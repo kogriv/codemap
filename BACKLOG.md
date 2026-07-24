@@ -49,6 +49,9 @@
 **DoD:** ✅ отвечает на каталог §1 для bquant; резолв импортов/ре-экспортов корректен. 13/13 тестов.
 Находки codemap о bquant: цикл `pipeline↔cache`; `analyze_zones` вне `__all__` пакета zones.
 
+**Гэп-док (полнота покрытия, семантика, data flow):** `../devref/gaps/codemap/coverage_gap_analysis_2026-07-24.md`
+(CM-01…CM-14; реестр проекта G13).
+
 ---
 
 ## M2 — Виды B и A
