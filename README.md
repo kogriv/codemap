@@ -16,5 +16,6 @@
 ## Контекст
 
 - Дизайн: [DESIGN.md](DESIGN.md)
+- Бэклог реализации: [BACKLOG.md](BACKLOG.md)
 - Место в дорожной карте пакета: `../devref/architecture/package_roadmap_2026-07.md` (стадия P1)
 - Позиция/конвенция: `../devref/architecture/package_charter.md`
