@@ -17,6 +17,6 @@
 
 - Дизайн: [DESIGN.md](DESIGN.md)
 - Бэклог реализации: [BACKLOG.md](BACKLOG.md)
-- **Гэп-анализ покрытия (bquant, M0+M1):** [../devref/gaps/codemap/coverage_gap_analysis_2026-07-24.md](../devref/gaps/codemap/coverage_gap_analysis_2026-07-24.md)
+- **Гэпы и покрытие (bquant, M0+M1):** [gaps/](gaps/) — [coverage_gap_analysis_2026-07-24.md](gaps/coverage_gap_analysis_2026-07-24.md)
 - Место в дорожной карте пакета: `../devref/architecture/package_roadmap_2026-07.md` (стадия P1)
 - Позиция/конвенция: `../devref/architecture/package_charter.md`
