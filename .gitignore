@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.egg-info/
+*.pyc
+# generated graph artifacts (v1: generated on-demand, not committed — DESIGN §10.9)
+graph.json
+*.graph.json

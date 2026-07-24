@@ -1,34 +1,35 @@
 # codemap — Бэклог
 
 **Тип:** Живой бэклог реализации. **Рамка:** `DESIGN.md` (дизайн v1 закрыт, решения §10 приняты).
-**Статус:** ⬜ реализация не начата. Следующее — **M0**.
+**Статус:** ✅ **M0 сделан** (2026-07-24). Следующее — **M1**.
 
 Вехи от «тонкого сквозного среза» к расширению. Внутри вехи задачи упорядочены по зависимости.
 Отсылки `§N` — разделы `DESIGN.md`.
 
 ---
 
-## M0 — Тонкий срез: API-surface (доказать конвейер) ⬅ следующее
+## M0 — Тонкий срез: API-surface (доказать конвейер) ✅
 
 **Цель:** `codemap build <path>` → `graph.json` → markdown-отчёт API-поверхности, на `bquant`.
 Самое маленькое сквозь весь конвейер Extract→Build→Store→Serve (§8).
 
-- [ ] **M0.1 Каркас пакета** — `codemap/codemap/` (§9), `pyproject.toml`, зависимость `griffe`,
-      `codemap/tests/`. Вне wheel `bquant` (уже так — whitelist).
-- [ ] **M0.2 Extract (griffe-адаптер)** — статический разбор пакета через griffe: модули/классы/
-      функции, сигнатуры, докстринги, публичность (`__all__`/`_`), декораторы (`@deprecated`) (§3, §10.2).
-- [ ] **M0.3 Модель** — нейтральные узлы/рёбра для API-surface: `Module/Class/Function`, рёбра
-      `contains/exports/decorated_by`, атрибуты `signature/docstring/visibility/is_deprecated` (§2, открытые kind).
-- [ ] **M0.4 Store** — сериализация в канонический `graph.json`: схема §2.2, `codemap_schema`,
-      **детерминизм** (сортировка, без таймстампов).
-- [ ] **M0.5 Report (вид D)** — рендерер `report api-surface` → markdown: дерево публичных символов
-      + сигнатуры + докстринги (§4.1-D).
-- [ ] **M0.6 CLI** — `codemap build <path>`, `codemap report api-surface`; **JSON по умолчанию**,
-      стабильные exit-коды (§6, §14.1).
-- [ ] **M0.7 Тесты на bquant** — отчёт содержит `analyze_zones` с верной сигнатурой; `MACDZoneAnalyzer`
-      помечен deprecated; два билда → идентичный JSON (детерминизм).
+- [x] **M0.1 Каркас пакета** — `codemap/codemap/` (§9), `pyproject.toml`, зависимость `griffe`,
+      `codemap/tests/`, `.gitignore`, свой `.venv` (uv). Вне wheel `bquant` (whitelist).
+- [x] **M0.2 Extract (griffe-адаптер)** — `extract/griffe_extractor.py`: статический разбор (без импорта),
+      модули/классы/функции/атрибуты, сигнатуры, докстринги, публичность (`__all__`/`_`), депрекация
+      по декоратору `@deprecated` (§3, §10.2). Алиасы/импорт-рёбра — M1.
+- [x] **M0.3 Модель** — `model.py`: нейтральные `Node`/`Edge`/`Graph`, открытые kind, детерминированный
+      `to_dict` (сортировка, без таймстампов; `codemap_schema`) (§2/§2.2).
+- [x] **M0.4 Store** — `store.py`: канонический `graph.json` (JSON, диффабельный).
+- [x] **M0.5 Report (вид D)** — `serve/api_surface.py`: markdown — публичные символы по модулям +
+      сигнатуры + докстринги + маркер deprecated (§4.1-D).
+- [x] **M0.6 CLI** — `cli.py`: `codemap build <path>`, `codemap report api-surface`; JSON по умолчанию,
+      exit-коды (§6, §14.1).
+- [x] **M0.7 Тесты на bquant** — 6 тестов зелены: 1709 узлов; `analyze_zones` верная сигнатура;
+      `MACDZoneAnalyzer` deprecated; детерминизм; roundtrip; отчёт корректен.
 
-**DoD:** на `bquant` end-to-end даёт корректный детерминированный API-surface отчёт.
+**DoD:** ✅ на `bquant` end-to-end даёт корректный детерминированный API-surface отчёт.
+Результат: 1709 узлов (89 mod / 126 cls / 863 fn / 631 attr), 6/6 тестов.
 
 ---
 
