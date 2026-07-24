@@ -33,7 +33,8 @@ def test_graph_is_populated(graph):
     assert kinds["class"] > 50
     assert kinds["function"] > 100
     # contains-edges form a tree over the nodes (root has no parent).
-    assert len(graph.edges) == len(graph.nodes) - 1
+    contains = [e for e in graph.edges if e.type == "contains"]
+    assert len(contains) == len(graph.nodes) - 1
 
 
 def test_flagship_symbol_signature(graph):
