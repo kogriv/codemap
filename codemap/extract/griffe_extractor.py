@@ -1,14 +1,18 @@
 """Python extractor backed by griffe (DESIGN §10.8).
 
 Static analysis only — griffe parses source without importing the target, and
-resolves the hard parts for us (signatures, docstrings, __all__ visibility, and
-relative-import / re-export resolution — DESIGN §3.1); we consume that, we don't
-reinvent it.
+resolves the hard parts for us (signatures, docstrings, __all__ visibility,
+base-class / relative-import / re-export resolution — DESIGN §3.1); we consume
+that, we don't reinvent it.
 
-Emits (M0 + M1):
+Emits (M0 + M1 + M1.5):
 - definition nodes (module/class/function/attribute) + `contains` structure;
 - `export` edges for re-exports/aliases (module re-exposes a symbol — §2.1);
-- `imports` edges between modules (dependency graph — §1, §3.1).
+- `imports` edges between modules (dependency graph — §1, §3.1);
+- `inherits` edges (class → base class; external bases flagged — §2);
+- `decorated_by` edges (symbol → decorator callable — §2);
+- node `extras`: attribute `annotation`, class `is_dataclass`, and dynamic
+  `registry` binding (decorator + literal key) for factory/registry wiring (§7).
 """
 
 from __future__ import annotations
@@ -34,17 +38,17 @@ def extract(package_path: str | Path) -> Graph:
     root = griffe.load(module_name, search_paths=[str(search_path)])
 
     graph = Graph(target=module_name)
-    aliases: list[tuple[str, str, str]] = []  # (parent_module_id, name, target_path)
+    aliases: list[tuple[str, str, str, bool]] = []  # (parent_module, name, target, public)
     imports: list[tuple[str, str]] = []  # (module_id, target_symbol_path)
 
-    _collect(graph, root, search_path, aliases, imports)
+    _collect(graph, root, search_path, module_name, aliases, imports)
     _resolve_edges(graph, module_name, aliases, imports)
     return graph
 
 
-# -- pass 1: definition nodes + contains, collect aliases/imports ------------
+# -- pass 1: definition nodes + contains/inherits/decorated_by, collect aliases/imports --
 
-def _collect(graph, obj, root, aliases, imports) -> None:
+def _collect(graph, obj, root, target_pkg, aliases, imports) -> None:
     if obj.kind.value == "module":
         _add_node(graph, obj, root)
         for name, tgt in (obj.imports or {}).items():
@@ -63,8 +67,34 @@ def _collect(graph, obj, root, aliases, imports) -> None:
         if member.kind.value != "module":  # modules add themselves in the branch above
             _add_node(graph, member, root)
         graph.add_edge(Edge("contains", obj.canonical_path, member.canonical_path))
+        _emit_decorated_by(graph, member)
+        if member.kind.value == "class":
+            _emit_inherits(graph, member, target_pkg)
         if member.kind.value in {"module", "class"}:
-            _collect(graph, member, root, aliases, imports)
+            _collect(graph, member, root, target_pkg, aliases, imports)
+
+
+# -- semantic edges resolvable inline (griffe gives absolute targets) --------
+
+def _emit_inherits(graph, cls, target_pkg) -> None:
+    """One `inherits` edge per base; griffe resolves the base to a canonical path."""
+    for base in getattr(cls, "bases", None) or []:
+        target = getattr(base, "canonical_path", None) or str(base)
+        internal = target == target_pkg or target.startswith(target_pkg + ".")
+        graph.add_edge(
+            Edge(
+                "inherits",
+                cls.canonical_path,
+                target,
+                extras={} if internal else {"external": True},
+            )
+        )
+
+
+def _emit_decorated_by(graph, obj) -> None:
+    """One `decorated_by` edge per decorator (target = its callable path)."""
+    for name in _decorator_names(obj):
+        graph.add_edge(Edge("decorated_by", obj.canonical_path, name))
 
 
 # -- pass 2: resolve export + import edges against known nodes ----------------
@@ -108,7 +138,7 @@ def _containing_module(symbol_path: str, module_ids: list[str]) -> str | None:
     return None
 
 
-# -- node building (M0) ------------------------------------------------------
+# -- node building (M0 + M1.5 extras) ----------------------------------------
 
 def _add_node(graph, obj, root) -> None:
     decorators = _decorator_names(obj)
@@ -124,8 +154,47 @@ def _add_node(graph, obj, root) -> None:
             visibility="public" if obj.is_public else "private",
             decorators=decorators,
             is_deprecated=any(d.split(".")[-1] == "deprecated" for d in decorators),
+            extras=_extras(obj, decorators),
         )
     )
+
+
+def _extras(obj, decorators) -> dict:
+    """Language-specific facts kept off the neutral core (DESIGN §2)."""
+    extras: dict = {}
+    kind = obj.kind.value
+    if kind == "attribute" and getattr(obj, "annotation", None) is not None:
+        extras["annotation"] = str(obj.annotation)  # e.g. "List[ZoneInfo]" (CM-01)
+    if kind == "class":
+        if any(d.split(".")[-1] == "dataclass" for d in decorators):
+            extras["is_dataclass"] = True  # CM-02
+        binding = _registry_binding(obj)  # CM-07: @Registry.register('key')
+        if binding is not None:
+            extras["registry"] = binding
+    return extras
+
+
+def _registry_binding(obj) -> dict | None:
+    """Dynamic registration via a decorator call with a literal string key.
+
+    Turns ``@ZoneDetectionRegistry.register('zero_crossing', ...)`` into
+    ``{"decorator": "...register", "key": "zero_crossing"}`` so factory/registry
+    wiring is queryable instead of hidden in a decorator string (DESIGN §7).
+    """
+    for d in getattr(obj, "decorators", []) or []:
+        path = getattr(d, "callable_path", None)
+        value = getattr(d, "value", None)
+        if path is None or "register" not in str(path).lower():
+            continue
+        args = getattr(value, "arguments", None)
+        if not args:
+            continue
+        first = args[0]  # griffe gives a string-literal arg as quoted source text
+        if isinstance(first, str) and len(first) >= 2 and first[0] in "'\"":
+            key = first.strip("'\"")
+            if key:
+                return {"decorator": str(path), "key": key}
+    return None
 
 
 def _signature(obj) -> str | None:

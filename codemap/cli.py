@@ -56,6 +56,11 @@ def _cmd_query(args) -> int:
             m: {"dependencies": q.dependencies(m), "dependents": q.dependents(m)}
             for m in modules
         }
+    classes = [n.id for n in matches if n.kind == "class"]
+    if classes:
+        result["classes"] = {
+            c: {"bases": q.bases(c), "subclasses": q.subclasses(c)} for c in classes
+        }
 
     if args.format == "text":
         _print_query_text(result)
@@ -73,6 +78,10 @@ def _print_query_text(r) -> None:
         print(f"\n[{mid}]")
         print("  imports:", ", ".join(dep["dependencies"]) or "—")
         print("  imported by:", ", ".join(dep["dependents"]) or "—")
+    for cid, h in r.get("classes", {}).items():
+        print(f"\n[{cid}]")
+        print("  bases:", ", ".join(h["bases"]) or "—")
+        print("  subclasses:", ", ".join(h["subclasses"]) or "—")
 
 
 def _cmd_report(args) -> int:

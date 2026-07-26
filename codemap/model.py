@@ -12,7 +12,9 @@ from dataclasses import dataclass, field, asdict
 from typing import Any
 
 # Bump on any change to the JSON schema (invariant, like bquant's CACHE_SCHEMA_VERSION).
-SCHEMA_VERSION = "0.1"
+# 0.2: M1.5 — inherits / decorated_by edges; attribute annotations, is_dataclass and
+#      dynamic-registration keys in node extras (closes gap-doc CM-01/02/06/07/08).
+SCHEMA_VERSION = "0.2"
 
 
 @dataclass

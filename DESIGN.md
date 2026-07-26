@@ -105,7 +105,7 @@ visibility (public/private по `_`/`__all__`), список декоратор�
 
 ```json
 {
-  "codemap_schema": "0.1",
+  "codemap_schema": "0.2",
   "target": {"name": "bquant", "root": "bquant"},
   "nodes": [
     {"id": "bquant.analysis.zones.pipeline.analyze_zones", "kind": "function",
@@ -113,12 +113,18 @@ visibility (public/private по `_`/`__all__`), список декоратор�
      "signature": "analyze_zones(df: pd.DataFrame) -> ZoneAnalysisBuilder",
      "docstring": "...", "visibility": "public", "decorators": [], "is_deprecated": false},
     {"id": "bquant.indicators.macd.MACDZoneAnalyzer", "kind": "class",
-     "decorators": ["deprecated"], "is_deprecated": true, "...": "..."}
+     "decorators": ["deprecated"], "is_deprecated": true, "...": "..."},
+    {"id": "bquant.analysis.zones.models.ZoneAnalysisResult.zones", "kind": "attribute",
+     "extras": {"annotation": "List[ZoneInfo]"}},
+    {"id": "bquant.analysis.zones.detection.zero_crossing.ZeroCrossingDetection", "kind": "class",
+     "extras": {"registry": {"decorator": "...ZoneDetectionRegistry.register", "key": "zero_crossing"}}}
   ],
   "edges": [
-    {"type": "contains", "from": "bquant.analysis.zones.pipeline", "to": "bquant.analysis.zones.pipeline.analyze_zones"},
-    {"type": "export",   "from": "bquant.analysis.zones", "to": "bquant.analysis.zones.pipeline.analyze_zones", "as": "analyze_zones"},
-    {"type": "imports",  "from": "bquant.analysis.zones.strategies.swing.zigzag", "to": "bquant.indicators.LibraryManager"}
+    {"type": "contains",     "from": "bquant.analysis.zones.pipeline", "to": "bquant.analysis.zones.pipeline.analyze_zones"},
+    {"type": "export",       "from": "bquant.analysis.zones", "to": "bquant.analysis.zones.pipeline.analyze_zones", "as": "analyze_zones"},
+    {"type": "imports",      "from": "bquant.analysis.zones.strategies.swing.zigzag", "to": "bquant.indicators.LibraryManager"},
+    {"type": "inherits",     "from": "bquant.indicators.base.BaseIndicator", "to": "abc.ABC", "extras": {"external": true}},
+    {"type": "decorated_by", "from": "bquant.indicators.macd.MACDZoneAnalyzer", "to": "deprecated"}
   ]
 }
 ```

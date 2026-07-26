@@ -28,6 +28,15 @@ class Query:
         for e in graph.edges:
             if e.type == "export":
                 self._exports.setdefault(e.extras.get("as", ""), []).append(e.target)
+        # inherits edges: class -> base (source imports base). Externals kept.
+        self._inherits = nx.DiGraph()
+        for e in graph.edges:
+            if e.type == "inherits":
+                self._inherits.add_edge(e.source, e.target)
+        # decorated_by edges: keep as (source, decorator-path) pairs.
+        self._decorated: list[tuple[str, str]] = [
+            (e.source, e.target) for e in graph.edges if e.type == "decorated_by"
+        ]
 
     # -- lookups -------------------------------------------------------------
 
@@ -61,6 +70,28 @@ class Query:
         if module_id not in self._imports:
             return []
         return sorted(self._imports.predecessors(module_id))
+
+    # -- class hierarchy (inherits edges) -----------------------------------
+
+    def bases(self, class_id: str) -> list[str]:
+        """Direct base classes of ``class_id`` (internal + external)."""
+        if class_id not in self._inherits:
+            return []
+        return sorted(self._inherits.successors(class_id))
+
+    def subclasses(self, class_id: str) -> list[str]:
+        """Direct subclasses of ``class_id``."""
+        if class_id not in self._inherits:
+            return []
+        return sorted(self._inherits.predecessors(class_id))
+
+    def decorated_with(self, decorator: str) -> list[str]:
+        """Symbols decorated by ``decorator`` (matched on full path or short name)."""
+        return sorted(
+            src
+            for src, dec in self._decorated
+            if dec == decorator or dec.rsplit(".", 1)[-1] == decorator
+        )
 
     # -- graph-wide ----------------------------------------------------------
 
