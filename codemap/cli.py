@@ -1,9 +1,13 @@
 """codemap CLI (DESIGN §6, §14.1). CLI-AI-first: JSON by default, stable exit codes.
 
-    codemap build  <path> [-o graph.json]
+    codemap build  <path> [-o graph.json] [--deep]
     codemap query  <name> (--graph g.json | --build <path>) [--format json|text]
     codemap report <kind> (--graph g.json | --build <path>) [--format markdown|json]
         kinds: api-surface | dependencies | dead-code | behavior
+    codemap export <kind> (--graph g.json | --build <path>) [-o out]
+        rag                          → JSONL chunks (consumer A)
+        vault -o <dir>               → Obsidian vault tree (consumer B)
+        mermaid --mkind class|deps|calls [--scope X] [--root Y] [--depth N]
 """
 
 from __future__ import annotations
@@ -11,15 +15,19 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from codemap import store
 from codemap.extract import extract
 from codemap.query import Query
 from codemap.serve import (
+    build_vault,
     render_api_surface,
     render_behavior,
     render_dead_code,
     render_dependencies,
+    render_mermaid,
+    render_rag,
 )
 
 _REPORTS = {
@@ -110,6 +118,37 @@ def _cmd_report(args) -> int:
     return 0
 
 
+def _cmd_export(args) -> int:
+    q = Query(_graph_from(args))
+    if args.kind == "rag":
+        _emit(render_rag(q), args.out)
+    elif args.kind == "mermaid":
+        _emit(render_mermaid(q, args.mkind, scope=args.scope, root=args.root,
+                             depth=args.depth), args.out)
+    elif args.kind == "vault":
+        if not args.out:
+            raise SystemExit("error: export vault needs -o <dir>")
+        _write_vault(build_vault(q), args.out)
+        print(args.out)
+    return 0
+
+
+def _emit(text: str, out: str | None) -> None:
+    if out:
+        Path(out).write_text(text, encoding="utf-8")
+        print(out)
+    else:
+        print(text, end="")
+
+
+def _write_vault(files: dict[str, str], out_dir: str) -> None:
+    base = Path(out_dir)
+    for rel, content in files.items():
+        path = base / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+
 def _add_source(p) -> None:
     p.add_argument("--graph", help="Read an existing graph.json.")
     p.add_argument("--build", help="Build fresh from this package path.")
@@ -139,6 +178,17 @@ def build_parser() -> argparse.ArgumentParser:
     _add_source(r)
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")
     r.set_defaults(func=_cmd_report)
+
+    e = sub.add_parser("export", help="Export a view: rag (JSONL) | vault | mermaid.")
+    e.add_argument("kind", choices=["rag", "vault", "mermaid"])
+    _add_source(e)
+    e.add_argument("-o", "--out", help="Output file (rag/mermaid) or dir (vault).")
+    e.add_argument("--mkind", choices=["class", "deps", "calls"], default="class",
+                   help="mermaid diagram kind (default: class).")
+    e.add_argument("--scope", help="mermaid class/deps: restrict to this id-prefix.")
+    e.add_argument("--root", help="mermaid calls: root symbol.")
+    e.add_argument("--depth", type=int, default=2, help="mermaid calls: BFS depth.")
+    e.set_defaults(func=_cmd_export)
 
     return p
 
