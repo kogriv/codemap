@@ -9,8 +9,9 @@ description = "Static analyzer that turns a package's source into a queryable co
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "griffe>=2.0",
-    "networkx>=3.0",
+    "griffe>=2.0",     # structure: API surface, imports, inherits, exports (fast tier)
+    "networkx>=3.0",   # query backend (graph algorithms)
+    "jedi>=0.19",      # deep call resolution: local-variable type inference (--deep tier)
 ]
 
 [project.scripts]

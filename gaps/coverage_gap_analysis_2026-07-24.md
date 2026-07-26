@@ -437,7 +437,7 @@ ZoneAnalysisPipeline bases: []
 | `imports` (module→symbol) | опционально | ❌ | **Гэп CM-05** |
 | `inherits` | ✅ | ✅ 52 (M1.5) | **✅ CM-08 закрыт** |
 | `decorated_by` | ✅ | ✅ 165 (M1.5) | **✅ CM-06 закрыт** |
-| `calls` (best-effort) | отложено | ✅ 933 (M4) | **🟡 CM-09 частично (~19%, метка resolution)** |
+| `calls` (best-effort) | отложено | ✅ 933 fast / 1292 deep | **🟡 CM-09 (fast ~19% / deep jedi ~26%, M4+M5)** |
 | `references` (точные) | отложено | ❌ | нора точности (§7) |
 | `implements` / `protocol` | нет в v1 | ❌ | будущее |
 | data flow (value-level) | нет в v1 | ❌ | **Гэп CM-10 (тип-уровень — есть, M4)** |
@@ -552,7 +552,7 @@ ZoneVisualizer.plot(..., data=result.data)  → visualization
 | **CM-06** | Нет рёбер `decorated_by` | связи | средняя | M1.5 | ✅ закрыт (165 рёбер) |
 | **CM-07** | Registry/factory не резолвятся | поведение | **высокая** | M1.5 | ✅ закрыт (`extras.registry`) |
 | **CM-08** | Нет рёбер `inherits` (griffe данные есть) | связи | **высокая** | M1.5 | ✅ закрыт (52 ребра) |
-| **CM-09** | Нет call-graph | поведение | **высокая** | M4 | 🟡 частично (`calls` best-effort ~19%; локали парковано) |
+| **CM-09** | Нет call-graph | поведение | **высокая** | M4 + M5 | 🟡 частично (fast ~19% / deep jedi ~26%; sound — вне v1; спайк 2026-07-26) |
 | **CM-10** | Нет data flow | поведение | **критическая*** | M4 | 🟡 частично (type-flow producers/consumers; value-level вне v1) |
 | **CM-11** | Нет локальных переменных | полнота | средняя | M4 | 🟡 частично (control-скелет; сами локали — нора) |
 | **CM-12** | Dead-code только module-level | аудит | средняя | M4 | 🟡 частично (symbol-level для приватных, с дисклеймером) |

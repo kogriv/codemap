@@ -32,14 +32,14 @@ _REPORTS = {
 
 def _graph_from(args):
     if getattr(args, "build", None):
-        return extract(args.build)
+        return extract(args.build, deep=getattr(args, "deep", False))
     if getattr(args, "graph", None):
         return store.load(args.graph)
     raise SystemExit("error: need --graph <file> or --build <path>")
 
 
 def _cmd_build(args) -> int:
-    graph = extract(args.path)
+    graph = extract(args.path, deep=args.deep)
     if args.out:
         store.save(graph, args.out)
         print(args.out)
@@ -113,6 +113,8 @@ def _cmd_report(args) -> int:
 def _add_source(p) -> None:
     p.add_argument("--graph", help="Read an existing graph.json.")
     p.add_argument("--build", help="Build fresh from this package path.")
+    p.add_argument("--deep", action="store_true",
+                   help="Deep call resolution via jedi (richer, ~1 min; default fast).")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -122,6 +124,8 @@ def build_parser() -> argparse.ArgumentParser:
     b = sub.add_parser("build", help="Build the canonical graph from a package path.")
     b.add_argument("path", help="Path to the package directory (holds __init__.py).")
     b.add_argument("-o", "--out", help="Write graph.json here (default: stdout JSON).")
+    b.add_argument("--deep", action="store_true",
+                   help="Deep call resolution via jedi (richer, ~1 min; default fast).")
     b.set_defaults(func=_cmd_build)
 
     q = sub.add_parser("query", help="Look up a symbol: where defined, deps both ways.")

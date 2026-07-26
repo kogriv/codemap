@@ -311,8 +311,10 @@ BQuant для codemap — **вход**, не зависимость: `codemap bu
 1. ✅ **Стор:** JSON-канон + query-бэкенд `networkx` в v1 (SQLite/Neo4j — по масштабу/домену, §4).
 2. ✅ **Докстринги:** включаем в v1 — griffe даёт их даром, нужны потребителю B и RAG. Сырой текст;
    структурный разбор Google/NumPy-секций — позже, по запросу B.
-3. ✅ **`references`/`calls`:** в v1 — только рёбра уровня импортов/структуры (imports / contains /
-   inherits / exports / decorated_by, §2). Точный call-graph функций — отложен (§7, слой глубины).
+3. ✅ **`references`/`calls`:** структурные рёбра (imports / contains / inherits / exports /
+   decorated_by, §2) — база. **Обновлено (M4/M5):** добавлен best-effort `calls`-слой в двух тирах
+   (см. §10.11) — fast (ast, ~19%) и deep (jedi, ~26%). **Точный/sound** call-graph остаётся вне v1
+   (§7) — неразрешим для Python в общем виде.
 4. ✅ **CLI + формат:** глаголы `build` / `query` / `report` / `export-rag` (+ `serve` позже);
    **JSON по умолчанию**, `--format` для человеческих форматов (§6, §14.1).
 5. ✅ **Область:** `codemap build <path>` — **любой пакет по пути**; bquant — первая цель/тест
@@ -331,9 +333,16 @@ BQuant для codemap — **вход**, не зависимость: `codemap bu
    нечему. Коммит + CI freshness-check — когда граф начнёт питать публикуемое (§15.4).
 10. ✅ **Свежесть:** v1 — полный ребилд on-demand (§15.5); git-хук/CI-check — когда `graph.json`
     коммитится/потребляется; watcher-демон — с тёплым serve-режимом (§14.4).
+11. ✅ **РЕШЕНО (2026-07-26) — движок разрешения вызовов:** **разделение труда** — `griffe` на
+    структуру, **`jedi` на вызовы** (вывод типов локалей). Замерено спайком, не заявлено
+    (`gaps/call_resolution_spike_2026-07-26.md`): по именам потолок ~19%, jedi поднимает до ~28%
+    (self `.foo()` → 99%, хвост локалей → +27%), но упирается в ~28-30% (Python-динамика — предел,
+    не лень). **Два тира:** fast (ast, дефолт, <1с, детерминизм/CI) и deep (`--deep`, jedi, ~50с,
+    богатый граф). Оба детерминированы; jedi — ленивый импорт, fast-путь его не тянет. Sound
+    call-graph / value-level data-flow / межфункциональный points-to — вне v1 (§7).
 
-→ **Открытых блокеров нет. Следующий шаг — реализация M0 (§8): `codemap build <path>` на griffe →
-`graph.json` → markdown-отчёт API-surface для bquant.**
+→ **Дизайн реализуется: M0/M1/M1.5/M4/M5 сделаны (см. `BACKLOG.md`). Стек: griffe (структура) +
+jedi (вызовы, deep) + networkx (query), JSON-канон, CLI-AI-first.**
 
 ---
 
@@ -449,8 +458,8 @@ OSS-baseline — не самоцель, а **референс-реализаци
 ### 14.2. Отличие от replan — стек сцеплен с parse-бэкендом
 У replan домен (планирование) нейтрален к языку → Go-first чист. У codemap домен — **разбор кода**,
 тянет экосистема:
-- **Python + `ast`/griffe** — Python-семантика даром, быстрый baseline; но Python-дистрибуция
-  (смягчается `uv`/`pipx`; бинарь позже через Nuitka/PyInstaller).
+- **Python + `ast`/griffe** (+ `jedi` для deep-вызовов, §10.11) — Python-семантика даром, быстрый
+  baseline; но Python-дистрибуция (смягчается `uv`/`pipx`; бинарь позже через Nuitka/PyInstaller).
 - **Go/Rust + tree-sitter** — **single static binary как у replan** + мультиязычность; но резолв
   импортов (§3.1) строишь сам per-language, без griffe.
 

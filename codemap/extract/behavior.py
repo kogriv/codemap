@@ -1,19 +1,24 @@
-"""Behavioral pass — best-effort call-graph + control skeleton (DESIGN §7, M4).
+"""Behavioral pass — best-effort call-graph + control skeleton (DESIGN §7, M4/M5).
 
 griffe gives the API surface but not the call sites; this second pass parses the
 same source files with the stdlib ``ast`` and adds a *bounded* behavioral layer:
 
 - `calls` edges (caller function → internal callee), each labeled by how it was
-  resolved (``extras.resolution``: module | self | imported);
+  resolved (``extras.resolution``);
 - per-function ``extras.calls`` coverage counts (out / resolved / external /
   unresolved / dynamic) so the graph reports its own honesty;
 - per-function ``extras.control`` skeleton (branches / loops / try / generator /
   async) — structure, not semantics.
 
-Explicit stop-line (measured on bquant — see gaps/ CM-09): calls on **local
-variables** (``result.data``, ``fig.write_html``) need local type inference and
-are left ``unresolved`` on purpose, not chased. Builtins/externals are counted,
-not edged.
+**Two tiers** (see gaps/ call_resolution_spike_2026-07-26 for the measurement):
+
+- **fast** (default): stdlib ``ast`` name resolution — module / self / imported.
+  Sub-second, zero heavy deps, deterministic. Leaves local-variable calls
+  (``result.data``, ``fig.write_html``) ``unresolved`` on purpose — resolving them
+  needs type inference. ~19% of call-sites on bquant.
+- **deep** (``deep=True``, jedi): local-variable type inference cracks the tail
+  ``self.*`` → ~99%, ``x.foo()`` on locals → new edges. ~28% on bquant; ~1 min
+  build. Python's dynamism caps even this — the remainder is genuinely undecidable.
 """
 
 from __future__ import annotations
@@ -27,29 +32,86 @@ _BUILTINS = set(vars(__import__("builtins")))
 _SKIP_RECEIVERS = {"self", "cls", "super"}
 
 
-def add_behavior(graph, griffe_root, target_pkg: str) -> None:
-    """Augment ``graph`` (built by the griffe pass) with the behavioral layer."""
+def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
+                 search_path=None) -> None:
+    """Augment ``graph`` (built by the griffe pass) with the behavioral layer.
+
+    ``deep=True`` swaps the ast name-resolver for jedi type inference on calls
+    (``search_path`` is the dir containing the package, used as the jedi project).
+    """
     modules = _index_modules(griffe_root)
+    project = _jedi_project(search_path) if deep else None
     for modpath in sorted(modules):
         mod = modules[modpath]
         fp = getattr(mod, "filepath", None)
         if not fp:
             continue
         try:
-            tree = ast.parse(Path(fp).read_text(encoding="utf-8"))
+            source = Path(fp).read_text(encoding="utf-8")
+            tree = ast.parse(source)
         except (OSError, SyntaxError):
             continue
         imports = dict(mod.imports or {})
         modmembers = set(mod.members.keys())
+        script = _jedi_script(source, fp, project) if deep else None
         for fnode, class_stack in _named_functions(tree):
             node_id = _node_id(modpath, class_stack, fnode.name)
             if node_id not in graph.nodes:
                 continue  # nested closure — not a definition node
             members = _class_scope(mod, class_stack, modules) if class_stack else set()
             class_prefix = ".".join([modpath, *class_stack]) if class_stack else ""
-            _process_function(
-                graph, node_id, fnode, modpath, class_prefix, imports, modmembers, members
-            )
+            if script is not None:
+                def resolve(call, _s=script):
+                    return _resolve_jedi(call, _s, target_pkg)
+            else:
+                def resolve(call, _cp=class_prefix, _im=imports, _mm=modmembers, _me=members):
+                    return _resolve(call, modpath, _cp, _im, _mm, _me)
+            _process_function(graph, node_id, fnode, resolve)
+
+
+# -- jedi (deep tier) --------------------------------------------------------
+
+def _jedi_project(search_path):
+    import jedi
+    return jedi.Project(str(search_path)) if search_path else None
+
+
+def _jedi_script(source, path, project):
+    import jedi
+    return jedi.Script(code=source, path=str(path), project=project)
+
+
+def _callee_pos(func):
+    """(line, column) of the callee name for jedi.goto (jedi cols are 0-based+1)."""
+    if isinstance(func, ast.Name):
+        return func.lineno, func.col_offset + 1
+    if isinstance(func, ast.Attribute):
+        return func.end_lineno, func.end_col_offset  # last char of the attr name
+    return None
+
+
+def _resolve_jedi(call, script, target_pkg):
+    """Resolve a call-site to a definition via jedi type inference.
+
+    Returns (target_id, resolution). ``deep`` = internal hit; ``external`` =
+    resolved outside the package; ``unresolved`` = jedi found nothing.
+    """
+    pos = _callee_pos(call.func)
+    if pos is None:
+        return "", "unresolved"
+    try:
+        defs = script.goto(pos[0], pos[1], follow_imports=True, follow_builtin_imports=False)
+    except Exception:
+        return "", "unresolved"
+    if not defs:
+        return "", "unresolved"
+    internal = sorted(
+        d.full_name for d in defs
+        if d.full_name and (d.full_name == target_pkg or d.full_name.startswith(target_pkg + "."))
+    )
+    if internal:
+        return internal[0], "deep"
+    return "", "external"
 
 
 # -- griffe context ----------------------------------------------------------
@@ -133,17 +195,18 @@ def _own_calls(fnode):
 
 # -- per-function resolution + control ---------------------------------------
 
-def _process_function(graph, node_id, fnode, modpath, class_prefix, imports, modmembers, members) -> None:
+_EDGE_RESOLUTIONS = {"module", "self", "imported", "deep"}
+
+
+def _process_function(graph, node_id, fnode, resolve) -> None:
     counts = {"out": 0, "resolved": 0, "external": 0, "unresolved": 0, "dynamic": 0}
     seen_targets: set[str] = set()
     for call in _own_calls(fnode):
         counts["out"] += 1
-        target, resolution = _resolve(
-            call, modpath, class_prefix, imports, modmembers, members
-        )
-        if resolution in ("module", "self", "imported"):
+        target, resolution = resolve(call)
+        if resolution in _EDGE_RESOLUTIONS:
             counts["resolved"] += 1
-            if target not in seen_targets:
+            if target and target not in seen_targets:
                 seen_targets.add(target)
                 graph.add_edge(
                     Edge("calls", node_id, target, extras={"resolution": resolution})

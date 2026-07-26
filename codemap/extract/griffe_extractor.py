@@ -28,8 +28,13 @@ from codemap.model import Edge, Graph, Node
 _NODE_KINDS = {"module", "class", "function", "attribute"}
 
 
-def extract(package_path: str | Path) -> Graph:
-    """Build a code graph from a Python package directory."""
+def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
+    """Build a code graph from a Python package directory.
+
+    ``deep=True`` runs the jedi-backed call resolver (M5) — richer call-graph
+    (local-variable type inference) at ~1 min build cost; default is the fast
+    ast tier (sub-second). See ``extract/behavior.py``.
+    """
     pkg_dir = Path(package_path).resolve()
     if not pkg_dir.is_dir():
         raise NotADirectoryError(f"Not a package directory: {pkg_dir}")
@@ -44,7 +49,8 @@ def extract(package_path: str | Path) -> Graph:
 
     _collect(graph, root, search_path, module_name, aliases, imports)
     _resolve_edges(graph, module_name, aliases, imports)
-    add_behavior(graph, root, module_name)  # M4: call-graph + control skeleton
+    # M4/M5: call-graph + control skeleton (deep=jedi type inference).
+    add_behavior(graph, root, module_name, deep=deep, search_path=search_path)
     return graph
 
 
