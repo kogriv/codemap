@@ -21,6 +21,7 @@ from pathlib import Path
 
 import griffe
 
+from codemap.extract.behavior import add_behavior
 from codemap.model import Edge, Graph, Node
 
 # griffe object kinds we turn into definition nodes (aliases handled separately).
@@ -43,6 +44,7 @@ def extract(package_path: str | Path) -> Graph:
 
     _collect(graph, root, search_path, module_name, aliases, imports)
     _resolve_edges(graph, module_name, aliases, imports)
+    add_behavior(graph, root, module_name)  # M4: call-graph + control skeleton
     return graph
 
 
@@ -165,6 +167,17 @@ def _extras(obj, decorators) -> dict:
     kind = obj.kind.value
     if kind == "attribute" and getattr(obj, "annotation", None) is not None:
         extras["annotation"] = str(obj.annotation)  # e.g. "List[ZoneInfo]" (CM-01)
+    if kind == "function":
+        # structured param/return types — basis for type-flow (M4) and CM-03.
+        params = [
+            {"name": p.name, "type": str(p.annotation)}
+            for p in obj.parameters
+            if p.annotation is not None
+        ]
+        if params:
+            extras["params"] = params
+        if obj.returns is not None:
+            extras["returns"] = str(obj.returns)
     if kind == "class":
         if any(d.split(".")[-1] == "dataclass" for d in decorators):
             extras["is_dataclass"] = True  # CM-02

@@ -13,6 +13,7 @@ import pytest
 
 from codemap import store
 from codemap.extract import extract
+from codemap.model import SCHEMA_VERSION
 from codemap.query import Query
 
 BQUANT = Path(__file__).resolve().parents[2] / "bquant"
@@ -97,4 +98,6 @@ def test_determinism_with_semantics():
 
 
 def test_schema_bumped(graph):
-    assert graph.to_dict()["codemap_schema"] == "0.2"
+    # M1.5 first lifted the schema off 0.1; kept in lockstep with the constant.
+    assert graph.to_dict()["codemap_schema"] == SCHEMA_VERSION
+    assert SCHEMA_VERSION >= "0.2"

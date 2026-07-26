@@ -9,10 +9,19 @@
 > **CM-08** (`inherits`, 52 ребра), **CM-06** (`decorated_by`, 165 рёбер), **CM-01**
 > (`extras.annotation` у атрибутов), **CM-02** (`extras.is_dataclass`), **CM-07**
 > (`extras.registry` — `@Registry.register('key')` резолвится в `{decorator, key}`).
-> Query: `bases`/`subclasses`/`decorated_with`. Остаются открытыми по дизайну (§7):
-> **CM-09** call-graph, **CM-10** data-flow, **CM-11** локали, а также **CM-05** (import
-> module→symbol), **CM-12/13** (symbol-level dead-code, entry points), **CM-14** (external
-> узлы). Статусы в таблице §10 обновлены. Исходный разбор ниже — как есть, на 2026-07-24.
+> Query: `bases`/`subclasses`/`decorated_with`.
+>
+> **Обновление 2026-07-26 — веха M4 (схема `0.3`), поведенческий слой.** Частично закрыты
+> «критические» гэпы — до **явной границы**, заданной спайком: чистое разрешение вызовов по
+> именам = ~18-19% call-site'ов (остальное — вызовы на локальных переменных, нужен вывод типов
+> локалей → парковано отдельным тиром). **CM-09** call-graph (`calls`-рёбра с меткой
+> `resolution`, 933 на bquant; Query `callers`/`callees`); **CM-10** data-flow — на **уровне типов**
+> (`producers`/`consumers` по сигнатурам, обходит локали); **CM-11** — control-скелет
+> (`extras.control`); **CM-12** — symbol-level dead-code для приватных функций; **CM-03** —
+> структурные `params`/`returns` в extras. Отчёт `report behavior` печатает собственный % разрешения.
+> Остаются открытыми: **CM-05** (import module→symbol), **CM-13** (entry points), **CM-14** (external
+> узлы), и **нора точности** — вывод типов локалей + sound call-graph/value-level data-flow (вне v1, §7).
+> Статусы §10/§6.2 обновлены. Исходный разбор ниже — как есть, на 2026-07-24.
 **Целевой пакет:** `bquant/` (версия 0.0.3)  
 **Метод:** статический прогон `codemap build ../bquant -o graph.json` + анализ артефакта, исходников экстрактора (`../codemap/extract/griffe_extractor.py`), query-слоя (`../codemap/query.py`), отчётов (`../codemap/serve/`) и дизайн-документа (`../DESIGN.md`)
 
@@ -428,9 +437,10 @@ ZoneAnalysisPipeline bases: []
 | `imports` (module→symbol) | опционально | ❌ | **Гэп CM-05** |
 | `inherits` | ✅ | ✅ 52 (M1.5) | **✅ CM-08 закрыт** |
 | `decorated_by` | ✅ | ✅ 165 (M1.5) | **✅ CM-06 закрыт** |
-| `references` / `calls` | отложено | ❌ 0 | **Гэп CM-09** |
+| `calls` (best-effort) | отложено | ✅ 933 (M4) | **🟡 CM-09 частично (~19%, метка resolution)** |
+| `references` (точные) | отложено | ❌ | нора точности (§7) |
 | `implements` / `protocol` | нет в v1 | ❌ | будущее |
-| data flow | нет в v1 | ❌ | **Гэп CM-10** |
+| data flow (value-level) | нет в v1 | ❌ | **Гэп CM-10 (тип-уровень — есть, M4)** |
 | registry key → implementation | §7 флаг | ✅ `extras.registry` (M1.5) | **✅ CM-07 закрыт** |
 
 ---
@@ -536,16 +546,16 @@ ZoneVisualizer.plot(..., data=result.data)  → visualization
 |----|----------|-----------|--------------|----------|--------|
 | **CM-01** | Типы полей атрибутов не извлекаются | модели данных | средняя | M1.5 | ✅ закрыт (`extras.annotation`) |
 | **CM-02** | Нет `extras.is_dataclass` | модели данных | низкая | M1.5 | ✅ закрыт |
-| **CM-03** | Сигнатуры не структурированы | модели данных | средняя | M2+ | 🟠 открыт |
+| **CM-03** | Сигнатуры не структурированы | модели данных | средняя | M4 | 🟡 частично (`params`/`returns` в extras; параметры не узлы) |
 | **CM-04** | 102 callable без docstring в графе | полнота метаданных | низкая | — | 🟠 отражает код |
 | **CM-05** | Import только module→module | связи | средняя | M2 | 🟠 открыт |
 | **CM-06** | Нет рёбер `decorated_by` | связи | средняя | M1.5 | ✅ закрыт (165 рёбер) |
 | **CM-07** | Registry/factory не резолвятся | поведение | **высокая** | M1.5 | ✅ закрыт (`extras.registry`) |
 | **CM-08** | Нет рёбер `inherits` (griffe данные есть) | связи | **высокая** | M1.5 | ✅ закрыт (52 ребра) |
-| **CM-09** | Нет call-graph | поведение | **высокая** | отложено | 🟠 отложен (§7) |
-| **CM-10** | Нет data flow | поведение | **критическая*** | отложено | 🟠 отложен (§7) |
-| **CM-11** | Нет локальных переменных | полнота | средняя | отложено | 🟠 отложен |
-| **CM-12** | Dead-code только module-level | аудит | средняя | M2+ | 🟠 открыт |
+| **CM-09** | Нет call-graph | поведение | **высокая** | M4 | 🟡 частично (`calls` best-effort ~19%; локали парковано) |
+| **CM-10** | Нет data flow | поведение | **критическая*** | M4 | 🟡 частично (type-flow producers/consumers; value-level вне v1) |
+| **CM-11** | Нет локальных переменных | полнота | средняя | M4 | 🟡 частично (control-скелет; сами локали — нора) |
+| **CM-12** | Dead-code только module-level | аудит | средняя | M4 | 🟡 частично (symbol-level для приватных, с дисклеймером) |
 | **CM-13** | Entry points / tests невидимы | аудит | средняя | M3 | 🟠 открыт |
 | **CM-14** | External imports отбрасываются | зависимости | средняя | M2 | 🟠 открыт |
 

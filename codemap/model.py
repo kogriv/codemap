@@ -14,7 +14,10 @@ from typing import Any
 # Bump on any change to the JSON schema (invariant, like bquant's CACHE_SCHEMA_VERSION).
 # 0.2: M1.5 — inherits / decorated_by edges; attribute annotations, is_dataclass and
 #      dynamic-registration keys in node extras (closes gap-doc CM-01/02/06/07/08).
-SCHEMA_VERSION = "0.2"
+# 0.3: M4 — best-effort `calls` edges (resolution-labeled); per-function extras
+#      `calls` coverage, `control` skeleton, structured `params`/`returns` for
+#      type-flow (partially closes CM-03/09/10/11/12).
+SCHEMA_VERSION = "0.3"
 
 
 @dataclass

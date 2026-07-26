@@ -3,7 +3,7 @@
     codemap build  <path> [-o graph.json]
     codemap query  <name> (--graph g.json | --build <path>) [--format json|text]
     codemap report <kind> (--graph g.json | --build <path>) [--format markdown|json]
-        kinds: api-surface | dependencies | dead-code
+        kinds: api-surface | dependencies | dead-code | behavior
 """
 
 from __future__ import annotations
@@ -15,12 +15,18 @@ import sys
 from codemap import store
 from codemap.extract import extract
 from codemap.query import Query
-from codemap.serve import render_api_surface, render_dead_code, render_dependencies
+from codemap.serve import (
+    render_api_surface,
+    render_behavior,
+    render_dead_code,
+    render_dependencies,
+)
 
 _REPORTS = {
     "api-surface": render_api_surface,       # takes Graph
     "dependencies": render_dependencies,     # takes Query
     "dead-code": render_dead_code,           # takes Query
+    "behavior": render_behavior,             # takes Query
 }
 
 
@@ -61,6 +67,11 @@ def _cmd_query(args) -> int:
         result["classes"] = {
             c: {"bases": q.bases(c), "subclasses": q.subclasses(c)} for c in classes
         }
+    funcs = [n.id for n in matches if n.kind == "function"]
+    if funcs:
+        result["functions"] = {
+            f: {"callers": q.callers(f), "callees": q.callees(f)} for f in funcs
+        }
 
     if args.format == "text":
         _print_query_text(result)
@@ -82,6 +93,10 @@ def _print_query_text(r) -> None:
         print(f"\n[{cid}]")
         print("  bases:", ", ".join(h["bases"]) or "—")
         print("  subclasses:", ", ".join(h["subclasses"]) or "—")
+    for fid, h in r.get("functions", {}).items():
+        print(f"\n[{fid}]")
+        print("  calls:", ", ".join(h["callees"]) or "—")
+        print("  called by:", ", ".join(h["callers"]) or "—")
 
 
 def _cmd_report(args) -> int:

@@ -105,13 +105,16 @@ visibility (public/private по `_`/`__all__`), список декоратор�
 
 ```json
 {
-  "codemap_schema": "0.2",
+  "codemap_schema": "0.3",
   "target": {"name": "bquant", "root": "bquant"},
   "nodes": [
     {"id": "bquant.analysis.zones.pipeline.analyze_zones", "kind": "function",
      "file": "bquant/analysis/zones/pipeline.py", "lines": [718, 740],
      "signature": "analyze_zones(df: pd.DataFrame) -> ZoneAnalysisBuilder",
-     "docstring": "...", "visibility": "public", "decorators": [], "is_deprecated": false},
+     "docstring": "...", "visibility": "public", "decorators": [], "is_deprecated": false,
+     "extras": {"returns": "ZoneAnalysisBuilder", "params": [{"name": "df", "type": "pd.DataFrame"}],
+                "calls": {"out": 3, "resolved": 2, "external": 1, "unresolved": 0, "dynamic": 0},
+                "control": {"branches": 1, "loops": 0}}},
     {"id": "bquant.indicators.macd.MACDZoneAnalyzer", "kind": "class",
      "decorators": ["deprecated"], "is_deprecated": true, "...": "..."},
     {"id": "bquant.analysis.zones.models.ZoneAnalysisResult.zones", "kind": "attribute",
@@ -124,7 +127,8 @@ visibility (public/private по `_`/`__all__`), список декоратор�
     {"type": "export",       "from": "bquant.analysis.zones", "to": "bquant.analysis.zones.pipeline.analyze_zones", "as": "analyze_zones"},
     {"type": "imports",      "from": "bquant.analysis.zones.strategies.swing.zigzag", "to": "bquant.indicators.LibraryManager"},
     {"type": "inherits",     "from": "bquant.indicators.base.BaseIndicator", "to": "abc.ABC", "extras": {"external": true}},
-    {"type": "decorated_by", "from": "bquant.indicators.macd.MACDZoneAnalyzer", "to": "deprecated"}
+    {"type": "decorated_by", "from": "bquant.indicators.macd.MACDZoneAnalyzer", "to": "deprecated"},
+    {"type": "calls",        "from": "bquant.analysis.zones.presets.analyze_macd_zones", "to": "bquant.analysis.zones.pipeline.analyze_zones", "extras": {"resolution": "imported"}}
   ]
 }
 ```
