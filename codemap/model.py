@@ -21,7 +21,11 @@ from typing import Any
 #      (`extras.root`: core | tests | examples | research | scripts | docs);
 #      `doc` node kind + `references` edge (consumer/doc → core symbol) let
 #      blast-radius reach beyond the package (closes gap-doc F1).
-SCHEMA_VERSION = "0.4"
+# 0.5: M7 — registry-aware call bridging. `calls` edges gain resolution
+#      `registry` (literal key → exact impl) and `registry-candidate` (factory/
+#      getter → all family impls, honest over-approximation) so the call chain
+#      reconnects at factory/registry dispatch seams (closes gap-doc F5).
+SCHEMA_VERSION = "0.5"
 
 
 @dataclass

@@ -77,6 +77,23 @@ def render_behavior(query: Query) -> str:
     lines.append(f"- dynamic string-keyed: {agg['dynamic']} ({100*agg['dynamic']/total:.1f}%)")
     lines.append(f"- unresolved (local vars — parked): {agg['unresolved']} ({100*agg['unresolved']/total:.1f}%)")
     lines.append("")
-    calls_edges = sum(1 for e in graph.edges if e.type == "calls")
+    by_res: dict[str, int] = {}
+    for e in graph.edges:
+        if e.type == "calls":
+            by_res[e.extras.get("resolution", "?")] = by_res.get(e.extras.get("resolution", "?"), 0) + 1
+    calls_edges = sum(by_res.values())
     lines.append(f"_Emitted {calls_edges} `calls` edges (deduped caller→callee)._")
+    bridged = by_res.get("registry", 0) + by_res.get("registry-candidate", 0)
+    if bridged:
+        lines.append("")
+        lines.append(
+            f"## Registry-bridged dispatch (M7): {bridged} edges "
+            f"({by_res.get('registry', 0)} exact, {by_res.get('registry-candidate', 0)} candidate)"
+        )
+        lines.append("")
+        lines.append(
+            "_Factory/registry seams (`create_x`, `Registry.get`) bridged to registered "
+            "impls via the M1.5 table. **Candidate** edges are an over-approximation "
+            "(dispatches to one of a family) — real for navigation, not for exact counts._"
+        )
     return "\n".join(lines).rstrip() + "\n"

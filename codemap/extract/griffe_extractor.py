@@ -22,6 +22,7 @@ from pathlib import Path
 import griffe
 
 from codemap.extract.behavior import add_behavior
+from codemap.extract.dispatch import add_dispatch
 from codemap.model import Edge, Graph, Node
 
 # griffe object kinds we turn into definition nodes (aliases handled separately).
@@ -51,6 +52,8 @@ def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
     _resolve_edges(graph, module_name, aliases, imports)
     # M4/M5: call-graph + control skeleton (deep=jedi type inference).
     add_behavior(graph, root, module_name, deep=deep, search_path=search_path)
+    # M7: bridge factory/registry dispatch seams using the M1.5 registry table.
+    add_dispatch(graph, root, module_name)
     return graph
 
 

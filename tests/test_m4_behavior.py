@@ -39,8 +39,10 @@ def q(graph):
 def test_calls_edges_present(graph):
     calls = [e for e in graph.edges if e.type == "calls"]
     assert len(calls) > 500
-    # every calls edge carries a resolution label
-    assert all(e.extras.get("resolution") in {"module", "self", "imported"} for e in calls)
+    # every calls edge carries a resolution label (fast tier: name-based +
+    # M7 registry bridges; deep tier would add "deep").
+    valid = {"module", "self", "imported", "registry", "registry-candidate"}
+    assert all(e.extras.get("resolution") in valid for e in calls)
 
 
 def test_callers_of_flagship(q):
