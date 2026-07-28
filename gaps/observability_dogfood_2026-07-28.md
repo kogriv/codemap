@@ -95,6 +95,29 @@ codemap в текущем виде подсказать **не мог** (F1) —
 и доков — тогда impact-анализ становится тем, ради чего граф и строится, а не переизобретением
 grep.
 
+## 6. Обкатка-2 (после M6, тот же день) — F1 закрыт
+
+M6 (repo scope, `extract_repo` + `report impact`) реализован в тот же день. Пере-прогон Q4
+на repo-scoped графе:
+
+```
+report impact --symbol MACDZoneAnalyzer  (thin, 2.8с сборка)
+→ 31 references across roots: core (2), docs (7), examples (1), scripts (2), tests (19)
+```
+
+**tests 19 — точно совпало с grep-списком** (backward-compat набор: test_macd_analyzer,
+test_macd_backward_compatibility, integration ×3, strategy-тесты, zone_features integration ×5,
+test_performance, test_sample_data). Full-режим даёт функциональную гранулярность — **55 тест-функций**
+(с именами методов). Было (обкатка-1): blast radius ≈0, только core. Стало: полный, сгруппированный
+по роуту и типу ребра, транзитивный. **F1 закрыт.** F2 закрыт (`query used_by`, `references_to`).
+
+Остаточные границы (честно): doc-слой ловит `from core import X` + точные точечные упоминания, но
+**не голое имя в прозе** → 7/11 doc-файлов на MACD (lower bound, дисклеймер в отчёте). F3/F4 — открыты
+(кандидаты, не блокеры). Резолв вызовов ядра — прежние 25.7% deep (M6 не про это).
+
+**Вердикт по MACDZoneAnalyzer теперь виден из графа:** выпилить нельзя — 19 тест-файлов +
+7 доков + examples/scripts держатся; это breaking-change v3.0.0.
+
 ---
 
-*Обновлять при пере-обкатке после M6 (сравнить thin/full режимы на том же Q4).*
+*Обкатка-1 → M6 → обкатка-2 замкнуты в один день. Обновлять при F3/F4 или следующей пере-обкатке.*

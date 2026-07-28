@@ -24,6 +24,10 @@ def _type_tokens(type_str: str) -> set[str]:
     return {t for t in _IDENT.findall(type_str or "") if t not in _TYPE_NOISE}
 
 
+# edge types that carry a "who depends on whom" signal for blast-radius (M6).
+_IMPACT_EDGES = ("calls", "references", "inherits", "imports", "decorated_by")
+
+
 class Query:
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
@@ -53,6 +57,13 @@ class Query:
         for e in graph.edges:
             if e.type == "calls":
                 self._calls.add_edge(e.source, e.target)
+        # provenance (M6): node id -> root (core | tests | docs | ...).
+        self._root_of = {n.id: n.extras.get("root", "core") for n in graph.nodes.values()}
+        # inbound index for impact/blast-radius: target -> [(source, edge_type)].
+        self._inbound: dict[str, list[tuple[str, str]]] = {}
+        for e in graph.edges:
+            if e.type in _IMPACT_EDGES:
+                self._inbound.setdefault(e.target, []).append((e.source, e.type))
 
     # -- lookups -------------------------------------------------------------
 
@@ -141,6 +152,70 @@ class Query:
             if n.id not in self._calls or self._calls.in_degree(n.id) == 0:
                 out.append(n.id)
         return sorted(out)
+
+    # -- impact / blast-radius (M6 — repo scope) -----------------------------
+
+    def root_of(self, node_id: str) -> str:
+        """Provenance root of a node (``core`` if untagged / single-package graph)."""
+        return self._root_of.get(node_id, "core")
+
+    def _member_ids(self, symbol_id: str) -> set[str]:
+        """The symbol plus its members (a class' methods are called, not the class)."""
+        return {
+            i for i in self.graph.nodes
+            if i == symbol_id or i.startswith(symbol_id + ".")
+        }
+
+    def references_to(self, symbol_id: str, *, include_members: bool = True) -> list[dict]:
+        """Direct inbound references to ``symbol_id`` (+ members), each tagged by root.
+
+        Spans every impact edge (calls / references / inherits / imports /
+        decorated_by), so it reaches consumers outside the package (tests, docs,
+        examples) once the graph was built repo-scoped (``extract_repo``).
+        """
+        targets = self._member_ids(symbol_id) if include_members else {symbol_id}
+        out = []
+        for t in sorted(targets):
+            for src, etype in self._inbound.get(t, []):
+                if src in targets:
+                    continue  # self-internal (a method calling a sibling)
+                out.append({"source": src, "type": etype,
+                            "root": self.root_of(src), "target": t})
+        return sorted(out, key=lambda r: (r["root"], r["type"], r["source"]))
+
+    def impact(self, symbol_id: str, *, depth: int = 2) -> dict:
+        """Blast radius of changing/removing ``symbol_id``.
+
+        Distance 1 = direct references (incl. to its members); further distances
+        follow inbound edges transitively up to ``depth``. Returns the ref list
+        (each with ``distance``) plus a ``by_root`` count matrix. Best-effort —
+        call resolution is partial (gaps/ CM-09), so this is a lower bound.
+        """
+        refs = self.references_to(symbol_id)
+        for r in refs:
+            r["distance"] = 1
+        seen = self._member_ids(symbol_id) | {r["source"] for r in refs}
+        current = {r["source"] for r in refs}
+        dist = 1
+        while dist < depth and current:
+            nxt: set[str] = set()
+            for node in sorted(current):
+                for src, etype in self._inbound.get(node, []):
+                    if src in seen:
+                        continue
+                    seen.add(src)
+                    refs.append({"source": src, "type": etype,
+                                 "root": self.root_of(src), "target": node,
+                                 "distance": dist + 1})
+                    nxt.add(src)
+            current = nxt
+            dist += 1
+
+        by_root: dict[str, dict[str, int]] = {}
+        for r in refs:
+            by_root.setdefault(r["root"], {}).setdefault(r["type"], 0)
+            by_root[r["root"]][r["type"]] += 1
+        return {"symbol": symbol_id, "refs": refs, "by_root": by_root}
 
     # -- type flow (M4 — producers/consumers by signature type) --------------
 

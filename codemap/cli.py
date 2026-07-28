@@ -1,9 +1,10 @@
 """codemap CLI (DESIGN §6, §14.1). CLI-AI-first: JSON by default, stable exit codes.
 
     codemap build  <path> [-o graph.json] [--deep]
+                   [--consumer PATH ...] [--docs PATH ...] [--mode thin|full]
     codemap query  <name> (--graph g.json | --build <path>) [--format json|text]
     codemap report <kind> (--graph g.json | --build <path>) [--format markdown|json]
-        kinds: api-surface | dependencies | dead-code | behavior
+        kinds: api-surface | dependencies | dead-code | behavior | impact --symbol X
     codemap export <kind> (--graph g.json | --build <path>) [-o out]
         rag                          → JSONL chunks (consumer A)
         vault -o <dir>               → Obsidian vault tree (consumer B)
@@ -18,7 +19,7 @@ import sys
 from pathlib import Path
 
 from codemap import store
-from codemap.extract import extract
+from codemap.extract import extract, extract_repo
 from codemap.query import Query
 from codemap.serve import (
     build_vault,
@@ -26,6 +27,7 @@ from codemap.serve import (
     render_behavior,
     render_dead_code,
     render_dependencies,
+    render_impact,
     render_mermaid,
     render_rag,
 )
@@ -36,6 +38,7 @@ _REPORTS = {
     "dead-code": render_dead_code,           # takes Query
     "behavior": render_behavior,             # takes Query
 }
+_REPORT_KINDS = sorted(_REPORTS) + ["impact"]  # impact takes (Query, --symbol)
 
 
 def _graph_from(args):
@@ -47,7 +50,16 @@ def _graph_from(args):
 
 
 def _cmd_build(args) -> int:
-    graph = extract(args.path, deep=args.deep)
+    if args.consumer or args.docs:
+        graph = extract_repo(
+            args.path,
+            consumers=tuple(args.consumer or ()),
+            docs=tuple(args.docs or ()),
+            mode=args.mode,
+            deep=args.deep,
+        )
+    else:
+        graph = extract(args.path, deep=args.deep)
     if args.out:
         store.save(graph, args.out)
         print(args.out)
@@ -80,12 +92,26 @@ def _cmd_query(args) -> int:
         result["functions"] = {
             f: {"callers": q.callers(f), "callees": q.callees(f)} for f in funcs
         }
+    # inbound references grouped by root — blast-radius at a glance (M6).
+    if matches:
+        result["used_by"] = {
+            n.id: _used_by_summary(q, n.id) for n in matches
+            if n.kind in ("class", "function")
+        }
 
     if args.format == "text":
         _print_query_text(result)
     else:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if (matches or result["defined_at"]) else 1
+
+
+def _used_by_summary(q, node_id) -> dict:
+    """{root: count} of direct inbound references — reaches consumers if repo-scoped."""
+    by_root: dict[str, int] = {}
+    for ref in q.references_to(node_id):
+        by_root[ref["root"]] = by_root.get(ref["root"], 0) + 1
+    return by_root
 
 
 def _print_query_text(r) -> None:
@@ -105,14 +131,23 @@ def _print_query_text(r) -> None:
         print(f"\n[{fid}]")
         print("  calls:", ", ".join(h["callees"]) or "—")
         print("  called by:", ", ".join(h["callers"]) or "—")
+    for sid, by_root in r.get("used_by", {}).items():
+        if by_root:
+            summary = ", ".join(f"{root}: {n}" for root, n in sorted(by_root.items()))
+            print(f"\n[{sid}] used by → {summary}")
 
 
 def _cmd_report(args) -> int:
     graph = _graph_from(args)
-    renderer = _REPORTS[args.kind]
     if args.format == "json":
         print(store.dumps(graph))
         return 0
+    if args.kind == "impact":
+        if not args.symbol:
+            raise SystemExit("error: report impact needs --symbol <name>")
+        print(render_impact(Query(graph), args.symbol), end="")
+        return 0
+    renderer = _REPORTS[args.kind]
     payload = renderer(graph) if args.kind == "api-surface" else renderer(Query(graph))
     print(payload, end="")
     return 0
@@ -165,6 +200,13 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("-o", "--out", help="Write graph.json here (default: stdout JSON).")
     b.add_argument("--deep", action="store_true",
                    help="Deep call resolution via jedi (richer, ~1 min; default fast).")
+    b.add_argument("--consumer", action="append", metavar="PATH",
+                   help="Repo-scope: extra root that USES the core (tests/, examples/, "
+                        "scripts/). Repeatable. Adds inbound refs for impact analysis.")
+    b.add_argument("--docs", action="append", metavar="PATH",
+                   help="Repo-scope: docs root (*.md) → doc nodes + references. Repeatable.")
+    b.add_argument("--mode", choices=["thin", "full"], default="thin",
+                   help="Consumer granularity: thin=per-file (default), full=per-function.")
     b.set_defaults(func=_cmd_build)
 
     q = sub.add_parser("query", help="Look up a symbol: where defined, deps both ways.")
@@ -174,8 +216,9 @@ def build_parser() -> argparse.ArgumentParser:
     q.set_defaults(func=_cmd_query)
 
     r = sub.add_parser("report", help="Render a report over the graph.")
-    r.add_argument("kind", choices=sorted(_REPORTS))
+    r.add_argument("kind", choices=_REPORT_KINDS)
     _add_source(r)
+    r.add_argument("--symbol", help="Symbol for `report impact` (short or full name).")
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")
     r.set_defaults(func=_cmd_report)
 

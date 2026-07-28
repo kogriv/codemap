@@ -5,5 +5,6 @@ neutral model, so adding a language later is additive, not a core rewrite.
 """
 
 from codemap.extract.griffe_extractor import extract
+from codemap.extract.roots import extract_repo
 
-__all__ = ["extract"]
+__all__ = ["extract", "extract_repo"]

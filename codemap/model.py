@@ -17,7 +17,11 @@ from typing import Any
 # 0.3: M4 — best-effort `calls` edges (resolution-labeled); per-function extras
 #      `calls` coverage, `control` skeleton, structured `params`/`returns` for
 #      type-flow (partially closes CM-03/09/10/11/12).
-SCHEMA_VERSION = "0.3"
+# 0.4: M6 — repo scope / impact (multi-root). Nodes carry provenance
+#      (`extras.root`: core | tests | examples | research | scripts | docs);
+#      `doc` node kind + `references` edge (consumer/doc → core symbol) let
+#      blast-radius reach beyond the package (closes gap-doc F1).
+SCHEMA_VERSION = "0.4"
 
 
 @dataclass
@@ -25,7 +29,7 @@ class Node:
     """A code entity. ``id`` is its canonical definition path (DESIGN §2.1)."""
 
     id: str
-    kind: str  # module | class | function | attribute (open set — DESIGN §2)
+    kind: str  # module | class | function | attribute | doc (open set — DESIGN §2)
     file: str | None = None
     lineno: int | None = None
     endlineno: int | None = None
@@ -41,7 +45,7 @@ class Node:
 class Edge:
     """A typed relationship between two nodes (by id)."""
 
-    type: str  # contains | imports | inherits | exports | decorated_by (DESIGN §2)
+    type: str  # contains | imports | inherits | exports | decorated_by | calls | references (§2)
     source: str
     target: str
     extras: dict[str, Any] = field(default_factory=dict)

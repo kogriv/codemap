@@ -360,10 +360,14 @@ BQuant для codemap — **вход**, не зависимость: `codemap bu
     `from core... import X` и точечные `core.a.b.C` → рёбра `references` от `doc`-узла к символам
     ядра (переиспользуя логику, которую doc-parity suite уже применяет). Cross-repo остаётся вне
     v1 (§7) — это мульти-рут в **одном** дереве, не кросс-репо. Схема → `0.4` (аддитивно:
-    `extras.root`, `doc`-узлы, `references`-рёбра). Реализация — веха **M6**.
+    `extras.root`, `doc`-узлы, `references`-рёбра). **Реализовано в M6 (2026-07-28):** `extract_repo`,
+    CLI `build --consumer/--docs/--mode`, `query used_by`, `report impact --symbol`. Обкатка-2
+    подтвердила DoD — `MACDZoneAnalyzer` теперь отдаёт полный blast radius (tests 19 / docs 7 /
+    examples 1 / scripts 2), совпав с grep. Ядро остаётся на griffe; потребители (россыпь `.py`,
+    не пакеты) — ast-скан ссылок в ядро.
 
-→ **Дизайн реализуется: M0/M1/M1.5/M4/M5/M2 сделаны, M6 в работе (см. `BACKLOG.md`). Стек: griffe
-(структура) + jedi (вызовы, deep) + networkx (query), JSON-канон, CLI-AI-first.**
+→ **Дизайн реализуется: M0/M1/M1.5/M4/M5/M2/M6 сделаны (см. `BACKLOG.md`). Стек: griffe (структура)
++ jedi (вызовы, deep) + networkx (query), JSON-канон, CLI-AI-first.**
 
 ---
 
