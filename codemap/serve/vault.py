@@ -62,6 +62,15 @@ def _link(node_id: str) -> str:
     return f"[[{node_id}|{node_id.rsplit('.', 1)[-1]}]]"
 
 
+def _tags(node) -> str:
+    """Kind + provenance-root tags, so Obsidian graph groups can colour by root."""
+    root = node.extras.get("root", "core")
+    parts = [f"#{node.kind}", f"#{root}"]
+    if node.is_deprecated:
+        parts.append("#deprecated")
+    return " ".join(parts)
+
+
 def _linked(i: str, known: set) -> str:
     """Wikilink when the target has its own note, else inline code (external base)."""
     return f"- {_link(i)}" if i in known else f"- `{i}`"
@@ -78,8 +87,7 @@ def _index_note(target: str, modules: list[str], docs: list[str]) -> str:
 def _module_note(node, symbols: list, uses: list[tuple[str, str]], known: set) -> str:
     module = node.id
     root = node.extras.get("root", "core")
-    tag = "#module" + (f" #{root}" if root != "core" else "")
-    lines = [f"# `{module}`", "", tag, ""]
+    lines = [f"# `{module}`", "", _tags(node), ""]
     classes = [n for n in symbols if n.kind == "class"]
     funcs = [n for n in symbols if n.kind == "function" and "." not in n.id[len(module) + 1:]]
     if classes:
@@ -95,8 +103,7 @@ def _module_note(node, symbols: list, uses: list[tuple[str, str]], known: set) -
 
 def _symbol_note(query: Query, node, known: set) -> str:
     module = node.id.rsplit(".", 1)[0]
-    tags = f"#{node.kind}" + (" #deprecated" if node.is_deprecated else "")
-    lines = [f"# `{node.id.rsplit('.', 1)[-1]}`", "", tags, "", f"In {_link(module)}."]
+    lines = [f"# `{node.id.rsplit('.', 1)[-1]}`", "", _tags(node), "", f"In {_link(module)}."]
     if node.signature:
         lines += ["", f"```python\n{node.signature}\n```"]
     if node.docstring:
@@ -116,7 +123,7 @@ def _symbol_note(query: Query, node, known: set) -> str:
 
 
 def _doc_note(node, targets: list[str], known: set) -> str:
-    lines = [f"# `{node.id}`", "", "#doc", ""]
+    lines = [f"# `{node.id}`", "", _tags(node), ""]
     if targets:
         lines += ["## References", ""] + [_linked(t, known) for t in targets]
     return "\n".join(lines).rstrip() + "\n"
