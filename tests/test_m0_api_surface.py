@@ -32,9 +32,12 @@ def test_graph_is_populated(graph):
     assert kinds["module"] > 50
     assert kinds["class"] > 50
     assert kinds["function"] > 100
-    # contains-edges form a tree over the nodes (root has no parent).
+    # contains-edges form a tree over the *definition* nodes (root has no parent).
+    # Overlay nodes (doc/column — M6/M12) live outside the containment tree.
+    defn = [n for n in graph.nodes.values()
+            if n.kind in ("module", "class", "function", "attribute")]
     contains = [e for e in graph.edges if e.type == "contains"]
-    assert len(contains) == len(graph.nodes) - 1
+    assert len(contains) == len(defn) - 1
 
 
 def test_flagship_symbol_signature(graph):

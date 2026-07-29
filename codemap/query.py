@@ -66,6 +66,14 @@ class Query:
         for e in graph.edges:
             if e.type == "implements":
                 self._implements.add_edge(e.source, e.target)
+        # string-key dataflow (M12/F6): column id -> {writers, readers}.
+        self._col_writers: dict[str, set[str]] = {}
+        self._col_readers: dict[str, set[str]] = {}
+        for e in graph.edges:
+            if e.type == "writes":
+                self._col_writers.setdefault(e.target, set()).add(e.source)
+            elif e.type == "reads":
+                self._col_readers.setdefault(e.target, set()).add(e.source)
         # provenance (M6): node id -> root (core | tests | docs | ...).
         self._root_of = {n.id: n.extras.get("root", "core") for n in graph.nodes.values()}
         # inbound index for impact/blast-radius: target -> [(source, edge_type)].
@@ -184,6 +192,30 @@ class Query:
                     "splat": extras.get("splat", False),
                 })
         return sorted(out, key=lambda r: (r["caller"], r["target"]))
+
+    # -- string-key dataflow (M12/F6) ----------------------------------------
+
+    def column(self, name: str) -> dict | None:
+        """Producers/consumers of the string key ``name`` (DataFrame column etc.).
+
+        Returns ``{writes: [funcs], reads: [funcs]}`` or ``None`` if the key was
+        never seen as a subscript. Over-set of true columns (dict keys included);
+        querying a specific key is still precise. See gap-doc F6.
+        """
+        col_id = name if name.startswith("column:") else "column:" + name
+        if col_id not in self.graph.nodes:
+            return None
+        return {
+            "writes": sorted(self._col_writers.get(col_id, set())),
+            "reads": sorted(self._col_readers.get(col_id, set())),
+        }
+
+    def columns(self) -> list[str]:
+        """All string keys seen as subscripts (column node keys)."""
+        return sorted(
+            n.extras.get("key", n.id[len("column:"):])
+            for n in self.graph.nodes.values() if n.kind == "column"
+        )
 
     def dead_symbols(self) -> list[str]:
         """Private functions with no incoming resolved call — dead-code candidates.

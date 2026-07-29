@@ -33,7 +33,11 @@ from typing import Any
 #      (how many call expressions collapsed into this edge) and the observed
 #      argument shape (`posargs` / `kwargs` / `splat`) so signature-change
 #      reasoning is possible (closes gap-doc F7).
-SCHEMA_VERSION = "0.7"
+# 0.8: M12 — string-key dataflow. `column` node per string subscript key
+#      (`column:macd_hist`) with `writes`/`reads` edges (function → column) so
+#      "who produces/consumes this DataFrame column" is queryable (closes
+#      gap-doc F6). Over-set of columns (dict keys land here too — honest).
+SCHEMA_VERSION = "0.8"
 
 
 @dataclass
@@ -41,7 +45,7 @@ class Node:
     """A code entity. ``id`` is its canonical definition path (DESIGN §2.1)."""
 
     id: str
-    kind: str  # module | class | function | attribute | doc (open set — DESIGN §2)
+    kind: str  # module | class | function | attribute | doc | column (open set — DESIGN §2)
     file: str | None = None
     lineno: int | None = None
     endlineno: int | None = None
@@ -57,7 +61,7 @@ class Node:
 class Edge:
     """A typed relationship between two nodes (by id)."""
 
-    type: str  # contains | imports | inherits | exports | decorated_by | calls | references | implements (§2)
+    type: str  # contains | imports | inherits | exports | decorated_by | calls | references | implements | reads | writes (§2)
     source: str
     target: str
     extras: dict[str, Any] = field(default_factory=dict)

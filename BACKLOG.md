@@ -243,10 +243,13 @@ thin/full сравнены; детерминизм держится; схема 
       и в consumer-скане `roots.py`. `Query.call_contract` + секция «Call-site contract» в `report impact`.
       На bquant get_indicator_params: examples ×2 (схлопывание снова видно), все «1 positional». Фикстура
       argpkg + test_m11 (5 тестов). 77/77.
-- [ ] **F6 (Extraction) — dataflow по строковым ключам.** Датафрейм-колонки (`macd_hist`, …) и
-      config-ключи как данные невидимы графу целиком (хуже grep). Отдельная веха: лёгкий проход по
-      подпискам `df['col']` / kwargs `indicator_col=` → `column`-узлы + `writes`/`reads`-рёбра.
-      Наибольшая ценность для отладки, наибольший объём. Эмпирика к отложенному CM-10 (§7).
+- [x] **F6 (Extraction) — dataflow по строковым ключам.** ✅ (M12, 2026-07-29, схема 0.8)
+      `extract/dataflow.add_dataflow`: `column`-узел на строковый ключ + `writes` (subscript-store и
+      dict-литерал-продюсер `{'k':…}`) / `reads` (subscript-load) рёбра function→column. Embedded-данные
+      исключены. `Query.column(name)`/`columns()` + `query <col>` печатает producers/consumers. На bquant:
+      1007 колонок / 2381 рёбер; `query macd_hist` → written by `MACD.calculate`, read by
+      extract_zone_features + 4 визуализатора (было — пусто). Честно: over-set строковых ключей (dict-
+      доступ тоже попадает). Фикстура flowpkg + test_m12 (6 тестов). 83/83.
 
 ---
 

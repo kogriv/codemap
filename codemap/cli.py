@@ -102,12 +102,16 @@ def _cmd_query(args) -> int:
             n.id: _used_by_summary(q, n.id) for n in matches
             if n.kind in ("class", "function")
         }
+    # M12/F6: string-key dataflow — producers/consumers of a DataFrame column.
+    col = q.column(args.name)
+    if col and (col["writes"] or col["reads"]):
+        result["column"] = col
 
     if args.format == "text":
         _print_query_text(result)
     else:
         print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if (matches or result["defined_at"]) else 1
+    return 0 if (matches or result["defined_at"] or result.get("column")) else 1
 
 
 def _used_by_summary(q, node_id) -> dict:
@@ -145,6 +149,11 @@ def _print_query_text(r) -> None:
         if by_root:
             summary = ", ".join(f"{root}: {n}" for root, n in sorted(by_root.items()))
             print(f"\n[{sid}] used by → {summary}")
+    col = r.get("column")
+    if col:
+        print(f"\n[column '{r['name']}'] string-key dataflow")
+        print("  written by:", ", ".join(col["writes"]) or "—")
+        print("  read by:", ", ".join(col["reads"]) or "—")
 
 
 def _cmd_report(args) -> int:

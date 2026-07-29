@@ -22,6 +22,7 @@ from pathlib import Path
 import griffe
 
 from codemap.extract.behavior import add_behavior
+from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import add_dispatch, add_family_links
 from codemap.model import Edge, Graph, Node
 
@@ -56,6 +57,8 @@ def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
     add_dispatch(graph, root, module_name)
     # M9 (F4): link registry-family members to the Protocol they satisfy.
     add_family_links(graph)
+    # M12 (F6): column/string-key dataflow (reads/writes on `df['col']`).
+    add_dataflow(graph, root, module_name)
     return graph
 
 
