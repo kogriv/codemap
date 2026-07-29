@@ -83,7 +83,8 @@ def _print_query_text(r) -> None:
     print(f"# {r['name']}")
     print("defined at:", ", ".join(r["defined_at"]) or "—")
     for m in r["matches"]:
-        print(f"  - {m['id']} ({m['kind']})")
+        loc = f" — {m['file']}:{m['lines'][0]}" if m.get("file") and m["lines"][0] else ""
+        print(f"  - {m['id']} ({m['kind']}){loc}")
     for mid, dep in r.get("modules", {}).items():
         print(f"\n[{mid}]")
         print("  imports:", ", ".join(dep["dependencies"]) or "—")
@@ -98,10 +99,19 @@ def _print_query_text(r) -> None:
             print("  implementers (registry family):", ", ".join(h["implementers"]))
         if h.get("family"):
             print("  family siblings:", ", ".join(h["family"]))
+        if h.get("registered_as"):
+            reg = h["registered_as"]
+            print(f"  register with: @{reg.get('decorator','?').rsplit('.',1)[-1]}('{reg.get('key')}')")
     for fid, h in r.get("functions", {}).items():
         print(f"\n[{fid}]")
         print("  calls:", ", ".join(h["callees"]) or "—")
         print("  called by:", ", ".join(h["callers"]) or "—")
+        if h.get("columns"):
+            c = h["columns"]
+            if c.get("reads"):
+                print("  reads columns:", ", ".join(c["reads"]))
+            if c.get("writes"):
+                print("  writes columns:", ", ".join(c["writes"]))
     for sid, by_root in r.get("used_by", {}).items():
         if by_root:
             summary = ", ".join(f"{root}: {n}" for root, n in sorted(by_root.items()))
@@ -148,7 +158,7 @@ def _cmd_serve(args) -> int:
     """Load the graph once, then serve JSON requests over stdio (warm — M3.1)."""
     from codemap.serve.server import serve_stdio
     from codemap.serve.session import Session
-    return serve_stdio(Session(_graph_from(args)))
+    return serve_stdio(Session(_graph_from(args), source_root=args.source_root))
 
 
 def _emit(text: str, out: str | None) -> None:
@@ -218,6 +228,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("serve", help="Warm resident process: JSON requests over stdin/stdout.")
     _add_source(s)
+    s.add_argument("--source-root", help="Base dir for the `source` op to read files "
+                                         "(node paths are repo-relative; default: cwd).")
     s.set_defaults(func=_cmd_serve)
 
     return p

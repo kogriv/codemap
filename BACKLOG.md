@@ -228,6 +228,25 @@ thin/full сравнены; детерминизм держится; схема 
 
 ---
 
+## Кандидаты из обкатки агент-через-serve 2026-07-29 (findings F9–F13) — ✅ ЗАКРЫТЫ (M13, 2026-07-29)
+
+Обкатка рабочего цикла агента через `serve` (`gaps/agent_workflow_dogfood_2026-07-29.md`): 5 гэпов
+Workflow/Query-surface. Все закрыты одной вехой **M13** (serve/query-слой, **без схемы**), +7 тестов (98/98).
+
+- [x] **F13 (Precision/Workflow) — реляционные ops резолвят re-export/короткое имя.** ✅ `Query.canonical`;
+      Session-ops (`implementers`/`family`/`callers`/`callees`/`call_contract`/`columns_of`/`source`) резолвят
+      вход через `_canon`; op `resolve`. `implementers('…detection.ZoneDetectionStrategy')` → 5 (было []).
+- [x] **F12 (Workflow) — хендл к исходнику.** ✅ `file`/`lines` в `matches` (и в text-выводе); op `source`
+      (сниппет по `--source-root`, best-effort; overlay-узлы → location-only с нотой).
+- [x] **F9 (Query-surface) — discovery/поиск/обзор.** ✅ op `search`(подстрока+kind+limit), op `families`
+      (Protocol → члены). `search ZoneDetection` → 5 классов (было пусто).
+- [x] **F11 (Query-surface) — обратный dataflow.** ✅ `Query.columns_of(func)` + op `columns_of` + поле
+      `columns` в query функции. `columns_of(extract_zone_features)` → reads [atr, close, …].
+- [x] **F10 (Workflow) — extension-рецепт.** ✅ `registered_as`(decorator+key) в query класса + text
+      «register with: @register('zero_crossing')»; op `families` отдаёт рецепт по каждому члену.
+
+---
+
 ## Кандидаты из глубокой обкатки 2026-07-29 (findings F3/F4/F6/F7/F8)
 
 Обкатка на 5 непокрытых осях (`gaps/deep_dogfood_2026-07-29.md`): 3 новых гэпа + 2 подтверждения.

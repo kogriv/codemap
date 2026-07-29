@@ -91,6 +91,42 @@ class Query:
             key=lambda n: n.id,
         )
 
+    def canonical(self, name_or_id: str) -> str | None:
+        """Resolve a short name or **re-export id** to the canonical node id (F13).
+
+        Relational edges are keyed by the definition id (``…detection.base.X``),
+        but ``query`` surfaces re-export paths (``…detection.X``); feeding the
+        latter to ``implementers``/``callers`` silently returned nothing. This maps
+        either form to the real node so the natural chain works.
+        """
+        if name_or_id in self.graph.nodes:
+            return name_or_id
+        short = name_or_id.rsplit(".", 1)[-1]
+        cands = [n.id for n in self.find(short)]
+        if not cands:
+            return None
+        if len(cands) == 1:
+            return cands[0]
+        # ambiguous short name: prefer the node sharing the most path components
+        # with the requested (re-export) id — disambiguates a.b.X vs a.c.X.
+        parts = set(name_or_id.split("."))
+        return max(cands, key=lambda c: (len(parts & set(c.split("."))), -len(c)))
+
+    def search(self, term: str, *, kind: str | None = None, limit: int = 50) -> list[dict]:
+        """Substring search over node ids — the discovery entry point (F9).
+
+        Case-insensitive match on the id (so both short name and module path hit).
+        Optional ``kind`` filter. Returns ``{id, kind, file, lineno}`` for a cold
+        agent that does not yet know exact names.
+        """
+        t = term.lower()
+        out = [
+            {"id": n.id, "kind": n.kind, "file": n.file, "lineno": n.lineno}
+            for n in self.graph.nodes.values()
+            if (kind is None or n.kind == kind) and t in n.id.lower()
+        ]
+        return sorted(out, key=lambda r: (len(r["id"]), r["id"]))[:limit]
+
     def where_defined(self, name: str) -> list[str]:
         """Canonical definition path(s) for ``name`` — resolving re-exports.
 
@@ -216,6 +252,40 @@ class Query:
             n.extras.get("key", n.id[len("column:"):])
             for n in self.graph.nodes.values() if n.kind == "column"
         )
+
+    def columns_of(self, func_id: str) -> dict:
+        """Which string keys ``func_id`` reads / writes — reverse dataflow (F11).
+
+        The mirror of ``column()``: standing on a function, see the data it touches
+        (``{reads: [key], writes: [key]}``), not just who touches a given key.
+        """
+        reads, writes = [], []
+        for col_id, funcs in self._col_readers.items():
+            if func_id in funcs:
+                reads.append(col_id[len("column:"):])
+        for col_id, funcs in self._col_writers.items():
+            if func_id in funcs:
+                writes.append(col_id[len("column:"):])
+        return {"reads": sorted(reads), "writes": sorted(writes)}
+
+    # -- registry families (M9/F4, surfaced for extension recipes — F10) ------
+
+    def families(self) -> list[dict]:
+        """Registry/Protocol families with their registration recipe (F9/F10).
+
+        Each: the Protocol, its implementers, and per-member the registration
+        ``decorator`` + ``key`` — i.e. how to add a new one. Lets a cold agent
+        enumerate extension points and learn *how to plug in*, not just *what*.
+        """
+        out = []
+        for pid in sorted({e.target for e in self.graph.edges if e.type == "implements"}):
+            members = []
+            for impl in self.implementers(pid):
+                reg = self.graph.nodes[impl].extras.get("registry", {}) if impl in self.graph.nodes else {}
+                members.append({"class": impl, "key": reg.get("key"),
+                                "decorator": reg.get("decorator")})
+            out.append({"protocol": pid, "members": members})
+        return out
 
     def dead_symbols(self) -> list[str]:
         """Private functions with no incoming resolved call — dead-code candidates.

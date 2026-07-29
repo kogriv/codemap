@@ -37,7 +37,10 @@ def build_query_result(q: Query, name: str) -> dict:
     result: dict = {
         "name": name,
         "defined_at": q.where_defined(name),
-        "matches": [{"id": n.id, "kind": n.kind} for n in matches],
+        # F12: carry file:line so an agent can jump to source; the id here is the
+        # canonical node (not a re-export), so it also chains into relational ops.
+        "matches": [{"id": n.id, "kind": n.kind, "file": n.file,
+                     "lines": [n.lineno, n.endlineno]} for n in matches],
     }
     modules = [n.id for n in matches if n.kind == "module"]
     if modules:
@@ -50,13 +53,18 @@ def build_query_result(q: Query, name: str) -> dict:
         result["classes"] = {
             c: {"bases": q.bases(c), "subclasses": q.subclasses(c),
                 "implements": q.implements(c), "implementers": q.implementers(c),
-                "family": q.family_siblings(c)}
+                "family": q.family_siblings(c),
+                # F10: how to register a sibling — the extension recipe.
+                "registered_as": q.graph.nodes[c].extras.get("registry")}
             for c in classes
         }
     funcs = [n.id for n in matches if n.kind == "function"]
     if funcs:
         result["functions"] = {
-            f: {"callers": q.callers(f), "callees": q.callees(f)} for f in funcs
+            f: {"callers": q.callers(f), "callees": q.callees(f),
+                # F11: which columns this function reads/writes (reverse dataflow).
+                "columns": _nonempty(q.columns_of(f))}
+            for f in funcs
         }
     if matches:
         used_by = {}
@@ -75,12 +83,24 @@ def build_query_result(q: Query, name: str) -> dict:
     return result
 
 
+def _nonempty(d: dict) -> dict | None:
+    """Drop a reads/writes dict that has nothing on either side."""
+    return d if (d.get("reads") or d.get("writes")) else None
+
+
 class Session:
     """A warm, in-memory query surface over one graph."""
 
-    def __init__(self, graph: Graph) -> None:
+    def __init__(self, graph: Graph, source_root: str | None = None) -> None:
         self.graph = graph
         self.query = Query(graph)
+        # F12: base dir to resolve node.file for the `source` op (node paths are
+        # repo-relative, e.g. `bquant/…`). Defaults to cwd; best-effort.
+        self.source_root = source_root
+
+    def _canon(self, name_or_id: str) -> str:
+        """Resolve a name / re-export id to the canonical node id (F13)."""
+        return self.query.canonical(name_or_id) or name_or_id
 
     # -- dispatch ------------------------------------------------------------
 
@@ -125,28 +145,65 @@ class Session:
             "markdown": render_impact(self.query, sym, depth=depth),
         }
 
+    def _op_resolve(self, args) -> str | None:
+        return self.query.canonical(args["name"])
+
+    def _op_search(self, args) -> list:
+        return self.query.search(args["term"], kind=args.get("kind"),
+                                 limit=int(args.get("limit", 50)))
+
+    def _op_families(self, args) -> list:
+        return self.query.families()
+
     def _op_column(self, args) -> dict | None:
         return self.query.column(args["name"])
 
     def _op_columns(self, args) -> list:
         return self.query.columns()
 
+    def _op_columns_of(self, args) -> dict:
+        return self.query.columns_of(self._canon(args["symbol"]))
+
     def _op_callers(self, args) -> list:
-        return self.query.callers(args["symbol"])
+        return self.query.callers(self._canon(args["symbol"]))
 
     def _op_callees(self, args) -> list:
-        return self.query.callees(args["symbol"])
+        return self.query.callees(self._canon(args["symbol"]))
 
     def _op_implementers(self, args) -> list:
-        return self.query.implementers(args["protocol"])
+        return self.query.implementers(self._canon(args["protocol"]))
 
     def _op_family(self, args) -> dict:
-        cid = args["class"]
+        cid = self._canon(args["class"])
         return {"implements": self.query.implements(cid),
                 "siblings": self.query.family_siblings(cid)}
 
     def _op_call_contract(self, args) -> list:
-        return self.query.call_contract(args["symbol"])
+        return self.query.call_contract(self._canon(args["symbol"]))
+
+    def _op_source(self, args) -> dict:
+        """Return the source span of a symbol (F12): {file, lines, code?}.
+
+        ``code`` is included when the file is readable under ``source_root`` (or
+        cwd); otherwise only the location is returned so the caller can read it.
+        """
+        from pathlib import Path
+        cid = self._canon(args["symbol"])
+        node = self.graph.nodes.get(cid)
+        if node is None:
+            return {"error": f"unknown symbol: {args['symbol']!r}"}
+        loc = {"id": cid, "file": node.file, "lines": [node.lineno, node.endlineno]}
+        if not node.file or node.lineno is None:
+            return {**loc, "code": None, "note": "no location (overlay node)"}
+        base = Path(self.source_root) if self.source_root else Path(".")
+        path = base / node.file
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+            loc["code"] = "\n".join(lines[node.lineno - 1:(node.endlineno or node.lineno)])
+        except OSError:
+            loc["code"] = None
+            loc["note"] = f"source unreadable at {path} — set source_root"
+        return loc
 
     def _op_report(self, args) -> dict:
         kind = args["kind"]
@@ -176,13 +233,18 @@ _OPS = {
     "stats": Session._op_stats,
     "query": Session._op_query,
     "impact": Session._op_impact,
+    "resolve": Session._op_resolve,
+    "search": Session._op_search,
+    "families": Session._op_families,
     "column": Session._op_column,
     "columns": Session._op_columns,
+    "columns_of": Session._op_columns_of,
     "callers": Session._op_callers,
     "callees": Session._op_callees,
     "implementers": Session._op_implementers,
     "family": Session._op_family,
     "call_contract": Session._op_call_contract,
+    "source": Session._op_source,
     "report": Session._op_report,
     "export": Session._op_export,
 }

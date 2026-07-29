@@ -103,11 +103,11 @@ extension-рецепт неполон.
 
 | ID | Задача | Категория | Статус | Суть | Форма фикса |
 |----|--------|-----------|--------|------|-------------|
-| **F9** | W1 | Query-surface | **новый** | нет discovery/поиска/обзора — `query` только по точному имени | op `search`(подстрока/kind) + `list`(families/protocols/entrypoints) |
-| **F10** | W2 | Workflow | **новый** | extension-рецепт неполон: нет декоратора регистрации в ответе | добавить `registered_as`/`decorated_by` в query класса; op `family` → как регистрировать |
-| **F11** | W3 | Query-surface | **новый** | dataflow только по ключу, нет «колонки функции F» | `Query.columns_of(func)` + поле в query функции / op |
-| **F12** | W4 | Workflow | **новый** | query-ответ без `file:line`; нет `source`-op | пробросить `file`/`lines` в matches; (опц.) op `source` |
-| **F13** | W1 | Precision/Workflow | **новый** | реляционные ops не резолвят re-export → цепочка молча пуста | `implementers`/`family`/… резолвят короткое имя/re-export в канон |
+| **F9** | W1 | Query-surface | ✅ M13 | нет discovery/поиска/обзора | op `search`(подстрока+kind+limit) + op `families` |
+| **F10** | W2 | Workflow | ✅ M13 | extension-рецепт неполон | `registered_as`(decorator+key) в query класса + op `families` |
+| **F11** | W3 | Query-surface | ✅ M13 | dataflow только по ключу | `Query.columns_of(func)` + op `columns_of` + поле в query функции |
+| **F12** | W4 | Workflow | ✅ M13 | query-ответ без `file:line`; нет `source`-op | `file`/`lines` в matches + op `source` (по `--source-root`) |
+| **F13** | W1 | Precision/Workflow | ✅ M13 | реляционные ops не резолвят re-export → цепочка молча пуста | `Query.canonical` + `_canon` в Session-ops + op `resolve` |
 
 **Гипотезы:** H6a→**F9** ✅, H6b→**F10** ✅, H6c→**F11** ✅ (dataflow↔callgraph не сшиты), H6d→**F12** ✅.
 Бонусом всплыл **F13** (не предсказан) — молчаливый пустой ответ на естественной цепочке `query→implementers`.
@@ -125,3 +125,11 @@ extension-рецепт неполон.
 Query-surface, все чинятся в serve/query-слое без схемы. Вывод: карта хорошо **отвечает про
 известный символ**, но плохо **пускает агента внутрь холодным** (найти вход) и **не сцепляет шаги**
 (re-export↔канон, dataflow↔callgraph, символ↔исходник).*
+
+**Итог реализации (M13, 2026-07-29):** все 5 закрыты одной вехой (serve/query-слой, без схемы). Новые
+ops: `search`, `families`, `columns_of`, `source`, `resolve`; реляционные ops резолвят имя/re-export
+(`Query.canonical`); query-ответ несёт `file:line` + `registered_as` + `columns`. Serve-поверхность
+выросла с 13 до 18 ops. +7 тестов (91→98). Проверено на живом графе: `search ZoneDetection`→5,
+`implementers('…detection.ZoneDetectionStrategy')`→5 (было []), `families`→рецепт с декоратором,
+`source`→код метода, `columns_of(extract_zone_features)`→reads[atr,close,…]. Ось «холодный агент внутрь
++ сцепка шагов» закрыта.
