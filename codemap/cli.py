@@ -85,7 +85,11 @@ def _cmd_query(args) -> int:
     classes = [n.id for n in matches if n.kind == "class"]
     if classes:
         result["classes"] = {
-            c: {"bases": q.bases(c), "subclasses": q.subclasses(c)} for c in classes
+            c: {"bases": q.bases(c), "subclasses": q.subclasses(c),
+                # M9/F4: registry family — Protocol satisfied + implementers + siblings.
+                "implements": q.implements(c), "implementers": q.implementers(c),
+                "family": q.family_siblings(c)}
+            for c in classes
         }
     funcs = [n.id for n in matches if n.kind == "function"]
     if funcs:
@@ -127,6 +131,12 @@ def _print_query_text(r) -> None:
         print(f"\n[{cid}]")
         print("  bases:", ", ".join(h["bases"]) or "—")
         print("  subclasses:", ", ".join(h["subclasses"]) or "—")
+        if h.get("implements"):
+            print("  implements:", ", ".join(h["implements"]))
+        if h.get("implementers"):
+            print("  implementers (registry family):", ", ".join(h["implementers"]))
+        if h.get("family"):
+            print("  family siblings:", ", ".join(h["family"]))
     for fid, h in r.get("functions", {}).items():
         print(f"\n[{fid}]")
         print("  calls:", ", ".join(h["callees"]) or "—")

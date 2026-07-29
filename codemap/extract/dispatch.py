@@ -77,6 +77,57 @@ def add_dispatch(graph, griffe_root, target_pkg: str) -> None:
         graph.add_edge(Edge("calls", src, tgt, extras={"resolution": resolution}))
 
 
+def add_family_links(graph) -> None:
+    """Link a registry family's members to the Protocol they satisfy (F4, M9).
+
+    Concrete strategies use *structural* typing — they never inherit their
+    Protocol — so the dogfood (F4) found the family invisible to ``query`` and to
+    the class diagram even though every datum is in the graph. This synthesises an
+    ``implements`` edge from each registered impl to its Protocol, matched
+    data-driven: the family token (``swing``) against the Protocol name
+    (``SwingCalculationStrategy``); for a token-less registrar the registry class
+    name drives it (``ZoneDetectionRegistry`` → ``ZoneDetectionStrategy``). No
+    hardcoded package names — a foreign convention just yields no link.
+    """
+    families = _build_families(graph)
+    if not families:
+        return
+    protocols = _protocols(graph)  # {name_lower: protocol_id}
+    for fid, fam in sorted(families.items()):
+        proto_id = _match_protocol(fid, protocols)
+        if proto_id is None:
+            continue
+        for class_id in sorted(set(fam["members"].values())):
+            if class_id in graph.nodes:
+                graph.add_edge(Edge("implements", class_id, proto_id,
+                                    extras={"via": "registry"}))
+
+
+def _protocols(graph) -> dict[str, str]:
+    """Protocol classes (inherit ``typing.Protocol``) keyed by lowercased name."""
+    out: dict[str, str] = {}
+    for e in graph.edges:
+        if e.type == "inherits" and e.target == "typing.Protocol":
+            out[e.source.rsplit(".", 1)[-1].lower()] = e.source
+    return out
+
+
+def _match_protocol(fid: tuple, protocols: dict[str, str]) -> str | None:
+    """Best Protocol for a family: token (or registry-class stem) ⊂ Protocol name."""
+    reg_class, token = fid
+    tokens = [token] if token else []
+    stem = reg_class[:-len("Registry")] if reg_class.endswith("Registry") else reg_class
+    if stem:
+        tokens.append(stem.lower())
+    for tok in tokens:
+        if not tok:
+            continue
+        matches = sorted((name, pid) for name, pid in protocols.items() if tok in name)
+        if matches:
+            return matches[0][1]  # deterministic: shortest/alphabetical name
+    return None
+
+
 # -- family table (from extras.registry) -------------------------------------
 
 def _build_families(graph) -> dict:

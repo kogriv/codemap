@@ -226,10 +226,12 @@ thin/full сравнены; детерминизм держится; схема 
       `Query.orphan_modules(root=)` + `orphan_modules_by_root()`; отчёт показывает core-орфаны как
       сигнал (8), consumer-entrypoint'ы (116: tests 75/examples 11/research 24/scripts 6) свёрнуты с
       пояснением «orphan по природе, не dead code». Serve+query, без схемы. +2 теста (65/65).
-- [ ] **F4 (Query-surface) — вид семейства реестр+Protocol.** Данные на 100% в графе (12 registry-
-      узлов + контракт-методы Protocol через `contains`), но `query`/`mermaid class` не собирают их
-      в семейство (Protocol не наследуется). Фикс: синтез `implements`-рёбер Protocol↔члены по таблице
-      реестра + family-вид/диаграмма + образец. Прямо обслуживает «расширить точку расширения».
+- [x] **F4 (Query-surface) — вид семейства реестр+Protocol.** ✅ (M9, 2026-07-29, схема 0.6)
+      `extract/dispatch.add_family_links` синтезирует `implements`-рёбра (impl→Protocol) по таблице
+      семейств, data-driven матч (токен ⊂ имя Protocol; безтокенный — по имени реестра). 12 рёбер на
+      bquant. Query: `implementers`/`implements`/`family_siblings` + вывод в `query`; mermaid class —
+      realization `<|..` (семейство больше не пустое); RAG-чанк несёт Implements/Implemented by.
+      Фикстура `dispatchpkg/base.py` (ThingProtocol) + test_m9_family.py (6 тестов). 71/71.
 - [ ] **F3 (Representation) — класс-чанк агрегирует call-соседей методов.** Класс-чанк несёт лишь
       `bases`/`subclasses`; шов делегирования (метод→pipeline) застревает на метод-чанке. Фикс: union
       `neighbors.calls` методов в класс-чанк с меткой «via <метод>». Малый объём, синергия с мостом M7.

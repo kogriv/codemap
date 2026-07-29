@@ -57,6 +57,12 @@ class Query:
         for e in graph.edges:
             if e.type == "calls":
                 self._calls.add_edge(e.source, e.target)
+        # implements edges (M9/F4): concrete impl -> Protocol (structural typing,
+        # synthesised via the registry family since it's never inherited).
+        self._implements = nx.DiGraph()
+        for e in graph.edges:
+            if e.type == "implements":
+                self._implements.add_edge(e.source, e.target)
         # provenance (M6): node id -> root (core | tests | docs | ...).
         self._root_of = {n.id: n.extras.get("root", "core") for n in graph.nodes.values()}
         # inbound index for impact/blast-radius: target -> [(source, edge_type)].
@@ -111,6 +117,26 @@ class Query:
         if class_id not in self._inherits:
             return []
         return sorted(self._inherits.predecessors(class_id))
+
+    def implementers(self, protocol_id: str) -> list[str]:
+        """Concrete classes that implement ``protocol_id`` (registry family, M9)."""
+        if protocol_id not in self._implements:
+            return []
+        return sorted(self._implements.predecessors(protocol_id))
+
+    def implements(self, class_id: str) -> list[str]:
+        """Protocol(s) ``class_id`` structurally satisfies (via its registry family)."""
+        if class_id not in self._implements:
+            return []
+        return sorted(self._implements.successors(class_id))
+
+    def family_siblings(self, class_id: str) -> list[str]:
+        """Other impls of the same Protocol family as ``class_id`` (M9)."""
+        sibs: set[str] = set()
+        for proto in self.implements(class_id):
+            sibs.update(self.implementers(proto))
+        sibs.discard(class_id)
+        return sorted(sibs)
 
     def decorated_with(self, decorator: str) -> list[str]:
         """Symbols decorated by ``decorator`` (matched on full path or short name)."""

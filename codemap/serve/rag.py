@@ -73,6 +73,14 @@ def _neighbors(query: Query, node) -> dict:
         reg = node.extras.get("registry")
         if reg:
             n["registered_as"] = reg.get("key")
+        # M9/F4: registry family — the Protocol satisfied and its implementers,
+        # neither of which is reachable via inheritance (structural typing).
+        impls = query.implements(node.id)
+        implers = query.implementers(node.id)
+        if impls:
+            n["implements"] = impls
+        if implers:
+            n["implementers"] = implers
     return n
 
 
@@ -94,6 +102,10 @@ def _embed_text(node, module, neighbors) -> str:
         parts.append("Called by: " + ", ".join(_short(c) for c in neighbors["called_by"][:8]) + ".")
     if neighbors.get("registered_as"):
         parts.append(f"Registered as '{neighbors['registered_as']}'.")
+    if neighbors.get("implements"):
+        parts.append("Implements: " + ", ".join(_short(p) for p in neighbors["implements"]) + ".")
+    if neighbors.get("implementers"):
+        parts.append("Implemented by: " + ", ".join(_short(c) for c in neighbors["implementers"][:8]) + ".")
     return " ".join(parts)
 
 

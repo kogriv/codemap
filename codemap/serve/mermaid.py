@@ -30,20 +30,28 @@ def _in_scope(node_id: str, scope: str | None) -> bool:
 
 
 def render_class_diagram(query: Query, scope: str | None = None) -> str:
-    """Class hierarchy (``inherits`` edges) as a Mermaid ``classDiagram``."""
+    """Class hierarchy as a Mermaid ``classDiagram``.
+
+    ``inherits`` edges render as inheritance (``<|--``); ``implements`` edges
+    (M9/F4 — registry-family members → Protocol, never inherited) render as
+    realization (``<|..``), so a strategy family is no longer an empty diagram.
+    """
     graph = query.graph
-    edges = sorted(
-        {(e.source, e.target) for e in graph.edges if e.type == "inherits"}
-    )
-    edges = [(s, t) for s, t in edges if _in_scope(s, scope)]
-    nodes = {n for pair in edges for n in pair}
+    inh = sorted({(e.source, e.target) for e in graph.edges if e.type == "inherits"})
+    inh = [(s, t) for s, t in inh if _in_scope(s, scope)]
+    impl = sorted({(e.source, e.target) for e in graph.edges if e.type == "implements"})
+    impl = [(s, t) for s, t in impl if _in_scope(s, scope) or _in_scope(t, scope)]
+    nodes = {n for pair in inh + impl for n in pair}
 
     lines = ["```mermaid", "classDiagram"]
     for nid in sorted(nodes):
         lines.append(f'    class {_san(nid)}["{_short(nid)}"]')
-    for sub, base in edges:
+    for sub, base in inh:
         # Mermaid: Base <|-- Sub  (arrow points from subclass to base)
         lines.append(f"    {_san(base)} <|-- {_san(sub)}")
+    for cls, proto in impl:
+        # realization: Protocol <|.. Impl
+        lines.append(f"    {_san(proto)} <|.. {_san(cls)}")
     lines.append("```")
     return "\n".join(lines) + "\n"
 

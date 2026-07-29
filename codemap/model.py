@@ -25,7 +25,11 @@ from typing import Any
 #      `registry` (literal key → exact impl) and `registry-candidate` (factory/
 #      getter → all family impls, honest over-approximation) so the call chain
 #      reconnects at factory/registry dispatch seams (closes gap-doc F5).
-SCHEMA_VERSION = "0.5"
+# 0.6: M9 — registry-family Protocol links. `implements` edge (concrete impl →
+#      the Protocol it structurally satisfies, matched via the registry family)
+#      makes the family queryable and diagrammable though it's never inherited
+#      (closes gap-doc F4).
+SCHEMA_VERSION = "0.6"
 
 
 @dataclass
@@ -49,7 +53,7 @@ class Node:
 class Edge:
     """A typed relationship between two nodes (by id)."""
 
-    type: str  # contains | imports | inherits | exports | decorated_by | calls | references (§2)
+    type: str  # contains | imports | inherits | exports | decorated_by | calls | references | implements (§2)
     source: str
     target: str
     extras: dict[str, Any] = field(default_factory=dict)
