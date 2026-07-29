@@ -66,8 +66,62 @@ Extraction / Representation / Query-surface / Precision — как раньше;
 
 ## 5. Прогон
 
-_TBD._
+**Граф:** repo-scoped `full --deep`, схема 0.8 — 4217 узлов / 9935 рёбер, поднят `codemap serve`.
+Вёл задачи, гоняя серв по-настоящему (ниже — где рвётся сцепка).
+
+### W1 — Холодная ориентация → **F9** (Query-surface) + **F13** (Precision/Workflow)
+- `query detect` → **пусто**: `query` матчит только **точное короткое имя** (`id.rsplit('.')[-1]==name`).
+  Ни подстроки, ни fuzzy, ни «найди про detection». Агент, не знающий имён, **не находит ничего**.
+- Нет op «дай карту / список семейств / список Protocol'ов / точки входа». `report api-surface` — дамп
+  64КБ / 2553 символа, не ориентация. → **F9**: нет discovery/поиска/обзора.
+- **Сцепка сломалась молча:** `query ZoneDetectionStrategy` → `defined_at =
+  ...zones.detection.ZoneDetectionStrategy` (**re-export**), а `implementers` по этому id → **[]**;
+  канонический `...detection.base.ZoneDetectionStrategy` → 5 детекторов. Реляционные ops ключуются
+  **каноническим** id, `query.defined_at` отдаёт **re-export** → естественная цепочка даёт пустоту
+  (не ошибку — хуже: агент решит «реализаций нет»). → **F13**: реляционные ops не резолвят
+  re-export/короткое имя.
+
+### W2 — Расширение (добавить детектор зон) → **F10** (Workflow)
+`query ZeroCrossingDetection` (класс) → поля `bases/subclasses/implements/implementers/family`. Есть
+контракт и сиблинги — но **нет декоратора регистрации** (`@ZoneDetectionRegistry.register('zero_crossing')`)
+и шва конструирования. Данные в графе (`extras.registry`, `decorated_by`), но **ни один op их не отдаёт**
+(нет `decorated_with`/`registered_as`). Агент знает «что реализовать», но не «как встроить». → **F10**:
+extension-рецепт неполон.
+
+### W3 — Трассировка (какие колонки питают метод) → **F11** (Query-surface/Workflow)
+`column(macd_hist)` даёт читателей/писателей ключа (одно направление). Обратного — «**какие колонки
+читает/пишет функция F**» — нет ни op, ни метода Query. Агент, стоя на `extract_zone_features`, не
+может спросить «что за данные она трогает». Dataflow queryable только по ключу, не по функции. → **F11**.
+
+### W4 — «Дальше читай исходник» → **F12** (Workflow)
+`query`-ответ **вообще не несёт `file:line`**: `matches`=`{id,kind}`, functions=`{callers,callees}` —
+локации нет, хотя узлы её хранят (`MACD.calculate` → `macd.py:60`). Serve-only агент **не может
+перейти к коду** (нет ни локации в ответе, ни op `source`/`snippet`). `column`-узлы локации не имеют
+вовсе. → **F12**: нет хендла к исходнику (локация не проброшена, source-op нет).
 
 ## 6. Findings
 
-_TBD._
+| ID | Задача | Категория | Статус | Суть | Форма фикса |
+|----|--------|-----------|--------|------|-------------|
+| **F9** | W1 | Query-surface | **новый** | нет discovery/поиска/обзора — `query` только по точному имени | op `search`(подстрока/kind) + `list`(families/protocols/entrypoints) |
+| **F10** | W2 | Workflow | **новый** | extension-рецепт неполон: нет декоратора регистрации в ответе | добавить `registered_as`/`decorated_by` в query класса; op `family` → как регистрировать |
+| **F11** | W3 | Query-surface | **новый** | dataflow только по ключу, нет «колонки функции F» | `Query.columns_of(func)` + поле в query функции / op |
+| **F12** | W4 | Workflow | **новый** | query-ответ без `file:line`; нет `source`-op | пробросить `file`/`lines` в matches; (опц.) op `source` |
+| **F13** | W1 | Precision/Workflow | **новый** | реляционные ops не резолвят re-export → цепочка молча пуста | `implementers`/`family`/… резолвят короткое имя/re-export в канон |
+
+**Гипотезы:** H6a→**F9** ✅, H6b→**F10** ✅, H6c→**F11** ✅ (dataflow↔callgraph не сшиты), H6d→**F12** ✅.
+Бонусом всплыл **F13** (не предсказан) — молчаливый пустой ответ на естественной цепочке `query→implementers`.
+
+### Приоритизация (все — serve/query-слой, дёшево; без схемы)
+1. **F13** — резолв re-export/короткого имени в реляционных ops (убирает молчаливые пустышки — самое коварное).
+2. **F12** — `file:line` в query-ответ (агент сможет `Read`; минимальная правка дос­ье).
+3. **F9** — op `search` + `list` (входная точка; без неё карта бесполезна вслепую).
+4. **F11** — `columns_of(func)` (обратный dataflow).
+5. **F10** — рецепт регистрации в query/family (extension-путь).
+
+---
+
+*Обкатка на оси «агент через serve»: 4 гипотезы подтверждены + 1 бонус (F13). Все 5 — Workflow/
+Query-surface, все чинятся в serve/query-слое без схемы. Вывод: карта хорошо **отвечает про
+известный символ**, но плохо **пускает агента внутрь холодным** (найти вход) и **не сцепляет шаги**
+(re-export↔канон, dataflow↔callgraph, символ↔исходник).*
