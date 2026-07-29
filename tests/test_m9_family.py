@@ -59,3 +59,18 @@ def test_rag_chunk_carries_family(q):
 def test_deterministic():
     from codemap import store
     assert store.dumps(extract(FIX)) == store.dumps(extract(FIX))
+
+
+# -- M10/F3: class chunk aggregates its methods' call-neighbours ---------------
+
+def test_class_chunk_aggregates_method_calls(q):
+    from codemap.serve.rag import build_chunks
+    chunks = {c["id"]: c for c in build_chunks(q)}
+    worker = chunks["dispatchpkg.user.Worker"]
+    via = worker["neighbors"].get("calls_via_methods", [])
+    targets = {v["target"].rsplit(".", 1)[-1] for v in via}
+    # Worker.work -> self.thing.run() bridged to the impls; surfaced on the class.
+    assert "run" in targets
+    # each aggregated call is tagged with the method it flows through.
+    assert all("via" in v and v["via"].startswith("dispatchpkg.user.Worker.") for v in via)
+    assert "Methods call:" in worker["text"]

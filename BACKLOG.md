@@ -232,9 +232,11 @@ thin/full сравнены; детерминизм держится; схема 
       bquant. Query: `implementers`/`implements`/`family_siblings` + вывод в `query`; mermaid class —
       realization `<|..` (семейство больше не пустое); RAG-чанк несёт Implements/Implemented by.
       Фикстура `dispatchpkg/base.py` (ThingProtocol) + test_m9_family.py (6 тестов). 71/71.
-- [ ] **F3 (Representation) — класс-чанк агрегирует call-соседей методов.** Класс-чанк несёт лишь
-      `bases`/`subclasses`; шов делегирования (метод→pipeline) застревает на метод-чанке. Фикс: union
-      `neighbors.calls` методов в класс-чанк с меткой «via <метод>». Малый объём, синергия с мостом M7.
+- [x] **F3 (Representation) — класс-чанк агрегирует call-соседей методов.** ✅ (M10, 2026-07-29)
+      `serve/rag._methods_calls`: union внешних callees методов класса → `neighbors.calls_via_methods`
+      (каждый target с меткой `via <метод>`) + текст «Methods call: …». Serve-only, без схемы.
+      MACDZoneAnalyzer класс-чанк теперь показывает шов `analyze_zones (via analyze_complete_modular)`
+      (+ detect_zones/with_indicator/build) — делегирование в pipeline видно без чтения методов. +1 тест (72/72).
 - [ ] **F7 (Representation+Precision) — арг-контракт на call-site.** `calls`-рёбра функц-гранулярны и
       несут только `resolution`; смену сигнатуры не обслуживают (не видно арности/kwargs, дубли из одной
       функции схлопнуты). Фикс: call-site-узлы/метки `argcount`/`kwnames` (апгрейд behavior-прохода).

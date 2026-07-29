@@ -81,7 +81,30 @@ def _neighbors(query: Query, node) -> dict:
             n["implements"] = impls
         if implers:
             n["implementers"] = implers
+        # M10/F3: aggregate the call-neighbours of the class' own methods so the
+        # class chunk is self-sufficient. A class' behaviour (e.g. a deprecated
+        # wrapper delegating to `analyze_zones`) lives on its methods; a retriever
+        # pulling the class chunk otherwise never sees that delegation seam.
+        via = _methods_calls(query, node.id)
+        if via:
+            n["calls_via_methods"] = via
     return n
+
+
+def _methods_calls(query: Query, class_id: str) -> list[dict]:
+    """Distinct call targets of the class' methods, each tagged with one via-method."""
+    prefix = class_id + "."
+    seen: dict[str, str] = {}  # target -> via-method (first, deterministic)
+    for mid in sorted(query.graph.nodes):
+        if not mid.startswith(prefix):
+            continue
+        if query.graph.nodes[mid].kind != "function":
+            continue
+        for tgt in query.callees(mid):
+            if tgt.startswith(prefix):
+                continue  # sibling method — internal, not an outward seam
+            seen.setdefault(tgt, mid)
+    return [{"target": t, "via": seen[t]} for t in sorted(seen)]
 
 
 def _embed_text(node, module, neighbors) -> str:
@@ -106,6 +129,12 @@ def _embed_text(node, module, neighbors) -> str:
         parts.append("Implements: " + ", ".join(_short(p) for p in neighbors["implements"]) + ".")
     if neighbors.get("implementers"):
         parts.append("Implemented by: " + ", ".join(_short(c) for c in neighbors["implementers"][:8]) + ".")
+    if neighbors.get("calls_via_methods"):
+        seams = ", ".join(
+            f"{_short(v['target'])} (via {_short(v['via'])})"
+            for v in neighbors["calls_via_methods"][:8]
+        )
+        parts.append("Methods call: " + seams + ".")
     return " ".join(parts)
 
 
