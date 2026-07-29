@@ -222,10 +222,10 @@ thin/full сравнены; детерминизм держится; схема 
 Обкатка на 5 непокрытых осях (`gaps/deep_dogfood_2026-07-29.md`): 3 новых гэпа + 2 подтверждения.
 Не блокеры; порядок — по «дёшево×ценно». Каждая находка с категорией по причине (диктует форму фикса).
 
-- [ ] **F8 (Representation) — провенанс-осознанный `report dead-code`.** После M6 отчёт тонет в
-      consumer-entrypoint'ах (124 orphan-модуля, 94% — tests/examples/scripts, orphan по природе).
-      Фикс: ограничить orphan-анализ роутом `core` / группировать по роуту с дисклеймером (как `impact`).
-      *Самый дешёвый, данные M6 уже есть.*
+- [x] **F8 (Representation) — провенанс-осознанный `report dead-code`.** ✅ (M8, 2026-07-29)
+      `Query.orphan_modules(root=)` + `orphan_modules_by_root()`; отчёт показывает core-орфаны как
+      сигнал (8), consumer-entrypoint'ы (116: tests 75/examples 11/research 24/scripts 6) свёрнуты с
+      пояснением «orphan по природе, не dead code». Serve+query, без схемы. +2 теста (65/65).
 - [ ] **F4 (Query-surface) — вид семейства реестр+Protocol.** Данные на 100% в графе (12 registry-
       узлов + контракт-методы Protocol через `contains`), но `query`/`mermaid class` не собирают их
       в семейство (Protocol не наследуется). Фикс: синтез `implements`-рёбер Protocol↔члены по таблице

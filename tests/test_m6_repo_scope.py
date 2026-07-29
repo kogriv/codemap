@@ -135,3 +135,22 @@ def test_bquant_macd_blast_radius():
     # the backward-compat test suite must now show up as inbound refs.
     assert "tests" in rep["by_root"]
     assert sum(rep["by_root"]["tests"].values()) >= 10
+
+
+# -- F8: provenance-aware dead-code (deep dogfood 2026-07-29) ------------------
+
+def test_orphan_modules_provenance_aware(full):
+    q = Query(full)
+    grouped = q.orphan_modules_by_root()
+    # the loose consumer script is orphan by nature — under its own root, not core.
+    assert "usage" in grouped
+    assert "usage" not in q.orphan_modules(root="core")
+    # core-scoped orphans never include a consumer module.
+    assert all(q.root_of(m) == "core" for m in q.orphan_modules(root="core"))
+
+
+def test_dead_code_report_separates_consumers(full):
+    from codemap.serve.audit import render_dead_code
+    out = render_dead_code(Query(full))
+    assert "core (no incoming imports)" in out
+    assert "orphan by nature, not dead code" in out

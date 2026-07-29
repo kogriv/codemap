@@ -243,20 +243,34 @@ class Query:
     def import_cycles(self) -> list[list[str]]:
         return [c for c in nx.simple_cycles(self._imports)]
 
-    def orphan_modules(self) -> list[str]:
+    def orphan_modules(self, root: str | None = None) -> list[str]:
         """Modules with no incoming imports (dead-code candidates — heuristic).
 
         Excludes the package root and ``__init__``/``__main__`` (entry points).
         Static heuristic: dynamic imports / entry points are not visible.
+
+        ``root`` (M6/F8): restrict to one provenance root. On a repo-scoped graph
+        consumer roots (``tests``/``examples``/``scripts``/``research``) are orphan
+        **by nature** — nothing imports an entrypoint — so ``root="core"`` isolates
+        the only orphans that mean *dead code*. Default ``None`` = every root.
         """
-        root = self.graph.target
+        pkg_root = self.graph.target
         out = []
         for mid in self._imports.nodes:
-            if mid == root or mid.rsplit(".", 1)[-1] in {"__init__", "__main__"}:
+            if mid == pkg_root or mid.rsplit(".", 1)[-1] in {"__init__", "__main__"}:
+                continue
+            if root is not None and self.root_of(mid) != root:
                 continue
             if self._imports.in_degree(mid) == 0:
                 out.append(mid)
         return sorted(out)
+
+    def orphan_modules_by_root(self) -> dict[str, list[str]]:
+        """Orphan modules grouped by provenance root (F8)."""
+        grouped: dict[str, list[str]] = {}
+        for mid in self.orphan_modules():
+            grouped.setdefault(self.root_of(mid), []).append(mid)
+        return {r: sorted(v) for r, v in sorted(grouped.items())}
 
     @property
     def import_graph(self) -> nx.DiGraph:

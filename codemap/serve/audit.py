@@ -33,7 +33,9 @@ def render_dependencies(query: Query) -> str:
 
 
 def render_dead_code(query: Query) -> str:
-    orphans = query.orphan_modules()
+    by_root = query.orphan_modules_by_root()
+    core_orphans = by_root.get("core", [])
+    consumer = {r: v for r, v in by_root.items() if r != "core"}
     dead = query.dead_symbols()
     lines = [f"# Dead-code candidates — `{query.graph.target}`", ""]
     lines.append(
@@ -42,9 +44,21 @@ def render_dead_code(query: Query) -> str:
         "**Candidates, not proof.**_"
     )
     lines.append("")
-    lines.append(f"## Orphan modules (no incoming imports): {len(orphans)}")
+    # F8: on a repo-scoped graph, consumer roots are orphan by nature (nobody
+    # imports an entrypoint). Only core orphans are candidate dead code.
+    lines.append(f"## Orphan modules — core (no incoming imports): {len(core_orphans)}")
     lines.append("")
-    lines.extend([f"- `{mid}`" for mid in orphans] or ["_none._"])
+    lines.extend([f"- `{mid}`" for mid in core_orphans] or ["_none._"])
+    if consumer:
+        total = sum(len(v) for v in consumer.values())
+        breakdown = ", ".join(f"{r} {len(v)}" for r, v in sorted(consumer.items()))
+        lines.append("")
+        lines.append(f"## Consumer entrypoints (orphan by nature, not dead code): {total}")
+        lines.append("")
+        lines.append(
+            f"_{breakdown} — tests/examples/scripts/research are never imported; "
+            "expected orphan. Excluded from dead-code candidates (F8)._"
+        )
     lines.append("")
     lines.append(f"## Uncalled private functions: {len(dead)}")
     lines.append("")
