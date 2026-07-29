@@ -22,6 +22,7 @@ from codemap import store
 from codemap.extract import extract, extract_repo
 from codemap.query import Query
 from codemap.serve import (
+    build_query_result,
     build_vault,
     render_api_surface,
     render_behavior,
@@ -70,56 +71,12 @@ def _cmd_build(args) -> int:
 
 def _cmd_query(args) -> int:
     q = Query(_graph_from(args))
-    matches = q.find(args.name)
-    result = {
-        "name": args.name,
-        "defined_at": q.where_defined(args.name),
-        "matches": [{"id": n.id, "kind": n.kind} for n in matches],
-    }
-    modules = [n.id for n in matches if n.kind == "module"]
-    if modules:
-        result["modules"] = {
-            m: {"dependencies": q.dependencies(m), "dependents": q.dependents(m)}
-            for m in modules
-        }
-    classes = [n.id for n in matches if n.kind == "class"]
-    if classes:
-        result["classes"] = {
-            c: {"bases": q.bases(c), "subclasses": q.subclasses(c),
-                # M9/F4: registry family — Protocol satisfied + implementers + siblings.
-                "implements": q.implements(c), "implementers": q.implementers(c),
-                "family": q.family_siblings(c)}
-            for c in classes
-        }
-    funcs = [n.id for n in matches if n.kind == "function"]
-    if funcs:
-        result["functions"] = {
-            f: {"callers": q.callers(f), "callees": q.callees(f)} for f in funcs
-        }
-    # inbound references grouped by root — blast-radius at a glance (M6).
-    if matches:
-        result["used_by"] = {
-            n.id: _used_by_summary(q, n.id) for n in matches
-            if n.kind in ("class", "function")
-        }
-    # M12/F6: string-key dataflow — producers/consumers of a DataFrame column.
-    col = q.column(args.name)
-    if col and (col["writes"] or col["reads"]):
-        result["column"] = col
-
+    result = build_query_result(q, args.name)
     if args.format == "text":
         _print_query_text(result)
     else:
         print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if (matches or result["defined_at"] or result.get("column")) else 1
-
-
-def _used_by_summary(q, node_id) -> dict:
-    """{root: count} of direct inbound references — reaches consumers if repo-scoped."""
-    by_root: dict[str, int] = {}
-    for ref in q.references_to(node_id):
-        by_root[ref["root"]] = by_root.get(ref["root"], 0) + 1
-    return by_root
+    return 0 if (result["matches"] or result["defined_at"] or result.get("column")) else 1
 
 
 def _print_query_text(r) -> None:
@@ -187,6 +144,13 @@ def _cmd_export(args) -> int:
     return 0
 
 
+def _cmd_serve(args) -> int:
+    """Load the graph once, then serve JSON requests over stdio (warm — M3.1)."""
+    from codemap.serve.server import serve_stdio
+    from codemap.serve.session import Session
+    return serve_stdio(Session(_graph_from(args)))
+
+
 def _emit(text: str, out: str | None) -> None:
     if out:
         Path(out).write_text(text, encoding="utf-8")
@@ -251,6 +215,10 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--root", help="mermaid calls: root symbol.")
     e.add_argument("--depth", type=int, default=2, help="mermaid calls: BFS depth.")
     e.set_defaults(func=_cmd_export)
+
+    s = sub.add_parser("serve", help="Warm resident process: JSON requests over stdin/stdout.")
+    _add_source(s)
+    s.set_defaults(func=_cmd_serve)
 
     return p
 
