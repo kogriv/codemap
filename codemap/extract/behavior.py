@@ -200,17 +200,18 @@ _EDGE_RESOLUTIONS = {"module", "self", "imported", "deep"}
 
 def _process_function(graph, node_id, fnode, resolve) -> None:
     counts = {"out": 0, "resolved": 0, "external": 0, "unresolved": 0, "dynamic": 0}
-    seen_targets: set[str] = set()
+    # F7: edges are deduped caller->callee, so aggregate the per-call-site argument
+    # contract before emitting — a refactorer needs "how is it called", and the
+    # collapse itself (2 sites -> 1 edge) must stay visible via `callsites`.
+    by_target: dict[str, dict] = {}
     for call in _own_calls(fnode):
         counts["out"] += 1
         target, resolution = resolve(call)
         if resolution in _EDGE_RESOLUTIONS:
             counts["resolved"] += 1
-            if target and target not in seen_targets:
-                seen_targets.add(target)
-                graph.add_edge(
-                    Edge("calls", node_id, target, extras={"resolution": resolution})
-                )
+            if target:
+                agg = by_target.setdefault(target, {"resolution": resolution, "shapes": []})
+                agg["shapes"].append(_arg_shape(call))
         elif resolution == "external":
             counts["external"] += 1
         elif resolution == "dynamic":
@@ -218,9 +219,43 @@ def _process_function(graph, node_id, fnode, resolve) -> None:
         else:
             counts["unresolved"] += 1
 
+    for target in sorted(by_target):
+        agg = by_target[target]
+        extras = {"resolution": agg["resolution"], **_arg_contract(agg["shapes"])}
+        graph.add_edge(Edge("calls", node_id, target, extras=extras))
+
     node = graph.nodes[node_id]
     node.extras["calls"] = counts
     node.extras["control"] = _control(fnode)
+
+
+def _arg_shape(call) -> tuple:
+    """(positional_count | None, sorted kwnames, splat?) for one call-site.
+
+    ``None`` positional count / ``splat=True`` mean ``*args``/``**kwargs`` made the
+    arity partly unknown — an honest signal for change-set reasoning.
+    """
+    splat = any(isinstance(a, ast.Starred) for a in call.args) \
+        or any(kw.arg is None for kw in call.keywords)
+    posargs = None if any(isinstance(a, ast.Starred) for a in call.args) else \
+        sum(1 for a in call.args if not isinstance(a, ast.Starred))
+    kwnames = sorted(kw.arg for kw in call.keywords if kw.arg is not None)
+    return posargs, tuple(kwnames), splat
+
+
+def _arg_contract(shapes: list[tuple]) -> dict:
+    """Aggregate call-site shapes into an edge argument contract (F7)."""
+    posargs = sorted({s[0] for s in shapes if s[0] is not None})
+    kwnames = sorted({k for s in shapes for k in s[1]})
+    splat = any(s[2] for s in shapes)
+    contract: dict = {"callsites": len(shapes)}
+    if posargs:
+        contract["posargs"] = posargs
+    if kwnames:
+        contract["kwargs"] = kwnames
+    if splat:
+        contract["splat"] = True
+    return contract
 
 
 def _resolve(call, modpath, class_prefix, imports, modmembers, members):

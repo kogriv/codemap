@@ -31,6 +31,7 @@ import ast
 import re
 from pathlib import Path
 
+from codemap.extract.behavior import _arg_contract, _arg_shape
 from codemap.extract.griffe_extractor import extract
 from codemap.model import Edge, Graph, Node
 
@@ -165,9 +166,9 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode) -> None:
     if mode == "full":
         _materialize_defs(graph, tree, mod_id, label)
 
-    # use edges: (source_id, target_id) -> called?
-    uses: dict[tuple[str, str], bool] = {}
-    call_func_ids = {id(n.func) for n in ast.walk(tree) if isinstance(n, ast.Call)}
+    # use edges: (source_id, target_id) -> {called?, arg shapes at call-sites}.
+    uses: dict[tuple[str, str], dict] = {}
+    call_by_func = {id(n.func): n for n in ast.walk(tree) if isinstance(n, ast.Call)}
     inner_attr_ids = {
         id(n.value) for n in ast.walk(tree)
         if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Attribute)
@@ -189,13 +190,18 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode) -> None:
         if not target:
             continue
         src = _source_for(use_node, mod_id, func_ranges) if mode == "full" else mod_id
-        called = id(use_node) in call_func_ids
-        key = (src, target)
-        uses[key] = uses.get(key, False) or called
+        entry = uses.setdefault((src, target), {"called": False, "shapes": []})
+        call_node = call_by_func.get(id(use_node))
+        if call_node is not None:
+            entry["called"] = True
+            entry["shapes"].append(_arg_shape(call_node))  # F7: capture call-site contract
 
-    for (src, target), called in sorted(uses.items()):
-        etype = "calls" if called else "references"
-        graph.add_edge(Edge(etype, src, target, extras={"resolution": "imported"}))
+    for (src, target), entry in sorted(uses.items()):
+        etype = "calls" if entry["called"] else "references"
+        extras = {"resolution": "imported"}
+        if etype == "calls" and entry["shapes"]:
+            extras.update(_arg_contract(entry["shapes"]))
+        graph.add_edge(Edge(etype, src, target, extras=extras))
 
 
 def _consumer_imports(tree, index: _CoreIndex):

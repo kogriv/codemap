@@ -54,9 +54,12 @@ class Query:
         ]
         # calls edges (M4 behavioral layer): caller -> callee.
         self._calls = nx.DiGraph()
+        # F7: callee -> [(caller, edge extras)] to expose the argument contract.
+        self._call_in: dict[str, list[tuple[str, dict]]] = {}
         for e in graph.edges:
             if e.type == "calls":
                 self._calls.add_edge(e.source, e.target)
+                self._call_in.setdefault(e.target, []).append((e.source, e.extras))
         # implements edges (M9/F4): concrete impl -> Protocol (structural typing,
         # synthesised via the registry family since it's never inherited).
         self._implements = nx.DiGraph()
@@ -159,6 +162,28 @@ class Query:
         if symbol_id not in self._calls:
             return []
         return sorted(self._calls.successors(symbol_id))
+
+    def call_contract(self, symbol_id: str) -> list[dict]:
+        """Per-caller argument contract of calls into ``symbol_id`` (+ members) — F7.
+
+        For signature-change reasoning: each entry gives the calling function, how
+        many call-sites it holds (``callsites`` — the collapse the edge hides), and
+        the observed argument shape (``posargs`` / ``kwargs`` / ``splat``). Only
+        resolved behavioral edges carry this; bridged (registry) edges do not.
+        """
+        out = []
+        for tgt in sorted(self._member_ids(symbol_id)):
+            for src, extras in self._call_in.get(tgt, []):
+                if "callsites" not in extras:
+                    continue  # bridge / edge without captured contract
+                out.append({
+                    "caller": src, "target": tgt,
+                    "callsites": extras.get("callsites", 1),
+                    "posargs": extras.get("posargs", []),
+                    "kwargs": extras.get("kwargs", []),
+                    "splat": extras.get("splat", False),
+                })
+        return sorted(out, key=lambda r: (r["caller"], r["target"]))
 
     def dead_symbols(self) -> list[str]:
         """Private functions with no incoming resolved call — dead-code candidates.

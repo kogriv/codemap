@@ -55,4 +55,24 @@ def render_impact(query: Query, symbol: str, *, depth: int = 2) -> str:
             if indirect:
                 lines.append(f"- _+{len(indirect)} transitive (distance >1)_")
             lines.append("")
+
+        # F7: argument contract of the call-sites — what a signature change touches.
+        contract = query.call_contract(sid)
+        if contract:
+            sites = sum(c["callsites"] for c in contract)
+            lines.append(f"### Call-site contract ({sites} sites — for signature change)")
+            lines.append("")
+            for c in contract:
+                pos = "/".join(map(str, c["posargs"])) or "0"
+                kw = ", ".join(c["kwargs"]) or "—"
+                splat = " +splat" if c["splat"] else ""
+                lines.append(
+                    f"- `{c['caller']}` ×{c['callsites']} — {pos} positional, kwargs: {kw}{splat}"
+                )
+            lines.append("")
+            lines.append(
+                "_Positional counts / kwarg names observed at the call-sites (resolved "
+                "edges only). Use to see which sites break under an arity/keyword change._"
+            )
+            lines.append("")
     return "\n".join(lines).rstrip() + "\n"

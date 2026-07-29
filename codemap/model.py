@@ -29,7 +29,11 @@ from typing import Any
 #      the Protocol it structurally satisfies, matched via the registry family)
 #      makes the family queryable and diagrammable though it's never inherited
 #      (closes gap-doc F4).
-SCHEMA_VERSION = "0.6"
+# 0.7: M11 — call-site argument contract. `calls` edges carry `callsites`
+#      (how many call expressions collapsed into this edge) and the observed
+#      argument shape (`posargs` / `kwargs` / `splat`) so signature-change
+#      reasoning is possible (closes gap-doc F7).
+SCHEMA_VERSION = "0.7"
 
 
 @dataclass

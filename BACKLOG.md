@@ -237,9 +237,12 @@ thin/full сравнены; детерминизм держится; схема 
       (каждый target с меткой `via <метод>`) + текст «Methods call: …». Serve-only, без схемы.
       MACDZoneAnalyzer класс-чанк теперь показывает шов `analyze_zones (via analyze_complete_modular)`
       (+ detect_zones/with_indicator/build) — делегирование в pipeline видно без чтения методов. +1 тест (72/72).
-- [ ] **F7 (Representation+Precision) — арг-контракт на call-site.** `calls`-рёбра функц-гранулярны и
-      несут только `resolution`; смену сигнатуры не обслуживают (не видно арности/kwargs, дубли из одной
-      функции схлопнуты). Фикс: call-site-узлы/метки `argcount`/`kwnames` (апгрейд behavior-прохода).
+- [x] **F7 (Representation+Precision) — арг-контракт на call-site.** ✅ (M11, 2026-07-29, схема 0.7)
+      `behavior._arg_shape`/`_arg_contract`: `calls`-рёбра несут `callsites` (сколько выражений вызова
+      схлопнуто) + `posargs`/`kwargs`/`splat` (наблюдённая форма аргументов); захват и в behavior-проходе,
+      и в consumer-скане `roots.py`. `Query.call_contract` + секция «Call-site contract» в `report impact`.
+      На bquant get_indicator_params: examples ×2 (схлопывание снова видно), все «1 positional». Фикстура
+      argpkg + test_m11 (5 тестов). 77/77.
 - [ ] **F6 (Extraction) — dataflow по строковым ключам.** Датафрейм-колонки (`macd_hist`, …) и
       config-ключи как данные невидимы графу целиком (хуже grep). Отдельная веха: лёгкий проход по
       подпискам `df['col']` / kwargs `indicator_col=` → `column`-узлы + `writes`/`reads`-рёбра.
