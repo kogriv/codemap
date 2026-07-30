@@ -27,9 +27,13 @@ uv venv && uv pip install -e .
 
 # or plain pip
 pip install -e .
+
+# optional: MCP server (`codemap serve --mcp`)
+pip install -e '.[mcp]'
 ```
 
 Dependencies: `griffe` (structure), `networkx` (query backend), `jedi` (deep call resolution).
+Optional: `mcp` (Model Context Protocol server).
 
 ## Quickstart
 
@@ -57,8 +61,11 @@ codemap export rag     --graph graph.json -o chunks.jsonl
 codemap export mermaid --graph graph.json --mkind class
 codemap export vault   --graph graph.json -o vault/
 
-# warm resident process — JSON requests over stdin/stdout (21 ops, MCP-mappable)
+# warm resident process — JSON requests over stdin/stdout (21 ops)
 codemap serve --graph graph.json --source-root .
+
+# …or expose the same surface as MCP tools for an AI-agent host (needs [mcp] extra)
+codemap serve --graph graph.json --source-root . --mcp
 ```
 
 ## What it answers

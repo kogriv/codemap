@@ -10,6 +10,11 @@ full M0–M16 development history. Graph schema **0.9**; 123 tests; warm serve s
 
 ### Milestones
 
+- **M17 — MCP adapter** (no schema change): `codemap serve --mcp` exposes the warm serve surface as
+  Model Context Protocol tools (18 tools, one per agent-facing op) so an AI-agent host can drive
+  codemap natively. Thin wrapper over `Session.handle` — the ambiguity signal (`resolved.ambiguous`)
+  and error envelopes pass through unchanged. `mcp` is an **optional** dependency
+  (`pip install codemap[mcp]`); the import is lazy so codemap works without it.
 - **M16 — architecture overview** (schema 0.9): `report architecture` — layers + direction/violations
   (order-free), coupling (Ca/Ce/instability), god-objects & call-hubs (pervasive-tagged); `Query.layers/
   coupling/hotspots`, serve op `architecture`.

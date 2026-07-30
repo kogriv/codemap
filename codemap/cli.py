@@ -11,6 +11,8 @@
         mermaid --mkind class|deps|calls [--scope X] [--root Y] [--depth N]
     codemap review [diff|-] (--graph g.json | --build <path>) [--format markdown|json]
         unified diff (or stdin) → risk-sorted change-set review (M15/F17)
+    codemap serve  (--graph g.json | --build <path>) [--source-root DIR] [--mcp]
+        warm resident process: line-delimited JSON stdio, or MCP with --mcp (M17)
 """
 
 from __future__ import annotations
@@ -173,10 +175,19 @@ def _cmd_review(args) -> int:
 
 
 def _cmd_serve(args) -> int:
-    """Load the graph once, then serve JSON requests over stdio (warm — M3.1)."""
-    from codemap.serve.server import serve_stdio
+    """Load the graph once, then serve it warm (M3.1).
+
+    Default transport is line-delimited JSON over stdio; ``--mcp`` serves the same
+    ops over the Model Context Protocol instead (needs the optional `mcp` extra).
+    """
     from codemap.serve.session import Session
-    return serve_stdio(Session(_graph_from(args), source_root=args.source_root))
+    session = Session(_graph_from(args), source_root=args.source_root)
+    if getattr(args, "mcp", False):
+        from codemap.serve.mcp_server import build_mcp_server
+        build_mcp_server(session).run("stdio")
+        return 0
+    from codemap.serve.server import serve_stdio
+    return serve_stdio(session)
 
 
 def _emit(text: str, out: str | None) -> None:
@@ -251,10 +262,13 @@ def build_parser() -> argparse.ArgumentParser:
     rv.add_argument("--format", choices=["markdown", "json"], default="markdown")
     rv.set_defaults(func=_cmd_review)
 
-    s = sub.add_parser("serve", help="Warm resident process: JSON requests over stdin/stdout.")
+    s = sub.add_parser("serve", help="Warm resident process: JSON (or MCP) over stdin/stdout.")
     _add_source(s)
     s.add_argument("--source-root", help="Base dir for the `source` op to read files "
                                          "(node paths are repo-relative; default: cwd).")
+    s.add_argument("--mcp", action="store_true",
+                   help="Serve over the Model Context Protocol instead of JSON "
+                        "(needs the optional 'mcp' extra: pip install 'codemap[mcp]').")
     s.set_defaults(func=_cmd_serve)
 
     return p

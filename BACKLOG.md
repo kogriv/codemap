@@ -6,8 +6,8 @@ findings глубокой обкатки F8/F4/F3/F7/F6; M13 — serve-эрго�
 F14/F15: `canonical`-ambiguity + column access-form, схема 0.9; M15 — diff/change-review A11 F16/F17:
 локация→символ + change-set-ревью, `codemap review`; M16 — архитектура A9 F18–F21: слои/coupling/хотспоты,
 `report architecture`) + **M3.1** тёплый serve-режим (граф в памяти, JSON-стдио). Осталось (отложено как
-преждевременное) — **M3.2/M3.3** (freshness-watcher, SQLite), **двух-графовый diff** (added/deleted
-символы) и тонкий MCP-адаптер — брать при живом потребителе/масштабе.
+преждевременное) — **M3.2/M3.3** (freshness-watcher, SQLite) и **двух-графовый diff** (added/deleted
+символы) — брать при живом потребителе/масштабе. **MCP-адаптер сделан** (M17, `serve --mcp`).
 
 Вехи от «тонкого сквозного среза» к расширению. Внутри вехи задачи упорядочены по зависимости.
 Отсылки `§N` — разделы `DESIGN.md`.
@@ -225,8 +225,12 @@ thin/full сравнены; детерминизм держится; схема 
       никто картой ежедневно не пользуется, инвалидировать нечего. Взять, когда появится живой потребитель.
 - [ ] **M3.3 SQLite query-бэкенд** — индексы (§4). **Отложено:** networkx-бэкенд держит текущий масштаб
       (3k узлов); SQLite оправдан только при бóльшем графе/serve-нагрузке. Двери открыты за той же query-поверхностью.
-- [ ] **M3.1+ MCP-адаптер** — тонкая обёртка `Session.handle` в MCP-tools (по одному tool на op), когда
-      нужен нативный вызов из AI-агента; требует зависимости `mcp`. Логики нет — только маппинг.
+- [x] **M17 — MCP-адаптер** ✅ (2026-07-30) — тонкая обёртка `Session.handle` в MCP-tools (18 tools,
+      по одному на agent-facing op), нативный вызов из AI-агента. `serve/mcp_server.py`:
+      `build_mcp_server(session)` (mcp 2.0 `MCPServer`, lazy-import), каждый tool зовёт `handle` и
+      возвращает конверт (сигнал `resolved.ambiguous` F14 сохраняется). CLI `codemap serve --mcp`
+      (stdio). `mcp` — **опциональная** зависимость (`pip install codemap[mcp]`; extra в pyproject),
+      import ленивый — codemap работает без неё. Логики нет — только маппинг. +7 тестов (importorskip mcp).
 
 ---
 

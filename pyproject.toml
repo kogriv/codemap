@@ -14,6 +14,9 @@ dependencies = [
     "jedi>=0.19",      # deep call resolution: local-variable type inference (--deep tier)
 ]
 
+[project.optional-dependencies]
+mcp = ["mcp>=2.0"]     # `codemap serve --mcp`: expose ops as MCP tools (optional)
+
 [project.scripts]
 codemap = "codemap.cli:main"
 
