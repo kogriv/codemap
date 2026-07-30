@@ -10,6 +10,11 @@ full M0–M16 development history. Graph schema **0.9**; 123 tests; warm serve s
 
 ### Milestones
 
+- **F22 — compact MCP payloads** (no schema change): shaped from the first live agent-over-MCP run.
+  The `impact` and `call_contract` MCP tools are compact by default — `impact` omits the duplicate
+  markdown and caps the flat ref list at `limit` (by_root counts stay complete); `call_contract` caps
+  its list. `full=true` returns everything. On a hub (`MACDZoneAnalyzer`) this cut the `impact` payload
+  ~65% and `call_contract` ~49%. Underlying ops / CLI unchanged (markdown still rendered there).
 - **M17 — MCP adapter** (no schema change): `codemap serve --mcp` exposes the warm serve surface as
   Model Context Protocol tools (18 tools, one per agent-facing op) so an AI-agent host can drive
   codemap natively. Thin wrapper over `Session.handle` — the ambiguity signal (`resolved.ambiguous`)

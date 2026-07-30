@@ -234,6 +234,21 @@ thin/full сравнены; детерминизм держится; схема 
 
 ---
 
+## Находки из живого MCP-использования 2026-07-30 (реальный агент через `serve --mcp`)
+
+Первый прогон codemap **как продукта в бою** — ИИ-агент (Claude Code) через MCP по графу bquant.
+Инструменты отработали (architecture поймал `analysis↔indicators`; impact/call_contract дали карту для
+смены сигнатуры; `resolved.ambiguous` прошёл через MCP). Находка эргономики канала:
+
+- [x] **F22 (MCP/Workflow) — тяжёлый payload на хабах.** ✅ (2026-07-30, без схемы) На `MACDZoneAnalyzer`:
+      `impact` возвращал **68 ссылок + дублирующий полный `markdown`**, `call_contract` — **61 запись**.
+      Фикс: MCP-обёртки `impact`/`call_contract` компактны по умолчанию — `impact` без `markdown` + `limit=40`
+      на плоский список refs (by_root-счётчики полны), `call_contract` `limit=30`; `full=true` возвращает
+      всё. Underlying-ops/CLI не тронуты. Замер на хабе: impact **−65%** (32.7k→11.6k), call_contract
+      **−49%** (17k→8.8k). `serve/mcp_server.py` `_compact_impact`/`_cap_list`. +4 теста (7→11 MCP).
+
+---
+
 ## Кандидаты из обкатки архитектуры 2026-07-30 (ось A9, findings F18–F21) — ✅ ЗАКРЫТЫ (M16, 2026-07-30)
 
 Обкатка A9 (`gaps/architecture_dogfood_2026-07-30.md`): роль архитектора — «форма системы целиком».

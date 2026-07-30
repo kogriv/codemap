@@ -16,7 +16,12 @@ import pytest
 pytest.importorskip("mcp", reason="optional 'mcp' extra not installed")
 
 from codemap.extract import extract
-from codemap.serve.mcp_server import MCP_TOOLS, build_mcp_server
+from codemap.serve.mcp_server import (
+    MCP_TOOLS,
+    _cap_list,
+    _compact_impact,
+    build_mcp_server,
+)
 from codemap.serve.session import Session
 
 DISPATCH = Path(__file__).resolve().parent / "fixtures" / "dispatchpkg"
@@ -75,3 +80,40 @@ def test_architecture_tool():
     env = _call(_server(), "architecture", {})
     assert env["ok"] is True
     assert "layers" in env["result"]
+
+
+# -- F22: compact MCP payloads ----------------------------------------------
+
+def test_compact_impact_drops_markdown_and_caps_refs():
+    refs = [{"source": f"s{i}"} for i in range(50)]
+    env = {"ok": True, "result": {"symbol": "X", "markdown": "…big…",
+                                  "impact": [{"refs": refs, "by_root": {"core": 50}}]}}
+    out = _compact_impact(env, limit=10)
+    entry = out["result"]["impact"][0]
+    assert "markdown" not in out["result"]           # duplicate rendering dropped
+    assert len(entry["refs"]) == 10                    # flat list capped
+    assert entry["refs_total"] == 50                   # total preserved
+    assert entry["by_root"] == {"core": 50}            # counts stay complete
+
+
+def test_cap_list_truncates_with_total():
+    env = {"ok": True, "result": [{"caller": f"c{i}"} for i in range(40)],
+           "resolved": {"ambiguous": False}}
+    out = _cap_list(env, limit=15)
+    assert len(out["result"]) == 15
+    assert out["total"] == 40
+    assert out["resolved"] == {"ambiguous": False}     # envelope extras preserved
+
+
+def test_compact_helpers_passthrough_on_error():
+    err = {"ok": False, "error": "boom"}
+    assert _compact_impact(err, 10) is err
+    assert _cap_list(err, 10) is err
+
+
+def test_impact_tool_compact_by_default_full_on_request():
+    s = _server()
+    default = _call(s, "impact", {"symbol": "ThingProtocol"})
+    assert "markdown" not in default["result"]         # compact default
+    full = _call(s, "impact", {"symbol": "ThingProtocol", "full": True})
+    assert "markdown" in full["result"]                # full keeps markdown

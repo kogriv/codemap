@@ -28,6 +28,37 @@ _INSTRUCTIONS = (
 )
 
 
+def _compact_impact(env: dict, limit: int) -> dict:
+    """Shrink an impact envelope for MCP (F22): drop the duplicate markdown and cap
+    each entry's flat ref list at ``limit`` — the ``by_root`` counts stay complete."""
+    if not env.get("ok"):
+        return env
+    env = dict(env)
+    result = dict(env.get("result") or {})
+    result.pop("markdown", None)  # structured refs already carry everything
+    entries = []
+    for e in result.get("impact", []):
+        e = dict(e)
+        refs = e.get("refs", [])
+        if len(refs) > limit:
+            e = {**e, "refs": refs[:limit],
+                 "refs_shown": limit, "refs_total": len(refs)}
+        entries.append(e)
+    result["impact"] = entries
+    env["result"] = result
+    return env
+
+
+def _cap_list(env: dict, limit: int) -> dict:
+    """Cap a list-valued result at ``limit`` (F22), noting the total when truncated."""
+    if not env.get("ok"):
+        return env
+    res = env.get("result")
+    if isinstance(res, list) and len(res) > limit:
+        env = {**env, "result": res[:limit], "shown": limit, "total": len(res)}
+    return env
+
+
 def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
     """Build an MCP server exposing the session's ops as tools (lazy mcp import)."""
     try:
@@ -78,16 +109,21 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("callees", {"symbol": symbol})
 
     @server.tool()
-    def impact(symbol: str, depth: int = 2) -> dict:
+    def impact(symbol: str, depth: int = 2, limit: int = 40, full: bool = False) -> dict:
         """Blast radius of changing `symbol`: inbound references up to `depth`, counted
-        by provenance root (core/tests/docs/…), plus a markdown summary."""
-        return op("impact", {"symbol": symbol, "depth": depth})
+        by provenance root (core/tests/docs/…). Compact by default (F22): omits the
+        duplicate markdown and caps the flat ref list at `limit` (by_root counts stay
+        complete). Pass full=true for the entire payload including markdown."""
+        env = op("impact", {"symbol": symbol, "depth": depth})
+        return env if full else _compact_impact(env, limit)
 
     @server.tool()
-    def call_contract(symbol: str) -> dict:
+    def call_contract(symbol: str, limit: int = 30, full: bool = False) -> dict:
         """Per-caller argument contract of calls into `symbol` (call-sites, posargs,
-        kwargs, splat) — for reasoning about a signature change."""
-        return op("call_contract", {"symbol": symbol})
+        kwargs, splat) — for reasoning about a signature change. Capped at `limit`
+        entries by default (F22); pass full=true for all of them."""
+        env = op("call_contract", {"symbol": symbol})
+        return env if full else _cap_list(env, limit)
 
     @server.tool()
     def implementers(protocol: str) -> dict:
