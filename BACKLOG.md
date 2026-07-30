@@ -253,6 +253,16 @@ thin/full сравнены; детерминизм держится; схема 
       на плоский список refs (by_root-счётчики полны), `call_contract` `limit=30`; `full=true` возвращает
       всё. Underlying-ops/CLI не тронуты. Замер на хабе: impact **−65%** (32.7k→11.6k), call_contract
       **−49%** (17k→8.8k). `serve/mcp_server.py` `_compact_impact`/`_cap_list`. +4 теста (7→11 MCP).
+- [ ] **F23 (Precision/Extraction) — blast-radius пуст для dataclass-моделей.** На реальной задаче
+      (bquant issue #110) `impact(bquant.analysis.zones.models.SwingPoint)` → **`[]`**, хотя `SwingPoint`
+      строится/используется во многих местах (swing-стратегии, сериализация, кэш). Причина: узел
+      **строится напрямую** (`SwingPoint(...)`) — инстанциация класса не ловится как inbound-ребро
+      (`references_to`/`impact` считают calls/references/inherits/imports/decorated_by, но **не**
+      конструктор-вызов класса как ссылку на класс). Итог: у dataclass/value-моделей blast-radius
+      **ложно пуст** — опасно (агент решит «никто не использует»). **Форма фикса:** ловить
+      class-instantiation (`ast.Call` где `func` резолвится в class-узел) как `references`/`calls`-ребро
+      на класс; проверить на моделях bquant (`SwingPoint`/`SwingContext`/`ZoneInfo`). Возможен бамп схемы
+      (новые рёбра). Найдено в живом MCP-использовании.
 
 ---
 
