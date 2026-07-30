@@ -16,7 +16,10 @@ from codemap.query import Query
 from codemap.serve import build_vault, render_mermaid, render_rag
 
 FIX = Path(__file__).resolve().parent / "fixtures" / "deeppkg"
-BQUANT = Path(__file__).resolve().parents[2] / "bquant"
+# Real-bquant acceptance target: the bquant repo checked out as a sibling
+# (../bquant/bquant is the package). Whole module skips when absent (FOSS CI).
+BQUANT = Path(__file__).resolve().parents[2] / "bquant" / "bquant"
+pytestmark = pytest.mark.skipif(not BQUANT.is_dir(), reason="bquant sibling repo not present")
 
 
 @pytest.fixture(scope="module")

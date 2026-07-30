@@ -14,7 +14,10 @@ from codemap.extract import extract
 from codemap.serve import render_api_surface
 
 # codemap/ lives at the repo root next to bquant/; tests/ is one level down.
-BQUANT = Path(__file__).resolve().parents[2] / "bquant"
+# Real-bquant acceptance target: the bquant repo checked out as a sibling
+# (../bquant/bquant is the package). Whole module skips when absent (FOSS CI).
+BQUANT = Path(__file__).resolve().parents[2] / "bquant" / "bquant"
+pytestmark = pytest.mark.skipif(not BQUANT.is_dir(), reason="bquant sibling repo not present")
 
 
 @pytest.fixture(scope="module")

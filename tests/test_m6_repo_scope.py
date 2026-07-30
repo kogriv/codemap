@@ -19,8 +19,10 @@ FIX = Path(__file__).resolve().parent / "fixtures" / "reporoot"
 CORE = FIX / "core"
 USAGE = FIX / "usage"
 DOCS = FIX / "docs"
-REPO = Path(__file__).resolve().parents[2]  # /data/pro/bquant
-BQUANT = REPO / "bquant"
+# Dogfood target: the bquant repo checked out as a sibling (../bquant from this
+# repo). Skipped cleanly when absent (e.g. FOSS CI without the target present).
+BQUANT_REPO = Path(__file__).resolve().parents[2] / "bquant"
+BQUANT = BQUANT_REPO / "bquant"
 
 
 @pytest.fixture(scope="module")
@@ -128,8 +130,8 @@ def test_repo_scope_deterministic():
 
 def test_bquant_macd_blast_radius():
     if not BQUANT.is_dir():
-        pytest.skip("bquant not found")
-    g = extract_repo(BQUANT, consumers=(REPO / "tests",), mode="thin")
+        pytest.skip("bquant sibling repo not found")
+    g = extract_repo(BQUANT, consumers=(BQUANT_REPO / "tests",), mode="thin")
     q = Query(g)
     rep = q.impact("bquant.indicators.macd.MACDZoneAnalyzer")
     # the backward-compat test suite must now show up as inbound refs.

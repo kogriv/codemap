@@ -16,7 +16,10 @@ from codemap.extract import extract
 from codemap.query import Query
 from codemap.serve import render_behavior
 
-BQUANT = Path(__file__).resolve().parents[2] / "bquant"
+# Real-bquant acceptance target: the bquant repo checked out as a sibling
+# (../bquant/bquant is the package). Whole module skips when absent (FOSS CI).
+BQUANT = Path(__file__).resolve().parents[2] / "bquant" / "bquant"
+pytestmark = pytest.mark.skipif(not BQUANT.is_dir(), reason="bquant sibling repo not present")
 PIPELINE = "bquant.analysis.zones.pipeline"
 ANALYZE = f"{PIPELINE}.analyze_zones"
 RUN = f"{PIPELINE}.ZoneAnalysisPipeline.run"
