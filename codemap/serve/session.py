@@ -94,12 +94,16 @@ def _nonempty(d: dict) -> dict | None:
 class Session:
     """A warm, in-memory query surface over one graph."""
 
-    def __init__(self, graph: Graph, source_root: str | None = None) -> None:
+    def __init__(self, graph: Graph, source_root: str | None = None,
+                 graph_path: str | None = None) -> None:
         self.graph = graph
         self.query = Query(graph)
         # F12: base dir to resolve node.file for the `source` op (node paths are
         # repo-relative, e.g. `bquant/…`). Defaults to cwd; best-effort.
         self.source_root = source_root
+        # M18: path of the loaded graph file, if any — lets `stats` report the map's
+        # age so a caller knows it may be stale. None for an in-memory graph.
+        self.graph_path = graph_path
 
     def _canon(self, name_or_id: str) -> str:
         """Resolve a name / re-export id to the canonical node id (F13).
@@ -143,7 +147,7 @@ class Session:
         return "pong"
 
     def _op_stats(self, args) -> dict:
-        return {
+        out = {
             "target": self.graph.target,
             "schema": SCHEMA_VERSION,
             "nodes": len(self.graph.nodes),
@@ -151,6 +155,12 @@ class Session:
             "node_kinds": dict(Counter(n.kind for n in self.graph.nodes.values())),
             "edge_types": dict(Counter(e.type for e in self.graph.edges)),
         }
+        # M18: age of the loaded graph file (may be stale vs current source).
+        from codemap.freshness import freshness
+        fr = freshness(self.graph_path)
+        if fr is not None:
+            out["freshness"] = fr
+        return out
 
     def _op_query(self, args) -> dict:
         return build_query_result(self.query, args["name"])

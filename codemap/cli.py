@@ -13,11 +13,14 @@
         unified diff (or stdin) → risk-sorted change-set review (M15/F17)
     codemap serve  (--graph g.json | --build <path>) [--source-root DIR] [--mcp]
         warm resident process: line-delimited JSON stdio, or MCP with --mcp (M17)
+    codemap refresh <graph.json>
+        rebuild a graph from the recipe recorded beside it at build time (M18)
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import sys
 from pathlib import Path
@@ -69,6 +72,11 @@ def _cmd_build(args) -> int:
         graph = extract(args.path, deep=args.deep)
     if args.out:
         store.save(graph, args.out)
+        # M18: record the build recipe beside the graph so `codemap refresh` can
+        # rebuild it, and so the graph's age is meaningful to `serve`/stats.
+        from codemap.freshness import write_meta
+        write_meta(args.out, argv=getattr(args, "_argv", []),
+                   cwd=os.getcwd(), target=graph.target)
         print(args.out)
     else:
         print(store.dumps(graph))
@@ -174,6 +182,21 @@ def _cmd_review(args) -> int:
     return 0
 
 
+def _cmd_refresh(args) -> int:
+    """Rebuild a graph from the recipe recorded beside it at build time (M18)."""
+    from codemap.freshness import read_meta
+    meta = read_meta(args.graph)
+    if not meta or not meta.get("argv"):
+        raise SystemExit(
+            f"error: no rebuild recipe for {args.graph!r} "
+            "(build it with `codemap build … -o {graph}` first)")
+    cwd = meta.get("cwd")
+    if cwd and os.path.isdir(cwd):
+        os.chdir(cwd)  # recorded argv may use paths relative to the build cwd
+    print(f"rebuilding {args.graph} …", file=sys.stderr)
+    return main(meta["argv"])
+
+
 def _cmd_serve(args) -> int:
     """Load the graph once, then serve it warm (M3.1).
 
@@ -181,7 +204,8 @@ def _cmd_serve(args) -> int:
     ops over the Model Context Protocol instead (needs the optional `mcp` extra).
     """
     from codemap.serve.session import Session
-    session = Session(_graph_from(args), source_root=args.source_root)
+    session = Session(_graph_from(args), source_root=args.source_root,
+                      graph_path=getattr(args, "graph", None))
     if getattr(args, "mcp", False):
         from codemap.serve.mcp_server import build_mcp_server
         build_mcp_server(session).run("stdio")
@@ -271,11 +295,17 @@ def build_parser() -> argparse.ArgumentParser:
                         "(needs the optional 'mcp' extra: pip install 'codemap[mcp]').")
     s.set_defaults(func=_cmd_serve)
 
+    rf = sub.add_parser("refresh", help="Rebuild a graph from the recipe recorded at build time.")
+    rf.add_argument("graph", help="Path to the graph.json to rebuild (needs its .meta.json sidecar).")
+    rf.set_defaults(func=_cmd_refresh)
+
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    raw = list(sys.argv[1:] if argv is None else argv)
+    args = build_parser().parse_args(raw)
+    args._argv = raw  # M18: kept so `build` can record its own invocation (refresh)
     try:
         return args.func(args)
     except Exception as exc:  # noqa: BLE001 - CLI boundary: report, don't traceback

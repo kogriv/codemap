@@ -10,6 +10,11 @@ full M0–M16 development history. Graph schema **0.9**; 123 tests; warm serve s
 
 ### Milestones
 
+- **M18 — graph freshness** (no schema change): the MCP server serves a static graph, so `stats` now
+  reports `freshness` (`built_at` / `age_seconds` from the file mtime) — an agent can tell the map may be
+  stale. The canonical graph.json stays timestamp-free (determinism preserved); build recipe + time live
+  in a sidecar `<graph>.meta.json`, and `codemap refresh <graph.json>` rebuilds from it. First step of the
+  deferred freshness work (M3.2), prompted by the now-live MCP consumer.
 - **F22 — compact MCP payloads** (no schema change): shaped from the first live agent-over-MCP run.
   The `impact` and `call_contract` MCP tools are compact by default — `impact` omits the duplicate
   markdown and caps the flat ref list at `limit` (by_root counts stay complete); `call_contract` caps

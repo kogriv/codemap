@@ -5,3 +5,4 @@ __pycache__/
 # generated graph artifacts (v1: generated on-demand, not committed — DESIGN §10.9)
 graph.json
 *.graph.json
+*.meta.json
