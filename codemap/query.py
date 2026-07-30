@@ -97,20 +97,41 @@ class Query:
         Relational edges are keyed by the definition id (``…detection.base.X``),
         but ``query`` surfaces re-export paths (``…detection.X``); feeding the
         latter to ``implementers``/``callers`` silently returned nothing. This maps
-        either form to the real node so the natural chain works.
+        either form to the real node so the natural chain works. Returns the chosen
+        id only; use :meth:`canonical_info` to also learn if the choice was a guess.
+        """
+        info = self.canonical_info(name_or_id)
+        return info["id"] if info else None
+
+    def canonical_info(self, name_or_id: str) -> dict | None:
+        """Resolve a name/re-export id **with an ambiguity signal** (M14/F13/F14).
+
+        Returns ``{input, id, ambiguous, alternatives}`` or ``None`` if no node
+        matches. ``ambiguous`` is True when ≥2 candidates tie on the disambiguation
+        signal — i.e. the choice was **arbitrary** (a bare short name like
+        ``calculate`` has 25 defs and no path to disambiguate). The B1 dogfood found
+        such names resolve silently to one def (even a test mock), so relational ops
+        can now warn instead of confidently answering about the wrong symbol.
         """
         if name_or_id in self.graph.nodes:
-            return name_or_id
+            return {"input": name_or_id, "id": name_or_id,
+                    "ambiguous": False, "alternatives": []}
         short = name_or_id.rsplit(".", 1)[-1]
         cands = [n.id for n in self.find(short)]
         if not cands:
             return None
         if len(cands) == 1:
-            return cands[0]
-        # ambiguous short name: prefer the node sharing the most path components
-        # with the requested (re-export) id — disambiguates a.b.X vs a.c.X.
+            return {"input": name_or_id, "id": cands[0],
+                    "ambiguous": False, "alternatives": []}
+        # prefer the node sharing the most path components with the requested id;
+        # ambiguous iff ≥2 candidates tie on that max (the pick fell back to -len).
         parts = set(name_or_id.split("."))
-        return max(cands, key=lambda c: (len(parts & set(c.split("."))), -len(c)))
+        shared = {c: len(parts & set(c.split("."))) for c in cands}
+        best = max(shared.values())
+        chosen = max(cands, key=lambda c: (shared[c], -len(c)))
+        ambiguous = sum(1 for c in cands if shared[c] == best) > 1
+        return {"input": name_or_id, "id": chosen, "ambiguous": ambiguous,
+                "alternatives": sorted(c for c in cands if c != chosen)}
 
     def search(self, term: str, *, kind: str | None = None, limit: int = 50) -> list[dict]:
         """Substring search over node ids — the discovery entry point (F9).
@@ -246,11 +267,19 @@ class Query:
             "reads": sorted(self._col_readers.get(col_id, set())),
         }
 
-    def columns(self) -> list[str]:
-        """All string keys seen as subscripts (column node keys)."""
+    def columns(self, *, subscripted_only: bool = True) -> list[str]:
+        """String-key column nodes (M14/F15).
+
+        By default returns only keys ever accessed as a subscript (``x['k']``) — the
+        real column-like set. The B1 dogfood found 71% of raw keys were dict-literal
+        payload keys (result dicts, config, rcParams); ``subscripted_only=False``
+        returns the full over-set (unchanged historical behavior).
+        """
         return sorted(
             n.extras.get("key", n.id[len("column:"):])
-            for n in self.graph.nodes.values() if n.kind == "column"
+            for n in self.graph.nodes.values()
+            if n.kind == "column"
+            and (not subscripted_only or n.extras.get("subscripted", True))
         )
 
     def columns_of(self, func_id: str) -> dict:

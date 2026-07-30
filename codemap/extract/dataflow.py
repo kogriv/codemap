@@ -28,10 +28,17 @@ _COLUMN_PREFIX = "column:"
 
 
 def add_dataflow(graph, griffe_root, target_pkg: str) -> None:
-    """Add column nodes + reads/writes edges for string-keyed subscripts."""
+    """Add column nodes + reads/writes edges for string-keyed subscripts.
+
+    Each column node records ``extras.subscripted`` (M14/F15): True iff the key was
+    ever accessed as ``x['k']`` somewhere, not only used as a dict-literal payload
+    key. Each edge records ``extras.access`` (``subscript`` | ``dict-literal``). The
+    B1 dogfood found 71% of keys were dict-literal-only (result dicts, config,
+    rcParams) — the flag lets aggregates surface the real column-like set.
+    """
     modules = _index_modules(griffe_root)
-    columns: set[str] = set()
-    edges: set[tuple[str, str, str]] = set()  # (type, func_id, column_id)
+    subscripted: dict[str, bool] = {}  # key -> ever accessed as a subscript
+    edges: set[tuple[str, str, str, str]] = set()  # (type, func_id, col_id, access)
     for modpath in sorted(modules):
         if "samples.embedded" in modpath:
             continue  # embedded datasets are data, not code
@@ -47,25 +54,31 @@ def add_dataflow(graph, griffe_root, target_pkg: str) -> None:
             node_id = _node_id(modpath, class_stack, fnode.name)
             if node_id not in graph.nodes:
                 continue
-            for key, is_write in _own_key_uses(fnode):
+            for key, is_write, is_subscript in _own_key_uses(fnode):
                 col_id = _COLUMN_PREFIX + key
-                columns.add(key)
-                edges.add(("writes" if is_write else "reads", node_id, col_id))
+                subscripted[key] = subscripted.get(key, False) or is_subscript
+                access = "subscript" if is_subscript else "dict-literal"
+                edges.add(("writes" if is_write else "reads", node_id, col_id, access))
 
-    for key in sorted(columns):
+    for key in sorted(subscripted):
         col_id = _COLUMN_PREFIX + key
         if col_id not in graph.nodes:
-            graph.add_node(Node(id=col_id, kind="column", extras={"key": key, "root": "core"}))
-    for etype, src, col_id in sorted(edges):
-        graph.add_edge(Edge(etype, src, col_id, extras={"resolution": "string-key"}))
+            graph.add_node(Node(id=col_id, kind="column",
+                                extras={"key": key, "root": "core",
+                                        "subscripted": subscripted[key]}))
+    for etype, src, col_id, access in sorted(edges):
+        graph.add_edge(Edge(etype, src, col_id,
+                            extras={"resolution": "string-key", "access": access}))
 
 
 def _own_key_uses(fnode):
-    """Yield (key, is_write) for string-keyed use in a function's own body.
+    """Yield (key, is_write, is_subscript) for string-keyed use in a function body.
 
     Skips nested defs/classes (their own scope). ``is_write`` is set for a Store
     subscript (``x['k'] = …`` / ``x['k'] += …``) and for a dict-literal key
     (``{'k': value}`` — a producer of that key). A Load subscript is a read.
+    ``is_subscript`` distinguishes container access (``x['k']``) from a dict-literal
+    payload key (``{'k': …}``) — the F15 precision discriminator.
     """
     def visit(node):
         for child in ast.iter_child_nodes(node):
@@ -73,11 +86,11 @@ def _own_key_uses(fnode):
                 continue
             if isinstance(child, ast.Subscript) and isinstance(child.slice, ast.Constant) \
                     and isinstance(child.slice.value, str):
-                yield child.slice.value, isinstance(child.ctx, ast.Store)
+                yield child.slice.value, isinstance(child.ctx, ast.Store), True
             elif isinstance(child, ast.Dict):
                 for k in child.keys:
                     if isinstance(k, ast.Constant) and isinstance(k.value, str):
-                        yield k.value, True  # dict-literal key = producer (write)
+                        yield k.value, True, False  # dict-literal key = producer (write)
             yield from visit(child)
 
     yield from visit(fnode)

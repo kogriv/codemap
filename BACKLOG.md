@@ -1,11 +1,12 @@
 # codemap — Бэклог
 
 **Тип:** Живой бэклог реализации. **Рамка:** `DESIGN.md` (дизайн v1 закрыт, решения §10 приняты).
-**Статус:** ✅ **M0 + M1 + M1.5 + M4 + M5 + M2 + M6 + M7 + M8–M12 сделаны** (M8–M12 — 2026-07-29,
+**Статус:** ✅ **M0 + M1 + M1.5 + M4 + M5 + M2 + M6 + M7 + M8–M13 + M14 сделаны** (M8–M12 — 2026-07-29,
 закрытие findings глубокой обкатки F8/F4/F3/F7/F6: провенанс dead-code, `implements`-семейства,
-class-chunk агрегация, арг-контракт call-site, `column`-dataflow; схема 0.8) + **M3.1** тёплый
-serve-режим (граф в памяти, JSON-стдио). Осталось (отложено как преждевременное) — **M3.2/M3.3**
-(freshness-watcher, SQLite) и тонкий MCP-адаптер — брать при живом потребителе/масштабе.
+class-chunk агрегация, арг-контракт call-site, `column`-dataflow; M13 — serve-эргономика F9–F13;
+M14 — 2026-07-30, soundness B1 F14/F15: `canonical`-ambiguity + column access-form; схема 0.9) +
+**M3.1** тёплый serve-режим (граф в памяти, JSON-стдио). Осталось (отложено как преждевременное) —
+**M3.2/M3.3** (freshness-watcher, SQLite) и тонкий MCP-адаптер — брать при живом потребителе/масштабе.
 
 Вехи от «тонкого сквозного среза» к расширению. Внутри вехи задачи упорядочены по зависимости.
 Отсылки `§N` — разделы `DESIGN.md`.
@@ -225,6 +226,34 @@ thin/full сравнены; детерминизм держится; схема 
       (3k узлов); SQLite оправдан только при бóльшем графе/serve-нагрузке. Двери открыты за той же query-поверхностью.
 - [ ] **M3.1+ MCP-адаптер** — тонкая обёртка `Session.handle` в MCP-tools (по одному tool на op), когда
       нужен нативный вызов из AI-агента; требует зависимости `mcp`. Логики нет — только маппинг.
+
+---
+
+## Кандидаты из обкатки soundness/trust 2026-07-30 (ось B1, findings F14–F15) — ✅ ЗАКРЫТЫ (M14, 2026-07-30)
+
+Обкатка B1 (precision/recall трёх приближений + `canonical`, `gaps/soundness_dogfood_2026-07-30.md`):
+сверка карты с исходником bquant. Итог: два «страшных» приближения — **фактически точны** (мост M7:
+0 false-exact, веер честен; `implements`: 12/12 истинны, recall 100%); два реальных дефекта доверия —
+**молчаливые** — закрыты вехой **M14**. +5 тестов (98→103).
+
+- [x] **F14 (Soundness/Workflow) — молчаливая `canonical`-дизамбигуация.** ✅ (M14, 2026-07-30, без схемы)
+      Голое короткое имя (`calculate` — 25 defs, `main` — 19) резолвилось в 1 узел по кратчайшему id, без
+      сигнала — реляционный op уверенно отвечал про **не тот** символ (вплоть до тест-мока
+      `MockSwingStrategy.calculate_global`). `Query.canonical_info` возвращает `{input,id,ambiguous,
+      alternatives}` (`ambiguous` ⇔ ≥2 кандидата в ничью по path-сигналу); `canonical` делегирует ему;
+      Session `_canon` пишет резолюцию, `handle` кладёт блок `resolved` в конверт, когда выбор был
+      неоднозначным (F14) **или** переписал вход (re-export, F13); op `resolve` отдаёт полный инфо-дикт.
+      На bquant: `callers('calculate')` → `resolved.ambiguous=True`, 24 альтернативы; `ZoneDetectionStrategy`
+      (1 def) → `ambiguous=False` (ложной тревоги нет). Фикстура dispatchpkg (`run` в Alpha/Beta/Protocol)
+      + 4 теста.
+- [x] **F15 (Soundness/misleading-label) — column node-set = 71% payload-шум.** ✅ (M14, 2026-07-30, схема 0.9)
+      Правило F6 «dict-literal ключ = writer» ловило **каждый** результат-словарь: из 1007 `column`-узлов
+      71% — dict-literal-only ключи (`adf_statistic`, `n_simulations`, `text.color`), не колонки; агрегат
+      `columns()` вводил в заблуждение. `extract/dataflow` пишет access-form: узел несёт
+      `extras.subscripted` (был ли ключ хоть раз `x['k']`), ребро — `extras.access`
+      (`subscript`|`dict-literal`). `Query.columns(subscripted_only=True)` по умолчанию отдаёт реальный
+      column-set (~30%: 300/1007); точечный `column('macd_hist')` и продюсер-ребро F6 не тронуты; op
+      `columns` принимает `all=true` для полного over-set. Фикстура flowpkg (`meta` = dict-only) + 2 теста.
 
 ---
 

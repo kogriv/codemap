@@ -42,7 +42,26 @@ def test_unknown_key_is_none(q):
 
 
 def test_column_nodes_listed(q):
-    assert {"signal", "flag", "meta"} <= set(q.columns())
+    # M14/F15: `columns()` defaults to subscript-accessed keys (the real column-like
+    # set). 'signal' (subscript read) and 'flag' (subscript write) qualify; 'meta'
+    # is a dict-literal-only payload key and is excluded by default.
+    assert {"signal", "flag"} <= set(q.columns())
+    assert "meta" not in q.columns()
+    # the full over-set (historical behavior) still includes the payload key.
+    assert "meta" in q.columns(subscripted_only=False)
+
+
+def test_access_form_recorded(q):
+    # M14/F15: column nodes carry `subscripted`; edges carry `access`.
+    g = q.graph
+    assert g.nodes["column:meta"].extras["subscripted"] is False
+    assert g.nodes["column:flag"].extras["subscripted"] is True
+    assert g.nodes["column:signal"].extras["subscripted"] is True
+    access = {(e.type, e.target): e.extras.get("access")
+              for e in g.edges if e.target.startswith("column:")}
+    assert access[("writes", "column:flag")] == "subscript"      # df['flag'] = 0
+    assert access[("reads", "column:signal")] == "subscript"     # frame['signal']
+    assert access[("writes", "column:meta")] == "dict-literal"   # {'meta': 1}
 
 
 def test_embedded_data_excluded():

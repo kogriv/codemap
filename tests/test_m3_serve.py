@@ -140,3 +140,41 @@ def test_families_lists_registration_recipe():
     alpha = [m for m in fam["members"] if m["class"].endswith("Alpha")][0]
     assert alpha["key"] == "alpha"
     assert "register_thing" in (alpha["decorator"] or "")
+
+
+def test_resolve_flags_ambiguous_short_name():
+    # F14: `run` is defined in Alpha, Beta and ThingProtocol — a bare short name
+    # with no path to disambiguate. resolve() must flag it, not pick silently.
+    s = Session(extract(DISPATCH))
+    r = s.handle({"op": "resolve", "args": {"name": "run"}})["result"]
+    assert r["ambiguous"] is True
+    assert len(r["alternatives"]) >= 2                 # the other defs surfaced
+    assert r["id"].endswith(".run")
+
+
+def test_ambiguous_resolution_warns_in_envelope():
+    # F14: a relational op on an ambiguous name carries a `resolved` warning so the
+    # caller never acts on a silently-wrong symbol.
+    s = Session(extract(DISPATCH))
+    env = s.handle({"op": "callers", "args": {"symbol": "run"}})
+    assert env["ok"]
+    assert env["resolved"]["ambiguous"] is True
+
+
+def test_unambiguous_shortname_resolves_without_ambiguity_flag():
+    # F13/F14: a short name with a single def resolves (envelope shows the rewrite
+    # for transparency) but is NOT flagged ambiguous.
+    s = Session(extract(DISPATCH))
+    env = s.handle({"op": "implementers", "args": {"protocol": "ThingProtocol"}})
+    assert env["ok"]
+    assert env["resolved"]["ambiguous"] is False
+    assert env["resolved"]["id"] == "dispatchpkg.base.ThingProtocol"
+
+
+def test_exact_id_input_no_resolved_noise():
+    # An already-canonical id neither rewrites nor is ambiguous → no `resolved` block.
+    s = Session(extract(DISPATCH))
+    env = s.handle({"op": "implementers",
+                    "args": {"protocol": "dispatchpkg.base.ThingProtocol"}})
+    assert env["ok"]
+    assert "resolved" not in env

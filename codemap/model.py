@@ -37,7 +37,14 @@ from typing import Any
 #      (`column:macd_hist`) with `writes`/`reads` edges (function → column) so
 #      "who produces/consumes this DataFrame column" is queryable (closes
 #      gap-doc F6). Over-set of columns (dict keys land here too — honest).
-SCHEMA_VERSION = "0.8"
+# 0.9: M14 — dataflow access-form (soundness/F15). `column` node carries
+#      `extras.subscripted` (bool — key was ever accessed as `x['k']`, not only a
+#      dict-literal payload key); `reads`/`writes` edges carry `extras.access`
+#      (`subscript` | `dict-literal`). B1 dogfood found 71% of column nodes were
+#      dict-literal-only payload keys (result dicts, config, rcParams) — the
+#      `subscripted` flag lets aggregates surface the ~29% real column-like set
+#      while per-key queries and the F6 producer edge stay intact.
+SCHEMA_VERSION = "0.9"
 
 
 @dataclass

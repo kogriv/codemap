@@ -99,23 +99,40 @@ class Session:
         self.source_root = source_root
 
     def _canon(self, name_or_id: str) -> str:
-        """Resolve a name / re-export id to the canonical node id (F13)."""
-        return self.query.canonical(name_or_id) or name_or_id
+        """Resolve a name / re-export id to the canonical node id (F13).
+
+        Records the resolution (F14) so ``handle`` can surface an ``ambiguous``
+        warning when a bare short name resolved to one of many defs arbitrarily.
+        """
+        info = self.query.canonical_info(name_or_id)
+        self._resolution = info
+        return info["id"] if info else name_or_id
 
     # -- dispatch ------------------------------------------------------------
 
     def handle(self, request: dict) -> dict:
-        """Route one ``{op, args}`` request to a service; never raises."""
+        """Route one ``{op, args}`` request to a service; never raises.
+
+        When an op resolved its input through ``_canon`` and that resolution either
+        was **ambiguous** (M14/F14 — arbitrary pick among equals) or rewrote the
+        input (F13 — re-export → canonical), the envelope carries a ``resolved``
+        block so a caller never acts on a silently-wrong symbol.
+        """
         op = request.get("op")
         args = request.get("args") or {}
         fn = _OPS.get(op)
         if fn is None:
             return {"ok": False, "error": f"unknown op: {op!r}",
                     "ops": sorted(_OPS)}
+        self._resolution = None
         try:
-            return {"ok": True, "result": fn(self, args)}
+            env = {"ok": True, "result": fn(self, args)}
         except Exception as exc:  # a bad arg must not kill the resident process
             return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        r = self._resolution
+        if r and (r["ambiguous"] or r["input"] != r["id"]):
+            env["resolved"] = r
+        return env
 
     # -- ops (each takes an args dict) ---------------------------------------
 
@@ -145,8 +162,10 @@ class Session:
             "markdown": render_impact(self.query, sym, depth=depth),
         }
 
-    def _op_resolve(self, args) -> str | None:
-        return self.query.canonical(args["name"])
+    def _op_resolve(self, args) -> dict | None:
+        # F14: full resolution — {input, id, ambiguous, alternatives} — so a cold
+        # agent can check for ambiguity before chaining into a relational op.
+        return self.query.canonical_info(args["name"])
 
     def _op_search(self, args) -> list:
         return self.query.search(args["term"], kind=args.get("kind"),
@@ -159,7 +178,9 @@ class Session:
         return self.query.column(args["name"])
 
     def _op_columns(self, args) -> list:
-        return self.query.columns()
+        # F15: default to subscript-accessed keys (the real column-like set);
+        # pass all=true for the full over-set incl. dict-literal payload keys.
+        return self.query.columns(subscripted_only=not args.get("all", False))
 
     def _op_columns_of(self, args) -> dict:
         return self.query.columns_of(self._canon(args["symbol"]))
