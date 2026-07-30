@@ -10,6 +10,12 @@ full M0–M16 development history. Graph schema **0.9**; 123 tests; warm serve s
 
 ### Milestones
 
+- **F23 — impact accepts a full/canonical id** (no schema change): `impact` (op, markdown, CLI) resolved
+  its input by short name only, so passing a full id like `pkg.mod.Class` — exactly what `query`/`search`
+  return — matched nothing and gave a falsely-empty blast radius (found on a live task). Added
+  `Query.impact_targets` (node-id → itself, short name → all matches, else canonical/where_defined) and
+  routed both `_op_impact` and `render_impact` through it. The extraction was fine — class instantiation
+  was always captured; the bug was serve-layer input resolution.
 - **M18 — graph freshness** (no schema change): the MCP server serves a static graph, so `stats` now
   reports `freshness` (`built_at` / `age_seconds` from the file mtime) — an agent can tell the map may be
   stale. The canonical graph.json stays timestamp-free (determinism preserved); build recipe + time live

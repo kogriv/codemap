@@ -253,16 +253,17 @@ thin/full сравнены; детерминизм держится; схема 
       на плоский список refs (by_root-счётчики полны), `call_contract` `limit=30`; `full=true` возвращает
       всё. Underlying-ops/CLI не тронуты. Замер на хабе: impact **−65%** (32.7k→11.6k), call_contract
       **−49%** (17k→8.8k). `serve/mcp_server.py` `_compact_impact`/`_cap_list`. +4 теста (7→11 MCP).
-- [ ] **F23 (Precision/Extraction) — blast-radius пуст для dataclass-моделей.** На реальной задаче
-      (bquant issue #110) `impact(bquant.analysis.zones.models.SwingPoint)` → **`[]`**, хотя `SwingPoint`
-      строится/используется во многих местах (swing-стратегии, сериализация, кэш). Причина: узел
-      **строится напрямую** (`SwingPoint(...)`) — инстанциация класса не ловится как inbound-ребро
-      (`references_to`/`impact` считают calls/references/inherits/imports/decorated_by, но **не**
-      конструктор-вызов класса как ссылку на класс). Итог: у dataclass/value-моделей blast-radius
-      **ложно пуст** — опасно (агент решит «никто не использует»). **Форма фикса:** ловить
-      class-instantiation (`ast.Call` где `func` резолвится в class-узел) как `references`/`calls`-ребро
-      на класс; проверить на моделях bquant (`SwingPoint`/`SwingContext`/`ZoneInfo`). Возможен бамп схемы
-      (новые рёбра). Найдено в живом MCP-использовании.
+- [x] **F23 (Query-surface) — `impact` не принимал полный/canonical id.** ✅ (2026-07-30, без схемы)
+      На реальной задаче (bquant #110) `impact('bquant.analysis.zones.models.SwingPoint')` → **`[]`**.
+      **Гипотеза «конструктор не ловится» ОПРОВЕРГНУТА при воспроизведении:** инстанциация класса
+      **ловится** — у `SwingPoint` 9 inbound calls-рёбер, `references_to` = 9. Настоящая причина: op/рендер
+      `impact` резолвили вход **только по короткому имени** (`find(sym)`), поэтому **полный id** (ровно то,
+      что агент получает назад из `query`/`search`) не матчился ни во что → пустой blast-radius. Молчаливо
+      неверно (как F13, но для impact). **Фикс:** `Query.impact_targets(name_or_id)` — node-id→сам,
+      короткое имя→все матчи (фан-аут сохранён), иначе `canonical` (re-export), иначе `where_defined`;
+      使用 в `_op_impact` и `render_impact`. Проверено: full id и re-export → 10 refs (было 0), короткое
+      имя без изменений. +2 теста. **Урок:** воспроизводить до фикса — записанная гипотеза (extraction)
+      оказалась неверной, реальный баг был в input-резолве serve-слоя.
 
 ---
 

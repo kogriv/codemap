@@ -168,7 +168,7 @@ class Session:
     def _op_impact(self, args) -> dict:
         sym = args["symbol"]
         depth = int(args.get("depth", 2))
-        ids = [n.id for n in self.query.find(sym)] or self.query.where_defined(sym)
+        ids = self.query.impact_targets(sym)  # F23: accept full id / re-export too
         return {
             "symbol": sym,
             "impact": [self.query.impact(sid, depth=depth) for sid in ids],

@@ -118,6 +118,23 @@ def test_render_impact_markdown(thin):
     assert "lower bound" in out  # honesty disclaimer present
 
 
+def test_impact_targets_accepts_full_id_and_short_name(thin):
+    # F23: a full/canonical id resolves for impact, not only the bare short name —
+    # otherwise a symbol queried by its returned id gets a falsely-empty blast radius.
+    q = Query(thin)
+    assert q.impact_targets("core.engine.Engine") == ["core.engine.Engine"]
+    assert q.impact_targets("Engine") == ["core.engine.Engine"]
+    assert q.impact_targets("nope_xyz") == []
+
+
+def test_render_impact_by_full_id_matches_short_name(thin):
+    # the #F23 bug: render_impact("core.engine.Engine") said "No definition found".
+    q = Query(thin)
+    by_full = render_impact(q, "core.engine.Engine")
+    assert "No definition found" not in by_full
+    assert "usage" in by_full and "docs" in by_full
+
+
 # -- determinism --------------------------------------------------------------
 
 def test_repo_scope_deterministic():

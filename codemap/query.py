@@ -209,6 +209,25 @@ class Query:
         ids.update(self._exports.get(name, []))
         return sorted(ids)
 
+    def impact_targets(self, name_or_id: str) -> list[str]:
+        """Node id(s) to run impact over, from a name / **full id** / re-export (F23).
+
+        The blast-radius surface previously resolved the input via short-name
+        ``find`` only, so a canonical/full id (``pkg.mod.Class`` — exactly what the
+        agent gets back from ``query``/``search``) matched nothing and returned an
+        empty impact, even for a widely-used symbol. Order: an existing node id maps
+        to itself; else all short-name matches (kept — a bare name like ``calculate``
+        legitimately fans out); else the canonical resolution of a re-export; else
+        ``where_defined``.
+        """
+        if name_or_id in self.graph.nodes:
+            return [name_or_id]
+        matches = [n.id for n in self.find(name_or_id)]
+        if matches:
+            return matches
+        canon = self.canonical(name_or_id)
+        return [canon] if canon else self.where_defined(name_or_id)
+
     # -- module dependencies (both directions) ------------------------------
 
     def dependencies(self, module_id: str) -> list[str]:

@@ -13,8 +13,7 @@ from codemap.query import Query
 
 def render_impact(query: Query, symbol: str, *, depth: int = 2) -> str:
     """Markdown blast-radius for the symbol matching ``symbol`` (short or full)."""
-    matches = query.find(symbol)
-    ids = [n.id for n in matches] or query.where_defined(symbol)
+    ids = query.impact_targets(symbol)  # F23: short name / full id / re-export
     lines = [f"# Impact — `{symbol}`", ""]
     lines.append(
         "_Best-effort static blast radius: who references the symbol (and its "
