@@ -148,6 +148,57 @@ class Query:
         ]
         return sorted(out, key=lambda r: (len(r["id"]), r["id"]))[:limit]
 
+    # -- location → symbol (M15/F16 — the reviewer's diff entry point) --------
+
+    def _defs_in_file(self, file: str):
+        """(lineno, endlineno, id) for located definitions in ``file`` + module id."""
+        defs, module = [], None
+        for n in self.graph.nodes.values():
+            if n.file != file:
+                continue
+            if n.kind == "module":
+                module = n.id
+            elif n.kind in ("function", "class", "attribute") and n.lineno is not None:
+                defs.append((n.lineno, n.endlineno or n.lineno, n.id))
+        return defs, module
+
+    def symbol_at(self, file: str, line: int) -> str | None:
+        """Innermost definition whose span contains ``(file, line)`` (M15/F16).
+
+        The reviewer's entry point: a diff gives ``file:line``, not a symbol name.
+        Nodes carry ``file``/``lineno``/``endlineno`` — this walks them to the
+        tightest enclosing function/class/attribute, falling back to the **module**
+        when the line is module-level code (between defs, e.g. a top-level dict) so a
+        change there is never silently dropped. Returns None if the file is unknown
+        (e.g. a consumer-root node that carries no ``file``).
+        """
+        defs, module = self._defs_in_file(file)
+        best, best_span = None, None
+        for lo, hi, nid in defs:
+            if lo <= line <= hi and (best is None or (hi - lo) < best_span):
+                best, best_span = nid, hi - lo
+        return best or module
+
+    def symbols_in_range(self, file: str, start: int, end: int) -> list[str]:
+        """Distinct innermost symbols a hunk ``file:[start,end]`` touches (M15/F16).
+
+        Per changed line, the tightest enclosing symbol (module fallback), deduped —
+        so a hunk landing in one method of a big class yields that method, not the
+        whole class. Powers change-set review from raw diff hunks.
+        """
+        defs, module = self._defs_in_file(file)
+        if not defs and module is None:
+            return []
+        out: set[str] = set()
+        for line in range(start, end + 1):
+            best, best_span = None, None
+            for lo, hi, nid in defs:
+                if lo <= line <= hi and (best is None or (hi - lo) < best_span):
+                    best, best_span = nid, hi - lo
+            out.add(best or module)
+        out.discard(None)
+        return sorted(out)
+
     def where_defined(self, name: str) -> list[str]:
         """Canonical definition path(s) for ``name`` — resolving re-exports.
 

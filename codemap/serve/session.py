@@ -21,6 +21,7 @@ from codemap.serve.audit import render_behavior, render_dead_code, render_depend
 from codemap.serve.impact import render_impact
 from codemap.serve.mermaid import render_mermaid
 from codemap.serve.rag import build_chunks
+from codemap.serve.review import build_review, render_review
 from codemap.serve.vault import build_vault
 
 _REPORTS = {
@@ -202,6 +203,21 @@ class Session:
     def _op_call_contract(self, args) -> list:
         return self.query.call_contract(self._canon(args["symbol"]))
 
+    def _op_locate(self, args) -> dict:
+        """F16: (file, line) or (file, lines:[start,end]) → containing symbol(s)."""
+        file = args["file"]
+        if "line" in args:
+            return {"file": file, "line": int(args["line"]),
+                    "symbol": self.query.symbol_at(file, int(args["line"]))}
+        lo, hi = args["lines"]
+        return {"file": file, "lines": [int(lo), int(hi)],
+                "symbols": self.query.symbols_in_range(file, int(lo), int(hi))}
+
+    def _op_review(self, args) -> dict:
+        """F17: change-set review from diff hunks and/or explicit symbols."""
+        return build_review(self.query, hunks=args.get("hunks"),
+                            symbols=args.get("symbols"))
+
     def _op_source(self, args) -> dict:
         """Return the source span of a symbol (F12): {file, lines, code?}.
 
@@ -265,6 +281,8 @@ _OPS = {
     "implementers": Session._op_implementers,
     "family": Session._op_family,
     "call_contract": Session._op_call_contract,
+    "locate": Session._op_locate,
+    "review": Session._op_review,
     "source": Session._op_source,
     "report": Session._op_report,
     "export": Session._op_export,

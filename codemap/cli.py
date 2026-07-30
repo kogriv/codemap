@@ -9,6 +9,8 @@
         rag                          → JSONL chunks (consumer A)
         vault -o <dir>               → Obsidian vault tree (consumer B)
         mermaid --mkind class|deps|calls [--scope X] [--root Y] [--depth N]
+    codemap review [diff|-] (--graph g.json | --build <path>) [--format markdown|json]
+        unified diff (or stdin) → risk-sorted change-set review (M15/F17)
 """
 
 from __future__ import annotations
@@ -154,6 +156,20 @@ def _cmd_export(args) -> int:
     return 0
 
 
+def _cmd_review(args) -> int:
+    """Change-set review from a unified diff → what to review (M15/F17)."""
+    from codemap.serve.review import build_review, parse_unified_diff, render_review
+    text = (sys.stdin.read() if args.diff in (None, "-")
+            else Path(args.diff).read_text(encoding="utf-8"))
+    hunks = parse_unified_diff(text)
+    q = Query(_graph_from(args))
+    if args.format == "json":
+        print(json.dumps(build_review(q, hunks=hunks), indent=2, sort_keys=True))
+    else:
+        print(render_review(q, hunks=hunks), end="")
+    return 0
+
+
 def _cmd_serve(args) -> int:
     """Load the graph once, then serve JSON requests over stdio (warm — M3.1)."""
     from codemap.serve.server import serve_stdio
@@ -225,6 +241,13 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--root", help="mermaid calls: root symbol.")
     e.add_argument("--depth", type=int, default=2, help="mermaid calls: BFS depth.")
     e.set_defaults(func=_cmd_export)
+
+    rv = sub.add_parser("review", help="Change-set review from a unified diff → what to review.")
+    rv.add_argument("diff", nargs="?", default="-",
+                    help="Unified-diff file (or '-'/omit for stdin, e.g. `git diff | codemap review`).")
+    _add_source(rv)
+    rv.add_argument("--format", choices=["markdown", "json"], default="markdown")
+    rv.set_defaults(func=_cmd_review)
 
     s = sub.add_parser("serve", help="Warm resident process: JSON requests over stdin/stdout.")
     _add_source(s)

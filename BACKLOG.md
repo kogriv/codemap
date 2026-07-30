@@ -1,12 +1,13 @@
 # codemap — Бэклог
 
 **Тип:** Живой бэклог реализации. **Рамка:** `DESIGN.md` (дизайн v1 закрыт, решения §10 приняты).
-**Статус:** ✅ **M0 + M1 + M1.5 + M4 + M5 + M2 + M6 + M7 + M8–M13 + M14 сделаны** (M8–M12 — 2026-07-29,
-закрытие findings глубокой обкатки F8/F4/F3/F7/F6: провенанс dead-code, `implements`-семейства,
-class-chunk агрегация, арг-контракт call-site, `column`-dataflow; M13 — serve-эргономика F9–F13;
-M14 — 2026-07-30, soundness B1 F14/F15: `canonical`-ambiguity + column access-form; схема 0.9) +
-**M3.1** тёплый serve-режим (граф в памяти, JSON-стдио). Осталось (отложено как преждевременное) —
-**M3.2/M3.3** (freshness-watcher, SQLite) и тонкий MCP-адаптер — брать при живом потребителе/масштабе.
+**Статус:** ✅ **M0 + M1 + M1.5 + M4 + M5 + M2 + M6 + M7 + M8–M13 + M14 + M15 сделаны** (M8–M12 —
+2026-07-29, findings глубокой обкатки F8/F4/F3/F7/F6; M13 — serve-эргономика F9–F13; M14 — 2026-07-30,
+soundness B1 F14/F15: `canonical`-ambiguity + column access-form, схема 0.9; M15 — 2026-07-30,
+diff/change-review A11 F16/F17: локация→символ + change-set-ревью, `codemap review`) + **M3.1** тёплый
+serve-режим (граф в памяти, JSON-стдио). Осталось (отложено как преждевременное) — **M3.2/M3.3**
+(freshness-watcher, SQLite), **двух-графовый diff** (added/deleted символы) и тонкий MCP-адаптер —
+брать при живом потребителе/масштабе.
 
 Вехи от «тонкого сквозного среза» к расширению. Внутри вехи задачи упорядочены по зависимости.
 Отсылки `§N` — разделы `DESIGN.md`.
@@ -226,6 +227,29 @@ thin/full сравнены; детерминизм держится; схема 
       (3k узлов); SQLite оправдан только при бóльшем графе/serve-нагрузке. Двери открыты за той же query-поверхностью.
 - [ ] **M3.1+ MCP-адаптер** — тонкая обёртка `Session.handle` в MCP-tools (по одному tool на op), когда
       нужен нативный вызов из AI-агента; требует зависимости `mcp`. Логики нет — только маппинг.
+
+---
+
+## Кандидаты из обкатки diff/change-review 2026-07-30 (ось A11, findings F16–F17) — ✅ ЗАКРЫТЫ (M15, 2026-07-30)
+
+Обкатка A11 (`gaps/changereview_dogfood_2026-07-30.md`): вход ревьюера — **дифф** (файл+строки), не имя.
+Два разрыва, оба в query/serve-слое (**без схемы**), +13 тестов (103→116); serve 18→20 ops.
+
+- [x] **F16 (Query-surface) — резолвер локация→символ.** ✅ (M15, 2026-07-30, без схемы)
+      Данные containment (`file`+`lineno`+`endlineno`) были, поверхности не было; `search` матчит только
+      подстроку id. `Query.symbol_at(file,line)` (внутренний-первым, **fallback к модулю** для кода между
+      def'ами) + `symbols_in_range(file,s,e)` (per-line дедуп); serve op `locate` ({file,line}|{file,lines}).
+- [x] **F17 (Workflow) — агрегация ревью change-set.** ✅ (M15, 2026-07-30, без схемы)
+      Было: 4 символа = ~20 ручных вызовов + склейка. `serve/review.py`: `build_review(hunks|symbols)` →
+      сшитое досье (per-symbol callers/call_contract/columns/consumers_by_root) + union blast-by-root +
+      **risk-ранг** (синтез из fan-out/cross-root/contract-sites/dataflow — R3 сложился бесплатно) +
+      unresolved-хунки (ничего не теряется молча); `render_review` markdown; serve op `review`; CLI
+      `codemap review <diff>` с парсером unified-хунков (`parse_unified_diff`, new-side диапазоны).
+      Проверено на реальном `git diff` (7 хунков→10 символов, high-risk первыми, blast core 32/tests 27).
+
+**Границы (не гэпы, в бэклог):** added/deleted символы → **двух-графовый diff** (rebuild@base vs @head),
+отложено с M3.3 (резолвер деградирует к объемлющему узлу, added не выдумывает); consumer-руты
+(tests/examples) `file` НЕ несут → дифф по тесту не локализуется (core-ревью — 80% случая).
 
 ---
 
