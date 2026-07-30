@@ -1,13 +1,13 @@
 # codemap — Бэклог
 
 **Тип:** Живой бэклог реализации. **Рамка:** `DESIGN.md` (дизайн v1 закрыт, решения §10 приняты).
-**Статус:** ✅ **M0 + M1 + M1.5 + M4 + M5 + M2 + M6 + M7 + M8–M13 + M14 + M15 сделаны** (M8–M12 —
-2026-07-29, findings глубокой обкатки F8/F4/F3/F7/F6; M13 — serve-эргономика F9–F13; M14 — 2026-07-30,
-soundness B1 F14/F15: `canonical`-ambiguity + column access-form, схема 0.9; M15 — 2026-07-30,
-diff/change-review A11 F16/F17: локация→символ + change-set-ревью, `codemap review`) + **M3.1** тёплый
-serve-режим (граф в памяти, JSON-стдио). Осталось (отложено как преждевременное) — **M3.2/M3.3**
-(freshness-watcher, SQLite), **двух-графовый diff** (added/deleted символы) и тонкий MCP-адаптер —
-брать при живом потребителе/масштабе.
+**Статус:** ✅ **M0 + M1 + M1.5 + M4 + M5 + M2 + M6 + M7 + M8–M16 сделаны** (M8–M12 — 2026-07-29,
+findings глубокой обкатки F8/F4/F3/F7/F6; M13 — serve-эргономика F9–F13; M14 — 2026-07-30, soundness B1
+F14/F15: `canonical`-ambiguity + column access-form, схема 0.9; M15 — diff/change-review A11 F16/F17:
+локация→символ + change-set-ревью, `codemap review`; M16 — архитектура A9 F18–F21: слои/coupling/хотспоты,
+`report architecture`) + **M3.1** тёплый serve-режим (граф в памяти, JSON-стдио). Осталось (отложено как
+преждевременное) — **M3.2/M3.3** (freshness-watcher, SQLite), **двух-графовый diff** (added/deleted
+символы) и тонкий MCP-адаптер — брать при живом потребителе/масштабе.
 
 Вехи от «тонкого сквозного среза» к расширению. Внутри вехи задачи упорядочены по зависимости.
 Отсылки `§N` — разделы `DESIGN.md`.
@@ -227,6 +227,31 @@ thin/full сравнены; детерминизм держится; схема 
       (3k узлов); SQLite оправдан только при бóльшем графе/serve-нагрузке. Двери открыты за той же query-поверхностью.
 - [ ] **M3.1+ MCP-адаптер** — тонкая обёртка `Session.handle` в MCP-tools (по одному tool на op), когда
       нужен нативный вызов из AI-агента; требует зависимости `mcp`. Логики нет — только маппинг.
+
+---
+
+## Кандидаты из обкатки архитектуры 2026-07-30 (ось A9, findings F18–F21) — ✅ ЗАКРЫТЫ (M16, 2026-07-30)
+
+Обкатка A9 (`gaps/architecture_dogfood_2026-07-30.md`): роль архитектора — «форма системы целиком».
+Было только `report dependencies` (циклы + top-imported). 4 гэпа, все Query-surface/Workflow, **без
+схемы** (поверх import-графа/calls/contains/провенанса), +7 тестов (116→123); serve report-kinds 4→5,
+ops 20→21. Реальная находка на bquant: слоевое нарушение `analysis ↔ indicators` (взаимозависимость).
+
+- [x] **F18 (Query-surface/Workflow) — слои + направление + нарушения.** ✅ (M16, 2026-07-30, без схемы)
+      `Query.layers()` → {слои (компонент под пакетом), межслойная матрица, **violations order-free** =
+      слоевые пары с рёбрами в обе стороны — без хардкода порядка `core<analysis`}. На bquant: 8 слоёв,
+      нарушение `analysis↔indicators`.
+- [x] **F19 (Query-surface) — coupling / instability.** ✅ (M16, 2026-07-30, без схемы)
+      `Query.coupling()` → per-module Ca (кто зависит от меня) / Ce (от кого завишу) / I=Ce/(Ca+Ce).
+      `logging_config` Ca94 I0.01 (стабильный лист), `exceptions/config/nb` I0.00 (стабильное ядро).
+- [x] **F20 (Query-surface) — god-объекты / хотспоты.** ✅ (M16, 2026-07-30, без схемы)
+      `Query.hotspots()` → god-классы (методы≥порог: `ZoneVisualizer` 35, `NotebookSimulator` 23,
+      `ZoneAnalysisPipeline` 20) + call-хабы (in+out) с флагом **pervasive** (логгер/util — ожидаемый шум,
+      не риск; `ContextualLogger.info` 105 помечен, реальные хабы `analyze_zones` 48 выделяются).
+- [x] **F21 (Workflow) — синтез: architecture overview.** ✅ (M16, 2026-07-30, без схемы)
+      `serve/architecture.py`: `build_/render_architecture` (циклы+слои+coupling+хотспоты в один вид);
+      report kind `architecture` (CLI `codemap report architecture` + serve report); serve op `architecture`
+      (структурный). Проверено на живом графе — читаемый одностраничный обзор формы системы.
 
 ---
 

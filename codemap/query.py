@@ -508,3 +508,102 @@ class Query:
     @property
     def import_graph(self) -> nx.DiGraph:
         return self._imports
+
+    # -- architecture: whole-system shape (M16 / A9) -------------------------
+
+    def _layer_of(self, module_id: str) -> str:
+        """Layer = the component just under the package root (``bquant.<layer>``)."""
+        pkg = self.graph.target
+        parts = module_id.split(".")
+        if parts[0] == pkg and len(parts) >= 2:
+            return parts[1]
+        return "(root)"
+
+    def layers(self) -> dict:
+        """Layer dependency structure of the **core** package (M16/F18).
+
+        Groups modules into layers (the component under the package root), sums
+        inter-layer import edges, and flags **violations** order-free: a layer pair
+        with edges in *both* directions (mutual dependency) is a coupling smell
+        regardless of intended layering — no hardcoded ``core < analysis`` order.
+        """
+        ig = self._imports
+        members: dict[str, list[str]] = {}
+        for m in ig.nodes:
+            if self.root_of(m) == "core":
+                members.setdefault(self._layer_of(m), []).append(m)
+        edges: dict[tuple[str, str], int] = {}
+        for u, v in ig.edges():
+            if self.root_of(u) != "core" or self.root_of(v) != "core":
+                continue
+            lu, lv = self._layer_of(u), self._layer_of(v)
+            if lu != lv:
+                edges[(lu, lv)] = edges.get((lu, lv), 0) + 1
+        violations = sorted(
+            {tuple(sorted((a, b))) for (a, b) in edges if (b, a) in edges}
+        )
+        return {
+            "layers": {k: sorted(v) for k, v in sorted(members.items())},
+            "edges": {f"{a} -> {b}": n for (a, b), n in
+                      sorted(edges.items(), key=lambda x: (-x[1], x[0]))},
+            "violations": [list(v) for v in violations],
+        }
+
+    def coupling(self, *, root: str = "core", limit: int = 20) -> list[dict]:
+        """Per-module afferent/efferent coupling + instability (M16/F19).
+
+        Ca = modules that import me, Ce = modules I import, Instability
+        I = Ce/(Ca+Ce) (0 = maximally stable, 1 = maximally unstable). Sorted most-
+        depended-on first. Restricted to ``root`` provenance (default core).
+        """
+        ig = self._imports
+        out = []
+        for m in ig.nodes:
+            if self.root_of(m) != root:
+                continue
+            ca, ce = ig.in_degree(m), ig.out_degree(m)
+            tot = ca + ce
+            out.append({"module": m, "ca": ca, "ce": ce,
+                        "instability": round(ce / tot, 2) if tot else 0.0})
+        out.sort(key=lambda r: (-r["ca"], r["module"]))
+        return out[:limit]
+
+    def hotspots(self, *, root: str = "core", min_methods: int = 12,
+                 limit: int = 15) -> dict:
+        """God-object classes + call-graph hubs (M16/F20).
+
+        ``god_classes``: classes with ``>= min_methods`` methods (concentration of
+        behavior). ``call_hubs``: symbols with the highest call-graph degree
+        (in+out) — but pervasive utilities (a logger, sample loaders) dominate by
+        nature, so each hub is flagged ``pervasive`` when its short name looks like
+        logging/util so the reader discounts expected noise, not real risk.
+        """
+        method_counts: dict[str, int] = {}
+        for e in self.graph.edges:
+            if e.type != "contains":
+                continue
+            src = self.graph.nodes.get(e.source)
+            tgt = self.graph.nodes.get(e.target)
+            if src and src.kind == "class" and tgt and tgt.kind == "function" \
+                    and self.root_of(e.source) == root:
+                method_counts[e.source] = method_counts.get(e.source, 0) + 1
+        god = sorted(((c, n) for c, n in method_counts.items() if n >= min_methods),
+                     key=lambda x: (-x[1], x[0]))[:limit]
+
+        cg = self._calls
+        hubs = []
+        for nid in cg.nodes:
+            if self.root_of(nid) != root:
+                continue
+            deg = cg.in_degree(nid) + cg.out_degree(nid)
+            short = nid.rsplit(".", 1)[-1]
+            recv = nid.rsplit(".", 2)[-2] if nid.count(".") >= 2 else ""
+            pervasive = any(t in (recv + "." + short).lower()
+                            for t in ("logger", "log", "get_sample", "warning",
+                                      "debug", "info", "error"))
+            hubs.append({"id": nid, "degree": deg, "pervasive": pervasive})
+        hubs.sort(key=lambda r: (-r["degree"], r["id"]))
+        return {
+            "god_classes": [{"class": c, "methods": n} for c, n in god],
+            "call_hubs": hubs[:limit],
+        }

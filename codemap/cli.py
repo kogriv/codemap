@@ -27,6 +27,7 @@ from codemap.serve import (
     build_query_result,
     build_vault,
     render_api_surface,
+    render_architecture,
     render_behavior,
     render_dead_code,
     render_dependencies,
@@ -40,6 +41,7 @@ _REPORTS = {
     "dependencies": render_dependencies,     # takes Query
     "dead-code": render_dead_code,           # takes Query
     "behavior": render_behavior,             # takes Query
+    "architecture": render_architecture,     # takes Query (M16/A9)
 }
 _REPORT_KINDS = sorted(_REPORTS) + ["impact"]  # impact takes (Query, --symbol)
 

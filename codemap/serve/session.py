@@ -17,6 +17,7 @@ from collections import Counter
 from codemap.model import SCHEMA_VERSION, Graph
 from codemap.query import Query
 from codemap.serve.api_surface import render_api_surface
+from codemap.serve.architecture import build_architecture, render_architecture
 from codemap.serve.audit import render_behavior, render_dead_code, render_dependencies
 from codemap.serve.impact import render_impact
 from codemap.serve.mermaid import render_mermaid
@@ -29,6 +30,7 @@ _REPORTS = {
     "dependencies": render_dependencies,
     "dead-code": render_dead_code,
     "behavior": render_behavior,
+    "architecture": render_architecture,
 }
 
 
@@ -218,6 +220,10 @@ class Session:
         return build_review(self.query, hunks=args.get("hunks"),
                             symbols=args.get("symbols"))
 
+    def _op_architecture(self, args) -> dict:
+        """F21: whole-system shape — cycles + layers + coupling + hotspots."""
+        return build_architecture(self.query)
+
     def _op_source(self, args) -> dict:
         """Return the source span of a symbol (F12): {file, lines, code?}.
 
@@ -283,6 +289,7 @@ _OPS = {
     "call_contract": Session._op_call_contract,
     "locate": Session._op_locate,
     "review": Session._op_review,
+    "architecture": Session._op_architecture,
     "source": Session._op_source,
     "report": Session._op_report,
     "export": Session._op_export,

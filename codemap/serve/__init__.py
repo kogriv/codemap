@@ -1,6 +1,7 @@
 """Serve layer: views/reports over the canonical graph (DESIGN §4)."""
 
 from codemap.serve.api_surface import render_api_surface
+from codemap.serve.architecture import build_architecture, render_architecture
 from codemap.serve.audit import render_behavior, render_dead_code, render_dependencies
 from codemap.serve.impact import render_impact
 from codemap.serve.mermaid import render_mermaid
@@ -15,6 +16,8 @@ __all__ = [
     "render_dependencies",
     "render_dead_code",
     "render_behavior",
+    "render_architecture",
+    "build_architecture",
     "render_impact",
     "render_mermaid",
     "render_rag",
