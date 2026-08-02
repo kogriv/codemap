@@ -17,7 +17,7 @@ full M0–M16 development history. Graph schema **0.9**; 123 tests; warm serve s
   precise graph, no stale index); differentiators are the canonical diffable `graph.json` with provenance
   and native agent/MCP verbs. Concrete capability candidates (SCIP/ctags export, architecture-contracts
   `--check`, complexity metrics, relevance ranking + token-budgeted pack, …) logged as use-driven backlog
-  items (R1-C1…C12). No code/schema change.
+  items (R1-C1…C14, fully specified with scope/acceptance/effort, tiered by value÷cost). No code/schema change.
 - **F23 — impact accepts a full/canonical id** (no schema change): `impact` (op, markdown, CLI) resolved
   its input by short name only, so passing a full id like `pkg.mod.Class` — exactly what `query`/`search`
   return — matched nothing and gave a falsely-empty blast radius (found on a live task). Added

@@ -284,36 +284,101 @@ Cody уходит от эмбеддингов к search+graph, Anthropic: agenti
 
 ### R1 → кандидаты в способности (use-driven, по нужде; порядок = value÷cost)
 
-- [ ] **R1-C1 SCIP-экспорт** — `export --scip` (Protobuf occurrences). Наивысшая interop-ценность: один
-      экспортёр → Sourcegraph + Glean + вся precise-code-intel экосистема. Модель SCIP ложится ~1:1 на граф
-      codemap (каноничные id + provenance). Экспортировать то, в чём уверены (defs/refs), остальное — метить.
-- [ ] **R1-C2 ctags-экспорт** — `export --ctags` из def-узлов. Мгновенная совместимость с любым редактором,
-      почти нулевые усилия; «пол» способностей, который codemap заведомо перекрывает.
-- [ ] **R1-C3 Архитектурные контракты + `--check`** — декларативный файл контрактов (layers/independence/
-      forbidden/containers/exhaustive) + ненулевой exit → architecture-отчёт становится **CI-гейтом**
-      (паритет с import-linter). **Самый ценный gap.** Сейчас codemap только *описывает* слои/нарушения.
-- [ ] **R1-C4 Метрики сложности в hotspots** — cyclomatic / Halstead / Maintainability Index поверх уже
-      имеющегося griffe-AST (детерминированно, source-only, on-brand) → богаче ранжирование hotspot
-      (паритет с radon). Сейчас hotspot чисто структурный (Ca/Ce, fan-in/out). wily-урок: метрики во времени.
-- [ ] **R1-C5 API breaking-change отчёт** — сигнатурный diff между двумя графами (идея griffe API-diff).
-      Пересекается с отложенным **двух-графовым diff** (added/deleted символы для `review`) — брать вместе.
-- [ ] **R1-C6 Relevance-ранжирование + token-budgeted pack** — PageRank-подобный ранкинг (как aider
-      repo-map) + режим «отрендерить релевантный срез под N токенов» → codemap как first-class
-      context-provider, а не только point-query. Две вещи, которых у codemap нет: *ранжирование* и
-      *бюджетированный рендер*.
-- [ ] **R1-C7 Задокументированный закрытый словарь edge-kind + структурные descriptor-id** — дисциплина
-      схемы Kythe/SCIP (почти уже так — формализовать и задокументировать).
-- [ ] **R1-C8 Dead-code confidence + whitelist UX** — градуированная уверенность (паритет с vulture) поверх
-      provenance-aware dead-code (у codemap уже есть контекст, лечащий FP vulture — оформить как UX).
-- [ ] **R1-C9 Инкрементальные / Merkle-обновления графа** — контент-хеш дерева, пересчёт только изменённых
-      подграфов (идея Cursor). Питает отложенный **M3.2** watcher.
-- [ ] **R1-C10 rope-безопасные правки** — опциональный слой мутаций (rename по вычисленному blast-radius);
-      read-only остаётся дефолтом. Только если codemap пойдёт от анализа к правкам.
-- [ ] **R1-C11 tree-sitter multi-language backend** — если выходить за Python: tree-sitter (доказано
-      ast-grep) — стандартный source-only/детерминированный/offline бэкенд ширины; **глубина (call-graph/
-      impact/contracts) остаётся за jedi/griffe** — это ров codemap. Смыкается с «Мультиязычность» ниже.
-- [ ] **R1-C12 PyCG-бенчмарк call-graph** — сверить точность callers/callees против PyCG-резолвинга; честно
-      заявить потолок (~99% precision / ~70% recall — предел ЛЮБОГО статического инструмента на динамике).
+Каждый пункт — готовая к взятию задача (**Scope / Зачем / Приёмка / Оценка**). Оценка в t-shirt: S≈полдня,
+M≈1–2 дня, L≈неделя, XL≈крупная веха. Дефолт стойки сохраняется: **source-only, детерминизм, read-only,
+Python-focus** — если задача его нарушает, это отмечено.
+
+#### Tier 1 — высокая value÷cost, брать первыми
+
+- [ ] **R1-C1 SCIP-экспорт** (M) — `codemap export --scip <graph.json> -o index.scip`.
+      **Scope:** маппинг узлов/рёбер графа в `scip.proto` (Document per файл; Occurrence = symbol-string +
+      range + SymbolRole: Definition/Import/Read/Write; SymbolInformation: kind/docs/relationships).
+      Symbol-string строится из каноничного id codemap (descriptor-путь `mod/Class#method().`). `scip`-dep —
+      **опциональный** extra (как `mcp`), lazy-import. **Зачем:** один экспортёр → interop с Sourcegraph +
+      Glean (Glean ест SCIP) + весь precise-code-intel; наивысшая внешняя ценность.
+      **Приёмка:** сгенерённый `.scip` проходит `scip print`/валидацию; defs/refs известного символа
+      совпадают с `impact`; экспортируем только уверенное (defs + резолвнутые refs), неуверенное — не льём.
+      **Оценка:** M. **Зависит от:** структурных descriptor-id (R1-C7 желателен, не блокер).
+- [ ] **R1-C2 ctags-экспорт** (S) — `codemap export --ctags <graph.json> -o tags`.
+      **Scope:** из def-узлов эмитить строки `name\tfile\t/^…$/;"\tkind` (+ scope/signature extension-поля),
+      формат universal-ctags; детерминированная сортировка. **Зачем:** мгновенная совместимость с любым
+      редактором почти без усилий; «пол» способностей, который codemap заведомо перекрывает.
+      **Приёмка:** `tags`-файл читается vim/`readtags`; на bquant покрывает все classes/functions/methods;
+      байт-стабилен между прогонами. **Оценка:** S.
+- [ ] **R1-C3 Архитектурные контракты + `--check`** (M) — декларативный файл контрактов + CI-гейт.
+      **Scope:** формат контрактов (layers ordered / independence / forbidden / containers / exhaustive) в
+      `codemap.toml`; `codemap architecture --check` → ненулевой exit + список нарушающих import-цепочек.
+      **Зачем:** сейчас architecture только *описывает* слои/нарушения; import-linter даёт *декларируемый
+      контракт, падающий в CI* — превращает отчёт в **enforceable gate**. **Самый ценный gap.**
+      **Приёмка:** заданный layers-контракт на bquant ловит намеренное нарушение (exit≠0) и проходит на
+      чистом (exit=0); exhaustive-режим падает при новом незадекларированном модуле. **Оценка:** M.
+      **Зависит от:** уже имеющегося `Query.layers/coupling` (M16).
+- [ ] **R1-C4 Метрики сложности в hotspots** (M) — cyclomatic / Halstead / Maintainability Index.
+      **Scope:** посчитать CC/MI по уже имеющемуся griffe-AST (без radon-dep — реализовать
+      детерминированно, source-only, on-brand); добавить в hotspot-скоринг и в `architecture`-отчёт.
+      **Зачем:** сейчас hotspot чисто структурный (Ca/Ce, fan-in/out) — «большой по связности класс» ≠
+      «сложная по McCabe функция»; комбинация сильнее. **Приёмка:** per-symbol CC/MI в `query`-досье и
+      hotspot-ранжирование учитывает обе оси; числа детерминированы. **Оценка:** M. wily-урок (метрики во
+      времени) — отдельная поздняя надстройка над `review`.
+
+#### Tier 2 — среднее value÷cost, нужен небольшой дизайн
+
+- [ ] **R1-C5 Двух-графовый diff + API breaking-change** (M) — объединить с отложенным двух-графовым diff.
+      **Scope:** сравнить два `graph.json` → added/deleted/changed символы; для changed — сигнатурный
+      breaking-change (идея griffe API-diff: убранный параметр, сузившийся тип, удалённый публичный символ).
+      Влить в `review` (сейчас он по хункам, не видит удалённые/новые узлы). **Зачем:** «что сломалось между
+      коммитами» на уровне API. **Приёмка:** на паре графов до/после известного изменения сигнатуры diff
+      помечает breaking; added/deleted символы перечислены. **Оценка:** M. **Заменяет** пункт «двух-графовый
+      diff» из отложенного.
+- [ ] **R1-C6 Relevance-ранжирование + token-budgeted pack** (L) — codemap как first-class context-provider.
+      **Scope:** (a) PageRank-подобный ранкинг узлов (personalized — смещение к seed-символам/файлам, как
+      aider repo-map); (b) режим `codemap pack --budget N` — отрендерить наиболее релевантный срез графа
+      (сигнатуры, ключевые рёбра) под N токенов (binary-search укладка). **Зачем:** сейчас codemap отвечает
+      на point-query; двух вещей нет — *ранжирования* (что показать) и *бюджетированного рендера*.
+      **Приёмка:** ранкинг детерминирован; `pack --budget` укладывается в лимит и на bquant включает
+      топ-хабы раньше листьев. **Оценка:** L.
+- [ ] **R1-C7 Закрытый словарь edge-kind + структурные descriptor-id** (S) — дисциплина схемы Kythe/SCIP.
+      **Scope:** задокументировать закрытый список типов рёбер и форму каноничных id как structured
+      descriptor (почти уже так); тест, падающий при незадекларированном edge-type. **Зачем:** предпосылка
+      к чистому SCIP-экспорту (R1-C1) и стабильности схемы. **Приёмка:** `docs`/`model.py` перечисляют
+      словарь; тест на closed-set. **Оценка:** S. **Желателен до** R1-C1.
+- [ ] **R1-C8 Dead-code confidence + whitelist UX** (S) — паритет с vulture-UX поверх наших provenance.
+      **Scope:** градуированная уверенность (у codemap уже есть контекст cross-root, лечащий FP vulture) +
+      whitelist-файл + `--min-confidence`. **Зачем:** оформить существующее преимущество как удобный отчёт
+      («vulture без framework-false-positives»). **Приёмка:** dead-code отчёт даёт confidence и уважает
+      whitelist; провенанс-строка объясняет, почему не мёртвое. **Оценка:** S.
+
+#### Tier 3 — крупные / стратегические, строго по нужде
+
+- [ ] **R1-C9 Инкрементальные / Merkle-обновления графа** (L) — контент-хеш дерева, пересчёт только
+      изменённых подграфов (идея Cursor). **Зачем:** быстрый ре-билд на изменении; питает отложенный
+      **M3.2** watcher. **Приёмка:** правка одного файла не триггерит полный ре-экстракт; граф идентичен
+      полному ре-билду. **Оценка:** L. **Смыкается с** M3.2.
+- [ ] **R1-C10 lightweight навигатор графа** (L) — ниша ушедшего Sourcetrail без GUI-налога.
+      **Scope:** статический self-contained HTML/mermaid-навигатор поверх `graph.json` (клик по символу →
+      соседи/impact), генерится `codemap export --view web`. **Зачем:** Sourcetrail умер на поддержке
+      кросс-платформенного GUI; наш детерминированный граф закрывает нишу дёшево. **Приёмка:** один HTML
+      открывается без сервера, навигация по bquant-графу работает офлайн. **Оценка:** L.
+- [ ] **R1-C11 tree-sitter multi-language backend** (XL) — выход за Python. **Scope:** tree-sitter (доказано
+      ast-grep) как source-only/детерминированный/offline бэкенд *ширины*; **глубина (call-graph/impact/
+      contracts) остаётся за jedi/griffe** — это ров codemap. **Зачем:** мультиязычность. **Приёмка:**
+      структура (defs/imports) для ≥1 не-Python языка в том же графе. **Оценка:** XL. **Смыкается с**
+      «Мультиязычность» ниже; брать только при явной нужде.
+- [ ] **R1-C12 rope-безопасные правки** (L) — опциональный слой мутаций (rename по вычисленному
+      blast-radius). **Нарушает read-only-дефолт** — держать за отдельным флагом/extra; read-only остаётся
+      дефолтом. **Зачем:** от анализа к безопасным правкам. **Приёмка:** rename символа по impact-радиусу,
+      dry-run по умолчанию. **Оценка:** L. Только если codemap пойдёт к правкам.
+
+#### Позиционирование (доки, дёшево, не код)
+
+- [ ] **R1-C13 PyCG-бенчмарк + честный потолок** (S) — сверить точность callers/callees против
+      PyCG-резолвинга и **заявить потолок открыто** (~99% precision / ~70% recall — предел ЛЮБОГО
+      статического инструмента на динамике Python) как силу детерминизма, а не прятать. **Приёмка:** раздел
+      в docs + опциональный бенч-скрипт. **Оценка:** S.
+- [ ] **R1-C14 Позиционные доки** (S) — в README: «codemap = точная структурная нога для index-free
+      агентов через MCP» (не замена embeddings-RAG); дифференциаторы (каноничный diffable граф + provenance
+      + agent/MCP-глаголы); provenance-aware dead-code как «vulture без FP». **Приёмка:** README отражает
+      выводы R1. **Оценка:** S.
 
 ---
 
