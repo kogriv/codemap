@@ -9,6 +9,7 @@
         rag                          → JSONL chunks (consumer A)
         vault -o <dir>               → Obsidian vault tree (consumer B)
         mermaid --mkind class|deps|calls [--scope X] [--root Y] [--depth N]
+        scip -o <file>               → SCIP index (defs + symbol info; interop, R1-C1)
     codemap review [diff|-] (--graph g.json | --build <path>) [--format markdown|json]
         unified diff (or stdin) → risk-sorted change-set review (M15/F17)
     codemap serve  (--graph g.json | --build <path>) [--source-root DIR] [--mcp]
@@ -165,6 +166,20 @@ def _cmd_export(args) -> int:
             raise SystemExit("error: export vault needs -o <dir>")
         _write_vault(build_vault(q), args.out)
         print(args.out)
+    elif args.kind == "scip":
+        if not args.out:
+            raise SystemExit("error: export scip needs -o <file> (binary output)")
+        from codemap.serve.scip import build_scip, write_scip
+        from codemap import __version__
+        index = build_scip(
+            q,
+            project_root=args.project_root or os.getcwd(),
+            package=args.package,
+            version=args.package_version,
+            tool_version=__version__,
+        )
+        Path(args.out).write_bytes(write_scip(index))
+        print(f"{args.out} ({len(index.documents)} documents)")
     return 0
 
 
@@ -268,15 +283,20 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")
     r.set_defaults(func=_cmd_report)
 
-    e = sub.add_parser("export", help="Export a view: rag (JSONL) | vault | mermaid.")
-    e.add_argument("kind", choices=["rag", "vault", "mermaid"])
+    e = sub.add_parser("export", help="Export a view: rag (JSONL) | vault | mermaid | scip.")
+    e.add_argument("kind", choices=["rag", "vault", "mermaid", "scip"])
     _add_source(e)
-    e.add_argument("-o", "--out", help="Output file (rag/mermaid) or dir (vault).")
+    e.add_argument("-o", "--out", help="Output file (rag/mermaid/scip) or dir (vault).")
     e.add_argument("--mkind", choices=["class", "deps", "calls"], default="class",
                    help="mermaid diagram kind (default: class).")
     e.add_argument("--scope", help="mermaid class/deps: restrict to this id-prefix.")
     e.add_argument("--root", help="mermaid calls: root symbol.")
     e.add_argument("--depth", type=int, default=2, help="mermaid calls: BFS depth.")
+    e.add_argument("--project-root", help="scip: filesystem root the paths are relative to "
+                                          "(default: cwd). Written as the SCIP project_root URI.")
+    e.add_argument("--package", help="scip: package name in symbol strings (default: graph target).")
+    e.add_argument("--package-version", default=".",
+                   help="scip: package version in symbol strings (default: '.' — unversioned).")
     e.set_defaults(func=_cmd_export)
 
     rv = sub.add_parser("review", help="Change-set review from a unified diff → what to review.")

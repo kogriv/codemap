@@ -290,15 +290,17 @@ Python-focus** — если задача его нарушает, это отм�
 
 #### Tier 1 — высокая value÷cost, брать первыми
 
-- [ ] **R1-C1 SCIP-экспорт** (M) — `codemap export --scip <graph.json> -o index.scip`.
-      **Scope:** маппинг узлов/рёбер графа в `scip.proto` (Document per файл; Occurrence = symbol-string +
-      range + SymbolRole: Definition/Import/Read/Write; SymbolInformation: kind/docs/relationships).
-      Symbol-string строится из каноничного id codemap (descriptor-путь `mod/Class#method().`). `scip`-dep —
-      **опциональный** extra (как `mcp`), lazy-import. **Зачем:** один экспортёр → interop с Sourcegraph +
-      Glean (Glean ест SCIP) + весь precise-code-intel; наивысшая внешняя ценность.
-      **Приёмка:** сгенерённый `.scip` проходит `scip print`/валидацию; defs/refs известного символа
-      совпадают с `impact`; экспортируем только уверенное (defs + резолвнутые refs), неуверенное — не льём.
-      **Оценка:** M. **Зависит от:** структурных descriptor-id (R1-C7 желателен, не блокер).
+- [x] **R1-C1 SCIP-экспорт** ✅ (2026-08-02, без схемы) — `codemap export scip -o index.scip`.
+      `codemap/serve/scip.py` (`build_scip`/`write_scip`) + вендоренные bindings `_scip_pb2.py`
+      (сгенерены из офиц. `scip.proto`, guard ослаблен до 5.26), extra `codemap[scip]=protobuf` (lazy).
+      **Честный scope:** граф symbol-level (нет координат call-site) → экспортируем **defs + SymbolInformation**
+      (по одной Definition-occurrence на узел с локацией, kind, docstring, `inherits`/`implements` →
+      SCIP `relationships` is_implementation); reference-occurrences (find-references) **намеренно не льём**
+      (нет позиций токенов — фейк хуже пропуска). Symbol-string из каноничных id по грамматике дескрипторов
+      SCIP (namespace `/`, type `#`, method `().`, term `.`). Детерминированные байты; проверено round-trip'ом
+      protobuf и реальным `scip print`. **Частично закрывает R1-C7** (структурные descriptor-id доказаны).
+      +8 тестов (importorskip protobuf; CLI-тест skip если `scip` не на PATH). На bquant: 206 documents,
+      1826 symbols.
 - [ ] **R1-C2 ctags-экспорт** (S) — `codemap export --ctags <graph.json> -o tags`.
       **Scope:** из def-узлов эмитить строки `name\tfile\t/^…$/;"\tkind` (+ scope/signature extension-поля),
       формат universal-ctags; детерминированная сортировка. **Зачем:** мгновенная совместимость с любым
@@ -337,11 +339,11 @@ Python-focus** — если задача его нарушает, это отм�
       на point-query; двух вещей нет — *ранжирования* (что показать) и *бюджетированного рендера*.
       **Приёмка:** ранкинг детерминирован; `pack --budget` укладывается в лимит и на bquant включает
       топ-хабы раньше листьев. **Оценка:** L.
-- [ ] **R1-C7 Закрытый словарь edge-kind + структурные descriptor-id** (S) — дисциплина схемы Kythe/SCIP.
-      **Scope:** задокументировать закрытый список типов рёбер и форму каноничных id как structured
-      descriptor (почти уже так); тест, падающий при незадекларированном edge-type. **Зачем:** предпосылка
-      к чистому SCIP-экспорту (R1-C1) и стабильности схемы. **Приёмка:** `docs`/`model.py` перечисляют
-      словарь; тест на closed-set. **Оценка:** S. **Желателен до** R1-C1.
+- [~] **R1-C7 Закрытый словарь edge-kind + структурные descriptor-id** (S) — 🟡 **частично** (2026-08-02):
+      структурные descriptor-id доказаны SCIP-экспортом (R1-C1) — каноничные id чисто ложатся на грамматику
+      дескрипторов. **Осталось:** задокументировать закрытый список типов рёбер + тест, падающий при
+      незадекларированном edge-type. **Приёмка (остаток):** `docs`/`model.py` перечисляют словарь; тест на
+      closed-set. **Оценка:** S.
 - [ ] **R1-C8 Dead-code confidence + whitelist UX** (S) — паритет с vulture-UX поверх наших provenance.
       **Scope:** градуированная уверенность (у codemap уже есть контекст cross-root, лечащий FP vulture) +
       whitelist-файл + `--min-confidence`. **Зачем:** оформить существующее преимущество как удобный отчёт

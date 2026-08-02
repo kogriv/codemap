@@ -10,6 +10,17 @@ full M0–M16 development history. Graph schema **0.9**; 123 tests; warm serve s
 
 ### Milestones
 
+- **R1-C1 — SCIP export** (no schema change): `codemap export scip -o index.scip` emits a
+  [SCIP](https://scip-code.org/) index so Sourcegraph, Glean and any SCIP consumer light up
+  go-to-definition, symbol search and type hierarchy over codemap's graph. Highest-value interop move
+  from the R1 landscape. **Honest scope:** codemap's graph is symbol-level (no call-site coordinates),
+  so the export is *definitions + SymbolInformation* — one Definition occurrence per located node, kind,
+  docstring, and `inherits`/`implements` as SCIP `relationships` (`is_implementation`); reference
+  occurrences (find-references) are deliberately omitted rather than faked. Symbol strings are built from
+  codemap's canonical ids via the SCIP descriptor grammar (namespace `/`, type `#`, method `().`, term `.`).
+  `protobuf` is an **optional** extra (`pip install codemap[scip]`); vendored bindings generated from the
+  official `scip.proto`, lazy-imported. Deterministic bytes; validated by protobuf round-trip and the real
+  `scip print` CLI. Partially satisfies R1-C7 (structured descriptor ids). +8 tests.
 - **R1 — research track opened** (docs only): survey of adjacent code-analysis / code-graph tools in
   `research/` — a landscape map (comparison matrix + integrate/wrap/learn verdicts) plus four theme reports
   (AI-context/repo-map, code-graph/index infra, query/dataflow engines, Python graph/arch peers). Grounded,

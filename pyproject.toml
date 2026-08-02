@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 mcp = ["mcp>=2.0"]     # `codemap serve --mcp`: expose ops as MCP tools (optional)
+scip = ["protobuf>=5.26"]  # `codemap export scip`: SCIP index for interop (optional, R1-C1)
 
 [project.scripts]
 codemap = "codemap.cli:main"
