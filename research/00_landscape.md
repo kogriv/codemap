@@ -4,6 +4,9 @@ The map of adjacent code-analysis / code-graph tools, where **codemap** sits amo
 integrate / wrap / learn verdict per tool. Detail lives in the four theme reports:
 [R1.1 AI-context/repo-map](01_ai_context_repomap.md) · [R1.2 code-graph/index infra](02_codegraph_index_infra.md) ·
 [R1.3 query/dataflow engines](03_query_dataflow_engines.md) · [R1.4 Python graph/arch peers](04_python_graph_arch_peers.md).
+A bottom-up field intake (curated Telegram posts) adds the **live competitor roster** and hard benchmark
+evidence in [R1.5 curated sources](05_curated_sources.md) — it confirms this map rather than changing it:
+the whole field has converged on codemap's "code graph over MCP beats grep" thesis.
 
 ---
 

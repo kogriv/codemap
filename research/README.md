@@ -27,6 +27,7 @@ Every tool below is placed against the stance codemap commits to:
 | R1.2 | [02_codegraph_index_infra.md](02_codegraph_index_infra.md) | Code-graph / semantic-index infra & interchange (SCIP, LSIF, Kythe, Glean, Stack Graphs, ctags) |
 | R1.3 | [03_query_dataflow_engines.md](03_query_dataflow_engines.md) | Query / dataflow / structural-search (CodeQL, Semgrep, ast-grep, tree-sitter, PyCG) |
 | R1.4 | [04_python_graph_arch_peers.md](04_python_graph_arch_peers.md) | Python graph / dependency / architecture peers (pydeps, pyan, grimp, import-linter, vulture, radon) |
+| R1.5 | [05_curated_sources.md](05_curated_sources.md) | Field intake — curated Telegram posts (live competitor roster, grep-vs-graph benchmark, new signals) |
 
 ## Method
 

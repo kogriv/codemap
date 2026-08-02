@@ -30,7 +30,9 @@ check when the `scip` binary is present); warm serve surface with 21 ops, an MCP
   precise graph, no stale index); differentiators are the canonical diffable `graph.json` with provenance
   and native agent/MCP verbs. Concrete capability candidates (SCIP/ctags export, architecture-contracts
   `--check`, complexity metrics, relevance ranking + token-budgeted pack, …) logged as use-driven backlog
-  items (R1-C1…C14, fully specified with scope/acceptance/effort, tiered by value÷cost). No code/schema change.
+  items (R1-C1…C15, fully specified with scope/acceptance/effort, tiered by value÷cost) — including a
+  bottom-up field intake (R1.5) of curated Telegram sources that confirms the field has converged on
+  codemap's thesis and adds the live competitor roster + a grep-vs-graph benchmark. No code/schema change.
 - **F23 — impact accepts a full/canonical id** (no schema change): `impact` (op, markdown, CLI) resolved
   its input by short name only, so passing a full id like `pkg.mod.Class` — exactly what `query`/`search`
   return — matched nothing and gave a falsely-empty blast radius (found on a live task). Added

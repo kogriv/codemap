@@ -6,3 +6,6 @@ __pycache__/
 graph.json
 *.graph.json
 *.meta.json
+# raw external inputs (Telegram exports, etc.) — never committed; processed into
+# research/ with personal info stripped instead.
+assets/
