@@ -12,6 +12,17 @@ check when the `scip` binary is present); warm serve surface with 21 ops, an MCP
 
 ### Milestones
 
+- **M19.A — input scope manifest** (no `graph.json` schema change): codemap is deterministic on its output;
+  this adds the symmetric thing for its **input**. `codemap/scope.py` resolves a scope (build args) to a
+  sorted file list, content-hashes each (sha-256), builds a **profile** (files/bytes/loc by role & ext +
+  largest), and computes a **`scope_id`** — same id ⇒ provably identical input. Operates **in place** over
+  the real tree (the live path); **git-mode enumeration** (`git ls-files`, preferred when available) yields
+  the gitignore-correct set for free — the `venv_bquant` trap from the graphlens pilot is impossible by
+  construction — and records git provenance (`commit/ref/dirty` + free `git_blob`), while identity stays
+  sha-256 (mode- and dirty-independent). New CLI `codemap scope <path> […] [--no-git] [--json]` and
+  `codemap scope --diff A.meta.json B.meta.json`; `build` writes the `scope` block into the M18 sidecar.
+  Stdlib-only (hashlib/subprocess). Substrate for R1-C9 (Merkle incremental) and M3.2 (hash-freshness).
+  +7 tests. Design: [docs/design/scope.md](docs/design/scope.md).
 - **R1-C1 — SCIP export** (no schema change): `codemap export scip -o index.scip` emits a
   [SCIP](https://scip-code.org/) index so Sourcegraph, Glean and any SCIP consumer light up
   go-to-definition, symbol search and type hierarchy over codemap's graph. Highest-value interop move

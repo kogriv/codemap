@@ -2,6 +2,8 @@
 
     codemap build  <path> [-o graph.json] [--deep]
                    [--consumer PATH ...] [--docs PATH ...] [--mode thin|full]
+    codemap scope  <path> [--consumer PATH ...] [--docs PATH ...] [--no-git] [--json]
+                   | --diff A.meta.json B.meta.json   → input scope manifest (M19.A)
     codemap query  <name> (--graph g.json | --build <path>) [--format json|text]
     codemap report <kind> (--graph g.json | --build <path>) [--format markdown|json]
         kinds: api-surface | dependencies | dead-code | behavior | impact --symbol X
@@ -75,12 +77,59 @@ def _cmd_build(args) -> int:
         store.save(graph, args.out)
         # M18: record the build recipe beside the graph so `codemap refresh` can
         # rebuild it, and so the graph's age is meaningful to `serve`/stats.
+        # M19.A: also record the input scope manifest (scope_id + profile + git).
         from codemap.freshness import write_meta
+        from codemap.scope import resolve_scope
+        try:
+            scope = resolve_scope(args.path, consumers=tuple(args.consumer or ()),
+                                  docs=tuple(args.docs or ()))
+        except Exception:
+            scope = None  # scope manifest is provenance, never fatal to a build
         write_meta(args.out, argv=getattr(args, "_argv", []),
-                   cwd=os.getcwd(), target=graph.target)
+                   cwd=os.getcwd(), target=graph.target, scope=scope)
         print(args.out)
     else:
         print(store.dumps(graph))
+    return 0
+
+
+def _cmd_scope(args) -> int:
+    """Resolve/print the input scope manifest, or diff two (M19.A)."""
+    from codemap.scope import resolve_scope, diff_scopes
+    if args.diff:
+        from codemap.freshness import read_meta
+        metas = []
+        for p in args.diff:
+            m = read_meta(p) if p.endswith(".meta.json") else None
+            if m is None:  # allow passing the graph path or the sidecar path
+                import json as _json
+                try:
+                    m = _json.loads(Path(p).read_text(encoding="utf-8"))
+                except (OSError, ValueError):
+                    raise SystemExit(f"error: cannot read scope/meta from {p!r}")
+            metas.append(m.get("scope", m))  # sidecar has {scope:{…}}; or a raw manifest
+        d = diff_scopes(metas[0], metas[1])
+        print(json.dumps(d, indent=2))
+        return 0 if not (d["added"] or d["removed"] or d["changed"]) else 1
+    if not args.path:
+        raise SystemExit("error: scope needs <path> (or --diff A B)")
+    scope = resolve_scope(args.path, consumers=tuple(args.consumer or ()),
+                          docs=tuple(args.docs or ()), use_git=not args.no_git)
+    if args.json:
+        print(json.dumps(scope, indent=2, sort_keys=True))
+    else:
+        p = scope["profile"]
+        g = scope["git"]
+        print(f"scope_id: {scope['scope_id']}")
+        print(f"root:     {scope['root']}")
+        print(f"files:    {p['file_count']}  ({p['total_bytes']} bytes, {p['loc_total']} loc)")
+        if g.get("mode") == "git":
+            print(f"git:      {g['ref']} @ {g['commit'][:10]}  dirty={g['dirty']}"
+                  + (f" ({len(g['dirty_files'])} files)" if g["dirty"] else ""))
+        else:
+            print("git:      (fs mode — not a git repo / --no-git)")
+        print("by_role:  " + ", ".join(f"{r}={v['files']}" for r, v in p["by_role"].items()))
+        print("by_ext:   " + ", ".join(f"{e}={v['files']}" for e, v in p["by_ext"].items()))
     return 0
 
 
@@ -269,6 +318,18 @@ def build_parser() -> argparse.ArgumentParser:
     b.add_argument("--mode", choices=["thin", "full"], default="thin",
                    help="Consumer granularity: thin=per-file (default), full=per-function.")
     b.set_defaults(func=_cmd_build)
+
+    sc = sub.add_parser("scope", help="Resolve the input scope manifest (scope_id + profile), or --diff two.")
+    sc.add_argument("path", nargs="?", help="Package/dir to scope (like build's path).")
+    sc.add_argument("--consumer", action="append", metavar="PATH",
+                    help="Extra consumer root (tests/examples/scripts). Repeatable.")
+    sc.add_argument("--docs", action="append", metavar="PATH", help="Docs root. Repeatable.")
+    sc.add_argument("--no-git", action="store_true",
+                    help="Force filesystem enumeration instead of git ls-files.")
+    sc.add_argument("--diff", nargs=2, metavar=("A", "B"),
+                    help="Diff two scopes: each is a <graph>.meta.json (or a manifest JSON).")
+    sc.add_argument("--json", action="store_true", help="Full manifest as JSON (default: summary).")
+    sc.set_defaults(func=_cmd_scope)
 
     q = sub.add_parser("query", help="Look up a symbol: where defined, deps both ways.")
     q.add_argument("name", help="Short symbol name (e.g. analyze_zones).")

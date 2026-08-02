@@ -25,10 +25,18 @@ def meta_path(graph_path: str) -> str:
     return str(graph_path) + ".meta.json"
 
 
-def write_meta(graph_path: str, *, argv: list[str], cwd: str, target: str) -> None:
-    """Record the build recipe beside a freshly-written graph (best-effort)."""
+def write_meta(graph_path: str, *, argv: list[str], cwd: str, target: str,
+               scope: dict | None = None) -> None:
+    """Record the build recipe beside a freshly-written graph (best-effort).
+
+    ``scope`` (M19.A) is the input manifest — ``{scope_id, profile, git, files}`` —
+    so a graph's exact input is provable/diffable. Provenance, not structure: it lives
+    in the sidecar, never in the timestamp-free ``graph.json``.
+    """
     meta = {"built_at": round(time.time()), "argv": list(argv),
             "cwd": cwd, "target": target}
+    if scope is not None:
+        meta["scope"] = scope
     try:
         Path(meta_path(graph_path)).write_text(
             json.dumps(meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")

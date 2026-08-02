@@ -418,7 +418,7 @@ Python-focus** — если задача его нарушает, это отм�
 by_role/by_ext/py_loc) → **`scope_id`** (sha256 по отсортированным `path\tsha256`). Одинаковый `scope_id` ⇒
 доказуемо одинаковый вход.
 
-- [ ] **M19.A codemap-фича: манифест входа** (M) — `codemap/scope.py` (резолв+хэш+профиль+`scope_id`);
+- [x] **M19.A codemap-фича: манифест входа** ✅ (2026-08-02) — `codemap/scope.py` (резолв+хэш+профиль+`scope_id`);
       **git-биндинг (O6 ✅):** перечисление через `git ls-files` в git-репо (gitignore-корректный набор —
       venv/build/кэши исключены сами) + fs-fallback; блок `git {commit,ref,dirty,dirty_files}` и бесплатные
       `git_blob` в манифесте; **идентичность = наш sha256** (mode-independent). CLI

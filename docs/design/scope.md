@@ -1,6 +1,7 @@
 # Design — Scope model (input identity, manifest, profile)
 
-**Status:** 🟡 design, pending review (2026-08-02). Not yet implemented. **git binding approved (O6).**
+**Status:** 🟢 Feature A implemented (M19.A, 2026-08-02) — `codemap/scope.py` + `codemap scope` + sidecar,
+7 tests. Feature B (R2.0.1 harness) next. All decisions O1–O6 settled.
 **Backlog:** M19 (product feature A) + R2.0.1 (research harness B) — see [../../BACKLOG.md](../../BACKLOG.md).
 **Motivation:** codemap is deterministic on its **output** (canonical `graph.json`) but says nothing precise
 about its **input**. Today the only record of scope is the M18 sidecar's build *command* (`argv/cwd/target`);
