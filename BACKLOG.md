@@ -8,7 +8,8 @@ F14/F15, схема 0.9; M15 — diff/change-review A11 F16/F17, `codemap review
 возраст графа в `stats` + `codemap refresh`) + **M3.1** тёплый serve-режим. **Режим: use-driven** —
 codemap вынесен в отдельный репо и подключён к живому ИИ-агенту через MCP; оси добора (A10/A12/B2) —
 watchlist «по нужде» (см. `gaps/dogfood_axes.md`). Отложено — **M3.2** полный watcher / **M3.3** SQLite /
-**двух-графовый diff** (added/deleted) — брать при нужде/масштабе.
+**двух-графовый diff** (added/deleted) — брать при нужде/масштабе. 🟢 **R1** — исследовательский трэк
+(ландшафт соседних тулов, `research/`) открыт 2026-08-02.
 
 Вехи от «тонкого сквозного среза» к расширению. Внутри вехи задачи упорядочены по зависимости.
 Отсылки `§N` — разделы `DESIGN.md`.
@@ -238,6 +239,81 @@ thin/full сравнены; детерминизм держится; схема 
       возвращает конверт (сигнал `resolved.ambiguous` F14 сохраняется). CLI `codemap serve --mcp`
       (stdio). `mcp` — **опциональная** зависимость (`pip install codemap[mcp]`; extra в pyproject),
       import ленивый — codemap работает без неё. Логики нет — только маппинг. +7 тестов (importorskip mcp).
+
+---
+
+## R1 — Исследовательский трэк: ландшафт соседних тулов 🟢 АКТИВЕН (2026-08-02)
+
+**Рамка (от пользователя):** ядро доведено до естественной точки (вынесено в отдельный репо,
+подключено к живому ИИ-агенту через MCP, findings F22/M18/F23 закрыты) → открываем
+исследовательский трэк. Изучаем **соседние тулы анализа кодовой базы** и по каждому решаем,
+как codemap должен к нему относиться: **прямая интеграция** / **тонкая обёртка-адаптер** /
+**только референс** (учимся, не тащим). Формат — набор markdown-отчётов в `research/`
+(один на тул или тему). Находки возвращаются сюда и в `gaps/dogfood_axes.md` как **конкретные
+способности**, а не спекулятивные фичи.
+
+**Оси сравнения (позиционирование codemap):** source-only (без сборки/рантайма) · детерминированный
+канонический граф · CLI-AI-first (JSON по умолчанию) · Python-focus · граф-модель (узлы/рёбра
++ provenance) · warm-serve/MCP.
+
+- [ ] **R1.0 Ландшафт** — `research/00_landscape.md`: категории тулов, где сидит codemap по осям,
+      сводная матрица + вердикт integrate/wrap/learn по каждому.
+- [ ] **R1.1 AI-context / repo-map** — aider repo-map, Cursor/Continue/Cody codebase-index — прямые
+      «конкуренты» по AI-first-использованию (учимся + дифференцируемся).
+- [ ] **R1.2 Code-graph / semantic-index инфра** — SCIP/LSIF, Kythe, Glean, Stack Graphs, Sourcegraph,
+      ctags — интерчейндж-форматы и схемы графа (кандидаты в адаптер/экспорт).
+- [ ] **R1.3 Query / dataflow движки** — CodeQL, Semgrep, ast-grep, tree-sitter, Comby — поверхность
+      запросов и бэкенды экстракции.
+- [ ] **R1.4 Python graph/arch пиры** — pydeps, pyan, code2flow, grimp/import-linter, snakefood, rope —
+      прямые референс-пиры (что делают лучше/хуже, чему учимся).
+
+Принцип трэка: **не строить фичи из отчётов сразу** — каждая находка проходит через backlog как
+конкретная способность и берётся по нужде (use-driven), как остальные оси.
+
+**Статус R1.0–R1.4: ✅ отчёты написаны** (2026-08-02) — `research/00_landscape.md` (карта + матрица +
+консолидированные вердикты) + 4 тематических (`01_ai_context_repomap` / `02_codegraph_index_infra` /
+`03_query_dataflow_engines` / `04_python_graph_arch_peers`). Метод: 4 grounded-агента (web-verified),
+по каждому тулу вердикт integrate/wrap/learn.
+
+**Ключевые структурные сигналы (для позиционирования):** (1) фронтир AI-context дрейфует К тезису codemap —
+Cody уходит от эмбеддингов к search+graph, Anthropic: agentic grep бьёт RAG; (2) вся граф-инфра сходится на
+примитивах codemap (Kythe VName / SCIP descriptor / LSIF moniker = каноничный устойчивый id — у codemap уже
+есть); (3) два source-only-*графовых* прецедента размечают полосу: stack-graphs **заархивирован 2025** под
+весом рукописных per-language DSL, ctags **живёт** простотой → *оставаться source-only+детерминированным, но
+никогда не строить собственный name-resolution движок; делегировать jedi/griffe, фокус на Python*.
+
+### R1 → кандидаты в способности (use-driven, по нужде; порядок = value÷cost)
+
+- [ ] **R1-C1 SCIP-экспорт** — `export --scip` (Protobuf occurrences). Наивысшая interop-ценность: один
+      экспортёр → Sourcegraph + Glean + вся precise-code-intel экосистема. Модель SCIP ложится ~1:1 на граф
+      codemap (каноничные id + provenance). Экспортировать то, в чём уверены (defs/refs), остальное — метить.
+- [ ] **R1-C2 ctags-экспорт** — `export --ctags` из def-узлов. Мгновенная совместимость с любым редактором,
+      почти нулевые усилия; «пол» способностей, который codemap заведомо перекрывает.
+- [ ] **R1-C3 Архитектурные контракты + `--check`** — декларативный файл контрактов (layers/independence/
+      forbidden/containers/exhaustive) + ненулевой exit → architecture-отчёт становится **CI-гейтом**
+      (паритет с import-linter). **Самый ценный gap.** Сейчас codemap только *описывает* слои/нарушения.
+- [ ] **R1-C4 Метрики сложности в hotspots** — cyclomatic / Halstead / Maintainability Index поверх уже
+      имеющегося griffe-AST (детерминированно, source-only, on-brand) → богаче ранжирование hotspot
+      (паритет с radon). Сейчас hotspot чисто структурный (Ca/Ce, fan-in/out). wily-урок: метрики во времени.
+- [ ] **R1-C5 API breaking-change отчёт** — сигнатурный diff между двумя графами (идея griffe API-diff).
+      Пересекается с отложенным **двух-графовым diff** (added/deleted символы для `review`) — брать вместе.
+- [ ] **R1-C6 Relevance-ранжирование + token-budgeted pack** — PageRank-подобный ранкинг (как aider
+      repo-map) + режим «отрендерить релевантный срез под N токенов» → codemap как first-class
+      context-provider, а не только point-query. Две вещи, которых у codemap нет: *ранжирование* и
+      *бюджетированный рендер*.
+- [ ] **R1-C7 Задокументированный закрытый словарь edge-kind + структурные descriptor-id** — дисциплина
+      схемы Kythe/SCIP (почти уже так — формализовать и задокументировать).
+- [ ] **R1-C8 Dead-code confidence + whitelist UX** — градуированная уверенность (паритет с vulture) поверх
+      provenance-aware dead-code (у codemap уже есть контекст, лечащий FP vulture — оформить как UX).
+- [ ] **R1-C9 Инкрементальные / Merkle-обновления графа** — контент-хеш дерева, пересчёт только изменённых
+      подграфов (идея Cursor). Питает отложенный **M3.2** watcher.
+- [ ] **R1-C10 rope-безопасные правки** — опциональный слой мутаций (rename по вычисленному blast-radius);
+      read-only остаётся дефолтом. Только если codemap пойдёт от анализа к правкам.
+- [ ] **R1-C11 tree-sitter multi-language backend** — если выходить за Python: tree-sitter (доказано
+      ast-grep) — стандартный source-only/детерминированный/offline бэкенд ширины; **глубина (call-graph/
+      impact/contracts) остаётся за jedi/griffe** — это ров codemap. Смыкается с «Мультиязычность» ниже.
+- [ ] **R1-C12 PyCG-бенчмарк call-graph** — сверить точность callers/callees против PyCG-резолвинга; честно
+      заявить потолок (~99% precision / ~70% recall — предел ЛЮБОГО статического инструмента на динамике).
 
 ---
 
