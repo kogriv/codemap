@@ -424,7 +424,12 @@ R1 закартировал поле сверху вниз; **R2** идёт по
 
 - [~] **R2.0 Конвенция + каркас** ✅ (2026-08-02) — `research/README.md` (конвенция), `research/tools/README.md`
       (шаблон карточки), `research/comparison.md` (сводная матрица, засеяна из R1/R1.5 на desk-уровне).
-- [ ] **R2.1 Пилот: graphlens-mcp** — полный hands-on разбор, залочить формат.
+- [x] **R2.1 Пилот: graphlens-mcp** ✅ (2026-08-02) — полный hands-on разбор, формат залочен.
+      Карточка `research/tools/graphlens.md`. Итоги: (1) **баг скоупа** — игнорит `.gitignore`, отсекает venv
+      по хардкод-именам → `venv_bquant` утянул весь venv (>3ч45м/9ГБ); воркэраунд — чистое дерево/пакет.
+      (2) На честном скоупе: индексация **12с/246МБ/17.5МБ БД/16796 узлов**. (3) **T1 search ✅** (~260мс),
+      но **T2/T3 relations/impact пусто** (`ty` LSP не стартанул → degraded; codemap на том же входе — 68 refs),
+      **T4/T5 инструментов нет** (поверхность = search/relations/info). Вердикт **learn-only**; питает R1-C13/C14.
 - [ ] **R2.2… остальные** — CodeGraph, GitNexus, OntoIndex, Sentrux, cocoindex, rag_for_git,
       Understand-Anything, CodeSlicer, ast-index, Graphify, grafema, CodeWiki, Foglamp (desk где SaaS/не
       воспроизводится — с честной пометкой). Порядок — по близости к codemap и по связи с R1-C.

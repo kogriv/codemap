@@ -12,7 +12,7 @@ come from R1; hands-on rows are filled as each card is measured on the common ta
 | Tool | Card | T1 defs | T2 callers | T3 impact | T4 sig-change | T5 arch | Determ. | MCP | Langs | License |
 |---|---|---|---|---|---|---|---|---|---|---|
 | **codemap** | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Py | MIT |
-| graphlens | [card](tools/graphlens.md) | ? | ? | ? | ? | ? | ?¹ | ✅ | Py/TS/Go/Rust/PHP | MIT |
+| graphlens | [card](tools/graphlens.md) | ✅ | ✖¹ | ✖¹ | ✖ | ✖ | ✖ | ✅ | Py/TS/Go/Rust/PHP | MIT |
 | CodeGraph (colbymchenry) | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | MIT |
 | GitNexus | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | PolyForm NC |
 | OntoIndex | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | ? |
@@ -24,10 +24,13 @@ come from R1; hands-on rows are filled as each card is measured on the common ta
 _Rows are seeded from R1/R1.5 (desk-level, hence `?`); each becomes measured as its card moves to
 `hands-on`. `codemap` is the ground-truth reference for T1–T5._
 
-¹ graphlens (v0.4.0): T1–T5 pending a **correctly-scoped** re-run. First hands-on attempt indexed the whole
-repo including a 1.5 GB / 16k-file virtualenv (`venv_bquant`) — it **ignores `.gitignore`** and excludes
-venvs only by hardcoded exact names (`.venv`/`venv`), so a non-standard venv name slips through
-(> 3h45m, ~9 GB RAM, DNF). Workaround: point it at a clean source tree / the package dir. See the
+¹ graphlens (v0.4.0), measured on the fair scope (same 6 dirs codemap indexes): **T1 `search` works**
+(~260 ms, finds the flagship symbol), but **T2/T3 `relations` returned empty** (0 callers/refs vs codemap's
+68) — its `ty` LSP resolver failed to initialize in this env (`resolver_status: degraded`); T4/T5 have **no
+tool at all** (surface is only search/relations/info). Indexing the fair scope: **12 s / 246 MB / 17.5 MB DB /
+16 796 nodes**. (The earlier > 3h45m / 9 GB / 1.1 GB run was the *misconfigured* repo-root scope: graphlens
+**ignores `.gitignore`** and excludes venvs only by hardcoded names, so the non-standard `venv_bquant`
+1.5 GB / 16k-file venv got pulled in. Workaround: point it at a clean source tree.) See the
 [card](tools/graphlens.md).
 
 ## Quality summary
@@ -37,7 +40,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 
 | Tool | Standout strength | Standout weakness | Verdict | Feeds |
 |---|---|---|---|---|
-| _(populated as cards land)_ | | | | |
+| graphlens | 5 languages; resolves into deps (when ty works); minimalist 3-verb MCP | impact empty out-of-box (ty LSP fragile); no arch/sig-change tools; non-deterministic 1 GB-capable DB; venv-scoping trap | learn-only | R1-C13, R1-C14 |
 
 ## Where codemap is not closed
 
