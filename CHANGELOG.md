@@ -6,7 +6,9 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 ## [Unreleased]
 
 Extracted into a standalone repository from its incubation home (the `bquant` monorepo), preserving the
-full M0–M16 development history. Graph schema **0.9**; 123 tests; warm serve surface with 21 ops.
+full M0–M16 development history; since extraction it has grown the MCP adapter (M17), graph freshness
+(M18), SCIP export (R1-C1) and the research track (R1). Graph schema **0.9**; **152 tests** (+1 SCIP-CLI
+check when the `scip` binary is present); warm serve surface with 21 ops, an MCP adapter, and SCIP export.
 
 ### Milestones
 

@@ -3,10 +3,13 @@
 **A static analyzer that turns a Python package's source into a queryable code graph.**
 It reads source only — no runtime import — so it works on any package and stays decoupled from
 the code it analyzes. One canonical, deterministic graph store → many renders: API surface,
-dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review.
+dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review,
+and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code-intelligence tools.
 
-**Status:** 🟢 M0–M16 implemented — schema 0.9, **123 tests green**, warm serve surface with 21 ops.
-See **[DESIGN.md](DESIGN.md)** (product design & v1 boundaries) and **[BACKLOG.md](BACKLOG.md)** (milestones).
+**Status:** 🟢 M0–M18 implemented + research track (R1) — schema 0.9, **152 tests green** (+ a SCIP-CLI
+check that runs when the `scip` binary is present), warm serve surface with 21 ops, an MCP adapter, and
+SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
+v1 boundaries), **[BACKLOG.md](BACKLOG.md)** (roadmap), and **[research/](research/)** (tool landscape).
 
 ## Why it exists
 
@@ -30,10 +33,13 @@ pip install -e .
 
 # optional: MCP server (`codemap serve --mcp`)
 pip install -e '.[mcp]'
+
+# optional: SCIP export (`codemap export scip`)
+pip install -e '.[scip]'
 ```
 
 Dependencies: `griffe` (structure), `networkx` (query backend), `jedi` (deep call resolution).
-Optional: `mcp` (Model Context Protocol server).
+Optional extras: `mcp` (Model Context Protocol server), `scip` (protobuf, for SCIP export).
 
 ## Quickstart
 
@@ -56,10 +62,11 @@ codemap report impact --symbol MyClass --graph graph.json
 # change-set review straight from a diff → risk-sorted dossier
 git diff | codemap review - --graph graph.json
 
-# exports
+# exports (see docs/export.md)
 codemap export rag     --graph graph.json -o chunks.jsonl
 codemap export mermaid --graph graph.json --mkind class
 codemap export vault   --graph graph.json -o vault/
+codemap export scip    --graph graph.json -o index.scip   # SCIP index (needs [scip] extra)
 
 # warm resident process — JSON requests over stdin/stdout (21 ops)
 codemap serve --graph graph.json --source-root .
@@ -78,6 +85,9 @@ codemap serve --graph graph.json --source-root . --mcp
   touched columns, cross-root consumers, risk rank.
 - **Dispatch seams** — registry/factory families and the Protocol each impl satisfies.
 - **Dataflow** — producers/consumers of a string-keyed DataFrame column.
+- **Interop** — export the graph as a [SCIP](https://scip-code.org/) index (definitions + symbol
+  info + inherits/implements relationships) so Sourcegraph, Glean and other SCIP consumers can drive
+  go-to-definition, symbol search and type hierarchy over it. See [docs/export.md](docs/export.md).
 
 ## Dogfooding
 
@@ -90,9 +100,11 @@ the live graph, findings, and the milestone that closed them.
 ## Documentation
 
 - **[DESIGN.md](DESIGN.md)** — product design, the query catalog, v1 boundaries.
-- **[BACKLOG.md](BACKLOG.md)** — milestones M0–M16 and deferred work.
+- **[docs/export.md](docs/export.md)** — export recipes: RAG, mermaid, Obsidian vault, SCIP interop.
+- **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
-- **[research/](research/)** — (planned) survey of adjacent tools and how codemap relates to them.
+- **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each
+  (integrate / wrap / learn); source of the R1 capability roadmap.
 
 ## License
 
