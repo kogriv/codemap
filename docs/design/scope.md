@@ -58,18 +58,33 @@ Sorting + relativity make the result path- and machine-independent. Two enumerat
 The spec's `include`/`exclude` always act as an overlay on top of the chosen mode, so you can add an
 untracked/generated file or drop a tracked one deliberately. See §1.5 for the git binding.
 
-### 1.3 Manifest (identity + detail)
-For each file: `{path, sha256, bytes}` (relative path; full sha-256 hex of content; size). Plus a **profile**:
+### 1.3 Manifest + profile
+
+Two parts. **Manifest** — the exact per-file identity: `{path, sha256, bytes}` (relative path; full sha-256
+hex of content; size) + `git_blob` in git mode. **Profile** — cheap aggregate stats *about* the scope, so a
+tool's numbers can be read in context (an "impact" cost means nothing without knowing the input size/shape).
 
 ```json
 {
-  "scope_id": "sha256:…",           // see 1.4 — canonical, mode-independent
-  "file_count": 285,
-  "total_bytes": 1234567,
-  "by_role":  {"core": 89, "tests": 76, "docs": 61, "...": 0},
-  "by_ext":   {".py": 206, ".md": 73},
-  "py_loc": 41234,                    // cheap line count over .py
-  "git": {                           // present only in a git repo (§1.5)
+  "scope_id": "sha256:…",              // §1.4 — canonical, mode-independent
+  "profile": {
+    "file_count": 285,
+    "total_bytes": 1234567,
+    "by_role": {                       // provenance bucket → files/bytes/loc
+      "core":  {"files": 89, "bytes": 900000, "loc": 30000},
+      "tests": {"files": 76, "bytes": 250000, "loc":  9000},
+      "docs":  {"files": 61, "bytes":  84000, "loc":  2000}
+    },
+    "by_ext": {                        // file type → files/bytes/loc
+      ".py": {"files": 206, "bytes": 1000000, "loc": 41000},
+      ".md": {"files":  73, "bytes":  230000, "loc":  6000}
+    },
+    "loc_total": 47000,                // text-line count across all in-scope files
+    "largest": [                       // top-N by bytes — spot hubs / vendored blobs
+      {"path": "bquant/indicators/macd.py", "bytes": 42000}
+    ]
+  },
+  "git": {                             // present only in a git repo (§1.5)
     "commit": "cb89a24…", "ref": "HEAD", "dirty": true,
     "dirty_files": ["uv.lock"], "mode": "git"
   },
@@ -77,6 +92,18 @@ For each file: `{path, sha256, bytes}` (relative path; full sha-256 hex of conte
              "git_blob": "d6f8dec…"}, "…"]   // git_blob only in git mode (free)
 }
 ```
+
+**Profile fields — and why each helps a comparison:**
+- `file_count` / `total_bytes` / `loc_total` — the raw size of the input; every per-tool number (time, RAM,
+  DB size, cost) is only meaningful relative to this.
+- `by_role` (core / tests / docs / …) — how much of the scope is package vs tests vs docs; explains, e.g.,
+  why an impact query reaches many test files.
+- `by_ext` — language/format mix; a Python-only tool vs a multi-language one should be read against this.
+- `largest` — surfaces hub files or accidentally-included blobs (an early smell-test that the scope is clean).
+
+All profile fields are **deterministic** (derived from the sorted file set + content) and **timestamp-free**.
+They are cheap: counts + `bytes` from `stat`, `loc` from a line count — no parsing, computed during the same
+walk that hashes files.
 
 ### 1.4 `scope_id` (the input fingerprint)
 `scope_id = "sha256:" + sha256( "\n".join(f"{path}\t{sha256}" for file in sorted(files)) )`.
@@ -109,13 +136,34 @@ files, `venv_bquant` = 0 (gitignored); git already holds per-blob hashes; `HEAD 
   the spec overlay work with or without git, and git mode only covers tracked files (untracked/generated
   files enter via the spec's `include`).
 
+### 1.6 Operating mode: in-place (live) vs materialized (benchmark) — O2
+
+The scope model resolves and hashes files **in place, over the real tree** — this is the **default** and the
+only mode that supports the live path. Copying to a clean folder is a **benchmark-only escape hatch**, not the
+general answer.
+
+- **In-place (default) — the live / interactive / incremental path.** Enumerate + hash the real working tree
+  where it lives. The venv/junk problem is solved by **git-mode enumeration** (§1.5), *not* by copying. This
+  is the **required** mode for anything that watches the repo and updates the graph on change — a copy would
+  freeze the input, break inotify/paths, and defeat the whole point of a live graph. Feature A (codemap's own
+  scope), and downstream **R1-C9 (Merkle/watch incremental)** and **M3.2 (hash-freshness)**, all run in-place.
+- **Materialized (benchmark only) — Feature B.** Realize a `scope_id` as a clean folder solely to feed
+  *third-party* tools that (a) don't accept a file list and (b) have unreliable excludes (graphlens's venv
+  trap). It is a **frozen snapshot for a one-shot fair diff**, derived from the *same spec* and carrying the
+  *same `scope_id`*, so it stays traceable to the live definition. It deliberately **sacrifices
+  interactivity** — never use it for live development.
+
+Rule of thumb: **live/product = in-place; one-shot cross-tool diff of an uncooperative tool = materialize.**
+codemap itself never needs materialization even in the benchmark (it takes the real tree in git mode); only
+tools that can't be pointed at a clean file set do.
+
 ---
 
 ## 2. Feature A — codemap input scope manifest (product)
 
 **Where it plugs in.** `extract`/`extract_repo` already enumerate the input tree; add a resolution+hash pass
-(`codemap/scope.py`) that produces the manifest. It runs on `build` and is written to the **M18 sidecar**,
-extending it:
+(`codemap/scope.py`) that produces the manifest **in place, over the real tree** (§1.6 — the live path;
+enables watch/incremental in R1-C9/M3.2). It runs on `build` and is written to the **M18 sidecar**, extending it:
 
 ```json
 // graph.json.meta.json
@@ -154,11 +202,13 @@ file hash + `scope_id`; `--diff` reports the right add/remove/change; excludes a
   the git binding (§1.5) the benchmark scope becomes a shareable one-liner — "**`bquant@<commit>` over
   pathspec {bquant,tests,examples,research,scripts,docs}**" — reproducible and gitignore-correct (no venv),
   with `scope_id` pinning the exact bytes.
-- **Materialization (Open decision O2):** materialize a **clean staging tree** (rsync per spec excludes) as
-  the tool-agnostic input, because tools like graphlens need a clean `--root` and don't reliably follow
-  symlinks. Recommendation: **materialize** (staging is ~40 MB, cheap) via a helper
-  `research/tools/_scope/materialize.py <spec> <out-dir>` that also emits `manifest.json` (= `codemap scope`
-  output → reuses Feature A).
+- **Materialization is a benchmark-only escape hatch (O2, see §1.6):** used *only* for third-party tools that
+  can't take a file list and have unreliable excludes (graphlens's venv trap). A helper
+  `research/tools/_scope/materialize.py <spec> <out-dir>` realizes the scope as a clean staging tree (~40 MB)
+  and emits `manifest.json` (= `codemap scope` output → reuses Feature A), carrying the same `scope_id`.
+  It is a frozen snapshot — no interactivity. **codemap itself is NOT materialized** even here: it indexes the
+  real tree in git mode. Tools with a live/watch mode of their own should ideally be pointed at the real tree
+  too (configuring their excludes); materialize is the fallback when that isn't possible.
 - **Card integration:** the card template gains a **Scope** field = `scope_id` + one-line profile; every
   hands-on row in [comparison.md](../../research/comparison.md) must carry the *same* `scope_id` (asserted in
   the hub). Retro-fill the graphlens card with the scope_id of the staging we already measured.
@@ -183,8 +233,10 @@ for the manifest/`scope_id`. Hence A and B are built together (A first, B immedi
 
 - **O1 — `scope_id` in `graph.json`?** Recommend **no** (sidecar-only; keep the graph structural). Alt: embed
   bare id for self-containment.
-- **O2 — materialize vs manifest-over-real-tree for B?** Recommend **materialize** (tool-agnostic, avoids the
-  venv trap). Alt: manifest over the real tree + trust each tool's excludes (fragile).
+- **O2 — in-place vs materialize.** ✅ **Resolved (2026-08-02):** **in-place over the real tree is the default**
+  and the only mode for the live/interactive/incremental path (A, R1-C9, M3.2) — git-mode enumeration keeps it
+  clean without copying. **Materialize is a benchmark-only escape hatch** (§1.6) for uncooperative third-party
+  tools; it freezes a snapshot and sacrifices interactivity by design.
 - **O3 — hash choice.** Recommend **sha-256 full hex** (stdlib, collision-safe, deterministic). Alt: truncated
   (shorter sidecar) or blake2b (faster).
 - **O4 — spec format.** Recommend a **small JSON spec** (§1.1) that maps to build args. Alt: infer scope purely
