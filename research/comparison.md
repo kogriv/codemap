@@ -53,11 +53,26 @@ backlog candidate. Populated as cards complete.
 - **Cross-boundary resolution into dependencies** — graphlens resolves calls *into* third-party libs
   (e.g. "what pandas API does bquant call"); codemap is source-only-of-target and does not. By design, but
   logged as a possible capability door. ([graphlens card](tools/graphlens.md))
+- **Incremental / watch-mode freshness** — graphlens persists to SQLite and re-indexes on file-change
+  (`serve --watch`); codemap rebuilds in-memory. codemap's M18/M3.2 (freshness sidecar + `refresh`) is the
+  partial answer; a true incremental graph is still open. ([graphlens card](tools/graphlens.md))
+- **Agent context-budget shaping** — graphlens's `relations` *deliberately* drops test call-sites by default
+  so impact answers don't drown in tests (a traced ergonomics decision). codemap returns everything with
+  provenance and leaves filtering to the caller — worth considering an opt-in `--exclude-role tests`.
 
 ## Notes for codemap's own positioning (differentiators, measured)
 
 - **Layout robustness** — codemap takes the package dir explicitly and never wanders into a venv/deps;
   graphlens indexed a 1.5 GB non-standard venv because it ignores `.gitignore` and matches venv names by a
   hardcoded list. codemap's "point at the package" model sidesteps this class of failure. (→ R1-C14)
-- **Determinism & artifact size** — codemap: ~4.8 MB canonical, diffable JSON, ~1 min. graphlens: a SQLite
-  DB (non-diffable), and on a clean scope TBD but heavier by construction (LSP-grade `ty`). (→ R1-C14)
+- **Determinism & artifact size** — measured on the identical staging: codemap ~3.6 MB **canonical, diffable
+  JSON** in ~1 min; graphlens a **31 MB SQLite DB** (non-diffable, WAL) in 2 m 20 s. Determinism + git-friendly
+  artifact is a hard differentiator. (→ R1-C14)
+- **Single-call, provenance-complete impact** — codemap `impact` returns one number split by role
+  (core/docs/examples/scripts/tests) in a single call; graphlens needs two tools (`relations` for resolved
+  code edges + `search exhaustive` for the file list) and hides tests by default. (→ R1-C14)
+- **No-LSP-dependency robustness** — codemap resolves impact source-only via jedi/griffe with nothing to
+  provision; graphlens's core impact silently degrades to tree-sitter if `ty` isn't on PATH (exactly the trap
+  we hit). "Works out of the box, offline, deterministically" is a positioning line. (→ R1-C14)
+- **T4/T5 coverage** — codemap has call-contract (signature-change surface) and architecture/layers ops;
+  graphlens has no tool for either (3-verb surface). (→ R1-C14)
