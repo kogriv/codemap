@@ -392,11 +392,13 @@ Python-focus** — если задача его нарушает, это отм�
       дешевле grep на «что сломается при смене сигнатуры», и БЕЗ выигрыша на «где определён X») уже на
       ops codemap → доказать value именно на impact/call_contract. **Приёмка:** раздел в docs + бенч-скрипт.
       **Оценка:** S (PyCG) / M (полный харнесс-бенч).
-- [ ] **R1-C14 Позиционные доки** (S) — в README: «codemap = точная структурная нога для index-free
-      агентов через MCP» (не замена embeddings-RAG); дифференциаторы (каноничный diffable граф + provenance
-      + agent/MCP-глаголы; **MIT** против non-commercial у GitNexus; SCIP-interop; honesty); provenance-aware
-      dead-code как «vulture без FP». **R1.5 добавил остроты:** ниша переполнена (десятки graph-for-agent
-      тулов) → ров надо заявлять громко. **Приёмка:** README отражает выводы R1/R1.5. **Оценка:** S.
+- [~] **R1-C14 Позиционные доки** (S) — 🟡 частично: заведён **`research/positioning.md`** — публикационный
+      слой (build-story hub): Story Zero (codemap + роадмэп M0→M19, дифференциаторы, честные дыры) + полная
+      **Build-story #1 (graphlens)** с цифрами и «эмоцией» по горячим следам. Тезис: «codemap = точная
+      структурная нога для index-free агентов через MCP» (не замена embeddings-RAG); дифференциаторы
+      (каноничный diffable граф + provenance + agent/MCP-глаголы; **MIT** против non-commercial у GitNexus;
+      SCIP-interop; honesty). **Осталось:** дотянуть в README проекта короткий позиционный абзац + линк;
+      наполнять build-story по мере разборов. **R1.5 добавил остроты:** ниша переполнена → ров заявлять громко.
 - [ ] **R1-C15 Living docs из графа** (M) — 🆕 из R1.5. Самообновляемая документация/вики по графу с
       **пометкой «не проверено»** для всего, что нельзя подтвердить по коду (как CodeWiki / «нейростатьи» /
       Tutorial-Codebase-Knowledge). **Зачем:** on-brand с honesty-стойкой codemap — у нас уже есть граф и

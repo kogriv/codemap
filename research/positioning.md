@@ -1,0 +1,186 @@
+# positioning & build-story
+
+**What this is.** The *publication layer* of the research track — article-ready narrative distilled from the
+raw measurements. It answers "what is codemap, why does it exist, and how does it actually compare?" in prose
+you can cut straight into a blog post, README intro, or talk.
+
+**What this is not.** Not the source of truth. Every number here reproduces from a card
+(`research/tools/*.md`) or the [comparison hub](comparison.md) — those are the evidence; this is the story.
+If a fact here and a card disagree, the card wins. Keep it that way: measure in cards, narrate here.
+
+**House rules (so it stays publishable):**
+- Every claim carries a number and a link to where it was measured.
+- Honesty first — the gaps section is load-bearing. A build-story that only flatters isn't believed.
+- "Measurements, not verdict; other authors are potential collaborators, not enemies." (inherited from the
+  разбор convention, `research/README.md`).
+
+Realizes the **R1-C14** backlog item (positioning docs).
+
+---
+
+## The thesis (one paragraph)
+
+codemap is **the precise structural leg for index-free AI agents**: a source-only, deterministic,
+Python-deep code graph exposed as agent/MCP verbs. It does not compete with embeddings-RAG or Repomix-style
+packing — it complements them. The field has already conceded that *structural precision + freshness beats a
+vector index for code navigation*; codemap's bet is to be the best **deterministic, diffable, provenance-aware**
+graph in that slot, and to interoperate outward (SCIP, ctags) rather than lock its graph away.
+
+Positioning line, tight enough for a headline:
+> **A code graph an agent can trust: source-only, deterministic, diffable — no index to go stale, no LSP to provision.**
+
+---
+
+## Story Zero — codemap and the road here
+
+### The itch
+Agents navigating code have two bad options: **grep** (exact but blind to structure — it can't tell you *who
+calls this* or *what breaks if I change this signature*) and **embeddings/RAG** (fuzzy, non-deterministic, and
+perpetually stale against a moving repo). The interesting third path — a *precise structural graph* — kept
+getting built as an opaque, non-diffable index (LSIF, vendor DBs) that rots the moment code changes and can't
+be reviewed in a PR.
+
+codemap's bet: build that graph **source-only** (no compile, no venv), make its artifact **canonical and
+diffable** (sorted, timestamp-free JSON — a graph you can `git diff`), tag every node with **provenance**
+(is this core, tests, docs, examples, scripts?), and hand agents **native verbs** over MCP instead of a query
+language to learn.
+
+### The arc (M0 → M19)
+- **M0–M5 — the graph exists.** Canonical structure (imports/exports/inherits), a query API, a behavioral
+  call graph, deep call resolution via jedi, and render views (RAG/vault/mermaid). The foundation:
+  *deterministic graph out of pure source*.
+- **M6–M12 — the graph gets opinionated.** Multi-root **provenance** and impact/blast-radius; registry-aware
+  call bridging; **provenance-aware dead-code** (vulture without the dominant false-positive source);
+  call-site argument contracts; string-key column dataflow. This is where codemap stops being "a parse tree"
+  and starts answering real questions.
+- **M13–M16 — ergonomics and altitude.** Discovery ops (search/families/source/resolve); soundness
+  (ambiguity surfaced, not silently resolved); **diff/change-review** (a diff → a risk-sorted dossier);
+  **architecture overview** (layers, coupling, god-objects).
+- **M17–M18 — agent-native + honest about time.** The **MCP adapter** (the graph as ~18 agent tools); graph
+  **freshness** (a static graph now reports its own age so an agent knows the map may be stale) — determinism
+  preserved by keeping the build recipe in a sidecar.
+- **R1 + R1-C1 — look outward.** A grounded survey of the whole field (this research track), then the
+  highest-value interop move: **SCIP export**, so Sourcegraph/Glean light up over codemap's graph.
+- **M19.A — deterministic about the input, too.** codemap was already deterministic on its *output*;
+  `scope_id` makes it deterministic on its *input* — a content hash of exactly the files that went in, with a
+  git binding. (Same id ⇒ provably identical input — the thing that makes tool-vs-tool comparison honest.)
+
+Schema **0.9**, ~**159 tests**, warm serve + MCP + SCIP export.
+
+### Where it sits in the field (measured, not asserted)
+The R1 survey placed codemap in an **under-served spot**: a *semantic (resolved) code graph* that is
+*deterministic*, *source-only*, *Python-deep*, and *agent-facing*. Neighbours each miss one axis — embeddings
+tools aren't deterministic; ctags/LSIF aren't resolved; LSP is ephemeral; the heavy graph DBs (Kythe/Glean)
+need a compiler. Full matrix: [00_landscape.md](00_landscape.md).
+
+### Honest gaps (the part that earns trust)
+- **No cross-boundary resolution into dependencies.** codemap is source-only-*of-target*; it won't tell you
+  "what pandas API does this call." graphlens can. By design, but a real limit. ([gap](comparison.md))
+- **No true incremental graph.** codemap rebuilds; it doesn't yet watch-and-patch. M18/M3.2 (freshness
+  sidecar + `refresh`) is the partial answer.
+- **Python only.** The peers that span 5+ languages do so by leaning on tree-sitter/LSP; codemap's depth is
+  bought with Python-specificity.
+
+---
+
+## Build-story #1 — "The competitor wasn't broken. We were." (graphlens-mcp)
+
+_Evidence: [graphlens card](tools/graphlens.md). Every number below reproduces there._
+
+### The setup
+graphlens-mcp is the nearest twin to codemap: a code-graph-for-agents, over MCP, with an *ambitious* backend
+— Astral's `ty` (an LSP-grade type checker) plus tree-sitter, persisted to SQLite. If anything in the field
+should beat codemap at impact analysis, it's this.
+
+First hands-on pass, on a fair scope (the same 6 directories codemap indexes). It indexed in **12 seconds**.
+Then the core query — *who calls `MACDZoneAnalyzer`?* — came back **empty**. Zero callers. Zero references.
+codemap answered the same question with a full provenance breakdown. Easy verdict, and we almost shipped it:
+*graphlens degrades to grep on a real source tree; learn-only; nothing to take.*
+
+### The itch that saved us from a cheap conclusion
+One detail nagged. graphlens's own response didn't *lie* — it flagged `resolver_status: "degraded"`. It was
+telling us its type resolver never came up. A tool this carefully built doesn't ship with impact analysis
+that just… doesn't work. Either the author shipped something broken, or **we were holding it wrong**.
+
+So we opened the hood. The Python resolver spawns `ty` like this:
+
+```python
+ty_bin = shutil.which("ty") or "ty"        # graphlens_python/_resolver.py:34
+```
+
+graphlens *bundles* `ty` at `~/.local/share/uv/tools/graphlens-mcp/bin/ty`. But `uv tool install` only puts
+the declared `graphlens-mcp` entry point on `PATH` — **not** the bundled `ty`. So `shutil.which("ty")`
+returned `None`, the spawn raised `FileNotFoundError`, and `prepare()` swallowed it (`except Exception:`) and
+fell back to tree-sitter-only. **Silent degrade.** The empty impact wasn't graphlens's weakness — it was our
+`PATH`.
+
+The fix was one line: put the bundled bin on `PATH`.
+
+### What happened when we ran it fair
+`ty server` came up. `resolver_status` flipped to **`ok`**. And everything changed:
+
+| | tree-sitter only (broken) | **ty-resolved (fixed)** |
+|---|---|---|
+| index time | 12 s | **2 m 20 s** (12×) |
+| DB size | 17.5 MB | 31 MB |
+| nodes / edges | 16 796 / 20 889 | **32 399 / 55 691** |
+| `relations(MACDZoneAnalyzer)` | **empty** | **9 callers + 1 callee + 2 refs** |
+
+Those extra ~35 000 edges are the resolved calls and references that were missing. The impact engine wasn't
+broken — it had never run.
+
+### The honest head-to-head (same staging, both tools)
+- **codemap** `impact`: **31 references, one call**, split by provenance — core 2 / docs 7 / examples 1 /
+  scripts 2 / **tests 19**.
+- **graphlens** `relations`: 9 callers + 1 callee + 2 refs (`resolver_status: ok`) — but it **auto-hides test
+  call-sites by default** (a *deliberate* choice, commented in `lean.py:53`, to keep an agent's context budget
+  from drowning in tests).
+- On the **non-test resolved call graph** the two nearly agree: codemap 12, graphlens ~9–11. The engine is
+  **sound**.
+
+### The lesson (this is the reusable bit)
+1. **A graph tool can silently degrade to grep.** The single most important thing to check before trusting —
+   or benchmarking — a resolved-graph tool is *did the resolver actually come up?* (`resolver_status == ok`).
+   This is now a hard rule for our benchmark harness (R1-C13).
+2. **"It returned nothing" is a hypothesis, not a finding.** The cheap verdict (*competitor is broken*) was
+   wrong and would have been unfair to a well-built tool. The extra hour turned a false takedown into a real,
+   respectful comparison.
+3. **Bundling a binary but resolving it via `shutil.which` is a trap** — a genuine, reportable packaging bug
+   in graphlens, worth a friendly upstream note.
+
+### What we take, what we keep
+- **Take (learn):** cross-boundary resolution *into* dependencies (a real capability we lack); the
+  context-budget test-de-emphasis heuristic; watch-mode incremental re-index (feeds our freshness work).
+- **Keep (our edge, now measured against a *working* competitor):** determinism (a 3.6 MB diffable JSON vs a
+  31 MB SQLite DB), single-call provenance-complete impact, works with no LSP to provision and offline, and
+  T4/T5 (call-contracts, architecture) that graphlens has no tool for.
+- **Verdict:** not "nothing to take" — a **competent peer** we learn from but don't integrate (overlapping
+  thesis, heavier, non-deterministic, layout-fragile, LSP-dependent).
+
+---
+
+## Article-ready sound bites (each backed by a card)
+
+- "We almost published that a competitor's impact analysis was broken. It was our `PATH`. The hour we spent
+  proving ourselves wrong is the most honest paragraph in the whole comparison." → build-story #1
+- "Same input, same question — *who calls this class?* codemap: one call, 31 references tagged by role.
+  graphlens: two tools and tests hidden by default. Neither is wrong; they're different bets." →
+  [graphlens card](tools/graphlens.md)
+- "A code graph you can `git diff`: 3.6 MB of canonical JSON versus a 31 MB SQLite database." →
+  [comparison](comparison.md)
+- "The one check before you trust any resolved-graph tool: did the resolver actually start? Ours never
+  provisions one; that's the point." → build-story #1
+
+---
+
+## Future stories (skeletons — fill on разбор)
+
+- **#2 …** next tool from R2.2 (CodeGraph / GitNexus / OntoIndex / …). Same shape: setup → the surprising
+  measurement → head-to-head → lesson → take/keep.
+- **The determinism story.** Why a diffable graph matters in a PR — needs a concrete "graph diff caught X"
+  episode from dogfooding (`gaps/`).
+- **The provenance story.** dead-code without false positives; impact that knows tests from core. Has the
+  facts (M8–M12), needs a narrative episode.
+
+_When a разбор produces a surprise worth telling, write it here **while it's hot** — the numbers are cheap to
+record now and expensive to reconstruct later._

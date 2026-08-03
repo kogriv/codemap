@@ -42,6 +42,9 @@ against codemap" gets answered with numbers, not adjectives.
 
 - **[comparison.md](comparison.md)** — the hub: coverage matrix (tools × capabilities) + quality summary + verdicts.
 - **[tools/](tools/)** — one card per tool; template + rules in [tools/README.md](tools/README.md).
+- **[positioning.md](positioning.md)** — the *publication layer*: article-ready build-story + positioning,
+  distilled from the cards (realizes R1-C14). Story Zero (codemap + roadmap) + one build-story per notable
+  разбор. Facts live in the cards; this narrates them.
 
 ### The разбор convention (codemap-native)
 
@@ -85,4 +88,5 @@ to show the author first. Record exact versions / commit hashes / commands so ev
 
 **Output back to the roadmap.** Findings don't become features directly — each returns to
 [../BACKLOG.md](../BACKLOG.md) as a concrete, use-driven capability (a gap codemap should close, or an
-external tool to integrate/wrap), and the "build story" itself lives in the cards + comparison hub.
+external tool to integrate/wrap); the raw comparison lives in the cards + comparison hub, and the
+article-ready **build story** is distilled into [positioning.md](positioning.md).
