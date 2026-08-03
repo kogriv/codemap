@@ -1,7 +1,9 @@
 # Design — Scope model (input identity, manifest, profile)
 
 **Status:** 🟢 Feature A implemented (M19.A, 2026-08-02) — `codemap/scope.py` + `codemap scope` + sidecar,
-7 tests. Feature B (R2.0.1 harness) next. All decisions O1–O6 settled.
+7 tests. 🟢 Feature B implemented (R2.0.1, 2026-08-03) — `research/tools/_scope/{bquant.scope.json,
+materialize.py}`, Scope field in the card template + comparison hub, canonical bench `scope_id` pinned
+(`sha256:300e0a01…5e47d2`, bquant@cb89a24, 280 files). All decisions O1–O6 settled.
 **Backlog:** M19 (product feature A) + R2.0.1 (research harness B) — see [../../BACKLOG.md](../../BACKLOG.md).
 **Motivation:** codemap is deterministic on its **output** (canonical `graph.json`) but says nothing precise
 about its **input**. Today the only record of scope is the M18 sidecar's build *command* (`argv/cwd/target`);

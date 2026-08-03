@@ -6,6 +6,15 @@
 _Tested version: **graphlens-mcp 0.4.0** (core `graphlens 0.8.2`, bundled `ty 0.0.63`), installed via
 `uv tool install graphlens-mcp --python 3.13`. First pass 2026-08-02 (degraded); re-measured 2026-08-03 (ty fixed)._
 
+**Scope:** canonical R2 benchmark = `sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2`
+([`_scope/bquant.scope.json`](../_scope/bquant.scope.json) — 280 files, 207 .py / 73 .md, bquant@`cb89a24`) ·
+run mode: **materialized**. ⚠️ *Retro-fill honesty:* the measured graphlens run used an **ad-hoc rsync
+staging** of the same 6 dirs (285 files = +5 generated `docs/_build/*.py` that git ignores) built before the
+harness existed, so its input was near-identical but **not** this exact `scope_id`. The 5 extra generated
+copies only inflate the grep-style `exhaustive` file list (they show up as `docs/_build/...` there); they
+don't touch the `relations` impact numbers. A canonical re-run is `materialize.py bquant.scope.json <dir>`
+then point graphlens at `<dir>`.
+
 ## ⚠️ Correction to the first pass — the "empty impact" was OUR environment, not the tool
 
 The 2026-08-02 pass reported `relations`/impact returning **empty** and marked graphlens's core

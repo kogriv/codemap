@@ -1,0 +1,20 @@
+{
+  "_comment": "R2 benchmark scope — the single source of truth for 'the input every tool card is measured on'. Realizes docs/design/scope.md §3 (Feature B). root is resolved relative to THIS file (a sibling bquant checkout); override with materialize.py --root. git mode makes this gitignore-correct (no venv), so scope_id pins the exact 280 tracked files at bquant@cb89a24.",
+  "root": "../../../../bquant",
+  "roots": [
+    {"path": "bquant",   "role": "core"},
+    {"path": "tests",    "role": "tests"},
+    {"path": "examples", "role": "examples"},
+    {"path": "research", "role": "research"},
+    {"path": "scripts",  "role": "scripts"},
+    {"path": "docs",     "role": "docs"}
+  ],
+  "include": ["*.py", "*.md"],
+  "expected": {
+    "scope_id": "sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2",
+    "git": {"commit": "cb89a2434092e098a7fd1b4ef582e1acc9a54190", "ref": "main"},
+    "file_count": 280,
+    "by_ext": {".py": 207, ".md": 73},
+    "by_role": {"core": 90, "tests": 81, "docs": 56, "research": 30, "examples": 12, "scripts": 11}
+  }
+}

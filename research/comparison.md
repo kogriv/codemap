@@ -7,6 +7,13 @@ come from R1; hands-on rows are filled as each card is measured on the common ta
 **Legend:** ✅ yes · ◐ partial · ✖ no · ? not yet measured · — N/A.
 **Card status:** `desk` = from R1 survey · `hands-on` = installed & measured on bquant.
 
+**Benchmark scope (parity anchor).** Every `hands-on` row is measured on the shared R2 scope
+[`tools/_scope/bquant.scope.json`](tools/_scope/bquant.scope.json) — **`scope_id
+sha256:300e0a01…5e47d2`**, 280 files (207 .py / 73 .md), `bquant@cb89a24`, venv-free by git enumeration.
+A card is only comparable here if its **Scope** field carries this `scope_id` (or notes the deviation, as
+graphlens does — measured on a near-identical pre-harness staging). codemap runs in place; venv-trap tools
+get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py).
+
 ## Coverage matrix
 
 | Tool | Card | T1 defs | T2 callers | T3 impact | T4 sig-change | T5 arch | Determ. | MCP | Langs | License |

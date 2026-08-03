@@ -1,0 +1,6 @@
+# Materialize outputs are throwaway — never commit staging trees or their manifests.
+# Only the spec (*.scope.json), materialize.py, and the READMEs belong here.
+manifest.json
+*_stage/
+stage/
+staging/
