@@ -465,12 +465,17 @@ R1 закартировал поле сверху вниз; **R2** идёт по
       сам — in-place** (реальное дерево в git-режиме, без копии). Шаблон карточки и `comparison.md` получают
       поле **Scope = scope_id + профиль**; все hands-on-строки обязаны нести один `scope_id`. Ретро-проставить
       `scope_id` в карточку graphlens. **Зависит от M19.A.**
-- [x] **R2.1 Пилот: graphlens-mcp** ✅ (2026-08-02) — полный hands-on разбор, формат залочен.
+- [x] **R2.1 Пилот: graphlens-mcp** ✅ (2026-08-02, **переизмерено 2026-08-03**) — полный hands-on разбор.
       Карточка `research/tools/graphlens.md`. Итоги: (1) **баг скоупа** — игнорит `.gitignore`, отсекает venv
       по хардкод-именам → `venv_bquant` утянул весь venv (>3ч45м/9ГБ); воркэраунд — чистое дерево/пакет.
-      (2) На честном скоупе: индексация **12с/246МБ/17.5МБ БД/16796 узлов**. (3) **T1 search ✅** (~260мс),
-      но **T2/T3 relations/impact пусто** (`ty` LSP не стартанул → degraded; codemap на том же входе — 68 refs),
-      **T4/T5 инструментов нет** (поверхность = search/relations/info). Вердикт **learn-only**; питает R1-C13/C14.
+      (2) **ИСПРАВЛЕНИЕ вывода первого прохода:** «T2/T3 пусто» было **нашим** окружением, не слабостью тула —
+      graphlens бандлит `ty`, но ищет его через `shutil.which("ty")`, а `uv tool install` не кладёт
+      бандл-`bin/` на PATH → тихий degrade в tree-sitter-only. Фикс: `ty` на PATH → `resolver_status: ok`.
+      (3) Переизмерено на том же staging: type-resolved индексация **2м20с/424МБ/31МБ БД/32399 узлов/55691 ребро**
+      (degraded было 12с/17.5МБ/16796). `relations` **работает** — `MACDZoneAnalyzer`: 9 callers+1 callee+2 refs
+      (тесты авто-скрыты), ≈ codemap-овские 12 не-тестовых из 31. **T4/T5 инструментов реально нет.**
+      Вердикт **learn (достойный peer, а не «пусто»)**; питает R1-C13 (бенч должен проверять `resolver_status==ok`)
+      и R1-C14 (дифференциаторы: детерминизм, single-call provenance-impact, no-LSP-dependency, layout-robustness).
 - [ ] **R2.2… остальные** — CodeGraph, GitNexus, OntoIndex, Sentrux, cocoindex, rag_for_git,
       Understand-Anything, CodeSlicer, ast-index, Graphify, grafema, CodeWiki, Foglamp (desk где SaaS/не
       воспроизводится — с честной пометкой). Порядок — по близости к codemap и по связи с R1-C.

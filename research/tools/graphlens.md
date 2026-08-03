@@ -1,140 +1,172 @@
 # graphlens-mcp
 
-**Verdict:** learn-only  ·  **Feeds:** R1-C13 (benchmark), R1-C14 (positioning)  ·
-**Card status:** hands-on — **measured** (fair scope; core impact capability degraded in this env, see below)
+**Verdict:** learn (competent peer; overlaps our thesis)  ·  **Feeds:** R1-C13 (benchmark), R1-C14 (positioning)  ·
+**Card status:** hands-on — **re-measured on a fully-provisioned env** (ty LSP now working; see correction below)
 
-_Tested version: **graphlens-mcp 0.4.0**, installed via `uv tool install graphlens-mcp --python 3.13` on 2026-08-02._
+_Tested version: **graphlens-mcp 0.4.0** (core `graphlens 0.8.2`, bundled `ty 0.0.63`), installed via
+`uv tool install graphlens-mcp --python 3.13`. First pass 2026-08-02 (degraded); re-measured 2026-08-03 (ty fixed)._
+
+## ⚠️ Correction to the first pass — the "empty impact" was OUR environment, not the tool
+
+The 2026-08-02 pass reported `relations`/impact returning **empty** and marked graphlens's core
+capability as broken here. **That conclusion was wrong** — traced to a packaging/PATH issue on our side,
+not a tool weakness. Re-measured with it fixed, **impact works and roughly matches codemap** on the
+resolved non-test call graph. The corrected picture is below; the old numbers are struck through where they
+appear.
+
+### Root cause (packaging, fixable in one line)
+graphlens's Python resolver spawns Astral's `ty` LSP server via
+`ty_bin = shutil.which("ty") or "ty"` (`graphlens_python/_resolver.py:34`). The tool **bundles** `ty` at
+`~/.local/share/uv/tools/graphlens-mcp/bin/ty`, but `uv tool install` does **not** put that dir on `PATH`
+(only the declared `graphlens-mcp` entry point is symlinked). So `shutil.which("ty")` returns `None`,
+`Popen(["ty","server"])` raises `FileNotFoundError`, and `TyResolver.prepare()` swallows it
+(`except Exception:` → `_client=None`) → silent fall-back to tree-sitter-only → `relations` returns nothing
+and self-reports `resolver_status: "degraded"`. The `ty` binary itself is fine (`ty --version` → 0.0.63,
+`ty server` starts).
+
+**Workaround (what we did):** put the bundled bin on `PATH` before launching graphlens —
+`PATH="$HOME/.local/share/uv/tools/graphlens-mcp/bin:$PATH"`. Then `ty server` starts, indexing switches
+from structural to type-resolved, and `resolver_status` flips to **`ok`**. (Arguably a graphlens bug: a
+tool that bundles `ty` should resolve it relative to its own install, not rely on the caller's `PATH`.)
 
 ## Identity
 - Repo / docs: `neko1313/graphlens-mcp` · https://neko1313.github.io/graphlens-mcp/
 - License: MIT
-- Stack: tree-sitter grammars (Python / TypeScript / Go / Rust / PHP) + **`ty`** (Astral's LSP-grade type
-  checker) for Python; graph persisted to **SQLite** (`.graphlens/graph.db`).
-- Install: `uv tool install graphlens-mcp` (Python ≥ 3.13).
-- Interface: **MCP-only** for querying (stdio `serve`). CLI is operational only: `init` (index+configure
-  agent), `reindex`, `remove`, `serve`, `status`. No CLI to query the graph (only `status`).
-- Reproduced? yes (install + index attempted on bquant).
+- Stack: tree-sitter grammars (Python / TypeScript / Go / Rust / PHP) + a **per-language LSP resolver**
+  (`ty` for Python, `gopls` for Go, `intelephense` for PHP, …) for type-grade resolution; graph persisted
+  to **SQLite** (`.graphlens/graph.db`, WAL).
+- Install: `uv tool install graphlens-mcp` (Python ≥ 3.13). **Gotcha:** ensure the bundled `ty` is on `PATH`
+  (see correction above) or Python impact silently degrades.
+- Interface: **MCP-only** for querying (stdio `serve`, watch-mode default on). CLI is operational only:
+  `init` (index + auto-configure an agent's MCP config), `reindex`, `remove`, `serve`, `status`.
+- Reproduced? yes — installed, indexed, and queried over MCP on bquant (both degraded and fixed).
 
 ## What it is
-An LSP-grade semantic code graph for AI agents: `ty` + tree-sitter build a typed graph of symbols, calls,
-references and imports (including cross-file and, notably, **cross-boundary into dependencies**), persisted
-to a SQLite DB, served to agents as MCP navigation tools. Has a filesystem watch mode (`serve --watch`,
-default on) for incremental re-index.
+An LSP-grade semantic code graph for AI agents: tree-sitter + a real type checker (`ty`) build a typed graph
+of symbols, calls, references and imports — including cross-file and, notably, **cross-boundary into
+dependencies** — persisted to SQLite and served to agents as MCP navigation tools. Filesystem watch mode
+(`serve --watch`) for incremental re-index.
 
-## ⚠️ Finding — indexing pulls in the whole dependency tree (product flaw + workaround)
+## Setup side-effects worth knowing
+- `init` **auto-writes an agent MCP config** (here it picked Codex → `~/.codex/config.toml`; override with
+  `--agent`). It edits files outside the indexed repo — expect it.
+- `init` did a **network fetch** ("Fetching 7 files", ~18 s) — vendored `ty`/typeshed stubs. Needs egress on
+  first index.
+- Under our tool sandbox, the `ty server` subprocess got killed (signal 16) → had to run graphlens with the
+  sandbox disabled. Not graphlens's fault; noted so the runbook is reproducible.
 
-**What happened (measured).** `graphlens-mcp init --root /data/pro/bquant` (the repo root) on bquant ran
-**> 3h45m, ~9 GB RAM, ~1.1 GB `graph.db`, and did not finish** before we killed it. Cause: it indexed
-**`venv_bquant/` — 1.5 GB, 16 087 third-party `.py`** (numpy, pandas, plotly, …), type-checking the entire
-dependency tree instead of the 89-file `bquant` package.
+## Indexing cost — structural vs type-resolved (same fair scope, 212 .py / 73 .md)
+Reference: codemap builds the same input in ~1 min (fast mode) → 3.6 MB canonical JSON on this staging.
 
-**Root cause (two parts).**
-1. graphlens **does not honor `.gitignore`** — where `venv_*/` is already excluded in this repo.
-2. It excludes virtual-envs only by a **hardcoded exact-name list** (`graphlens/contracts/adapter.py`,
-   v0.4.0):
-   ```python
-   _EXCLUDED_DIRS = frozenset({".venv", "venv", "__pycache__", ".git",
-                               "dist", "build", ".eggs", "node_modules"})
-   ```
-   A **non-standard venv name** (`venv_bquant`) doesn't match `.venv`/`venv`, so it slips through and drags
-   the whole dependency tree into the graph. There is no `--exclude` flag and no gitignore support in v0.4.0.
+| Mode | Time | Peak RAM | DB size | Nodes | Edges | resolver_status |
+|---|---|---|---|---|---|---|
+| tree-sitter only (ty missing) | **12 s** | 246 MB | 17.5 MB | 16 796 | 20 889 | `degraded` |
+| **ty-resolved (fixed)** | **2 m 20 s** | 424 MB | 31 MB | **32 399** | **55 691** | **`ok`** |
 
-**Workarounds.**
-- Point `--root` at the **package directory** (`bquant/bquant`), not the repo root — the cleanest fix, and
-  what codemap does anyway.
-- Or name the virtualenv `.venv`/`venv` (matches the hardcoded list), or keep it **outside** the indexed root.
-- No in-tool ignore/exclude exists in v0.4.0, so the safe rule is: **only point graphlens at a clean source
-  tree with no venv/deps inside it.**
+Type resolution costs ~12× the wall-clock and ~2.7× the edges — those extra edges are the resolved
+calls/references that were missing in the degraded run. (The earlier 3h45m/9 GB/1.1 GB catastrophe was a
+*different* bug — the venv trap below — not this.)
 
-**codemap contrast.** codemap takes the package dir explicitly and is source-only-**of-the-target**, so it
-never wanders into a venv or non-standard dirs — robustness to repo layout is a quiet differentiator
-(feeds R1-C14). The flip side is a real *capability* difference, not just a bug: graphlens **can resolve
-into dependencies** (cross-boundary — e.g. "what pandas API does bquant call"), which codemap does **not**
-do by design.
+## MCP surface — 3 general verbs (richer than the first pass implied)
+- **`search(query, limit=25, path_glob, exhaustive)`** — the one way in. Name / content / **meaning** →
+  nodes **with signatures** (`via` shows which ranked it); `text_matches` = non-symbol hits (incl. markdown);
+  content matched **literally**. `path_glob` scopes (`tests/*`, `!tests/*`). **Test files auto-excluded**
+  unless you scope them or the query says "test". `exhaustive=true` → *every* matching file path, uncapped
+  (grep-flavoured, no signatures).
+- **`relations(symbol, depth=2, limit=25, file)`** — neighbourhood in one call: callers, callees,
+  implementors/subclasses, non-call references, each with signature. THE impact tool. **Also auto-drops
+  test call-sites** by default (`lean.py:53`, a deliberate context-budget heuristic traced from real agent
+  runs) unless the symbol mentions "test".
+- **`info(target, limit=200, file, mode)`** — symbol → source/sig/loc; file → symbol outline, or
+  `mode='source'` → line-numbered content **+ which files import it**.
 
-## MCP surface
-Minimalist — **3 tools**: `search` (name/content/meaning → nodes+signatures), `relations` (neighbourhood:
-callers/callees/implementors/references — "THE tool for impact"), `info` (symbol source/sig/loc, or file
-outline). Contrast: codemap exposes ~18 specialized ops (impact, call_contract, callers, callees,
-architecture, columns, …). Different philosophy: 3 general verbs vs many precise ones.
+codemap exposes ~18 specialized ops; graphlens bets on 3 general verbs. Different philosophy, not strictly
+worse — the auto-test-exclusion is a genuinely thoughtful agent-ergonomics call.
 
-## Coverage vs codemap
-Measured on the fair scope (staging = same 6 dirs codemap indexes: bquant/tests/examples/research/scripts/docs).
-
-| Capability | codemap | graphlens |
+## Coverage vs codemap — re-measured (same staging)
+| Capability | codemap | graphlens (ty working) |
 |---|---|---|
-| symbol lookup (T1) | ✅ | ✅ (`search`) |
-| callers/callees (T2) | ✅ | ✖ in this env¹ (`relations` → empty) |
-| impact / blast-radius (T3) | ✅ | ✖ in this env¹ |
-| signature-change surface (T4) | ✅ (`call_contract`) | ✖ no such tool |
-| architecture / layers (T5) | ✅ (`architecture`) | ✖ no such tool |
-| resolves into dependencies | ✖ (by design) | ✅ (when ty works) |
-| determinism | ✅ (canonical JSON) | ✖ (SQLite DB, not diffable) |
-| MCP | ✅ (~18 ops) | ✅ (3 tools) |
-| indexes markdown/docs as refs | ✅ (doc nodes) | ◐ (content text-match only) |
-| languages | Python | Py/TS/Go/Rust/PHP |
+| symbol lookup (T1) | ✅ | ✅ `search` (finds flagship + content/markdown hits; ranking mediocre) |
+| callers/callees (T2) | ✅ | ✅ `relations` — **works** (~~✖~~), tests auto-excluded |
+| impact / blast-radius (T3) | ✅ | ✅ `relations` (code) + `search exhaustive` (files) — **works** (~~✖~~) |
+| signature-change surface (T4) | ✅ `call_contract` | ✖ no such tool |
+| architecture / layers (T5) | ✅ `architecture` | ✖ no such tool |
+| resolves into dependencies | ✖ (by design) | ✅ (real capability codemap lacks) |
+| determinism | ✅ canonical diffable JSON | ✖ SQLite DB, not diffable |
+| single-call provenance impact | ✅ (core/docs/examples/scripts/tests in one number) | ◐ (2 tools; tests hidden by default) |
+| works source-only, no LSP dep | ✅ (jedi/griffe) | ◐ (needs `ty` on PATH or silently degrades) |
+| indexes markdown/docs as refs | ✅ doc nodes | ◐ content text-match; counts generated `_build/` copies |
+| languages | Python | Py / TS / Go / Rust / PHP |
 | license | MIT | MIT |
-| honors .gitignore / excludes venv | takes package dir | ✖ (hardcoded names only) |
+| honors .gitignore / excludes venv | takes package dir (immune) | ✖ hardcoded exact-name list only |
 
-¹ `relations` returned empty because graphlens's **`ty` LSP resolver failed to initialize** here (see below);
-its own response flagged `resolver_status: "degraded"`. Structural `search` still worked.
+## Hands-on — impact head-to-head on `MACDZoneAnalyzer` (identical staging)
+| Tool / metric | Result |
+|---|---|
+| **codemap** `impact` (1 call) | **31 refs** — core 2 / docs 7 / examples 1 / scripts 2 / **tests 19**, each provenance-tagged |
+| **graphlens** `relations` (resolved graph, tests auto-dropped) | 9 callers + 1 callee (`deprecated`) + 2 refs, `resolver_status: ok` |
+| **graphlens** `search exhaustive` (grep-like, all files) | 44 files — bquant 2 / docs 14 / examples 2 / research 3 / scripts 2 / **tests 21** |
 
-## Hands-on measurements (target: bquant, fair scope — 212 .py / 73 .md)
-Reference: codemap builds the same input in ~1 min → 4.8 MB canonical JSON, 4225 nodes / 9970 edges.
-
-**Indexing:** **12.1 s**, **246 MB** peak RAM, **17.5 MB** SQLite DB, **16 796 nodes / 20 889 edges**.
-(The earlier 3h45m/9 GB/1.1 GB run was the *misconfigured* repo-root scope pulling `venv_bquant` — see finding.)
-
-| Task | Correct? | Cost / latency | Notes |
-|---|---|---|---|
-| T1 where defined (`analyze_zones`) | ✅ | ~260 ms | `search` finds the flagship `…pipeline.analyze_zones` (3rd of 25); ranking surfaces a same-named method + `_analyze_zones` above it. Returns signatures + content matches (incl. markdown). |
-| T2 callers (`MACDZoneAnalyzer`) | ✖ | ~130 ms | `relations` → 0 callers/callees/impl/refs (`degraded`). |
-| T3 impact (`MACDZoneAnalyzer`) | ✖ | ~130 ms | 0 refs vs **codemap's 68** (core 2 / docs 7 / examples 1 / scripts 2 / tests 56). Degraded resolver. |
-| T4 sig-change (`analyze_zones`) | ✖ | — | No call-contract/argument-shape tool exists. |
-| T5 architecture | ✖ | — | No architecture/layers/coupling tool exists. |
-
-**Why T2/T3 empty (diagnosed, fairly):** graphlens's impact resolution needs the **`ty` LSP server**
-(Astral ty 0.0.63, bundled). `ty check` runs fine on the staging (997 diagnostics), but graphlens's
-`ty server` LSP handshake **fails to initialize deterministically** in this env → it silently falls back
-to tree-sitter-only, where `relations` yields nothing. codemap resolves the same callers/impact
-**source-only via jedi** with no such dependency, on the identical input. A fully-provisioned env (project
-venv + working ty) might populate `relations` — untested (see "did NOT check"). Also: semantic `search`
-mode was disabled (embedding model unreachable — no egress), so only name/content search ran.
+**Reading it fairly.** On the **non-test resolved call graph** the two are close — codemap 12
+(core 2 + docs 7 + examples 1 + scripts 2), graphlens ~9–11 — so graphlens's engine is **sound**, not empty.
+The differences are shape, not capability:
+- graphlens **splits** the answer across two tools (`relations` = resolved code edges, `search exhaustive`
+  = textual file list) and **hides tests by default**; codemap returns tests + docs + code in **one
+  provenance-tagged number**.
+- graphlens's exhaustive list counts **generated `docs/_build/html/_downloads/*.py`** copies (no gitignore
+  → staging hygiene leaks in); codemap's doc references are the 7 real `.md` mentions.
 
 ## Разбор
-- **What we'd take:** cross-boundary resolution *into* dependencies is a genuinely useful idea codemap
-  lacks (careful — it's also what makes graphlens expensive). The LSP-grade `ty` backend buys type
-  precision codemap's jedi/griffe approximates.
-- **What we'd do differently and why:** codemap stays source-only-of-target + deterministic canonical
-  artifact; graphlens's whole-tree, DB-backed, non-deterministic approach is heavier and layout-fragile.
-- **What the author knows that we didn't:** using a real type checker (`ty`) as the graph backend, and a
-  persisted SQLite store + FS watch for incremental updates (vs codemap's in-memory + rebuild).
-- **What we did NOT check (honest boundary):** `relations`/impact with a **fully-provisioned env** (project
-  venv installed + a working `ty` server) — it may populate there; we measured the out-of-box source-only
-  result (same setup codemap handles). Also unchecked: DB determinism across re-index; whether `--watch`
-  incremental is correct; semantic search quality (embedding model was unreachable — no egress).
+- **What we'd take:** cross-boundary resolution *into* dependencies (a real capability codemap lacks by
+  design); the **auto-test-exclusion** heuristic for agent context budgets (smart default — impact answers
+  shouldn't drown in test call-sites); watch-mode incremental re-index; the 3-verb minimal surface as a
+  design foil.
+- **What we'd do differently and why:** codemap stays source-only-of-target + **deterministic canonical
+  artifact** (diffable JSON vs opaque SQLite) + **no LSP dependency** (jedi/griffe resolve impact with
+  nothing to provision — graphlens's core silently dies if `ty` isn't on PATH) + **layout robustness**
+  (package-dir, immune to venv/`_build` traps). And codemap answers T4/T5 (call-contracts, architecture)
+  that graphlens has no tool for.
+- **What the author knows that we didn't:** using a real type checker (`ty`) as the graph backend for
+  cross-boundary precision; a persisted SQLite store + FS watch for incremental updates; and the
+  context-budget rationale for de-emphasising tests in agent-facing results.
+- **What we did NOT check (honest boundary):** cross-boundary *into deps* actually resolving (would need the
+  project venv installed under the indexed root); DB determinism across re-index; whether `--watch`
+  incremental stays correct; semantic `search` quality (embedding model was unreachable — no egress, so only
+  name/content search ran); other languages (Go/TS/Rust/PHP have their own LSP resolvers, untested here).
 
-## Quality (on the covered part)
-- **accuracy:** `search` good (finds the symbol + content matches incl. markdown); ranking mediocre (a
-  same-named method outranks the flagship function). `relations` unusable here (degraded → empty).
+## The venv trap (still valid — separate from the ty issue)
+`init --root <repo-root>` on a repo with a **non-standard venv name** (`venv_bquant`) drags the whole
+dependency tree in: graphlens ignores `.gitignore` and excludes virtualenvs only by a hardcoded exact-name
+list (`.venv`/`venv`/…), so `venv_bquant` slips through → our first attempt ran **> 3h45m / ~9 GB / 1.1 GB
+DB** type-checking numpy/pandas/… before we killed it. **Workaround:** point `--root` at a clean source tree
+(the package dir), or name the venv `.venv`/`venv`, or keep it outside the root. No `--exclude` in v0.4.0.
+codemap takes the package dir explicitly and is immune.
+
+## Quality (re-measured)
+- **accuracy:** `search` good (flagship + content/markdown hits); ranking mediocre (a same-named method
+  outranks the flagship function). `relations` **now accurate** (`resolver_status: ok`), matches codemap on
+  the non-test call graph.
 - **determinism:** ✖ — SQLite DB, not a canonical/diffable artifact; determinism across runs untested.
-- **cost/speed:** indexing 12 s / 246 MB (fair scope); queries fast (~130–260 ms) once served.
-- **setup friction:** high — needs Python ≥3.13; **fragile scoping** (no gitignore/exclude → the venv trap);
-  core impact depends on an experimental `ty` LSP that didn't initialize here.
-- **languages:** broad (Py/TS/Go/Rust/PHP) — codemap is Python-only.
-- **license:** MIT (same as codemap). **interface:** MCP-only querying (3 tools) + operational CLI.
-- **honesty-of-claims:** good — it self-reports `resolver_status: "degraded"` rather than faking results.
+- **cost/speed:** type-resolved indexing 2m20s / 424 MB / 31 MB DB (fair scope); queries fast (~130–260 ms).
+- **setup friction:** high — Python ≥3.13; **`ty`-on-PATH gotcha** (silent degrade); no gitignore/exclude
+  (venv trap); first index needs egress; `init` edits an external agent config.
+- **languages:** broad (Py/TS/Go/Rust/PHP). **license:** MIT. **interface:** MCP-only querying (3 tools).
+- **honesty-of-claims:** good — self-reports `resolver_status: "degraded"` rather than faking results
+  (which is exactly how we caught our own PATH bug).
 
 ## Verdict & backlog effect
-**learn-only.** graphlens's ambitions overlap codemap's (graph-for-agents, impact, MCP) and it has real
-reach (5 languages, resolves into deps *when ty works*), but out-of-box on a source-only tree it degraded
-to structural search with **empty impact** — the exact query where a graph should beat grep — while codemap
-answered T1–T5 on the identical input. Findings folded to the roadmap:
-- **R1-C14 (positioning):** codemap's **determinism** (diffable JSON vs opaque SQLite), **layout robustness**
-  (package-dir, no venv trap), and **source-only resolution that actually works without deps** are concrete,
-  now-measured differentiators. State them.
-- **R1-C13 (benchmark):** the fair grep-vs-graph bench must ensure the *competitor's resolver is actually
-  functioning* — here the honest result is "graph tool degraded to search"; codemap's 68-ref impact is the
-  baseline to beat.
-- **learn:** the 3-verb MCP surface (search/relations/info) is an interesting minimalism vs codemap's ~18
-  ops; and cross-boundary dep resolution remains a genuine capability codemap lacks by design.
+**learn — a competent peer, not "nothing to take."** Corrected finding: graphlens's impact engine **works**
+and ≈ codemap on the resolved non-test call graph; the earlier "empty impact" was our PATH bug. We still
+wouldn't integrate/wrap it — it overlaps codemap's thesis and is heavier (12× index time), non-deterministic
+(SQLite), layout-fragile (venv/`_build` traps), LSP-dependent, and lacks T4/T5 tools — but the ideas are
+real. Roadmap effects:
+- **R1-C14 (positioning):** codemap's durable differentiators, now measured against a *working* competitor:
+  **determinism** (diffable JSON), **single-call provenance-complete impact** (tests + docs + code, one
+  number), **no-LSP-dependency robustness** (impact works with nothing to provision), **layout robustness**,
+  and **T4/T5 coverage**. State these — not "graphlens is broken."
+- **R1-C13 (benchmark):** the grep-vs-graph bench must **verify the competitor's resolver is actually up**
+  (`resolver_status == ok`) before comparing — our own run shows how easily a graph tool degrades to grep.
+  Fair same-scope baseline: codemap 31-ref provenance impact vs graphlens 9-caller resolved graph + 44-file
+  exhaustive.
+- **learn candidates:** cross-boundary dep resolution (capability gap); context-budget test-de-emphasis
+  (ergonomics idea); watch-mode incremental (feeds M3.2 freshness).

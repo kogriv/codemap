@@ -12,7 +12,7 @@ come from R1; hands-on rows are filled as each card is measured on the common ta
 | Tool | Card | T1 defs | T2 callers | T3 impact | T4 sig-change | T5 arch | Determ. | MCP | Langs | License |
 |---|---|---|---|---|---|---|---|---|---|---|
 | **codemap** | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Py | MIT |
-| graphlens | [card](tools/graphlens.md) | ✅ | ✖¹ | ✖¹ | ✖ | ✖ | ✖ | ✅ | Py/TS/Go/Rust/PHP | MIT |
+| graphlens | [card](tools/graphlens.md) | ✅ | ✅¹ | ✅¹ | ✖ | ✖ | ✖ | ✅ | Py/TS/Go/Rust/PHP | MIT |
 | CodeGraph (colbymchenry) | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | MIT |
 | GitNexus | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | PolyForm NC |
 | OntoIndex | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | ? |
@@ -24,14 +24,17 @@ come from R1; hands-on rows are filled as each card is measured on the common ta
 _Rows are seeded from R1/R1.5 (desk-level, hence `?`); each becomes measured as its card moves to
 `hands-on`. `codemap` is the ground-truth reference for T1–T5._
 
-¹ graphlens (v0.4.0), measured on the fair scope (same 6 dirs codemap indexes): **T1 `search` works**
-(~260 ms, finds the flagship symbol), but **T2/T3 `relations` returned empty** (0 callers/refs vs codemap's
-68) — its `ty` LSP resolver failed to initialize in this env (`resolver_status: degraded`); T4/T5 have **no
-tool at all** (surface is only search/relations/info). Indexing the fair scope: **12 s / 246 MB / 17.5 MB DB /
-16 796 nodes**. (The earlier > 3h45m / 9 GB / 1.1 GB run was the *misconfigured* repo-root scope: graphlens
-**ignores `.gitignore`** and excludes venvs only by hardcoded names, so the non-standard `venv_bquant`
-1.5 GB / 16k-file venv got pulled in. Workaround: point it at a clean source tree.) See the
-[card](tools/graphlens.md).
+¹ graphlens (v0.4.0), re-measured on the fair scope (same 6 dirs codemap indexes) **with the `ty` LSP
+working**: **T1–T3 all work.** `search` finds the flagship symbol (~260 ms); `relations` returns a real
+resolved call graph (`resolver_status: ok`) — on `MACDZoneAnalyzer`: 9 callers + 1 callee + 2 refs (tests
+auto-excluded by design), ≈ codemap's 12 non-test refs. **Correction:** the first pass reported T2/T3
+*empty*, but that was **our** environment — graphlens bundles `ty` yet resolves it via `shutil.which("ty")`,
+and `uv tool install` leaves the bundled `bin/` off `PATH`, so it silently fell back to tree-sitter-only.
+Fixed by putting the bundled bin on `PATH`; then indexing goes type-resolved (**2 m 20 s / 424 MB / 31 MB DB
+/ 32 399 nodes / 55 691 edges**, vs the degraded **12 s / 246 MB / 17.5 MB / 16 796 nodes**). T4/T5 remain
+genuinely absent (surface is only search/relations/info). (The separate > 3h45m / 9 GB / 1.1 GB catastrophe
+was the venv trap — repo-root scope pulling `venv_bquant` because graphlens ignores `.gitignore`; point it at
+a clean source tree.) See the [card](tools/graphlens.md).
 
 ## Quality summary
 
@@ -40,7 +43,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 
 | Tool | Standout strength | Standout weakness | Verdict | Feeds |
 |---|---|---|---|---|
-| graphlens | 5 languages; resolves into deps (when ty works); minimalist 3-verb MCP | impact empty out-of-box (ty LSP fragile); no arch/sig-change tools; non-deterministic 1 GB-capable DB; venv-scoping trap | learn-only | R1-C13, R1-C14 |
+| graphlens | working type-resolved impact (≈codemap non-test); resolves into deps; 5 languages; minimalist 3-verb MCP; smart test-de-emphasis | no arch/sig-change tools (no T4/T5); non-deterministic DB; **`ty`-on-PATH gotcha** silently degrades impact; venv-scoping trap; 12× index cost | learn (competent peer) | R1-C13, R1-C14 |
 
 ## Where codemap is not closed
 
