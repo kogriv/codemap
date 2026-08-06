@@ -6,7 +6,7 @@ the code it analyzes. One canonical, deterministic graph store → many renders:
 dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review,
 and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code-intelligence tools.
 
-**Status:** 🟢 M0–M18 implemented + research track (R1) — schema 0.9, **152 tests green** (+ a SCIP-CLI
+**Status:** 🟢 M0–M19.A implemented + research track (R1/R2) — schema 0.9, **160 tests green** (+ a SCIP-CLI
 check that runs when the `scip` binary is present), warm serve surface with 21 ops, an MCP adapter, and
 SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
 v1 boundaries), **[BACKLOG.md](BACKLOG.md)** (roadmap), and **[research/](research/)** (tool landscape).
@@ -89,6 +89,19 @@ codemap serve --graph graph.json --source-root . --mcp
   info + inherits/implements relationships) so Sourcegraph, Glean and other SCIP consumers can drive
   go-to-definition, symbol search and type hierarchy over it. See [docs/export.md](docs/export.md).
 
+## How it compares
+
+codemap is **the precise structural leg for index-free AI agents** — it complements embeddings-RAG and
+Repomix-style packing rather than competing with them. Its bet is to be the best *deterministic, diffable,
+provenance-aware* graph in that slot, and to interoperate outward (SCIP, ctags) instead of locking the graph
+away.
+
+> **A code graph an agent can trust: source-only, deterministic, diffable — no index to go stale, no LSP to provision.**
+
+The [research track](research/) measures this against the field hands-on, on a shared benchmark scope. The
+[positioning doc](research/positioning.md) is the publication layer — the narrative and the numbers behind the
+claims above; [comparison.md](research/comparison.md) is the coverage matrix that backs them.
+
 ## Dogfooding
 
 codemap is validated end-to-end against a real external package. Place a target repo as a sibling and
@@ -104,7 +117,9 @@ the live graph, findings, and the milestone that closed them.
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
 - **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each
-  (integrate / wrap / learn); source of the R1 capability roadmap.
+  (integrate / wrap / learn); source of the R1 capability roadmap. See
+  **[research/positioning.md](research/positioning.md)** for the publication-layer narrative and
+  **[research/comparison.md](research/comparison.md)** for the hands-on coverage matrix.
 
 ## License
 
