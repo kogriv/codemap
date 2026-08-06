@@ -483,9 +483,21 @@ R1 закартировал поле сверху вниз; **R2** идёт по
       (тесты авто-скрыты), ≈ codemap-овские 12 не-тестовых из 31. **T4/T5 инструментов реально нет.**
       Вердикт **learn (достойный peer, а не «пусто»)**; питает R1-C13 (бенч должен проверять `resolver_status==ok`)
       и R1-C14 (дифференциаторы: детерминизм, single-call provenance-impact, no-LSP-dependency, layout-robustness).
-- [ ] **R2.2… остальные** — CodeGraph, GitNexus, OntoIndex, Sentrux, cocoindex, rag_for_git,
-      Understand-Anything, CodeSlicer, ast-index, Graphify, grafema, CodeWiki, Foglamp (desk где SaaS/не
-      воспроизводится — с честной пометкой). Порядок — по близости к codemap и по связи с R1-C.
+- [~] **R2.2… остальные** — 🟡 в работе.
+      - [x] **GitNexus** ✅ (2026-08-06, **hands-on** через новый харнесс R2.0.1) — `research/tools/gitnexus.md`.
+            v1.6.9, TS/Node, tree-sitter + LadybugDB + локальные ONNX-эмбеддинги, 14 языков, PolyForm-NC.
+            Измерено на R2-скоупе (materialized staging, `scope_id` сверен): T1 ✅ (ambiguity как у нас),
+            T2 ◐ (import fan-in, не call-sites), T3 ✅ (транзитивный import-closure + risk + epistemic),
+            T4 ✖ (нет call-contract), T5 ◐ (cycles+кластеры+flows, без coupling/god-objects). Детерминизм ◐:
+            **ответ** байт-идентичен (clean-room A/B), **артефакт** — 123 МБ бинарный LadybugDB (не diffable);
+            re-analyze без clean не идемпотентен. Установка 1.7 ГБ node_modules. Вердикт **learn (сильный,
+            смежный peer — комплементарен, не конкурент)**. Питает R1-C13 (epistemic/confidence-метки),
+            R1-C14 (дифференциаторы: MIT vs NC, diffable JSON vs бинарь, provenance-impact, no-git), R1-C15
+            (clusters+flows → living docs). **Новый gap:** семантический поиск + flow/community-нарратив.
+            Build-story #2 в `research/positioning.md` («The one that does more, and why that's fine»).
+      - [ ] остальные — CodeGraph, OntoIndex, Sentrux, cocoindex, rag_for_git, Understand-Anything, CodeSlicer,
+            ast-index, Graphify, grafema, CodeWiki, Foglamp (desk где SaaS/не воспроизводится — с честной
+            пометкой). Порядок — по близости к codemap и по связи с R1-C.
 
 ---
 

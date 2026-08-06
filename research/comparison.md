@@ -21,7 +21,7 @@ get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py)
 | **codemap** | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Py | MIT |
 | graphlens | [card](tools/graphlens.md) | ✅ | ✅¹ | ✅¹ | ✖ | ✖ | ✖ | ✅ | Py/TS/Go/Rust/PHP | MIT |
 | CodeGraph (colbymchenry) | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | MIT |
-| GitNexus | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | PolyForm NC |
+| **GitNexus** | [card](tools/gitnexus.md) | ✅ | ◐² | ✅² | ✖ | ◐² | ◐² | ✅ | 14 (tree-sitter) | PolyForm NC |
 | OntoIndex | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | ? |
 | Sentrux | ? | — | — | ? | ? | ✅ | ✅ | ✅ | 52 | ? |
 | cocoindex-code | ? | ✅ | ✖ | ✖ | ✖ | ✖ | ✖ | ? | multi | Apache-2.0 |
@@ -30,6 +30,18 @@ get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py)
 
 _Rows are seeded from R1/R1.5 (desk-level, hence `?`); each becomes measured as its card moves to
 `hands-on`. `codemap` is the ground-truth reference for T1–T5._
+
+² GitNexus (v1.6.9), hands-on on the R2 scope (materialized staging, `scope_id` verified). **T1** ✅
+`context` surfaces the same 2-def ambiguity codemap does. **T2** ◐ `context` returns import fan-in (22) +
+methods, **not** call-sites — a file-import model, not codemap's 65 symbol-refs by role. **T3** ✅ `impact`
+is a transitive upstream **import closure** (48 impacted; byDepth 5/15/28; `risk: MEDIUM`; per-answer
+`epistemic`/`confidence`) — richer in depth+risk, but file-level and **provenance-blind**. **T4** ✖ no
+per-call argument contract (`detect-changes` ≈ codemap `review`, and needs git). **T5** ◐ `check --cycles`
+(3 cycles) + 276 Leiden clusters + 294 flows, but no coupling/god-object metrics. **Determinism** ◐: answer
+is byte-identical across clean-room A/B, but the artifact is a **123 MB binary LadybugDB** (non-diffable), and
+in-place re-`analyze` without `clean` is non-idempotent. Setup is heavy (**1.7 GB `node_modules`**), license is
+**non-commercial**. Net: a strong, adjacent **semantic+structural hybrid** — complementary, not competing. See
+the [card](tools/gitnexus.md).
 
 ¹ graphlens (v0.4.0), re-measured on the fair scope (same 6 dirs codemap indexes) **with the `ty` LSP
 working**: **T1–T3 all work.** `search` finds the flagship symbol (~260 ms); `relations` returns a real
@@ -51,6 +63,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 | Tool | Standout strength | Standout weakness | Verdict | Feeds |
 |---|---|---|---|---|
 | graphlens | working type-resolved impact (≈codemap non-test); resolves into deps; 5 languages; minimalist 3-verb MCP; smart test-de-emphasis | no arch/sig-change tools (no T4/T5); non-deterministic DB; **`ty`-on-PATH gotcha** silently degrades impact; venv-scoping trap; 12× index cost | learn (competent peer) | R1-C13, R1-C14 |
+| GitNexus | hybrid semantic+structural: BM25+embeddings+RRF search, Leiden clusters + 294 process-flows, transitive risk-rated impact, per-answer `epistemic`/`confidence`, 14 langs, MCP+HTTP+web, 1-cmd editor setup | **non-commercial license**; 1.7 GB install + 123 MB binary non-diffable index (28× input); T2 is import-fan-in not call-sites; no T4 (call contracts) & partial T5 (no coupling/god-objects); **git-required** for incremental/change-detection | learn (strong, adjacent niche) | R1-C13, R1-C14, R1-C15 |
 
 ## Where codemap is not closed
 
@@ -66,6 +79,18 @@ backlog candidate. Populated as cards complete.
 - **Agent context-budget shaping** — graphlens's `relations` *deliberately* drops test call-sites by default
   so impact answers don't drown in tests (a traced ergonomics decision). codemap returns everything with
   provenance and leaves filtering to the caller — worth considering an opt-in `--exclude-role tests`.
+- **Semantic retrieval + flow/community narrative** — GitNexus fuses BM25 + local embeddings (RRF) with the
+  graph, and adds Leiden **community clustering** (276) + **process-flow tracing** (294 entry-point call
+  chains). codemap has no fuzzy layer and no "how execution moves through the system" view. Per the positioning
+  thesis this is a layer codemap should *interoperate with* (feed the precise graph into a retrieval/narrative
+  tool), not necessarily build — but flows/communities atop the existing call graph are a candidate view.
+  ([GitNexus card](tools/gitnexus.md))
+- **Per-answer epistemic labels** — GitNexus tags every answer/edge with `epistemic` + `confidence`. codemap
+  labels *approximations* structurally but doesn't attach a confidence to each answer — a small honesty
+  ergonomic worth adopting. ([GitNexus card](tools/gitnexus.md))
+- **Transitive, depth-bucketed, risk-rated impact** — GitNexus's `impact` returns a depth histogram
+  (`byDepth`) + a coarse `risk` band over a transitive closure; codemap's `impact` is one-hop by design. An
+  opt-in transitive mode with a depth histogram is a natural extension. ([GitNexus card](tools/gitnexus.md))
 
 ## Notes for codemap's own positioning (differentiators, measured)
 

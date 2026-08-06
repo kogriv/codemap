@@ -159,6 +159,77 @@ broken — it had never run.
 
 ---
 
+## Build-story #2 — "The one that does more, and why that's fine" (GitNexus)
+
+### The setup
+R1 filed GitNexus in one line: *"repo → knowledge graph (3D map) + CLI + MCP, non-commercial license."* Easy
+to shelve as a visualization toy with a bad license. Then we installed it — **v1.6.9**, and it is nothing like
+the desk note. `npm install gitnexus` pulls **1.7 GB** of `node_modules`: tree-sitter grammars for 14
+languages, an ONNX runtime, a native LadybugDB graph engine, transformers.js embeddings. This is not a toy.
+It's a **hybrid semantic+structural engine** — BM25 + vector search fused with a symbol graph, Leiden
+community clustering, entry-point process-flow tracing, transitive risk-rated impact. On the R2 scope
+(materialized staging, `scope_id` verified identical to ours) it indexed 280 files into **6 344 nodes /
+14 661 edges / 276 clusters / 294 flows** in ~25 s.
+
+### The two cheap conclusions we had to resist
+Graphlens taught us not to dismiss a competitor too fast. GitNexus taught the **opposite** discipline —
+not to *panic* too fast. Two lazy verdicts were on the table:
+1. *"It's just a non-commercial 3D-map, nothing to take."* — false; it does several things we don't.
+2. *"It does semantic search, clustering, flows, 14 languages, risk ratings — they've lapped us."* — also
+   false, and the more dangerous one, because it's the kind of thing you half-believe at 2 a.m.
+
+The only way out of both was the harness: **same input, same five questions, measure what each tool is
+actually _for_.**
+
+### What the measurements actually said
+- **T1 (where is `analyze_zones`)**: GitNexus's `context` returned **ambiguous — 2 candidates**
+  (`pipeline.py` function + `analyzer.py` method), exactly the two defs codemap surfaces. Both tools are
+  honest about the ambiguity. Dead heat. ✅
+- **T2 (who calls `MACDZoneAnalyzer`)**: here the models diverge. GitNexus says `incoming: {imports: 22}`.
+  codemap says 65 references, split **core 2 · docs 7 · examples 1 · scripts 2 · tests 53**. GitNexus counts
+  *file imports*; codemap counts *symbol references, tagged by role*. Ask "what actually breaks in core?" and
+  only one of them answers. ◐
+- **T3 (impact)**: GitNexus shines — a **transitive** upstream import closure: **48 impacted**, depth
+  histogram **5 / 15 / 28**, **risk: MEDIUM**, and a per-answer `epistemic: exact` label. Richer than
+  codemap's one-hop count *in depth and risk framing* — but file-level and **provenance-blind**. Different
+  bet, both correct. ✅
+- **T4 (signature-change surface)**: GitNexus has **no** per-call argument contract. Its `detect-changes` is a
+  git-diff→symbol mapper (our `review`, not our `call_contract`) — and it **errored without `.git`**. ✖
+- **T5 (architecture)**: `check --cycles` found 3 real import cycles; 276 clusters + 294 flows add a narrative
+  layer we lack — but there's no coupling / instability / god-object metric. ◐
+
+### The determinism test that cut both ways
+GitNexus *claims* deterministic indexing. We didn't take the claim — we materialized **two** independent
+clean-room stagings (identical `scope_id`) and indexed each. Result: **identical counts, and a byte-identical
+`impact` answer.** The claim holds. But two caveats we'd have missed without looking: the artifact is a
+**123 MB binary LadybugDB** (WAL) — the *answer* is reproducible, the *store* is not something you `git diff`;
+and re-`analyze` **without** `clean` is **non-idempotent** (it merged and drifted 6 344 → 6 356 nodes). So:
+deterministic answer ✅, diffable artifact ✖. That distinction *is* codemap's differentiator, now measured
+against a tool that gets the first half right.
+
+### The lesson (reusable)
+1. **"They do more" is not "they win."** A tool that does semantic search + clustering + flows + 14 languages
+   isn't beating a tool that does deterministic, diffable, provenance-precise Python structure — it's playing
+   an *adjacent* game. The harness is what lets you say that with numbers instead of nerves.
+2. **The most valuable competitor is the one that proves your thesis.** codemap's positioning is "the precise
+   structural leg for index-free agents, that *interoperates with* retrieval rather than replacing it."
+   GitNexus is a working retrieval+structure hybrid — it is the concrete other half of that sentence. It
+   doesn't threaten the thesis; it *demonstrates* it.
+3. **Claims decompose.** "Deterministic" split into deterministic-*answer* (true) and diffable-*artifact*
+   (false). Measure the parts, not the slogan.
+
+### What we take, what we keep
+- **Take (learn):** per-answer **`epistemic` + edge `confidence`** labels (R1-C13 honesty); **transitive,
+  depth-bucketed, risk-rated impact** as an opt-in mode; **flow/community narrative** as a higher-altitude
+  view (feeds R1-C15 living docs); **one-command MCP setup** into every editor (adoption ergonomics, R1-C14).
+- **Keep (our edge, measured against a richer tool):** **MIT** vs PolyForm-NC; a **4.83 MB diffable JSON** vs
+  a **123 MB binary DB**; **provenance-split, symbol-level impact** vs a file-import closure; **T4 call
+  contracts** it has no answer for; **no git required** and **no 1.7 GB / no embedding models** to provision.
+- **Verdict:** **learn (strong, adjacent peer).** Complementary, not competing — and the best evidence yet
+  that codemap's "precise leg" positioning is real, because here's the retrieval half, built by someone else.
+
+---
+
 ## Article-ready sound bites (each backed by a card)
 
 - "We almost published that a competitor's impact analysis was broken. It was our `PATH`. The hour we spent
@@ -170,13 +241,22 @@ broken — it had never run.
   [comparison](comparison.md)
 - "The one check before you trust any resolved-graph tool: did the resolver actually start? Ours never
   provisions one; that's the point." → build-story #1
+- "The competitor that does *more* — semantic search, clustering, 14 languages — turned out to be the best
+  proof our positioning is right. It's the retrieval half of the sentence; we're the precise-structure half."
+  → build-story #2
+- "'Deterministic' has two halves. GitNexus nails the first — same input, byte-identical answer. The second,
+  a 123 MB binary index you can't `git diff` versus our 4.83 MB of canonical JSON, is where we differ." →
+  [GitNexus card](tools/gitnexus.md)
+- "Their impact says *48 things could break, medium risk*. Ours says *12 non-test references — 2 in core,
+  7 in docs — and 53 in tests*. Depth-and-risk versus provenance — pick your question." →
+  [GitNexus card](tools/gitnexus.md)
 
 ---
 
 ## Future stories (skeletons — fill on разбор)
 
-- **#2 …** next tool from R2.2 (CodeGraph / GitNexus / OntoIndex / …). Same shape: setup → the surprising
-  measurement → head-to-head → lesson → take/keep.
+- **#3 …** next tool from R2.2 (CodeGraph / OntoIndex / Sentrux / …). Same shape: setup → the surprising
+  measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus done.)
 - **The determinism story.** Why a diffable graph matters in a PR — needs a concrete "graph diff caught X"
   episode from dogfooding (`gaps/`).
 - **The provenance story.** dead-code without false positives; impact that knows tests from core. Has the
