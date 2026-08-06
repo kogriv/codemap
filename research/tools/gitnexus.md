@@ -144,3 +144,9 @@ index. codemap is the *deterministic, diffable, provenance-precise, Python-deep 
 - **Adds a gap** (→ comparison.md): **semantic search + flow-tracing + community clustering** — a retrieval/
   narrative axis codemap doesn't have and, per the thesis, should *interoperate with* rather than build.
 - **Nudges R1-C15** (living docs): clusters + flows are the raw material for a generated, honestly-labeled wiki.
+- **Integration stance (R1-C16 licensing policy, decided 2026-08-06):** GitNexus can be a **routable opt-in
+  plugin** (codemap calls a user-installed GitNexus, never bundles it → codemap stays clean MIT), gated behind
+  a one-time noncommercial-use disclaimer. But because of the **PolyForm-NC license**, its unique capabilities
+  (semantic search, multi-language) — if we build parity ourselves — are better wrapped around an **MIT/Apache**
+  peer (cocoindex / graphlens), not GitNexus. So: **learn** for building, **routable opt-in** for using-as-is.
+  See [DESIGN §13](../../DESIGN.md) licensing policy.
