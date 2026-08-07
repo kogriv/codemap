@@ -54,7 +54,7 @@ _REPORTS = {
     "behavior": render_behavior,             # takes Query
     "architecture": render_architecture,     # takes Query (M16/A9)
 }
-_REPORT_KINDS = sorted(_REPORTS) + ["impact"]  # impact takes (Query, --symbol)
+_REPORT_KINDS = sorted(_REPORTS) + ["impact", "communities", "flows"]  # extra args
 
 
 def _graph_from(args):
@@ -199,6 +199,13 @@ def _cmd_report(args) -> int:
         if not args.symbol:
             raise SystemExit("error: report impact needs --symbol <name>")
         print(render_impact(Query(graph), args.symbol, depth=args.depth), end="")
+        return 0
+    if args.kind in ("communities", "flows"):
+        from codemap.serve.subsystems import render_communities, render_flows
+        q = Query(graph)
+        out = (render_communities(q) if args.kind == "communities"
+               else render_flows(q, args.symbol, depth=args.depth))
+        print(out, end="")
         return 0
     renderer = _REPORTS[args.kind]
     payload = renderer(graph) if args.kind == "api-surface" else renderer(Query(graph))

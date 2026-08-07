@@ -22,7 +22,8 @@ _INSTRUCTIONS = (
     "codemap exposes a static code graph of a package. Start with `search` (find "
     "symbols by substring) or `stats` (graph overview), then `query` a symbol for its "
     "dossier. Use `impact`/`callers`/`callees` for blast radius, `review` to turn a "
-    "diff into a change-set review, `architecture` for the system shape. Relational "
+    "diff into a change-set review, `architecture` for the system shape, `communities` "
+    "for module subsystems and `flows` for forward call-flow from an entry. Relational "
     "tools accept a short name or re-export id; when a name is ambiguous the response "
     "carries a `resolved.ambiguous` flag — check it before trusting the answer."
 )
@@ -173,6 +174,18 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("architecture")
 
     @server.tool()
+    def communities() -> list:
+        """Data-driven module subsystems: clusters of modules that import each other
+        more than the rest (deterministic greedy modularity), labelled by layer."""
+        return op("communities")
+
+    @server.tool()
+    def flows(symbol: str | None = None, depth: int = 5) -> dict:
+        """Forward call-flow: what calling `symbol` sets in motion (edges by distance,
+        the mirror of impact). Omit `symbol` to list entry points with their reach."""
+        return op("flows", {"symbol": symbol, "depth": depth})
+
+    @server.tool()
     def source(symbol: str) -> dict:
         """Source span of a symbol: {file, lines, code} (code when readable under the
         server's source-root)."""
@@ -191,5 +204,5 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 MCP_TOOLS = (
     "stats", "search", "query", "resolve", "callers", "callees", "impact",
     "call_contract", "implementers", "family", "families", "column", "columns_of",
-    "locate", "review", "architecture", "source", "report",
+    "locate", "review", "architecture", "communities", "flows", "source", "report",
 )

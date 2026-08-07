@@ -234,6 +234,17 @@ class Session:
         """F21: whole-system shape — cycles + layers + coupling + hotspots."""
         return build_architecture(self.query)
 
+    def _op_communities(self, args) -> list:
+        """R1-C18: data-driven module subsystems (greedy modularity)."""
+        return self.query.communities()
+
+    def _op_flows(self, args) -> dict:
+        """R1-C18: forward call-flow from a symbol, or entry points if none given."""
+        sym = args.get("symbol")
+        if not sym:
+            return {"entry_points": self.query.entry_points()}
+        return self.query.flow(self._canon(sym), max_depth=int(args.get("depth", 5)))
+
     def _op_source(self, args) -> dict:
         """Return the source span of a symbol (F12): {file, lines, code?}.
 
@@ -301,6 +312,8 @@ _OPS = {
     "locate": Session._op_locate,
     "review": Session._op_review,
     "architecture": Session._op_architecture,
+    "communities": Session._op_communities,
+    "flows": Session._op_flows,
     "source": Session._op_source,
     "report": Session._op_report,
     "export": Session._op_export,

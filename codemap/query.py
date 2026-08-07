@@ -495,6 +495,71 @@ class Query:
             return "medium"
         return "low"
 
+    # -- subsystems: communities + flows (R1-C18) ----------------------------
+
+    def communities(self) -> list[dict]:
+        """Module subsystems via greedy modularity over the (undirected) import graph.
+
+        A community is a set of modules that import each other more than the rest —
+        a data-driven *subsystem*. Uses ``greedy_modularity_communities``, which is
+        **deterministic** (order-stable) — on-brand vs seed-dependent Louvain. Each
+        cluster is labelled by its dominant layer (component under the package root).
+        Inspired by the GitNexus разбор (Leiden clusters); computed natively on our
+        own graph — no external dependency. Sorted by size desc, then first module.
+        """
+        from collections import Counter
+        from networkx.algorithms import community as _comm
+        ug = self._imports.to_undirected()
+        if ug.number_of_edges() == 0:
+            return []
+        out = []
+        for members in _comm.greedy_modularity_communities(ug):
+            mods = sorted(members)
+            layers = Counter(self._layer_of(m) for m in mods)
+            out.append({"label": layers.most_common(1)[0][0],
+                        "size": len(mods), "modules": mods})
+        out.sort(key=lambda c: (-c["size"], c["modules"][0]))
+        return out
+
+    def entry_points(self, root: str = "core") -> list[str]:
+        """Call-forest roots: functions that call out but are never called (resolved).
+
+        Where behaviour starts — public API / mains / not-yet-triggered. Restricted
+        to one provenance ``root`` (default core). Best-effort: call resolution is
+        partial, so an unresolved caller can leave a real internal as an entry point.
+        """
+        return sorted(
+            n for n in self._calls.nodes
+            if self.root_of(n) == root
+            and self._calls.out_degree(n) > 0 and self._calls.in_degree(n) == 0
+        )
+
+    def flow(self, entry: str, *, max_depth: int = 5) -> dict:
+        """Forward call-flow from ``entry`` along ``calls`` edges, bounded by depth.
+
+        The mirror of :meth:`impact` (which walks inbound): *what does calling this
+        set in motion*. Each edge is tagged with its distance from the entry; each
+        node is expanded once (cycle-safe). Partial (resolution gaps) → lower bound.
+        """
+        if entry not in self._calls:
+            return {"entry": entry, "edges": [], "reached": 0, "max_depth": 0}
+        edges: list[dict] = []
+        seen = {entry}
+        current = {entry}
+        dist = 0
+        while dist < max_depth and current:
+            nxt: set[str] = set()
+            for src in sorted(current):
+                for tgt in sorted(self._calls.successors(src)):
+                    edges.append({"source": src, "target": tgt, "distance": dist + 1})
+                    if tgt not in seen:
+                        seen.add(tgt)
+                        nxt.add(tgt)
+            current = nxt
+            dist += 1
+        return {"entry": entry, "edges": edges, "reached": len(seen) - 1,
+                "max_depth": max((e["distance"] for e in edges), default=0)}
+
     # -- type flow (M4 — producers/consumers by signature type) --------------
 
     def producers(self, type_name: str) -> list[str]:

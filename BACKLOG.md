@@ -444,13 +444,16 @@ Python-focus** — если задача его нарушает, это отм�
       разрешённые, хрупкие данные в сайдкар ради маржинального выигрыша над уже имеющимися external-leaf-узлами codemap —
       не стоит. **Пересмотреть если:** graphlens начнёт именовать внешний член (не span) и/или ty стабилизируется на
       тяжёлых deps. Спайк-first гейт сработал — сэкономил постройку P3. Связь: DESIGN §13.1, [research/tools/graphlens.md].
-- [ ] **R1-C18 Communities + flows (на своём графе)** (M) — 🆕 (2026-08-07, из GitNexus). Самое вкусное для
-      постройки: у нас уже есть граф + networkx, GitNexus считает это на своём — считаем на **нашем**. **Scope:**
-      (a) community-detection (Leiden/Louvain через networkx) над call/import-графом → кластеры подсистем;
-      (b) flow-трейсинг — цепочки от entry-point по `calls`-рёбрам. **Зачем:** нарративный вид «из чего система
-      состоит и как поток идёт» — питает **R1-C15** (living docs). **Приёмка:** `codemap` отдаёт кластеры +
-      flow-цепочки детерминированно на bquant. **Оценка:** M. Строим сами (не wrap — NC-лицензия GitNexus и так
-      бы запретила адаптер).
+- [x] **R1-C18 Communities + flows (на своём графе)** ✅ (2026-08-07, без схемы). Построено на своём графе +
+      networkx (подсмотрено у GitNexus, но считаем сами — детерминированно). (a) `Query.communities()` — кластеры
+      модулей через **greedy_modularity_communities** (детерминизм by construction, on-brand vs seed-Louvain) над
+      undirected import-графом, ярлык = доминирующий слой; (b) `Query.entry_points()` — корни call-леса (зовут, но
+      не зовомы) по роуту; (c) `Query.flow(entry, max_depth)` — форвардный call-flow по `calls` (зеркало impact),
+      рёбра с distance, cycle-safe. Рендер `serve/subsystems.py` (`render_communities`/`render_flows`); CLI
+      `report communities` + `report flows [--symbol X] [--depth N]`; serve-ops `communities`/`flows`; **MCP-tools**
+      `communities`/`flows` (18→20). **Проверено на bquant:** 16 кластеров подсистем; 224 entry points,
+      ранжированы по reach (swing `calculate` → 32). +11 тестов (конструированные 2-кластера + call-chain; CLI;
+      serve). Полный прогон 204 passed/1 skip. **Питает R1-C15** (living docs). Строим сами (не wrap).
 - [x] **R1-C19 Транзитивный impact + depth-гистограмма + risk** ✅ (2026-08-07, без схемы). Транзитивный BFS уже
       был (M6.6, `impact(depth=2)` метит `distance`); добавлено то, чего не было и что подсмотрено у GitNexus, но
       построено **на своём графе**: (1) `by_distance`-гистограмма + `max_distance` в `Query.impact`; (2) эвристичный
