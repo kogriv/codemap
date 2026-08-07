@@ -33,6 +33,19 @@ _REPORTS = {
     "architecture": render_architecture,
 }
 
+# R1-C13: ops whose answer leans on the partial static call graph (Python call
+# resolution is incomplete — gaps/ CM-09) → the answer is a lower bound. We stamp
+# them with a machine-readable epistemic label (the structured twin of the prose
+# disclaimers). Absence of the label = structural/complete (imports, contains,
+# inherits, exports — exact). One label per answer (no per-edge confidence: edges
+# already carry `resolution`). From the GitNexus разбор, built natively.
+_PARTIAL_OPS = frozenset({"callers", "callees", "impact", "flows", "call_contract"})
+_EPISTEMIC_PARTIAL = {
+    "epistemic": "partial",
+    "reason": "leans on static call resolution (partial for Python) — a lower "
+              "bound; pair with grep/tests before acting.",
+}
+
 
 def build_query_result(q: Query, name: str) -> dict:
     """The full symbol dossier — shared by ``codemap query`` and warm serve."""
@@ -139,6 +152,8 @@ class Session:
         r = self._resolution
         if r and (r["ambiguous"] or r["input"] != r["id"]):
             env["resolved"] = r
+        if op in _PARTIAL_OPS:  # R1-C13: machine-readable "this is a lower bound"
+            env["epistemic"] = _EPISTEMIC_PARTIAL
         return env
 
     # -- ops (each takes an args dict) ---------------------------------------

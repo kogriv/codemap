@@ -463,8 +463,12 @@ Python-focus** — если задача его нарушает, это отм�
       новые поля (они на entry, не на refs). **Проверено на bquant:** `MACDZoneAnalyzer` → 28 refs (core 2/docs 7/
       tests 19), Risk MEDIUM (3 роута), d1×28. +10 тестов (конструированный граф — точный контроль; CLI; serve).
       Полный прогон 193 passed/1 skip. Строим сами (не wrap). Смыкается с M6 (impact) и R1-C5 (diff).
-- [ ] **R1-C13 (расширение) epistemic/confidence-метки** — из GitNexus: per-answer метка достоверности + edge
-      confidence. On-brand с honesty-стойкой (у нас уже `resolution`-метки на рёбрах). Строим сами; см. R1-C13 выше.
+- [x] **R1-C13 (расширение) epistemic-метка** ✅ (2026-08-07, без схемы). Вариант 1 (одна метка на ответ, без
+      per-edge confidence — рёбра уже несут `resolution`). Serve-конверт для call-graph-зависимых ops
+      (`callers`/`callees`/`impact`/`flows`/`call_contract`) несёт `epistemic: "partial"` + причина —
+      машиночитаемый двойник прозаических дисклеймеров; структурные ops (imports/contains/…) метку не несут
+      (отсутствие = exact). Переживает MCP-компакцию. +5 тестов. Полный прогон 209 passed/1 skip. Остаток
+      R1-C13 (бенчмарк PyCG + grep-vs-graph) — отдельно, см. основной R1-C13 выше.
 
 ---
 
