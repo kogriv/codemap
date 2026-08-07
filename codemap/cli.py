@@ -18,6 +18,9 @@
         warm resident process: line-delimited JSON stdio, or MCP with --mcp (M17)
     codemap refresh <graph.json>
         rebuild a graph from the recipe recorded beside it at build time (M18)
+    codemap route  <capability> <question> [--root DIR]
+        forward a capability to an opt-in external tool (DESIGN §13.1; needs
+        codemap.toml [integrations].enabled + the tool installed)
 """
 
 from __future__ import annotations
@@ -261,6 +264,29 @@ def _cmd_refresh(args) -> int:
     return main(meta["argv"])
 
 
+def _cmd_route(args) -> int:
+    """Route a capability question to an opt-in external tool (DESIGN §13.1).
+
+    Capability-first: the tool is picked from the registry by capability, gated on
+    opt-in (codemap.toml) + install. A non-commercial tool's licensing notice is
+    shown once (unless acknowledged in config). The answer is forwarded as-is —
+    it never enters the graph.
+    """
+    from codemap.integrations import load_config, resolve
+    cfg = load_config(args.root)
+    integ = resolve(args.capability, config=cfg, root=args.root)
+    if integ is None:
+        raise SystemExit(
+            f"error: no enabled + installed tool provides {args.capability!r}. "
+            f"Enable one in codemap.toml [integrations].enabled and install it.")
+    notice = integ.disclaimer()  # §13.1 п.3 — worded on use, not reselling
+    if notice and not cfg.is_acknowledged(integ.name):
+        print(notice, file=sys.stderr)
+    answer = integ.route(args.capability, args.question)
+    print(json.dumps(answer.to_dict(), ensure_ascii=False, indent=2))
+    return 0
+
+
 def _cmd_serve(args) -> int:
     """Load the graph once, then serve it warm (M3.1).
 
@@ -379,6 +405,13 @@ def build_parser() -> argparse.ArgumentParser:
     rf = sub.add_parser("refresh", help="Rebuild a graph from the recipe recorded at build time.")
     rf.add_argument("graph", help="Path to the graph.json to rebuild (needs its .meta.json sidecar).")
     rf.set_defaults(func=_cmd_refresh)
+
+    rt = sub.add_parser("route", help="Forward a capability to an opt-in external tool (§13.1).")
+    rt.add_argument("capability", help="Capability to route, e.g. semantic-search.")
+    rt.add_argument("question", help="The query to forward to the tool.")
+    rt.add_argument("--root", default=".",
+                    help="Dir with codemap.toml + the target tree (default: cwd).")
+    rt.set_defaults(func=_cmd_route)
 
     return p
 

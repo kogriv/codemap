@@ -61,12 +61,16 @@ class FakeRouter(Integration):
 
 @pytest.fixture(autouse=True)
 def _clean_registry():
-    """Each test starts with an empty registry (module-global otherwise leaks)."""
-    for i in list(registry.all_integrations()):
-        registry.unregister(i.name)
+    """Isolate each test with an empty registry, then restore the real one.
+
+    The registry is a module global that concrete integrations populate on import
+    (e.g. gitnexus). Snapshot + restore so these fake-only tests neither see the
+    real tools nor destroy their registration for other test files."""
+    saved = dict(registry._REGISTRY)
+    registry._REGISTRY.clear()
     yield
-    for i in list(registry.all_integrations()):
-        registry.unregister(i.name)
+    registry._REGISTRY.clear()
+    registry._REGISTRY.update(saved)
 
 
 # -- licensing policy (the machine-checked half of §13.1) --------------------

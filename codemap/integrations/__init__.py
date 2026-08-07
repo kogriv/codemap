@@ -27,6 +27,10 @@ from .registry import (
     unregister,
 )
 
+# Import concrete integrations so they self-register (dict inserts only — no I/O;
+# availability/subprocess calls happen lazily at resolve/route time). DESIGN §13.1.
+from . import gitnexus as _gitnexus  # noqa: E402,F401
+
 __all__ = [
     "GraphFragment",
     "Integration",
