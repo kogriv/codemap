@@ -179,3 +179,23 @@ real. Roadmap effects:
   exhaustive.
 - **learn candidates:** cross-boundary dep resolution (capability gap); context-budget test-de-emphasis
   (ergonomics idea); watch-mode incremental (feeds M3.2 freshness).
+
+## Integration spike (2026-08-07) — adapter feasibility for R1-C17 → **negative, deferred**
+Hands-on test of the one adapter candidate (resolve-into-deps → codemap `calls_external` sidecar). Synthetic
+target: `mypkg.core.dump` calls `json.dumps`; control `caller`→`helper`. Findings from graphlens's own
+`graph.db` (`init --no-agent`, `ty` on PATH):
+- **Cross-boundary edges DO exist** (more than codemap has): `calls: mypkg.core.dump → external_symbol`,
+  `resolves_to: import json → external_symbol {"origin":"stdlib"}`, `has_type` edges to external types;
+  the intra-project `caller → helper` control edge is correct too. Node kind `external_symbol` (6), edge
+  kinds `calls/references/resolves_to/has_type/contains/declares/imports`.
+- **Blocker 1 — external member not named:** the call target is a **span placeholder** `call@6:17`, not
+  `json.dumps`. graphlens records "this call crosses into stdlib at line 6" but not *which* symbol → the
+  headline value ("what pandas API does the code call") is not delivered at symbol granularity.
+- **Blocker 2 — real third-party breaks the resolver:** with `pandas` installed, `ty server` timed out
+  repeatedly (1s/30s), **0 nodes after 10+ min**; only the stdlib-only project completed. Embeddings also
+  failed (no egress). Confirms the card's "setup friction: high".
+- **Verdict:** absorbing non-deterministic, low-resolution, fragile data into a sidecar for marginal gain
+  over codemap's existing external-leaf nodes isn't worth it now. **Adapter deferred (R1-C17).** Revisit if
+  graphlens names the external member (not a span) and `ty` stabilizes on heavy deps. The spike-first gate
+  worked — it prevented building the adapter. Net: **neither worked-through tool yields a built adapter** —
+  unique capabilities are built natively (R1-C18/19), foreign ones are routed (GitNexus, R1-C16).

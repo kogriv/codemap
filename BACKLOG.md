@@ -431,16 +431,19 @@ Python-focus** — если задача его нарушает, это отм�
 **на своём графе** (networkx + канон уже есть) и лучше ложится на тезис детерминизм/provenance; настоящий
 адаптер один.
 
-- [ ] **R1-C17 graphlens-адаптер: резолв внутрь зависимостей** (M, **спайк-first**) — 🆕 (2026-08-07). Единственный
-      настоящий кандидат на встройку из обоих разборов. **Scope:** codemap source-only-of-target (не резолвит в
-      библиотеки) — graphlens (MIT, `ty`-бэкенд) это умеет. subprocess+MCP-клиент к graphlens `relations` →
-      рёбра **в библиотеки** переводим в нашу схему: edge-kind `calls_external` → узел `external_symbol`
-      (`provenance: external, resolver: graphlens`). **Детерминизм чистым:** graphlens-SQLite недетерминирован →
-      внешние рёбра **НЕ в канонический core-граф**, а в помеченный сайдкар (`external_edges.json`, non-canonical);
-      diffable ядро остаётся детерминированным. **Спайк-first:** сперва проверить, что резолв в deps вообще
-      заводится (нужен venv цели под индексируемым корнем — не проверено). **Приёмка:** opt-in extra; на bquant
-      symbol с внешним вызовом даёт `calls_external`-рёбра в сайдкаре; ядро/детерминизм не тронуты. **Оценка:** M.
-      Связь: DESIGN §13.1, R1-C16 (реализуется поверх роутер-слоя), [research/tools/graphlens.md].
+- [~] **R1-C17 graphlens-адаптер: резолв внутрь зависимостей** — 🔬 **спайк сделан (2026-08-07) → ОТЛОЖЕНО (негатив)**.
+      Гипотеза: codemap source-only-of-target (не резолвит в библиотеки), graphlens (MIT, `ty`-бэкенд) умеет — обернуть
+      адаптером, `calls_external` → `external_symbol` в сайдкар. **Спайк-first проверил на синтетике** (`mypkg.core.dump`
+      зовёт `json.dumps`; контроль — `caller`→`helper`): graphlens **действительно** пишет cross-boundary-рёбра
+      (`calls: dump → external_symbol`, `resolves_to: import json → external_symbol {origin: stdlib}`, `has_type` на
+      внешние типы) — этого у codemap нет. **НО два блокера убивают ценность сейчас:** (1) **внешний член не именуется** —
+      цель вызова = span-плейсхолдер `call@6:17`, а не `json.dumps`; graphlens знает «вызов уходит в stdlib здесь», но не
+      *какой* символ → заявленная ценность «какой pandas-API зовёт код» не отдаётся на symbol-гранулярности; (2) **реальный
+      third-party кейс ломает резолвер** — на pandas `ty server` таймаутил (1s/30s повторно), 0 узлов за 10+ мин; собрался
+      только stdlib-only проект, эмбеддинги упали (нет egress). **Вывод:** абсорбировать недетерминированные, низко-
+      разрешённые, хрупкие данные в сайдкар ради маржинального выигрыша над уже имеющимися external-leaf-узлами codemap —
+      не стоит. **Пересмотреть если:** graphlens начнёт именовать внешний член (не span) и/или ty стабилизируется на
+      тяжёлых deps. Спайк-first гейт сработал — сэкономил постройку P3. Связь: DESIGN §13.1, [research/tools/graphlens.md].
 - [ ] **R1-C18 Communities + flows (на своём графе)** (M) — 🆕 (2026-08-07, из GitNexus). Самое вкусное для
       постройки: у нас уже есть граф + networkx, GitNexus считает это на своём — считаем на **нашем**. **Scope:**
       (a) community-detection (Leiden/Louvain через networkx) над call/import-графом → кластеры подсистем;
