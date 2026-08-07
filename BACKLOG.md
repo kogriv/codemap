@@ -401,11 +401,19 @@ Python-focus** — если задача его нарушает, это отм�
       позиционная строка + линки на positioning.md/comparison.md). Наполнять build-story по мере разборов
       (это continuous — живёт в positioning.md, не блокирует R1-C14). **R1.5 добавил остроты:** ниша
       переполнена → ров заявлять громко.
-- [ ] **R1-C15 Living docs из графа** (M) — 🆕 из R1.5. Самообновляемая документация/вики по графу с
-      **пометкой «не проверено»** для всего, что нельзя подтвердить по коду (как CodeWiki / «нейростатьи» /
-      Tutorial-Codebase-Knowledge). **Зачем:** on-brand с honesty-стойкой codemap — у нас уже есть граф и
-      дисциплина «approximations labeled»; генерить из этого живой markdown/вики — естественный выход.
-      **Приёмка:** `codemap export docs` (или вью) даёт связную доку по символам с честными метками. **Оценка:** M.
+- [x] **R1-C15 Living docs из графа** ✅ (2026-08-07, без схемы). `codemap export docs` — нарративный документ,
+      организованный **по подсистемам** (communities R1-C18), а не плоско по модулям. `serve/livingdocs.py`
+      `render_docs`. **Honesty-контракт = дифференциатор** (vs CodeWiki/нейростатьи, которые галлюцинируют):
+      всё трассируемо — структура (модули/классы/функции/imports/inheritance) = точный факт; докстринги
+      цитируются **verbatim** (слова авторов, не генерятся); недокументированный символ **помечается**
+      (`_(undocumented)_`), не выдумывается; call-flow-секции несут `epistemic: partial` (нижняя граница).
+      Секции: overview+counts → subsystems (с публичными символами) → ungrouped-модули (полнота) → behavioural
+      entry points (flows) → architecture-заметки (циклы/violations/god-objects) → honesty-footer. CLI
+      `export docs [-o]` + serve export-view `docs`. **Core-only** (не документируем tests/docs-роуты).
+      **Побочный фикс:** `Query.communities()` теперь кластеризует **только core**-модули (consumer-роуты
+      утягивали ярлык в «(root)») — улучшило и R1-C18: на bquant ярлыки стали реальными (data/analysis/
+      indicators вместо «(root) 45»). **Проверено на bquant:** 165 модулей, подсистемы, docstrings verbatim,
+      god-objects, footer. +11 тестов. Полный прогон 220 passed/1 skip. Питается communities+flows+epistemic.
 - [ ] **R1-C16 Роутер/адаптер-слой над внешними тулами** (L) — 🆕 (2026-08-06, из разбора GitNexus). codemap
       не только самописный тул, но и **каркас-роутер** над сторонними: для способностей, которых у нас нет и
       строить свои нет смысла (семантический поиск, много языков, flow/community-нарратив), **вызывать чужой

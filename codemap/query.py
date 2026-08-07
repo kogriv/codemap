@@ -509,7 +509,11 @@ class Query:
         """
         from collections import Counter
         from networkx.algorithms import community as _comm
-        ug = self._imports.to_undirected()
+        # Subsystems of the *package* = core modules only; consumer roots
+        # (tests/docs/examples) are not subsystems and would drag labels to
+        # "(root)" (they live outside the package namespace). Matches entry_points.
+        core_mods = [m for m in self._imports.nodes if self.root_of(m) == "core"]
+        ug = self._imports.subgraph(core_mods).to_undirected()
         if ug.number_of_edges() == 0:
             return []
         out = []

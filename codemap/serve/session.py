@@ -305,6 +305,9 @@ class Session:
                 depth=int(args.get("depth", 2)))}
         if view == "vault":
             return {"view": view, "files": build_vault(self.query)}
+        if view == "docs":
+            from codemap.serve.livingdocs import render_docs
+            return {"view": view, "markdown": render_docs(self.query)}
         raise ValueError(f"unknown export view: {view!r}")
 
 

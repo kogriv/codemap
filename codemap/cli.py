@@ -12,6 +12,7 @@
         vault -o <dir>               → Obsidian vault tree (consumer B)
         mermaid --mkind class|deps|calls [--scope X] [--root Y] [--depth N]
         scip -o <file>               → SCIP index (defs + symbol info; interop, R1-C1)
+        docs                         → living documentation (subsystem-organized, R1-C15)
     codemap review [diff|-] (--graph g.json | --build <path>) [--format markdown|json]
         unified diff (or stdin) → risk-sorted change-set review (M15/F17)
     codemap serve  (--graph g.json | --build <path>) [--source-root DIR] [--mcp]
@@ -225,6 +226,9 @@ def _cmd_export(args) -> int:
             raise SystemExit("error: export vault needs -o <dir>")
         _write_vault(build_vault(q), args.out)
         print(args.out)
+    elif args.kind == "docs":
+        from codemap.serve.livingdocs import render_docs
+        _emit(render_docs(q), args.out)
     elif args.kind == "scip":
         if not args.out:
             raise SystemExit("error: export scip needs -o <file> (binary output)")
@@ -380,7 +384,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.set_defaults(func=_cmd_report)
 
     e = sub.add_parser("export", help="Export a view: rag (JSONL) | vault | mermaid | scip.")
-    e.add_argument("kind", choices=["rag", "vault", "mermaid", "scip"])
+    e.add_argument("kind", choices=["rag", "vault", "mermaid", "scip", "docs"])
     _add_source(e)
     e.add_argument("-o", "--out", help="Output file (rag/mermaid/scip) or dir (vault).")
     e.add_argument("--mkind", choices=["class", "deps", "calls"], default="class",
