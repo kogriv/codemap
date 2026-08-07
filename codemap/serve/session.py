@@ -261,7 +261,8 @@ class Session:
     def _op_report(self, args) -> dict:
         kind = args["kind"]
         if kind == "impact":
-            return {"kind": kind, "markdown": render_impact(self.query, args["symbol"])}
+            return {"kind": kind, "markdown": render_impact(
+                self.query, args["symbol"], depth=int(args.get("depth", 2)))}
         renderer = _REPORTS.get(kind)
         if renderer is None:
             raise ValueError(f"unknown report kind: {kind!r}")

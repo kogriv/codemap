@@ -451,11 +451,15 @@ Python-focus** — если задача его нарушает, это отм�
       состоит и как поток идёт» — питает **R1-C15** (living docs). **Приёмка:** `codemap` отдаёт кластеры +
       flow-цепочки детерминированно на bquant. **Оценка:** M. Строим сами (не wrap — NC-лицензия GitNexus и так
       бы запретила адаптер).
-- [ ] **R1-C19 Транзитивный impact + depth-гистограмма** (S→M) — 🆕 (2026-08-07, из GitNexus). **Scope:** сейчас
-      `impact` 1-hop; opt-in `--transitive --depth N` = BFS по нашим inbound-рёбрам с гистограммой по глубине
-      (и, опционально, risk-меткой как у GitNexus). **Зачем:** «насколько далеко расходится blast radius» —
-      тривиально на существующем графе. **Приёмка:** транзитивный impact детерминирован, гистограмма по distance;
-      1-hop остаётся дефолтом. **Оценка:** S→M. Строим сами. Смыкается с M6 (impact) и R1-C5 (diff).
+- [x] **R1-C19 Транзитивный impact + depth-гистограмма + risk** ✅ (2026-08-07, без схемы). Транзитивный BFS уже
+      был (M6.6, `impact(depth=2)` метит `distance`); добавлено то, чего не было и что подсмотрено у GitNexus, но
+      построено **на своём графе**: (1) `by_distance`-гистограмма + `max_distance` в `Query.impact`; (2) эвристичный
+      **`risk`** (none/low/medium/high) из формы blast-radius — breadth × reach × **root-spread** (последнее —
+      наш провенанс-дифференциатор: символ, задетый в core+tests+docs, дороже менять); (3) `--depth` на CLI
+      `report impact` + проброс в serve report-op; (4) рендер показывает Risk + гистограмму. MCP-compact сохраняет
+      новые поля (они на entry, не на refs). **Проверено на bquant:** `MACDZoneAnalyzer` → 28 refs (core 2/docs 7/
+      tests 19), Risk MEDIUM (3 роута), d1×28. +10 тестов (конструированный граф — точный контроль; CLI; serve).
+      Полный прогон 193 passed/1 skip. Строим сами (не wrap). Смыкается с M6 (impact) и R1-C5 (diff).
 - [ ] **R1-C13 (расширение) epistemic/confidence-метки** — из GitNexus: per-answer метка достоверности + edge
       confidence. On-brand с honesty-стойкой (у нас уже `resolution`-метки на рёбрах). Строим сами; см. R1-C13 выше.
 

@@ -38,6 +38,13 @@ def render_impact(query: Query, symbol: str, *, depth: int = 2) -> str:
         total = len(refs)
         roots = ", ".join(f"{r} ({sum(by_root[r].values())})" for r in sorted(by_root))
         lines.append(f"**{total} references across roots:** {roots}")
+        # R1-C19: risk triage + depth histogram (transitive reach at a glance).
+        hist = ", ".join(f"d{d}×{rep['by_distance'][d]}" for d in sorted(rep["by_distance"]))
+        lines.append(
+            f"**Risk: {rep['risk'].upper()}** — depth reached {rep['max_distance']}"
+            + (f"; distances: {hist}" if hist else "")
+            + " _(heuristic: breadth × reach × root-spread)_"
+        )
         lines.append("")
         # per-root breakdown, direct refs first.
         for root in sorted(by_root):

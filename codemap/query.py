@@ -467,7 +467,33 @@ class Query:
         for r in refs:
             by_root.setdefault(r["root"], {}).setdefault(r["type"], 0)
             by_root[r["root"]][r["type"]] += 1
-        return {"symbol": symbol_id, "refs": refs, "by_root": by_root}
+        # R1-C19: depth histogram (refs per transitive distance) + a triage risk
+        # label from the blast-radius shape — from the GitNexus разбор, built on
+        # our own graph (no external dep).
+        by_distance: dict[int, int] = {}
+        for r in refs:
+            by_distance[r["distance"]] = by_distance.get(r["distance"], 0) + 1
+        max_distance = max(by_distance) if by_distance else 0
+        return {"symbol": symbol_id, "refs": refs, "by_root": by_root,
+                "by_distance": by_distance, "max_distance": max_distance,
+                "risk": self._impact_risk(len(refs), max_distance, len(by_root))}
+
+    @staticmethod
+    def _impact_risk(breadth: int, reach: int, roots: int) -> str:
+        """Heuristic change-risk from blast-radius shape (breadth × reach × root-spread).
+
+        Not a proof — a triage signal (like dead-code confidence). Breadth (how many
+        references) dominates; transitive ``reach`` and ``roots`` (how many provenance
+        roots — core/tests/docs/… — are touched) amplify it, since a symbol used
+        across roots is costlier to change. Pair with the ref list before acting.
+        """
+        if breadth == 0:
+            return "none"
+        if breadth >= 30 or roots >= 4 or (breadth >= 15 and reach >= 3):
+            return "high"
+        if breadth >= 5 or roots >= 2 or reach >= 2:
+            return "medium"
+        return "low"
 
     # -- type flow (M4 — producers/consumers by signature type) --------------
 

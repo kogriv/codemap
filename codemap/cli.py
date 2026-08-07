@@ -198,7 +198,7 @@ def _cmd_report(args) -> int:
     if args.kind == "impact":
         if not args.symbol:
             raise SystemExit("error: report impact needs --symbol <name>")
-        print(render_impact(Query(graph), args.symbol), end="")
+        print(render_impact(Query(graph), args.symbol, depth=args.depth), end="")
         return 0
     renderer = _REPORTS[args.kind]
     payload = renderer(graph) if args.kind == "api-surface" else renderer(Query(graph))
@@ -367,6 +367,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("kind", choices=_REPORT_KINDS)
     _add_source(r)
     r.add_argument("--symbol", help="Symbol for `report impact` (short or full name).")
+    r.add_argument("--depth", type=int, default=2,
+                   help="report impact: transitive BFS depth (default 2).")
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")
     r.set_defaults(func=_cmd_report)
 
