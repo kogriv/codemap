@@ -170,16 +170,18 @@ def _check(res: dict) -> int:
     """Assert the invariants the honest-ceiling story rests on. Exit 0 / 1."""
     a = res["aggregate"]
     problems = []
-    # deep tier must be sound on the decidable set: no false edges, all decidable edges found
-    if a["deep"]["precision"] != 1.0:
-        problems.append(f"deep precision {a['deep']['precision']} != 1.0 (a wrong edge slipped in)")
-    if a["deep"]["recall_decidable"] != 1.0:
-        problems.append(f"deep recall_decidable {a['deep']['recall_decidable']} != 1.0 "
-                        f"(a statically-decidable edge was missed)")
-    # deep tier must not emit phantom edges (fast may, and we document it)
-    if a["deep"]["phantom"] != 1:
-        problems.append(f"deep phantom count {a['deep']['phantom']} != 1 "
-                        f"(expected exactly the documented c10 closure phantom)")
+    # both tiers must be sound on the decidable set: no false edges, all decidable
+    # edges found, and NO phantom edges (R1-C13-f1/f2 fixed — internal edges never
+    # point at a non-node).
+    for tier in _TIERS:
+        if a[tier]["precision"] != 1.0:
+            problems.append(f"{tier} precision {a[tier]['precision']} != 1.0 (a wrong edge slipped in)")
+        if a[tier]["recall_decidable"] != 1.0:
+            problems.append(f"{tier} recall_decidable {a[tier]['recall_decidable']} != 1.0 "
+                            f"(a statically-decidable edge was missed)")
+        if a[tier]["phantom"] != 0:
+            problems.append(f"{tier} phantom count {a[tier]['phantom']} != 0 "
+                            f"(an internal edge points at a non-node — soundness regression)")
     # the honest ceiling must be strictly below 1.0 (undecidable edges exist and are unmet)
     if not (a["deep"]["recall_overall"] < 1.0):
         problems.append("deep recall_overall is not < 1.0 — the ceiling demo is broken")

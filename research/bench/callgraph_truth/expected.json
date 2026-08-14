@@ -32,11 +32,11 @@
     "limitation": []
   },
   "c06_inheritance": {
-    "difficulty": "decidable-deep",
-    "expected": [["Derived.run", "Base.base_op", "deep"]],
+    "difficulty": "decidable",
+    "expected": [["Derived.run", "Base.base_op", "fast"]],
     "ceiling": [],
     "limitation": [],
-    "note": "fast tier over-approximates self.base_op to the phantom id Derived.base_op (no MRO walk); deep resolves the real Base.base_op. The fast phantom counts against fast precision."
+    "note": "both tiers resolve self.<inherited>() to the base class that defines it (R1-C13-f1 fixed: _class_members maps each inherited member to its owning-class id, so no phantom same-class target)."
   },
   "c07_getattr_dynamic": {
     "difficulty": "undecidable",
@@ -61,7 +61,7 @@
     "difficulty": "limitation",
     "expected": [],
     "ceiling": [],
-    "limitation": [["outer", "outer.inner"], ["inner", "helper"]],
-    "note": "nested-closure calls are not attributed to a definition node; deep emits outer->outer.inner whose target is a non-node (phantom) — surfaced as a soundness flag, not a precision hit (the relationship is real; only its target id is unmaterialized). Distinct from c06-fast, where the target is genuinely wrong."
+    "limitation": [["outer", "inner"], ["inner", "helper"]],
+    "note": "nested-closure calls are not attributed to a definition node. R1-C13-f2 fixed the soundness wart: the extractor no longer emits outer->outer.inner to a non-node — the closure relationship is simply not modeled (dropped), rather than pointing at nothing. Materializing closure nodes remains future work."
   }
 }

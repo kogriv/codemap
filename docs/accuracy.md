@@ -46,8 +46,8 @@ practical limit of *sound* static analysis on a dynamic language.
 
 | Tier | Precision | Recall (decidable) | Recall (all true) | Phantom edges |
 |---|---|---|---|---|
-| fast | 87.5% | 100% | 53.8% | 1 |
-| **deep** | **100%** | **100%** | **60.0%** | 1 |
+| fast | 100% | 100% | 57.1% | 0 |
+| **deep** | **100%** | **100%** | **60.0%** | 0 |
 
 Reading it:
 
@@ -58,16 +58,19 @@ Reading it:
   resolve: a function passed as a parameter and called via it (higher-order), `getattr(obj, name)()`
   (dynamic dispatch), and value-flow through a string-keyed registry. The suite labels these as `ceiling`,
   so the gap is visible, not hidden.
-- **Phantom edges** — edges whose *target is not a graph node*, surfaced as a soundness signal rather than
-  swept up:
-  - **fast tier, inheritance** — `self.<inherited_method>()` is over-approximated to a same-class id that
-    doesn't exist (the fast resolver doesn't walk the MRO). The deep tier resolves the real base-class
-    method. This is why fast precision is 87.5%, not 100%. *(follow-up: R1-C13-f1.)*
-  - **deep tier, closure** — a call to a nested inner function emits an edge to the closure's
-    (unmaterialized) id. The relationship is real; only its target id is not a node. *(follow-up: R1-C13-f2.)*
+- **Phantom edges = 0** — no `calls` edge points at a non-node on either tier. This did *not* start clean:
+  the first run of this suite surfaced two soundness warts, both since fixed —
+  - **fast tier, inheritance (R1-C13-f1)** — `self.<inherited_method>()` was over-approximated to a
+    same-class id that doesn't exist (the fast resolver ignored the MRO). Fixed: `_class_members` now maps
+    each inherited member to the *base class that defines it*, so the edge lands on the real method. Fast
+    precision went 87.5% → 100%.
+  - **closure (R1-C13-f2)** — a call to a nested inner function emitted an edge to the closure's
+    unmaterialized id. Fixed by a general guard: an internal edge whose target is not a graph node is
+    downgraded to *unresolved* rather than emitted, so the graph never points at nothing (this also removed
+    40 latent phantom edges on the bquant graph — locals that `jedi` typed to their own scope-path).
 
-Both findings are the suite doing its job: an accuracy benchmark that only ever prints 100% isn't measuring
-anything. Run it yourself:
+An accuracy benchmark that only ever prints 100% isn't measuring anything; this one found real bugs on its
+first run, and now guards against their return in CI. Run it yourself:
 
 ```bash
 python research/bench/callgraph_accuracy.py            # human table
@@ -82,13 +85,13 @@ code. Aggregated over the **bquant** deep graph (`bquant@cb89a24`, the canonical
 
 | Outcome | Share | Meaning |
 |---|---|---|
-| resolved (internal) | **25.7%** | edge into the analyzed package — the call graph you query |
+| resolved (internal) | **25.3%** | edge into the analyzed package — the call graph you query |
 | external | **46.1%** | resolved to a third-party library (pandas, numpy, …) — correctly *not* an internal edge |
-| unresolved | **28.2%** | local-variable / dynamic call the static tiers can't type — the ceiling tail |
+| unresolved | **28.6%** | local-variable / dynamic call the static tiers can't type — the ceiling tail |
 | dynamic | 0.0% | — |
 
 So of the call-sites that *could* be internal (resolved + unresolved = 3 407), the deep tier resolves
-**~48%**. That is the real-world echo of the suite's 60% — and exactly why the graph is labeled a lower
+**~47%**. That is the real-world echo of the suite's 60% — and exactly why the graph is labeled a lower
 bound. Reproduce:
 
 ```bash
@@ -140,8 +143,9 @@ python research/bench/grep_vs_graph.py --build ./codemap --repo .    # dogfood o
 
 ## What this means for trust
 
-- Believe a **present** edge: deep-tier precision is 100% on the labeled suite — codemap does not invent
-  calls. (The two phantom-target cases are labeled soundness follow-ups, not silent errors.)
+- Believe a **present** edge: precision is 100% on the labeled suite (both tiers) — codemap does not invent
+  calls, and no edge points at a non-node (the two phantom cases the suite first surfaced are fixed and
+  guarded in CI).
 - Treat an **absent** edge as *"not proven"*, never *"proven absent"*: recall against all true edges is
   ~60%. That is why `impact`, `callers`, `callees`, `flows` and `call_contract` all carry
   `epistemic: partial`.

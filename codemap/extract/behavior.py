@@ -58,7 +58,7 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
             node_id = _node_id(modpath, class_stack, fnode.name)
             if node_id not in graph.nodes:
                 continue  # nested closure — not a definition node
-            members = _class_scope(mod, class_stack, modules) if class_stack else set()
+            members = _class_members(mod, class_stack, modules) if class_stack else {}
             class_prefix = ".".join([modpath, *class_stack]) if class_stack else ""
             if script is not None:
                 def resolve(call, _s=script):
@@ -130,22 +130,30 @@ def _index_modules(root) -> dict:
     return out
 
 
-def _class_scope(mod, class_stack, modules) -> set:
-    """Member names of the enclosing class, including internal base classes."""
+def _class_members(mod, class_stack, modules) -> dict:
+    """Map ``member_name -> owning-class canonical id`` for the enclosing class.
+
+    Includes members inherited from internal base classes, each keyed to the base
+    class that actually defines it — so ``self.<inherited>()`` resolves to the base
+    method's real id, not a phantom ``ThisClass.<inherited>`` that is not a node
+    (fast-tier soundness, R1-C13-f1). Own members win over inherited (override).
+    """
     obj = mod
     for cname in class_stack:
         obj = obj.members.get(cname)
         if obj is None:
-            return set()
-    names = set(obj.members.keys())
+            return {}
+    owners = {name: obj.canonical_path for name in obj.members}
     for base in getattr(obj, "bases", None) or []:
         bpath = getattr(base, "canonical_path", None) or ""
         if bpath.startswith(f"{mod.canonical_path.split('.')[0]}."):
             *modparts, cname = bpath.split(".")
             bmod = modules.get(".".join(modparts))
             if bmod and cname in bmod.members:
-                names |= set(bmod.members[cname].members.keys())
-    return names
+                bclass = bmod.members[cname]
+                for name in bclass.members:
+                    owners.setdefault(name, bclass.canonical_path)  # own already set → keep
+    return owners
 
 
 # -- ast scope walking -------------------------------------------------------
@@ -207,11 +215,15 @@ def _process_function(graph, node_id, fnode, resolve) -> None:
     for call in _own_calls(fnode):
         counts["out"] += 1
         target, resolution = resolve(call)
-        if resolution in _EDGE_RESOLUTIONS:
+        # Soundness (R1-C13-f1/f2): an internal call edge must point at a real
+        # graph node. A resolver can name a non-node — a local variable jedi typed
+        # to its own scope-path, or a nested/closure function that is not a
+        # definition node — so downgrade any such target to unresolved rather than
+        # emit an edge to nothing (which would poison callers/callees/impact).
+        if resolution in _EDGE_RESOLUTIONS and target and target in graph.nodes:
             counts["resolved"] += 1
-            if target:
-                agg = by_target.setdefault(target, {"resolution": resolution, "shapes": []})
-                agg["shapes"].append(_arg_shape(call))
+            agg = by_target.setdefault(target, {"resolution": resolution, "shapes": []})
+            agg["shapes"].append(_arg_shape(call))
         elif resolution == "external":
             counts["external"] += 1
         elif resolution == "dynamic":
@@ -279,8 +291,9 @@ def _resolve(call, modpath, class_prefix, imports, modmembers, members):
         recv = f.value
         if isinstance(recv, ast.Name):
             if recv.id in _SKIP_RECEIVERS and attr in members and class_prefix:
-                # method call on self — resolve within the enclosing class scope
-                return f"{class_prefix}.{attr}", "self"
+                # method call on self — resolve to the class that actually defines
+                # the member (own or a base), never a phantom same-class id.
+                return f"{members[attr]}.{attr}", "self"
             if recv.id in imports:
                 tgt = imports[recv.id]
                 if tgt.startswith(pkg):

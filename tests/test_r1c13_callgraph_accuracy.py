@@ -44,21 +44,21 @@ def test_honest_ceiling_below_one(result):
     assert result["aggregate"]["deep"]["recall_overall"] < 1.0
 
 
-def test_fast_tier_has_the_documented_inheritance_phantom(result):
-    # fast tier over-approximates self.<inherited> to a same-class phantom id; the
-    # suite surfaces it rather than hiding it. Deep resolves it correctly.
+def test_fast_tier_resolves_inherited_self_method(result):
+    # R1-C13-f1: fast tier resolves self.<inherited>() to the base class that
+    # defines it — a real edge, no phantom same-class target.
     c06_fast = next(r for r in result["rows"]
                     if r["case"] == "c06_inheritance" and r["tier"] == "fast")
-    assert c06_fast["phantom"] == 1
-    assert c06_fast["fp"] == 1
+    assert c06_fast["tp"] == 1
+    assert c06_fast["fp"] == 0
+    assert c06_fast["phantom"] == 0
 
 
-def test_deep_phantom_is_only_the_closure_case(result):
-    # exactly one phantom edge on the deep tier — the c10 closure limitation.
-    assert result["aggregate"]["deep"]["phantom"] == 1
-    c10 = next(r for r in result["rows"]
-               if r["case"] == "c10_closure" and r["tier"] == "deep")
-    assert c10["phantom"] == 1
+def test_no_phantom_edges_on_either_tier(result):
+    # R1-C13-f1/f2: an internal call edge never points at a non-node. The closure
+    # relationship (c10) is dropped rather than emitted as an edge to nothing.
+    for tier in ("fast", "deep"):
+        assert result["aggregate"][tier]["phantom"] == 0
 
 
 def test_registry_dispatch_not_a_call_edge(result):
