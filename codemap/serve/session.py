@@ -249,6 +249,20 @@ class Session:
         """F21: whole-system shape — cycles + layers + coupling + hotspots."""
         return build_architecture(self.query)
 
+    def _op_diff(self, args) -> dict:
+        """R1-C5: API diff a baseline graph → this session's graph.
+
+        ``base`` is the path to the 'before' graph.json; the session graph is the
+        'after'. Returns {ok, added, removed, changes, summary} — breaking-change
+        classification on the public API surface.
+        """
+        from codemap import store
+        from codemap.serve.apidiff import build_apidiff
+        base_path = args.get("base")
+        if not base_path:
+            return {"error": "diff needs args.base = path to the baseline graph.json"}
+        return build_apidiff(store.load(base_path), self.graph)
+
     def _op_check(self, args) -> dict:
         """R1-C3: evaluate the [architecture] contract → {ok, violations}.
 
@@ -344,6 +358,7 @@ _OPS = {
     "review": Session._op_review,
     "architecture": Session._op_architecture,
     "check": Session._op_check,
+    "diff": Session._op_diff,
     "communities": Session._op_communities,
     "flows": Session._op_flows,
     "source": Session._op_source,

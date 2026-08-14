@@ -336,13 +336,17 @@ Python-focus** — если задача его нарушает, это отм�
 
 #### Tier 2 — среднее value÷cost, нужен небольшой дизайн
 
-- [ ] **R1-C5 Двух-графовый diff + API breaking-change** (M) — объединить с отложенным двух-графовым diff.
-      **Scope:** сравнить два `graph.json` → added/deleted/changed символы; для changed — сигнатурный
-      breaking-change (идея griffe API-diff: убранный параметр, сузившийся тип, удалённый публичный символ).
-      Влить в `review` (сейчас он по хункам, не видит удалённые/новые узлы). **Зачем:** «что сломалось между
-      коммитами» на уровне API. **Приёмка:** на паре графов до/после известного изменения сигнатуры diff
-      помечает breaking; added/deleted символы перечислены. **Оценка:** M. **Заменяет** пункт «двух-графовый
-      diff» из отложенного.
+- [x] **R1-C5 Двух-графовый diff + API breaking-change** ✅ (2026-08-14, без схемы). `codemap/apidiff.py`
+      (движок: added/removed/changed по **публичной** поверхности; сигнатуры парсятся через `ast` —
+      `def <sig>: ...` — точный разбор параметров, не строковый diff; непарсящаяся → консервативный
+      `signature-changed`, не ложный breaking). **Правила breaking:** удалённый публичный символ ·
+      public→private · смена kind · удалён параметр · добавлен обязательный · optional→required · удалён
+      `*args`/`**kwargs`. **warning:** смена типа параметра/возврата · newly-deprecated. **info:** добавлен
+      optional-параметр · новый символ. `codemap diff old new [--exit-code]` (гейт релиза: exit 1 на breaking) +
+      serve-op `diff` + MCP-tool `diff` + **влито в `review --base`** (добавляет removed/added/breaking,
+      которых не видят хунки). **Приёмка выполнена:** на паре графов до/после diff помечает breaking
+      (param made-required, removed symbol), added/deleted перечислены; тест на непарсящейся сигнатуре.
+      Доки `docs/api-diff.md`. +21 тест.
 - [ ] **R1-C6 Relevance-ранжирование + token-budgeted pack** (L) — codemap как first-class context-provider.
       **Scope:** (a) PageRank-подобный ранкинг узлов (personalized — смещение к seed-символам/файлам, как
       aider repo-map); (b) режим `codemap pack --budget N` — отрендерить наиболее релевантный срез графа

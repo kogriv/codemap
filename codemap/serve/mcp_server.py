@@ -23,7 +23,8 @@ _INSTRUCTIONS = (
     "symbols by substring) or `stats` (graph overview), then `query` a symbol for its "
     "dossier. Use `impact`/`callers`/`callees` for blast radius, `review` to turn a "
     "diff into a change-set review, `architecture` for the system shape, `check` to "
-    "enforce the [architecture] contract, `communities` "
+    "enforce the [architecture] contract, `diff` for a two-snapshot API breaking-change "
+    "report, `communities` "
     "for module subsystems and `flows` for forward call-flow from an entry. Relational "
     "tools accept a short name or re-export id; when a name is ambiguous the response "
     "carries a `resolved.ambiguous` flag — check it before trusting the answer."
@@ -175,6 +176,13 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("architecture")
 
     @server.tool()
+    def diff(base: str) -> dict:
+        """API diff a baseline graph.json (`base`) → this server's graph. Returns
+        {ok, added, removed, changes:[{symbol, kind, severity, detail}], summary} —
+        public-API breaking-change detection between two snapshots."""
+        return op("diff", {"base": base})
+
+    @server.tool()
     def check(root: str | None = None) -> dict:
         """Architecture-contract gate: does the graph still satisfy the [architecture]
         rules in codemap.toml? Returns {ok, violations:[{rule, summary, edges}]} — the
@@ -212,5 +220,5 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 MCP_TOOLS = (
     "stats", "search", "query", "resolve", "callers", "callees", "impact",
     "call_contract", "implementers", "family", "families", "column", "columns_of",
-    "locate", "review", "architecture", "check", "communities", "flows", "source", "report",
+    "locate", "review", "architecture", "check", "diff", "communities", "flows", "source", "report",
 )

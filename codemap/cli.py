@@ -253,10 +253,11 @@ def _cmd_review(args) -> int:
             else Path(args.diff).read_text(encoding="utf-8"))
     hunks = parse_unified_diff(text)
     q = Query(_graph_from(args))
+    base = store.load(args.base) if getattr(args, "base", None) else None
     if args.format == "json":
-        print(json.dumps(build_review(q, hunks=hunks), indent=2, sort_keys=True))
+        print(json.dumps(build_review(q, hunks=hunks, base_graph=base), indent=2, sort_keys=True))
     else:
-        print(render_review(q, hunks=hunks), end="")
+        print(render_review(q, hunks=hunks, base_graph=base), end="")
     return 0
 
 
@@ -316,6 +317,21 @@ def _cmd_check(args) -> int:
     violations = check_contract(q, contract)
     print(render_check(q, contract, violations), end="")
     return 2 if violations else 0
+
+
+def _cmd_diff(args) -> int:
+    """Two-graph API diff → added/removed/changed + breaking-change (R1-C5).
+
+    Renders the public-API delta between two graph.json snapshots. With
+    ``--exit-code`` it behaves like a release gate: exit 1 when any breaking
+    change (a removed public symbol or an incompatible signature change) is found.
+    """
+    from codemap.serve.apidiff import build_apidiff, render_apidiff
+    old, new = store.load(args.old), store.load(args.new)
+    print(render_apidiff(old, new), end="")
+    if args.exit_code and not build_apidiff(old, new)["ok"]:
+        return 1
+    return 0
 
 
 def _cmd_serve(args) -> int:
@@ -423,6 +439,8 @@ def build_parser() -> argparse.ArgumentParser:
     rv.add_argument("diff", nargs="?", default="-",
                     help="Unified-diff file (or '-'/omit for stdin, e.g. `git diff | codemap review`).")
     _add_source(rv)
+    rv.add_argument("--base", help="Baseline graph.json to API-diff against (adds removed/"
+                    "added/breaking symbols the hunks miss — R1-C5).")
     rv.add_argument("--format", choices=["markdown", "json"], default="markdown")
     rv.set_defaults(func=_cmd_review)
 
@@ -445,6 +463,13 @@ def build_parser() -> argparse.ArgumentParser:
     rt.add_argument("--root", default=".",
                     help="Dir with codemap.toml + the target tree (default: cwd).")
     rt.set_defaults(func=_cmd_route)
+
+    df = sub.add_parser("diff", help="API diff two graph.json snapshots (added/removed/changed + breaking).")
+    df.add_argument("old", help="Baseline graph.json (the 'before').")
+    df.add_argument("new", help="Current graph.json (the 'after').")
+    df.add_argument("--exit-code", action="store_true",
+                    help="Exit 1 if any breaking change is found (release gate).")
+    df.set_defaults(func=_cmd_diff)
 
     ck = sub.add_parser("check", help="Enforce the [architecture] contract (CI gate; exit 2 on violation).")
     _add_source(ck)

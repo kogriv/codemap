@@ -124,6 +124,8 @@ the live graph, findings, and the milestone that closed them.
   the grep-vs-graph value proof (both harnesses guarded in CI).
 - **[docs/architecture-contracts.md](docs/architecture-contracts.md)** — declare the intended architecture
   in `codemap.toml` and enforce it with `codemap check` (CI gate; codemap dogfoods its own).
+- **[docs/api-diff.md](docs/api-diff.md)** — `codemap diff` two snapshots for added/removed/changed symbols
+  and API breaking-change detection (release gate + `review --base`).
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
 - **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each

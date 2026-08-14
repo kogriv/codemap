@@ -77,13 +77,18 @@ def build_symbol_dossier(query: Query, sid: str) -> dict:
 
 
 def build_review(query: Query, *, hunks: list[dict] | None = None,
-                 symbols: list[str] | None = None) -> dict:
+                 symbols: list[str] | None = None, base_graph=None) -> dict:
     """Consolidated change-set review from diff hunks and/or explicit symbols.
 
     Returns ``{changed: [dossier…], summary}`` with dossiers risk-sorted (highest
     first). ``summary`` carries the symbol count, union blast-radius by root, and
     the count of unresolved hunks (module-level / unknown files) so nothing is
     silently dropped.
+
+    ``base_graph`` (R1-C5): a 'before' graph to API-diff against. Hunk-based review
+    sees only *modified* lines; the diff adds the symbols hunks miss — **removed**
+    and **added** public symbols and **breaking** signature changes — under
+    ``api_diff``.
     """
     ids = set(symbols or [])
     unresolved = []
@@ -111,23 +116,41 @@ def build_review(query: Query, *, hunks: list[dict] | None = None,
         "high_risk": [d["symbol"] for d in dossiers if d["risk"] == "high"],
         "unresolved_hunks": unresolved,
     }
-    return {"changed": dossiers, "summary": summary}
+    result = {"changed": dossiers, "summary": summary}
+    if base_graph is not None:
+        from codemap.serve.apidiff import build_apidiff
+        result["api_diff"] = build_apidiff(base_graph, query.graph)
+    return result
 
 
 def render_review(query: Query, *, hunks: list[dict] | None = None,
-                  symbols: list[str] | None = None) -> str:
+                  symbols: list[str] | None = None, base_graph=None) -> str:
     """Human markdown for a change-set review (highest risk first)."""
-    rv = build_review(query, hunks=hunks, symbols=symbols)
+    rv = build_review(query, hunks=hunks, symbols=symbols, base_graph=base_graph)
     s = rv["summary"]
     out = ["# Change-set review", ""]
     out.append(f"**{s['changed_symbols']} changed symbol(s)**; "
                f"blast by root: {s['blast_by_root'] or '—'}.")
+    if "api_diff" in rv:
+        ad = rv["api_diff"]["summary"]
+        out.append(f"**API diff vs baseline:** {ad['breaking_total']} breaking, "
+                   f"{ad['removed']} removed, {ad['added']} added.")
     if s["high_risk"]:
         out.append(f"**Review first (high risk):** {', '.join(s['high_risk'])}")
     if s["unresolved_hunks"]:
         out.append(f"_Unresolved hunks (module-level / unknown file): "
                    f"{len(s['unresolved_hunks'])} — inspect manually._")
     out.append("")
+    if "api_diff" in rv:
+        ad = rv["api_diff"]
+        breaking = [c for c in ad["changes"] if c["severity"] == "breaking"]
+        if ad["removed"] or breaking:
+            out.append("## API breaking changes (not in the hunks)")
+            for sym in ad["removed"][:20]:
+                out.append(f"- **removed** `{sym}`")
+            for c in breaking[:20]:
+                out.append(f"- **{c['kind']}** `{c['symbol']}` — {c['detail']}")
+            out.append("")
     for d in rv["changed"]:
         loc = f" ({d['file']}:{d['lines'][0]})" if d["file"] and d["lines"] else ""
         out.append(f"## [{d['risk']}] {d['symbol']}{loc}")
