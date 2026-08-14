@@ -314,17 +314,18 @@ Python-focus** — если задача его нарушает, это отм�
       редактором почти без усилий; «пол» способностей, который codemap заведомо перекрывает.
       **Приёмка:** `tags`-файл читается vim/`readtags`; на bquant покрывает все classes/functions/methods;
       байт-стабилен между прогонами. **Оценка:** S.
-- [ ] **R1-C3 Архитектурные контракты + `--check`** (M) — декларативный файл контрактов + CI-гейт.
-      **Scope:** формат контрактов (layers ordered / independence / forbidden / containers / exhaustive) в
-      `codemap.toml`; `codemap architecture --check` → ненулевой exit + список нарушающих import-цепочек.
-      **Зачем:** сейчас architecture только *описывает* слои/нарушения; import-linter даёт *декларируемый
-      контракт, падающий в CI* — превращает отчёт в **enforceable gate**. **Самый ценный gap.**
-      **Приёмка:** заданный layers-контракт на bquant ловит намеренное нарушение (exit≠0) и проходит на
-      чистом (exit=0); exhaustive-режим падает при новом незадекларированном модуле. **Оценка:** M.
-      **Зависит от:** уже имеющегося `Query.layers/coupling` (M16). **R1.5 усилил:** ArchUnitPython
-      (правила как pytest), AACT (arch-as-code), Sentrux (`rules.toml`, 52 языка) — взять их словарь правил
-      (cycles/layer-direction/naming/file-size/coupling); рассмотреть Sentrux-паттерн «health-delta до/после
-      правки агента + агент через MCP спрашивает „что я сломал“».
+- [x] **R1-C3 Архитектурные контракты + `check`** ✅ (2026-08-14, без схемы). `codemap/arch.py`
+      (декларативный контракт `[architecture]` в `codemap.toml`: **layers ordered / independent / forbidden
+      / no_cycles / exhaustive**; парсер толерантен как gate — битый toml → пустой контракт) + `codemap check`
+      (CLI-гейт: **exit 2** на нарушении со списком нарушающих import-рёбер, **exit 0** на чистом,
+      `--require-contract` делает отсутствие контракта провалом) + serve-op `check` + MCP-tool `check`
+      (паттерн «что я сломал» — агент спрашивает после правки). **Приёмка выполнена:** на bquant layers-контракт
+      ловит реальное нарушение (`indicators.macd → analysis.zones.models` вверх + цикл `pipeline↔cache`, exit 2)
+      и проходит на forbidden-контракте (exit 0); exhaustive падает на незадекларированном слое (тест).
+      **Dogfood:** codemap описал **собственный** слой-контракт в `codemap.toml` и `codemap check --build
+      ./codemap` зелёный (тест `test_r1c3_dogfood.py` стережёт). Доки `docs/architecture-contracts.md`.
+      **Отложено из R1.5-словаря:** naming/file-size-правила, health-delta до/после (кандидаты в R1-C4/новый
+      пункт). +18 тестов.
 - [ ] **R1-C4 Метрики сложности в hotspots** (M) — cyclomatic / Halstead / Maintainability Index.
       **Scope:** посчитать CC/MI по уже имеющемуся griffe-AST (без radon-dep — реализовать
       детерминированно, source-only, on-brand); добавить в hotspot-скоринг и в `architecture`-отчёт.

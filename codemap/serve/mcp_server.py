@@ -22,7 +22,8 @@ _INSTRUCTIONS = (
     "codemap exposes a static code graph of a package. Start with `search` (find "
     "symbols by substring) or `stats` (graph overview), then `query` a symbol for its "
     "dossier. Use `impact`/`callers`/`callees` for blast radius, `review` to turn a "
-    "diff into a change-set review, `architecture` for the system shape, `communities` "
+    "diff into a change-set review, `architecture` for the system shape, `check` to "
+    "enforce the [architecture] contract, `communities` "
     "for module subsystems and `flows` for forward call-flow from an entry. Relational "
     "tools accept a short name or re-export id; when a name is ambiguous the response "
     "carries a `resolved.ambiguous` flag — check it before trusting the answer."
@@ -174,6 +175,13 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("architecture")
 
     @server.tool()
+    def check(root: str | None = None) -> dict:
+        """Architecture-contract gate: does the graph still satisfy the [architecture]
+        rules in codemap.toml? Returns {ok, violations:[{rule, summary, edges}]} — the
+        'what did I break' check. `root` overrides where codemap.toml is read from."""
+        return op("check", {"root": root})
+
+    @server.tool()
     def communities() -> list:
         """Data-driven module subsystems: clusters of modules that import each other
         more than the rest (deterministic greedy modularity), labelled by layer."""
@@ -204,5 +212,5 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 MCP_TOOLS = (
     "stats", "search", "query", "resolve", "callers", "callees", "impact",
     "call_contract", "implementers", "family", "families", "column", "columns_of",
-    "locate", "review", "architecture", "communities", "flows", "source", "report",
+    "locate", "review", "architecture", "check", "communities", "flows", "source", "report",
 )

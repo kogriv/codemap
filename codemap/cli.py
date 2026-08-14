@@ -298,6 +298,26 @@ def _cmd_route(args) -> int:
     return 0
 
 
+def _cmd_check(args) -> int:
+    """Enforce the [architecture] contract → exit 2 on any violation (R1-C3).
+
+    The CI gate: reads codemap.toml [architecture] under --root, evaluates every
+    rule against the graph, prints the report, and exits non-zero if the contract
+    is broken (2 = violations) so a pipeline can fail on it. An empty/absent
+    contract is a no-op success unless --require-contract is set.
+    """
+    from codemap.arch import check_contract, load_contract
+    from codemap.serve.check import render_check
+    q = Query(_graph_from(args))
+    contract = load_contract(args.root)
+    if contract.is_empty() and args.require_contract:
+        print(render_check(q, contract, []), end="")
+        raise SystemExit("error: no [architecture] contract found (--require-contract)")
+    violations = check_contract(q, contract)
+    print(render_check(q, contract, violations), end="")
+    return 2 if violations else 0
+
+
 def _cmd_serve(args) -> int:
     """Load the graph once, then serve it warm (M3.1).
 
@@ -425,6 +445,14 @@ def build_parser() -> argparse.ArgumentParser:
     rt.add_argument("--root", default=".",
                     help="Dir with codemap.toml + the target tree (default: cwd).")
     rt.set_defaults(func=_cmd_route)
+
+    ck = sub.add_parser("check", help="Enforce the [architecture] contract (CI gate; exit 2 on violation).")
+    _add_source(ck)
+    ck.add_argument("--root", default=".",
+                    help="Dir with codemap.toml holding [architecture] (default: cwd).")
+    ck.add_argument("--require-contract", action="store_true",
+                    help="Fail if no [architecture] contract is present (default: no-op success).")
+    ck.set_defaults(func=_cmd_check)
 
     return p
 

@@ -122,6 +122,8 @@ the live graph, findings, and the milestone that closed them.
 - **[docs/export.md](docs/export.md)** — export recipes: RAG, mermaid, Obsidian vault, SCIP interop.
 - **[docs/accuracy.md](docs/accuracy.md)** — measured call-graph accuracy, the honest static ceiling, and
   the grep-vs-graph value proof (both harnesses guarded in CI).
+- **[docs/architecture-contracts.md](docs/architecture-contracts.md)** — declare the intended architecture
+  in `codemap.toml` and enforce it with `codemap check` (CI gate; codemap dogfoods its own).
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
 - **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each

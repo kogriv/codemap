@@ -249,6 +249,19 @@ class Session:
         """F21: whole-system shape — cycles + layers + coupling + hotspots."""
         return build_architecture(self.query)
 
+    def _op_check(self, args) -> dict:
+        """R1-C3: evaluate the [architecture] contract → {ok, violations}.
+
+        The 'what did I break' surface: an agent (or CI) asks whether the current
+        graph still satisfies the declared architecture. The contract is read from
+        codemap.toml under ``root`` (arg, else ``source_root``, else cwd).
+        """
+        from codemap.arch import check_contract, load_contract
+        from codemap.serve.check import build_check
+        root = args.get("root") or self.source_root or "."
+        contract = load_contract(root)
+        return build_check(self.query, contract, check_contract(self.query, contract))
+
     def _op_communities(self, args) -> list:
         """R1-C18: data-driven module subsystems (greedy modularity)."""
         return self.query.communities()
@@ -330,6 +343,7 @@ _OPS = {
     "locate": Session._op_locate,
     "review": Session._op_review,
     "architecture": Session._op_architecture,
+    "check": Session._op_check,
     "communities": Session._op_communities,
     "flows": Session._op_flows,
     "source": Session._op_source,

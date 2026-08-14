@@ -1,0 +1,20 @@
+# codemap project config.
+#
+# [architecture] — the architecture contract codemap enforces on *itself* (R1-C3).
+# Dogfood: `codemap check --build ./codemap` must stay green (guarded by
+# tests/test_r1c3_dogfood.py). The layer order below is codemap's real import
+# structure, top → bottom; `model` is the leaf every layer may depend on.
+[architecture]
+layers = [
+  "cli",           # entry point — may import everything below
+  "serve",         # warm/MCP surface over the query layer
+  "extract",       # source → graph
+  "query",         # read model over the graph
+  "store",         # (de)serialize the graph
+  "arch",          # this contract checker
+  "scope",         # input scope manifest
+  "freshness",     # graph age / rebuild recipe
+  "integrations",  # opt-in external-tool gate
+  "model",         # neutral graph data model — the leaf
+]
+no_cycles = true
