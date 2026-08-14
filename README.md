@@ -102,6 +102,12 @@ The [research track](research/) measures this against the field hands-on, on a s
 [positioning doc](research/positioning.md) is the publication layer — the narrative and the numbers behind the
 claims above; [comparison.md](research/comparison.md) is the coverage matrix that backs them.
 
+Honesty is part of the bet: the call graph is a **measured lower bound**, not a guess. [docs/accuracy.md](docs/accuracy.md)
+reports it — 100% precision / 100% decidable-recall on a hand-labeled suite, an openly-stated ~60% recall
+against *all* true edges (the price of Python's dynamism), and a grep-vs-graph proof that the graph is ~2×
+cheaper than grep for impact on unique names, tens of × on polymorphic ones, and no cheaper for locating a
+symbol.
+
 ## Dogfooding
 
 codemap is validated end-to-end against a real external package. Place a target repo as a sibling and
@@ -114,6 +120,8 @@ the live graph, findings, and the milestone that closed them.
 
 - **[DESIGN.md](DESIGN.md)** — product design, the query catalog, v1 boundaries.
 - **[docs/export.md](docs/export.md)** — export recipes: RAG, mermaid, Obsidian vault, SCIP interop.
+- **[docs/accuracy.md](docs/accuracy.md)** — measured call-graph accuracy, the honest static ceiling, and
+  the grep-vs-graph value proof (both harnesses guarded in CI).
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
 - **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each

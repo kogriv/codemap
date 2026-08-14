@@ -1,0 +1,67 @@
+{
+  "_README": "Hand-labeled ground truth for codemap's call-graph, per micro-case. Edges are [src, tgt] as suffixes relative to the case package (the harness prepends '<case>.'). 'expected' = call edges a SOUND static analyzer should emit (min_tier: the cheapest tier that can get it — 'fast' or 'deep'); every expected target is a real definition node. 'ceiling' = true call relationships that are statically UNDECIDABLE for any sound tool (higher-order via param, getattr dispatch, registry value-dispatch) — informational, they define the honest recall gap, never penalized. 'limitation' = true relationships codemap does not model by a documented design choice (closure bodies not attributed to a def node; string-registry seams routed through the bridge channel, not as calls edges) — informational, excluded from precision. Targets that are not graph nodes ('phantom') are a soundness signal the harness reports separately; a phantom emitted for a DECIDABLE edge (wrong resolution) counts against precision, a phantom for a limitation edge only raises the soundness flag.",
+
+  "c01_direct_call": {
+    "difficulty": "decidable",
+    "expected": [["a", "b", "fast"]],
+    "ceiling": [],
+    "limitation": []
+  },
+  "c02_self_method": {
+    "difficulty": "decidable",
+    "expected": [["Widget.render", "Widget.paint", "fast"]],
+    "ceiling": [],
+    "limitation": []
+  },
+  "c03_cross_module": {
+    "difficulty": "decidable",
+    "expected": [["run", "other.helper", "fast"]],
+    "ceiling": [],
+    "limitation": []
+  },
+  "c04_higher_order": {
+    "difficulty": "undecidable-tail",
+    "expected": [["run", "apply", "fast"]],
+    "ceiling": [["apply", "target"]],
+    "limitation": []
+  },
+  "c05_decorator": {
+    "difficulty": "decidable",
+    "expected": [["run", "worker", "fast"]],
+    "ceiling": [],
+    "limitation": []
+  },
+  "c06_inheritance": {
+    "difficulty": "decidable-deep",
+    "expected": [["Derived.run", "Base.base_op", "deep"]],
+    "ceiling": [],
+    "limitation": [],
+    "note": "fast tier over-approximates self.base_op to the phantom id Derived.base_op (no MRO walk); deep resolves the real Base.base_op. The fast phantom counts against fast precision."
+  },
+  "c07_getattr_dynamic": {
+    "difficulty": "undecidable",
+    "expected": [["run", "Obj", "fast"]],
+    "ceiling": [["run", "Obj.handle"]],
+    "limitation": []
+  },
+  "c08_local_var": {
+    "difficulty": "decidable-deep",
+    "expected": [["run", "Widget", "fast"], ["run", "Widget.act", "deep"]],
+    "ceiling": [],
+    "limitation": []
+  },
+  "c09_registry_dispatch": {
+    "difficulty": "design-boundary",
+    "expected": [],
+    "ceiling": [["run", "build_a"], ["run", "build_b"]],
+    "limitation": [],
+    "note": "string-keyed dict dispatch — value-flow undecidable as a calls edge; codemap routes such seams through its registry-bridge channel (M7), not as resolved calls."
+  },
+  "c10_closure": {
+    "difficulty": "limitation",
+    "expected": [],
+    "ceiling": [],
+    "limitation": [["outer", "outer.inner"], ["inner", "helper"]],
+    "note": "nested-closure calls are not attributed to a definition node; deep emits outer->outer.inner whose target is a non-node (phantom) — surfaced as a soundness flag, not a precision hit (the relationship is real; only its target id is unmaterialized). Distinct from c06-fast, where the target is genuinely wrong."
+  }
+}

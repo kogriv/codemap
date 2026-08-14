@@ -385,13 +385,28 @@ Python-focus** — если задача его нарушает, это отм�
 
 #### Позиционирование (доки, дёшево, не код)
 
-- [ ] **R1-C13 Бенчмарк call-graph + grep-vs-graph + честный потолок** (S→M) — (a) сверить точность
-      callers/callees против PyCG-резолвинга и **заявить потолок открыто** (~99% precision / ~70% recall —
-      предел ЛЮБОГО статического инструмента на динамике Python); (b) **R1.5 расширил:** повторить
-      grep-vs-graph харнесс-бенч (по мотивам 936-прогонного исследования на apache/superset: граф в 10–23×
-      дешевле grep на «что сломается при смене сигнатуры», и БЕЗ выигрыша на «где определён X») уже на
-      ops codemap → доказать value именно на impact/call_contract. **Приёмка:** раздел в docs + бенч-скрипт.
-      **Оценка:** S (PyCG) / M (полный харнесс-бенч).
+- [x] **R1-C13 Бенчмарк call-graph + grep-vs-graph + честный потолок** ✅ (2026-08-14, без схемы). Приёмка
+      закрыта: **`docs/accuracy.md`** (раздел) + два бенч-скрипта + CI-тесты (`tests/test_r1c13_*.py`).
+      **(a) точность/потолок:** PyCG-как-оракул — **спайк-негатив** (`research/tools/pycg.md`): PyCG 0.0.8
+      не запускается на Python 3.12 (import-hook хачит stdlib, падает даже на 3-строчном файле — три
+      слоя поломки, третий структурный; та же «хюбрис-зона», что и graphlens). **Пивот:** свой
+      **ручной ground-truth микро-сьют** (`research/bench/callgraph_truth/`, 10 кейсов: direct/self/
+      cross-module/higher-order/decorator/inheritance/getattr/local-var/registry/closure) → deep-tier
+      **precision 100% / recall(decidable) 100% / recall(all) 60%** (`callgraph_accuracy.py`). Литературный
+      потолок PyCG (~99% precision / ~70% recall, ICSE 2021) процитирован, не запускался. Intrinsic-резолв
+      на bquant@cb89a24: 6323 call-sites → 25.7% resolved / 46.1% external / 28.2% unresolved. **(b)
+      grep-vs-graph:** `grep_vs_graph.py` (авто-таргеты, без черри-пика) на bquant: BREAKAGE — граф дешевле
+      grep в **~11× (unique) → ~38× (polymorphic, до 55× на `calculate`)**; WHERE-DEFINED — **~1× (нет
+      выигрыша, grep `def NAME` уже точен)** — честный нуль удержан. Дифференциатор: ценность графа на
+      **связях, не локациях**. Дожфуд-CI на самом codemap (fast-tier, <1с).
+- [ ] **R1-C13-f1 (soundness) fast-tier наследование → фантомный таргет** (S) — 🆕 из микро-сьюта (c06):
+      fast-резолвер над-аппроксимирует `self.<inherited>()` к id того же класса, которого нет как узла (не
+      ходит по MRO); deep резолвит корректно в базовый класс. Стоит либо ходить по MRO на fast, либо не
+      эмитить ребро в несуществующий узел (дроп честнее фантома). Держит fast-precision на 87.5% вместо 100%.
+- [ ] **R1-C13-f2 (soundness) call в замыкание → ребро в неузел** (S) — 🆕 из микро-сьюта (c10): deep
+      эмитит `outer→outer.inner`, где `inner` (вложенная функция) не материализована как узел. Связь
+      реальна, но таргет — фантом. Либо материализовать closure-узлы, либо атрибутировать вызовы тела
+      замыкания объемлющей функции. Единственный phantom на deep-tier.
 - [x] **R1-C14 Позиционные доки** ✅ (2026-08-06) — заведён **`research/positioning.md`** — публикационный
       слой (build-story hub): Story Zero (codemap + роадмэп M0→M19, дифференциаторы, честные дыры) + полная
       **Build-story #1 (graphlens)** с цифрами и «эмоцией» по горячим следам. Тезис: «codemap = точная

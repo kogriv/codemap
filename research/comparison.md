@@ -64,6 +64,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 |---|---|---|---|---|
 | graphlens | working type-resolved impact (≈codemap non-test); resolves into deps; 5 languages; minimalist 3-verb MCP; smart test-de-emphasis | no arch/sig-change tools (no T4/T5); non-deterministic DB; **`ty`-on-PATH gotcha** silently degrades impact; venv-scoping trap; 12× index cost | learn (competent peer) | R1-C13, R1-C14 |
 | GitNexus | hybrid semantic+structural: BM25+embeddings+RRF search, Leiden clusters + 294 process-flows, transitive risk-rated impact, per-answer `epistemic`/`confidence`, 14 langs, MCP+HTTP+web, 1-cmd editor setup | **non-commercial license**; 1.7 GB install + 123 MB binary non-diffable index (28× input); T2 is import-fan-in not call-sites; no T4 (call contracts) & partial T5 (no coupling/god-objects); **git-required** for incremental/change-detection | learn (strong, adjacent niche) | R1-C13, R1-C14, R1-C15 |
+| PyCG | academic reference for Python call-graph accuracy; hand-labeled micro/macro benchmark corpus (the ~99%P/~70%R ceiling citation) | **does not run on Python 3.12** (import-hook surgery collides with stdlib; fails on a 3-line file); batch CLI, not a service; unmaintained (0.0.8, 2021) | learn (methodology only — spike-negative as a live oracle) | R1-C13 |
 
 ## Where codemap is not closed
 
