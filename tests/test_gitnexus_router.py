@@ -27,9 +27,38 @@ def test_gitnexus_registered_as_router():
 
 def test_argv_per_capability():
     g = gitnexus.GitNexusRouter()
-    assert g._argv("semantic-search", "how are zones detected") == [
+    assert g._argv("semantic-search", "how are zones detected", ["gitnexus"]) == [
         "gitnexus", "search", "how are zones detected", "--json"]
-    assert g._argv("community-clusters", "") == ["gitnexus", "check", "--clusters", "--json"]
+    assert g._argv("community-clusters", "", ["gitnexus"]) == [
+        "gitnexus", "check", "--clusters", "--json"]
+
+
+def test_argv_carries_npx_launcher():
+    # the launcher (global bin vs `npx …`) is prepended verbatim; the tail is identical.
+    g = gitnexus.GitNexusRouter()
+    launcher = ["npx", "--no-install", "gitnexus"]
+    assert g._argv("semantic-search", "zones", launcher) == [
+        "npx", "--no-install", "gitnexus", "search", "zones", "--json"]
+
+
+def test_launcher_prefers_global_binary(monkeypatch):
+    monkeypatch.setattr(gitnexus, "which", lambda b: "/usr/bin/gitnexus")
+    assert gitnexus.GitNexusRouter()._launcher() == ["gitnexus"]
+
+
+def test_launcher_falls_back_to_npx(monkeypatch):
+    # global gitnexus absent, but npx present → serve a local `npm install gitnexus`.
+    monkeypatch.setattr(gitnexus, "which", lambda b: None if b == "gitnexus" else "/usr/bin/npx")
+    assert gitnexus.GitNexusRouter()._launcher() == ["npx", "--no-install", "gitnexus"]
+
+
+def test_launcher_none_when_neither_present(monkeypatch):
+    monkeypatch.setattr(gitnexus, "which", lambda b: None)
+    g = gitnexus.GitNexusRouter()
+    assert g._launcher() is None
+    assert g.is_available() is False
+    # route degrades cleanly — no launcher → payload None, never a crash or a download.
+    assert g.route("semantic-search", "zones").payload is None
 
 
 def test_route_wraps_answer_with_disclaimer(monkeypatch):

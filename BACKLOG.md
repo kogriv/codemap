@@ -454,6 +454,16 @@ Python-focus** — если задача его нарушает, это отм�
       установленный внешний тул, сроутить в него opt-in запрос, показать лицензионную оговорку, перевести/
       прокинуть ответ; ядро работает и без него. **Оценка:** L. Связь: DESIGN §13, [research/tools/gitnexus.md],
       реестр кандидатов (§13.1).
+- [x] **R1-C16-f1 (router) `npx`-фоллбэк детекта GitNexus** ✅ (2026-08-15, без схемы) — из живого вопроса
+      «почему `which gitnexus` пусто, мы же ставили». Причина: GitNexus ставится как **локальный** npm-пакет
+      (`npm install gitnexus`, 1.7 ГБ `node_modules` → бин в `./node_modules/.bin/`, запуск через `npx`),
+      глобального `gitnexus` на PATH не было **никогда**; наш `is_available()` дергал только
+      `which("gitnexus")` → всегда «unavailable». **Фикс:** `GitNexusRouter._launcher()` — глобальный бин,
+      если на PATH; иначе `npx --no-install gitnexus` (работает с локальной инсталляцией, **без скрытой
+      сетевой доустановки** — при отсутствии деградирует в None, не качает); иначе None. `is_available()`/
+      `route()` идут через launcher, argv собирается launcher-независимо (`_verb_argv`). Снимает «setup
+      friction — high» из карточки: роутер живёт без `npm install -g`. +5 тестов. Связь:
+      [research/tools/gitnexus.md], DESIGN §13.1.
 
 #### Из разбора graphlens + GitNexus (2026-08-07) — что встраивать в продукт
 
