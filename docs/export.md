@@ -9,6 +9,7 @@ All exporters read an existing graph (`--graph graph.json`) or build one on the 
 | Mermaid | `codemap export mermaid --mkind class` | mermaid diagram (stdout or `-o`) | — |
 | Obsidian vault | `codemap export vault -o vault/` | linked markdown tree | — |
 | **SCIP index** | `codemap export scip -o index.scip` | binary SCIP protobuf | `[scip]` |
+| **ctags** | `codemap export ctags -o tags` | universal-ctags `tags` file | — |
 
 ## RAG chunks
 
@@ -86,4 +87,43 @@ The output is deterministic (byte-stable across runs). Validate it with the offi
 ```bash
 scip print index.scip          # human-readable dump
 scip print --json index.scip   # JSON dump
+```
+
+## ctags (editor interop)
+
+A [universal-ctags](https://ctags.io/) `tags` file is the lowest common denominator of
+code navigation — vim, Emacs, `readtags` and countless editors do go-to-definition by
+binary-searching it. codemap already holds every definition's name, file, line and scope,
+so this export is near-free and needs no extra.
+
+```bash
+codemap export ctags --graph graph.json --project-root /path/to/repo -o tags
+```
+
+`--project-root` is the filesystem root the graph's file paths are relative to (default:
+cwd). codemap reads source lines from it to build robust `/^…$/` search-pattern addresses;
+if a line is unreadable it falls back to a bare line-number address (always available from
+the graph).
+
+### What's in it (and what isn't)
+
+One line per **definition** — classes, functions, methods, attributes — in extended
+(exuberant) format with extension fields codemap already knows:
+
+- `kind` — `c` class · `f` function · `m` method · `v` variable/attribute
+- `line:` · `scope` (e.g. `class:Foo`) · `access:` (public/private)
+- functions also carry `signature:(…)` and `typeref:typename:…`, and `end:` when known
+
+It does **not** emit reference tags (find-uses): codemap tracks no token positions, so this
+is a *tags* file, not a references index (that is SCIP's job). Modules are files, not tags,
+so they are skipped — as universal-ctags itself does. Re-export aliases (a symbol with no
+own definition location) are skipped too, so each definition is tagged once at its real site.
+
+### Verifying
+
+The output is deterministic (byte-stable) and sorted by name (pseudo-tags declare
+`!_TAG_FILE_SORTED\t1`) so `readtags` can binary-search it:
+
+```bash
+readtags -t tags analyze_zones   # look up a symbol
 ```

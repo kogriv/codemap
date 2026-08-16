@@ -308,12 +308,21 @@ Python-focus** — если задача его нарушает, это отм�
       protobuf и реальным `scip print`. **Частично закрывает R1-C7** (структурные descriptor-id доказаны).
       +8 тестов (importorskip protobuf; CLI-тест skip если `scip` не на PATH). На bquant: 206 documents,
       1826 symbols.
-- [ ] **R1-C2 ctags-экспорт** (S) — `codemap export --ctags <graph.json> -o tags`.
-      **Scope:** из def-узлов эмитить строки `name\tfile\t/^…$/;"\tkind` (+ scope/signature extension-поля),
-      формат universal-ctags; детерминированная сортировка. **Зачем:** мгновенная совместимость с любым
-      редактором почти без усилий; «пол» способностей, который codemap заведомо перекрывает.
-      **Приёмка:** `tags`-файл читается vim/`readtags`; на bquant покрывает все classes/functions/methods;
-      байт-стабилен между прогонами. **Оценка:** S.
+- [x] **R1-C2 ctags-экспорт** ✅ (2026-08-16, без схемы) — `codemap export ctags [-o tags]`.
+      `codemap/serve/ctags.py` (`build_ctags`) — из def-узлов (class/function/attribute) строки extended-
+      формата universal-ctags: `name\tfile\t{address};"\t{kind}\t{ext-поля}`. **Адрес:** `/^<строка>$/`-паттерн
+      когда исходник читаем (устойчив к сдвигу строк — весь смысл ctags-паттернов; экранируются `\`/`/`/`$`),
+      иначе **бэкоф на голый номер строки** (всегда есть из графа). **Ext-поля** (всё из уже имеющихся данных,
+      без догадок): `kind` (c/f/m/v), `line:`, `scope` (`class:Foo`, module-scope опущен как в u-ctags),
+      `signature:(…)`+`typeref:typename:…` (функции, paren-balanced разбор), `access:` (public/private из
+      visibility), `end:`. **Честный scope:** только дефы (не references — это SCIP); модули пропущены (=файлы,
+      как u-ctags); ре-экспорт-алиасы (узел без своей локации) пропущены → каждый деф тегируется один раз в
+      реальном месте. **Детерминизм:** pseudo-tags объявляют `!_TAG_FILE_SORTED\t1`, реальные теги сортированы
+      по имени→файлу→адресу (binary-searchable). CLI: `export ctags` + `--project-root` как source-root.
+      **Приёмка выполнена:** на bquant@graph 1585 тегов (все classes/functions/methods/attributes с локацией;
+      core), байт-идентичен между прогонами, структурно валиден + сортирован (readtags binary-search находит
+      `analyze_zones`). Доки `docs/export.md` (секция + таблица). +9 тестов (readtags-CLI-тест skip если не на
+      PATH). Закрывает «пол» способностей из R1-ландшафта.
 - [x] **R1-C3 Архитектурные контракты + `check`** ✅ (2026-08-14, без схемы). `codemap/arch.py`
       (декларативный контракт `[architecture]` в `codemap.toml`: **layers ordered / independent / forbidden
       / no_cycles / exhaustive**; парсер толерантен как gate — битый toml → пустой контракт) + `codemap check`

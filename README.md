@@ -67,6 +67,7 @@ codemap export rag     --graph graph.json -o chunks.jsonl
 codemap export mermaid --graph graph.json --mkind class
 codemap export vault   --graph graph.json -o vault/
 codemap export scip    --graph graph.json -o index.scip   # SCIP index (needs [scip] extra)
+codemap export ctags   --graph graph.json -o tags         # universal-ctags tags file
 
 # warm resident process — JSON requests over stdin/stdout (21 ops)
 codemap serve --graph graph.json --source-root .
@@ -119,7 +120,7 @@ the live graph, findings, and the milestone that closed them.
 ## Documentation
 
 - **[DESIGN.md](DESIGN.md)** — product design, the query catalog, v1 boundaries.
-- **[docs/export.md](docs/export.md)** — export recipes: RAG, mermaid, Obsidian vault, SCIP interop.
+- **[docs/export.md](docs/export.md)** — export recipes: RAG, mermaid, Obsidian vault, SCIP + ctags interop.
 - **[docs/accuracy.md](docs/accuracy.md)** — measured call-graph accuracy, the honest static ceiling, and
   the grep-vs-graph value proof (both harnesses guarded in CI).
 - **[docs/architecture-contracts.md](docs/architecture-contracts.md)** — declare the intended architecture

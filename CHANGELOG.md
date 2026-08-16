@@ -34,6 +34,19 @@ check when the `scip` binary is present); warm serve surface with 21 ops, an MCP
   `protobuf` is an **optional** extra (`pip install codemap[scip]`); vendored bindings generated from the
   official `scip.proto`, lazy-imported. Deterministic bytes; validated by protobuf round-trip and the real
   `scip print` CLI. Partially satisfies R1-C7 (structured descriptor ids). +8 tests.
+- **R1-C2 — ctags export** (no schema change): `codemap export ctags -o tags` emits a universal-ctags
+  `tags` file — the lowest common denominator of editor navigation (vim/Emacs/`readtags` binary-search a
+  sorted tags file). `codemap/serve/ctags.py` renders one extended-format line per **definition**
+  (class/function/method/attribute): a `/^…$/` search-pattern address when the source line is readable
+  (robust to line drift; `\`/`/`/`$` escaped), else a bare line-number address (always available from the
+  graph). Extension fields are all facts codemap already holds — `kind` (c/f/m/v), `line:`, `scope`
+  (`class:Foo`; module scope omitted as universal-ctags does), `signature:(…)` + `typeref:typename:…` for
+  functions, `access:` (public/private), `end:`. **Honest scope:** definitions only (no reference tags —
+  that is SCIP's job); modules are files not tags (skipped); re-export aliases (a symbol with no own
+  location) are skipped so each definition is tagged once at its real site. Deterministic: pseudo-tags
+  declare `!_TAG_FILE_SORTED\t1` and real tags sort by name→file→address (binary-searchable). Stdlib-only.
+  On bquant: 1585 tags, byte-stable. +9 tests (`readtags`-CLI check when present). Docs:
+  [docs/export.md](docs/export.md).
 - **R1 — research track opened** (docs only): survey of adjacent code-analysis / code-graph tools in
   `research/` — a landscape map (comparison matrix + integrate/wrap/learn verdicts) plus four theme reports
   (AI-context/repo-map, code-graph/index infra, query/dataflow engines, Python graph/arch peers). Grounded,

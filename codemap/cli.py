@@ -12,6 +12,7 @@
         vault -o <dir>               → Obsidian vault tree (consumer B)
         mermaid --mkind class|deps|calls [--scope X] [--root Y] [--depth N]
         scip -o <file>               → SCIP index (defs + symbol info; interop, R1-C1)
+        ctags [-o tags]              → universal-ctags tags file (defs; editor interop, R1-C2)
         docs                         → living documentation (subsystem-organized, R1-C15)
     codemap review [diff|-] (--graph g.json | --build <path>) [--format markdown|json]
         unified diff (or stdin) → risk-sorted change-set review (M15/F17)
@@ -243,6 +244,13 @@ def _cmd_export(args) -> int:
         )
         Path(args.out).write_bytes(write_scip(index))
         print(f"{args.out} ({len(index.documents)} documents)")
+    elif args.kind == "ctags":
+        from codemap.serve.ctags import build_ctags
+        from codemap import __version__
+        # --project-root doubles as the source root for /^…$/ pattern addresses;
+        # if lines are unreadable, build_ctags falls back to line-number addresses.
+        _emit(build_ctags(q, source_root=args.project_root or os.getcwd(),
+                          tool_version=__version__), args.out)
     return 0
 
 
@@ -419,17 +427,18 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")
     r.set_defaults(func=_cmd_report)
 
-    e = sub.add_parser("export", help="Export a view: rag (JSONL) | vault | mermaid | scip.")
-    e.add_argument("kind", choices=["rag", "vault", "mermaid", "scip", "docs"])
+    e = sub.add_parser("export", help="Export a view: rag (JSONL) | vault | mermaid | scip | ctags | docs.")
+    e.add_argument("kind", choices=["rag", "vault", "mermaid", "scip", "ctags", "docs"])
     _add_source(e)
-    e.add_argument("-o", "--out", help="Output file (rag/mermaid/scip) or dir (vault).")
+    e.add_argument("-o", "--out", help="Output file (rag/mermaid/scip/ctags) or dir (vault).")
     e.add_argument("--mkind", choices=["class", "deps", "calls"], default="class",
                    help="mermaid diagram kind (default: class).")
     e.add_argument("--scope", help="mermaid class/deps: restrict to this id-prefix.")
     e.add_argument("--root", help="mermaid calls: root symbol.")
     e.add_argument("--depth", type=int, default=2, help="mermaid calls: BFS depth.")
-    e.add_argument("--project-root", help="scip: filesystem root the paths are relative to "
-                                          "(default: cwd). Written as the SCIP project_root URI.")
+    e.add_argument("--project-root", help="scip/ctags: filesystem root the paths are relative to "
+                                          "(default: cwd). SCIP writes it as project_root URI; "
+                                          "ctags reads source lines from it for /^…$/ addresses.")
     e.add_argument("--package", help="scip: package name in symbol strings (default: graph target).")
     e.add_argument("--package-version", default=".",
                    help="scip: package version in symbol strings (default: '.' — unversioned).")
