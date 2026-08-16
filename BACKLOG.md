@@ -464,9 +464,11 @@ Python-focus** — если задача его нарушает, это отм�
       — для non-commercial-тулов (PolyForm-NC и т.п.) показывать разовую оговорку: *«тул X под лицензией
       PolyForm Noncommercial; этот маршрут — только для некоммерческого использования; при коммерческом не
       задействуйте его / возьмите enterprise-лицензию у автора»*; (4) при открытии codemap — **спросить автора**
-      тула про явное разрешение на роутинг. Приватная фаза: ограничений нет. **Первый капабилити-кандидат:**
-      семантический поиск (обёртка вокруг MIT/Apache-тула — cocoindex/graphlens, **не** GitNexus из-за NC-лицензии;
-      GitNexus остаётся `learn` + опционально routable-plugin). **Приёмка:** `codemap` умеет продетектить
+      тула про явное разрешение на роутинг. Приватная фаза: ограничений нет. **Первый капабилити-кандидат
+      ПОДТВЕРЖДЁН разбором (2026-08-16):** семантический поиск через **cocoindex-code (`ccc`)** —
+      Apache-2.0, локальный (без БД/ключа), CLI+MCP, hands-on-измерен (`research/tools/cocoindex-code.md`);
+      лицензионно-чистый → пригоден к **adapter** (перевод в наш контракт), не только `route`. GitNexus остаётся
+      `learn` + NC-routable-plugin (не adapter). **Приёмка:** `codemap` умеет продетектить
       установленный внешний тул, сроутить в него opt-in запрос, показать лицензионную оговорку, перевести/
       прокинуть ответ; ядро работает и без него. **Оценка:** L. Связь: DESIGN §13, [research/tools/gitnexus.md],
       реестр кандидатов (§13.1).
@@ -614,7 +616,22 @@ R1 закартировал поле сверху вниз; **R2** идёт по
             R1-C14 (дифференциаторы: MIT vs NC, diffable JSON vs бинарь, provenance-impact, no-git), R1-C15
             (clusters+flows → living docs). **Новый gap:** семантический поиск + flow/community-нарратив.
             Build-story #2 в `research/positioning.md` («The one that does more, and why that's fine»).
-      - [ ] остальные — CodeGraph, OntoIndex, Sentrux, cocoindex, rag_for_git, Understand-Anything, CodeSlicer,
+      - [x] **cocoindex-code (`ccc`)** ✅ (2026-08-16, **hands-on** на R2-скоупе) — `research/tools/cocoindex-code.md`.
+            0.2.41 на cocoindex 1.0.20, Apache-2.0, Python+Rust-движок, tree-sitter-чанкинг, локальные ST-эмбеддинги
+            (`snowflake-arctic-embed-xs` — та же модель, что у GitNexus), встроенный **LMDB+SQLite (без БД-сервиса,
+            без API-ключа)**. Развод: **CocoIndex** (ETL-фреймворк, часто Postgres+pgvector) vs **cocoindex-code**
+            (сам CLI, embedded store) — карточка про второй. Измерено: 280 файлов → 6403 чанка; **T1 ◐** (semantic
+            `search` даёт релевантный спред, деф не #1; точный деф — через bundled `ccc grep`, tree-sitter);
+            **T2–T5 N/A** (векторный индекс, нет графа/вызовов/impact/арх); **concept-query блистает**
+            (`swing pivot points` → точно `strategies/swing/pivot_points.py`, чего codemap не умеет); детерминизм ◐
+            (ответ байт-идентичен, артефакт — бинарный LMDB/SQLite); **инкрементальная переиндексация ≈ 1с**
+            (content-hash — тезис движка). GPU заблокирован (torch 2.13/cu130 выкинул Pascal sm_61 → CPU-only на
+            1080 Ti; onnxruntime GitNexus'а на sm_61 ехал — другой рантайм). Вердикт **wrap (opt-in
+            семантик-адаптер) + learn (инкрементальный движок)**: **первый лицензионно-чистый (Apache-2.0)
+            семантик-поиск, пригодный к обёртке за роутером R1-C16** (там, где GitNexus только `route`, но не
+            `adapt` из-за NC). Питает **R1-C16** (первый adapter-кандидат семантики), **R1-C9** (content-hash
+            инкрементальность — рабочее доказательство), **R1-C6** (relevance).
+      - [ ] остальные — CodeGraph, OntoIndex, Sentrux, rag_for_git, Understand-Anything, CodeSlicer,
             ast-index, Graphify, grafema, CodeWiki, Foglamp (desk где SaaS/не воспроизводится — с честной
             пометкой). Порядок — по близости к codemap и по связи с R1-C.
 

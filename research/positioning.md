@@ -243,6 +243,68 @@ The day of setup didn't change the verdict — it made the verdict felt.
 
 ---
 
+## Build-story #3 — "The competitor that does *less* — and that's why we take it" (cocoindex-code)
+
+_Evidence: [cocoindex-code card](tools/cocoindex-code.md). Every number below reproduces there._
+
+### The setup
+GitNexus was the tool that did *more*. cocoindex-code (`ccc`) is the opposite bet: it does *less* than
+anything we'd measured. No call graph. No impact. No architecture. No symbols. Point it at a repo and it
+does exactly one thing — embed the code with tree-sitter chunking and answer a natural-language query with
+the nearest chunks. On the R2 task-set, **four of five tasks are structurally N/A**: ask `ccc` "who calls
+`MACDZoneAnalyzer`?" and it returns semantically-similar *docs and tests*, not a caller list, because there
+is no graph to have callers in. By the coverage matrix, it's the emptiest row we've filled.
+
+### The surprise: the emptiest row is the most useful тool
+And it's the most valuable разбор for the roadmap so far. Because the story isn't the feature set — it's the
+**license**. GitNexus does everything `ccc` does *and* a structural graph *and* 14 languages — but it's
+PolyForm-Noncommercial, so codemap can only ever **route** to it (opt-in subprocess, answer passed through
+untouched), never **adapt** it (translate its output into our graph contract). `ccc` is **Apache-2.0**. It
+does less, but it's the first semantic-search tool we are legally free to *wrap* — the first one that can
+sit behind the R1-C16 router as an owned capability, not a borrowed one. "Does more" lost to "does less,
+under a license we can build on."
+
+### The measurement that shows the fit
+Two queries tell the whole story. Ask for a *concept* — "detect swing high/low pivot points within a zone" —
+and `ccc` nails `bquant/analysis/zones/strategies/swing/pivot_points.py` at rank 1 (0.72) with **zero
+knowledge of the name**. That is precisely the fuzzy leg codemap refuses to grow. Ask for an *exact symbol* —
+`analyze_zones` — and `ccc search` returns a relevant spread where the real definition ranks #5, not #1;
+it's `ccc grep` (tree-sitter, no index) that pinpoints it. The boundary is crisp: **semantic retrieval for
+"what's this about," exact structure for "where is X" — and they're different tools, not the same one graded
+differently.** That's the composition thesis, measured on one repo.
+
+### The aside that cut the other way (GPU)
+A footnote worth keeping. GitNexus's embeddings ran on the 1080 Ti after we side-loaded a CUDA-13 runtime —
+its onnxruntime EP has Pascal kernels. `ccc`'s `[full]` extra pulled **torch 2.13/cu130**, whose wheels are
+compiled for sm_75+ only; the same GPU, same model family, **hard-fails** with `no kernel image for device`.
+Two tools, same embedding model (`snowflake-arctic-embed-xs`), opposite GPU outcomes — because the runtime,
+not the card, decides. So `ccc` embedded 6403 chunks on CPU in ~9 minutes. The redeeming number: a re-index
+of unchanged content takes **~1 second** — content-hash delta processing, a working proof of the incremental
+graph we've deferred as R1-C9.
+
+### The lesson (reusable)
+1. **"Does less" can be worth more than "does more."** Capability is not the axis that decides integrate /
+   wrap / learn — **fit × license** is. A tool that does one thing cleanly, composes with your core, and
+   carries a license you can build on beats a richer tool you can only admire from behind a subprocess.
+2. **The wrap/route/learn triad is a licensing decision as much as a technical one.** Same capability
+   (semantic search), two tools: GitNexus → route-only (NC); cocoindex-code → adaptable (Apache-2.0). The
+   verdict flipped on the license file, not the feature list.
+3. **Measure the boundary, not just the hit.** The finding wasn't "semantic search works" — it was *where it
+   stops* (exact-symbol lookup goes fuzzy), which is exactly what tells you to wrap it as opt-in, beside the
+   structural answer, never instead of it.
+
+### What we take, what we keep
+- **Take (wrap + learn):** cocoindex-code itself as the **R1-C16 semantic-search adapter** — the first
+  license-clean tool for the fuzzy-retrieval leg codemap lacks by design; and its **content-hash incremental
+  re-index** (~1 s) as the concrete pattern behind our deferred **R1-C9** (Merkle/incremental).
+- **Keep (our edge):** a **diffable** graph vs a binary LMDB/SQLite blob; **exact, re-export-resolving**
+  symbol lookup vs a fuzzy spread; **provenance-split structural impact** it has no notion of; and a graph
+  that **provisions nothing** — no 1 GB torch, no embedding model, no GPU-arch lottery.
+- **Verdict:** **wrap (opt-in semantic adapter) + learn (incremental engine).** The retrieval half we can
+  finally *own*, not just point at.
+
+---
+
 ## Article-ready sound bites (each backed by a card)
 
 - "We almost published that a competitor's impact analysis was broken. It was our `PATH`. The hour we spent
@@ -265,13 +327,18 @@ The day of setup didn't change the verdict — it made the verdict felt.
   [GitNexus card](tools/gitnexus.md)
 - "Then we ran it for real: ~18 minutes to embed on CPU, a CUDA-13 runtime side-loaded to use the GPU. The
   retrieval half works — and its cost is exactly why you wrap it, not absorb it." → build-story #2
+- "The emptiest row in our matrix — four of five tasks N/A — is the most useful tool we found. Not for what
+  it does, but for its license: it's the first semantic search we're free to *wrap*, not just route to." →
+  build-story #3
+- "Same embedding model, two tools, opposite GPU outcomes: GitNexus's onnxruntime ran on a 1080 Ti, ccc's
+  torch hard-failed. The runtime, not the card, decides." → [cocoindex-code card](tools/cocoindex-code.md)
 
 ---
 
 ## Future stories (skeletons — fill on разбор)
 
-- **#3 …** next tool from R2.2 (CodeGraph / OntoIndex / Sentrux / …). Same shape: setup → the surprising
-  measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus done.)
+- **#4 …** next tool from R2.2 (CodeGraph / OntoIndex / Sentrux / …). Same shape: setup → the surprising
+  measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code done.)
 - **The determinism story.** Why a diffable graph matters in a PR — needs a concrete "graph diff caught X"
   episode from dogfooding (`gaps/`).
 - **The provenance story.** dead-code without false positives; impact that knows tests from core. Has the

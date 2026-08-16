@@ -24,7 +24,7 @@ get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py)
 | **GitNexus** | [card](tools/gitnexus.md) | ✅ | ◐² | ✅² | ✖ | ◐² | ◐² | ✅ | 14 (tree-sitter) | PolyForm NC |
 | OntoIndex | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | ? |
 | Sentrux | ? | — | — | ? | ? | ✅ | ✅ | ✅ | 52 | ? |
-| cocoindex-code | ? | ✅ | ✖ | ✖ | ✖ | ✖ | ✖ | ? | multi | Apache-2.0 |
+| cocoindex-code | [card](tools/cocoindex-code.md) | ◐³ | — | — | — | — | ◐³ | ✅ | multi (tree-sitter) | Apache-2.0 |
 | rag_for_git | ? | ✅ | ✅ | ◐ | ? | ? | ✖ | ✖ | ? | OSS |
 | Understand-Anything | ? | ? | ? | ? | ? | ? | ? | ? | multi | OSS |
 
@@ -55,6 +55,18 @@ genuinely absent (surface is only search/relations/info). (The separate > 3h45m 
 was the venv trap — repo-root scope pulling `venv_bquant` because graphlens ignores `.gitignore`; point it at
 a clean source tree.) See the [card](tools/graphlens.md).
 
+³ cocoindex-code `ccc` (0.2.41 on cocoindex 1.0.20), hands-on on the R2 scope (materialized staging,
+`scope_id` verified; `ccc` also picked up the harness `manifest.json` via its broad default include).
+**Semantic-only** — a vector index, **no symbol graph**, so T2–T5 are structurally **N/A** (`search "who calls
+X"` returns similar *docs/tests*, not callers). **T1** ◐: `search` returns a relevant spread (scores 0.69–0.71,
+def ranks #5 not #1), but bundled **`ccc grep`** (tree-sitter, no index) pinpoints defs exactly. **Where it
+wins:** a concept query ("detect swing high/low pivot points within a zone") nails
+`strategies/swing/pivot_points.py` (0.72) with zero knowledge of names — the fuzzy leg codemap lacks.
+**Determinism** ◐: answer byte-identical across runs, artifact is a binary LMDB/SQLite blob. Runs **fully
+local, no DB, no API key** (280 files → 6403 chunks; **incremental re-index ≈ 1 s**). GPU blocked (its torch
+2.13/cu130 dropped Pascal sm_61). **Apache-2.0** makes it the first license-clean semantic-search tool codemap
+can *wrap* (vs GitNexus's NC). See the [card](tools/cocoindex-code.md).
+
 ## Quality summary
 
 Filled per axis (accuracy · determinism · cost · speed · setup · languages · license · interface ·
@@ -65,6 +77,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 | graphlens | working type-resolved impact (≈codemap non-test); resolves into deps; 5 languages; minimalist 3-verb MCP; smart test-de-emphasis | no arch/sig-change tools (no T4/T5); non-deterministic DB; **`ty`-on-PATH gotcha** silently degrades impact; venv-scoping trap; 12× index cost | learn (competent peer) | R1-C13, R1-C14 |
 | GitNexus | hybrid semantic+structural: BM25+embeddings+RRF search, Leiden clusters + 294 process-flows, transitive risk-rated impact, per-answer `epistemic`/`confidence`, 14 langs, MCP+HTTP+web, 1-cmd editor setup | **non-commercial license**; 1.7 GB install + 123 MB binary non-diffable index (28× input); T2 is import-fan-in not call-sites; no T4 (call contracts) & partial T5 (no coupling/god-objects); **git-required** for incremental/change-detection | learn (strong, adjacent niche) | R1-C13, R1-C14, R1-C15 |
 | PyCG | academic reference for Python call-graph accuracy; hand-labeled micro/macro benchmark corpus (the ~99%P/~70%R ceiling citation) | **does not run on Python 3.12** (import-hook surgery collides with stdlib; fails on a 3-line file); batch CLI, not a service; unmaintained (0.0.8, 2021) | learn (methodology only — spike-negative as a live oracle) | R1-C13 |
+| cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
 
 ## Where codemap is not closed
 
