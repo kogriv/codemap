@@ -1,6 +1,6 @@
 # GitNexus
 
-**Verdict:** learn (strong peer, different niche)  ·  **Feeds:** R1-C13, R1-C14, R1-C15 (+ new gap: semantic search / flow-tracing)  ·  **Card status:** hands-on
+**Verdict:** learn (strong peer, different niche)  ·  **Feeds:** R1-C13, R1-C14, R1-C15 (+ new gap: semantic search / flow-tracing)  ·  **Card status:** hands-on + end-user follow-up (2026-08-16)
 
 **Scope:** `sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2`
 (R2 benchmark `bquant.scope.json` — 280 files, 207 .py / 73 .md, bquant@cb89a24) ·
@@ -125,11 +125,38 @@ membership not verified.
     higher-altitude "how does this system work" answer than any single symbol query — closer to R1-C15
     (living docs) than to T1–T5.
 - **What we did NOT check** (honest boundary):
-  - Semantic `query` **quality** (did it retrieve the *right* flows for a concept?) — only that it runs.
+  - Semantic `query` **quality** — spot-checked in the 2026-08-16 follow-up below (retrieval was relevant);
+    not measured at scale (precision/recall over a labelled query set).
   - `wiki` generation (needs an LLM key), `trace <from> <to>`, `group` cross-index impact, the web UI, and
     multi-language behavior (measured Python only, on the shared scope).
   - Cluster **membership** determinism (only the count, 276, was shown stable across A/B).
-  - MCP transport (measured the CLI, which is the same graph; MCP wiring not exercised end-to-end).
+
+## Follow-up: run as an end-user dev tool on full bquant (2026-08-16)
+Distinct from the R2 measurement above (codemap-vs-tool on the shared scope) — here we used GitNexus **as
+users**, standing it up against the *whole* `bquant` repo (not the materialized R2 scope) to feel its real
+operating envelope. This closes two boundaries the R2 pass left open (semantic quality; MCP wiring).
+
+- **Scale on the real repo:** 13 054 nodes / 22 390 edges / 340 clusters / 297 flows; **4 516 embedding
+  chunks**; `.gitnexus` store **~206 MB**. Enumeration is git-aware, so a 1.5 GB `venv_bquant` is excluded for
+  free (the trap that bit graphlens can't happen here).
+- **Embedding cost (the real tax):** a full CPU embedding pass is **~18 min** on this 4-core box; incremental
+  re-`analyze` only re-embeds changed nodes, so full passes are rare. The **VECTOR ANN index** is *not*
+  on by default — it needs a one-time network install (`GITNEXUS_LBUG_EXTENSION_INSTALL=auto`); without it
+  semantic search falls back to a brute-force exact scan capped at 10 000 chunks.
+- **GPU path (measured, works on Pascal):** onnxruntime-node 1.27 ships a **CUDA-13** execution provider;
+  with cuDNN 9 + the CUDA-13 runtime side-loaded it runs on a **GTX 1080 Ti** (sm_61) — a 302-file / 1516-node
+  embed took **52.8 s** with the GPU held at ~320 MiB VRAM. Provider selection is invisible in gitnexus logs
+  (it silences ORT); the authoritative signal is a `Creating BFCArena for Cuda` line when driving the same ORT
+  module verbose, or GPU VRAM in `nvidia-smi`.
+- **Semantic quality (the R2-open item):** on the fully-indexed repo, semantic `query` returned **relevant**
+  MACD-zone flows for a concept query (a clear lift over the earlier keyword-only noise) — quality confirmed
+  by inspection, though still not measured against a labelled set.
+- **MCP wiring:** the `gitnexus` MCP server is now wired into the agent and exercised end-to-end (list/search/
+  trace/impact over the live graph), closing the "CLI-only" boundary from the R2 pass.
+- **Net:** nothing here changes the **verdict** (learn, adjacent niche) — it *confirms* the card's thesis. The
+  semantic + flow layer is real and useful; the cost profile (1.7 GB install, ~18 min embeds, network-gated
+  VECTOR, GPU-for-scale) is exactly why codemap stays source-only/deterministic and *wraps* such a layer
+  rather than absorbing it. Operational detail lives in project memory `gitnexus-on-bquant.md`.
 
 ## Verdict & backlog effect
 **learn (strong peer, adjacent niche).** GitNexus is a *semantic + structural hybrid retrieval engine* for

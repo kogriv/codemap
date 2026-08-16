@@ -207,6 +207,19 @@ and re-`analyze` **without** `clean` is **non-idempotent** (it merged and drifte
 deterministic answer ✅, diffable artifact ✖. That distinction *is* codemap's differentiator, now measured
 against a tool that gets the first half right.
 
+### Postscript: we took it home and ran it (2026-08-16)
+The R2 pass measured GitNexus against codemap on a shared scope. Then we did the other thing — we stood it up
+**as users**, on the *whole* bquant repo, and lived with it. Two payoffs. First, the R2 card had honestly
+flagged one thing unmeasured: *did semantic search retrieve the **right** things, or just run?* On the fully
+indexed repo (13k nodes, 4.5k embedding chunks), it did — a concept query pulled the relevant MACD-zone flows,
+a clear lift over keyword noise. The retrieval half of our sentence isn't hypothetical; we watched it work.
+Second, we felt the tax that the thesis is built around: a full embedding pass is **~18 minutes** on CPU; the
+ANN index needs a network install to exist at all; and getting it onto the GPU meant side-loading a **CUDA-13
+runtime + cuDNN 9** just to light up a 1080 Ti. None of that is a knock — it's *why the split is the right
+call*. codemap stays a source-only, deterministic, provisions-nothing graph; a retrieval engine with models and
+a 1.7 GB footprint is exactly the kind of thing you **wrap behind an opt-in router**, not absorb into the core.
+The day of setup didn't change the verdict — it made the verdict felt.
+
 ### The lesson (reusable)
 1. **"They do more" is not "they win."** A tool that does semantic search + clustering + flows + 14 languages
    isn't beating a tool that does deterministic, diffable, provenance-precise Python structure — it's playing
@@ -250,6 +263,8 @@ against a tool that gets the first half right.
 - "Their impact says *48 things could break, medium risk*. Ours says *12 non-test references — 2 in core,
   7 in docs — and 53 in tests*. Depth-and-risk versus provenance — pick your question." →
   [GitNexus card](tools/gitnexus.md)
+- "Then we ran it for real: ~18 minutes to embed on CPU, a CUDA-13 runtime side-loaded to use the GPU. The
+  retrieval half works — and its cost is exactly why you wrap it, not absorb it." → build-story #2
 
 ---
 
