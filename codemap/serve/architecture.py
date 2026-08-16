@@ -74,8 +74,18 @@ def render_architecture(query: Query) -> str:
     hs = a["hotspots"]
     out.append(f"## God-object candidates (≥ methods): {len(hs['god_classes'])}")
     out.append("")
-    out.extend([f"- `{g['class']}` — {g['methods']} methods" for g in hs["god_classes"]]
-               or ["_none above threshold._"])
+    out.append("_methods = concentration of behaviour; ΣCC / maxCC = McCabe complexity across them._")
+    out.append("")
+    out.extend([f"- `{g['class']}` — {g['methods']} methods, ΣCC {g['total_cc']}, maxCC {g['max_cc']}"
+                for g in hs["god_classes"]] or ["_none above threshold._"])
+    out.append("")
+    complex_fns = hs.get("complex_functions", [])
+    out.append(f"## Most complex functions (cyclomatic ≥ threshold): {len(complex_fns)}")
+    out.append("")
+    out.append("_CC = McCabe cyclomatic; MI = Maintainability Index (0–100, higher is better)._")
+    out.append("")
+    out.extend([f"- `{f['id']}` — CC {f['cc']}, MI {f['mi']} ({f['sloc']} sloc)"
+                for f in complex_fns] or ["_none above threshold._"])
     out.append("")
     out.append("## Call-graph hubs (in+out degree)")
     out.append("")

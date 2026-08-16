@@ -79,7 +79,9 @@ def build_query_result(q: Query, name: str) -> dict:
         result["functions"] = {
             f: {"callers": q.callers(f), "callees": q.callees(f),
                 # F11: which columns this function reads/writes (reverse dataflow).
-                "columns": _nonempty(q.columns_of(f))}
+                "columns": _nonempty(q.columns_of(f)),
+                # R1-C4: per-symbol complexity (cc / mi / volume / sloc), when known.
+                "complexity": q.graph.nodes[f].extras.get("complexity")}
             for f in funcs
         }
     if matches:

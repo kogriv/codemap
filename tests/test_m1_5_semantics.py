@@ -103,4 +103,5 @@ def test_determinism_with_semantics():
 def test_schema_bumped(graph):
     # M1.5 first lifted the schema off 0.1; kept in lockstep with the constant.
     assert graph.to_dict()["codemap_schema"] == SCHEMA_VERSION
-    assert SCHEMA_VERSION >= "0.2"
+    # Numeric (not lexicographic) compare — "0.10" < "0.2" as strings but 0.10 > 0.2.
+    assert tuple(map(int, SCHEMA_VERSION.split("."))) >= (0, 2)

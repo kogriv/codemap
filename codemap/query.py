@@ -683,16 +683,20 @@ class Query:
         return out[:limit]
 
     def hotspots(self, *, root: str = "core", min_methods: int = 12,
-                 limit: int = 15) -> dict:
-        """God-object classes + call-graph hubs (M16/F20).
+                 min_cc: int = 8, limit: int = 15) -> dict:
+        """God-object classes + call-graph hubs + complex functions (M16/F20, R1-C4).
 
         ``god_classes``: classes with ``>= min_methods`` methods (concentration of
-        behavior). ``call_hubs``: symbols with the highest call-graph degree
-        (in+out) — but pervasive utilities (a logger, sample loaders) dominate by
-        nature, so each hub is flagged ``pervasive`` when its short name looks like
-        logging/util so the reader discounts expected noise, not real risk.
+        behavior), each annotated with aggregate method complexity (``total_cc`` /
+        ``max_cc``) — the second axis, so "big by connectivity" and "complex by
+        McCabe" are both visible. ``complex_functions``: functions with the highest
+        cyclomatic complexity (``>= min_cc``), the sharpest per-symbol risk signal.
+        ``call_hubs``: symbols with the highest call-graph degree (in+out) — pervasive
+        utilities (a logger, sample loaders) hub by nature, so each is flagged
+        ``pervasive`` and the reader discounts expected noise, not real risk.
         """
         method_counts: dict[str, int] = {}
+        class_cc: dict[str, list[int]] = {}
         for e in self.graph.edges:
             if e.type != "contains":
                 continue
@@ -701,8 +705,22 @@ class Query:
             if src and src.kind == "class" and tgt and tgt.kind == "function" \
                     and self.root_of(e.source) == root:
                 method_counts[e.source] = method_counts.get(e.source, 0) + 1
+                cc = (tgt.extras.get("complexity") or {}).get("cc")
+                if cc is not None:
+                    class_cc.setdefault(e.source, []).append(cc)
         god = sorted(((c, n) for c, n in method_counts.items() if n >= min_methods),
                      key=lambda x: (-x[1], x[0]))[:limit]
+
+        # Second axis: individual functions ranked by cyclomatic complexity.
+        complex_fns = []
+        for nid, node in self.graph.nodes.items():
+            if node.kind != "function" or self.root_of(nid) != root:
+                continue
+            metrics = node.extras.get("complexity")
+            if metrics and metrics.get("cc", 0) >= min_cc:
+                complex_fns.append({"id": nid, "cc": metrics["cc"], "mi": metrics["mi"],
+                                    "sloc": metrics["sloc"]})
+        complex_fns.sort(key=lambda r: (-r["cc"], r["id"]))
 
         cg = self._calls
         hubs = []
@@ -717,7 +735,14 @@ class Query:
                                       "debug", "info", "error"))
             hubs.append({"id": nid, "degree": deg, "pervasive": pervasive})
         hubs.sort(key=lambda r: (-r["degree"], r["id"]))
+
+        def _class_entry(c: str, n: int) -> dict:
+            ccs = class_cc.get(c, [])
+            return {"class": c, "methods": n,
+                    "total_cc": sum(ccs), "max_cc": max(ccs) if ccs else 0}
+
         return {
-            "god_classes": [{"class": c, "methods": n} for c, n in god],
+            "god_classes": [_class_entry(c, n) for c, n in god],
+            "complex_functions": complex_fns[:limit],
             "call_hubs": hubs[:limit],
         }

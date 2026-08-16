@@ -335,13 +335,20 @@ Python-focus** — если задача его нарушает, это отм�
       ./codemap` зелёный (тест `test_r1c3_dogfood.py` стережёт). Доки `docs/architecture-contracts.md`.
       **Отложено из R1.5-словаря:** naming/file-size-правила, health-delta до/после (кандидаты в R1-C4/новый
       пункт). +18 тестов.
-- [ ] **R1-C4 Метрики сложности в hotspots** (M) — cyclomatic / Halstead / Maintainability Index.
-      **Scope:** посчитать CC/MI по уже имеющемуся griffe-AST (без radon-dep — реализовать
-      детерминированно, source-only, on-brand); добавить в hotspot-скоринг и в `architecture`-отчёт.
-      **Зачем:** сейчас hotspot чисто структурный (Ca/Ce, fan-in/out) — «большой по связности класс» ≠
-      «сложная по McCabe функция»; комбинация сильнее. **Приёмка:** per-symbol CC/MI в `query`-досье и
-      hotspot-ранжирование учитывает обе оси; числа детерминированы. **Оценка:** M. wily-урок (метрики во
-      времени) — отдельная поздняя надстройка над `review`.
+- [x] **R1-C4 Метрики сложности в hotspots** ✅ (2026-08-16, схема 0.10). Считаются в поведенческом
+      ast-проходе (`extract/behavior._complexity`, тот же проход, что control-скелет — source-only,
+      **stdlib-only, без radon**, детерминированно): `extras.complexity` на function-узлах несёт **cc**
+      (McCabe цикломатическая: if/elif/тернар/for/while/except/bool-join/comprehension-clause+filters/
+      match-case, по **собственному телу** — вложенные def не двоятся), **volume** (Halstead: операторы-
+      символы AST + имена/константы), **sloc** (физический span), **mi** (Maintainability Index,
+      radon-нормализованный 0–100, ln-входы прижаты к 1). **Вплетено в обе оси:** `Query.hotspots` →
+      god-классы аннотированы `total_cc`/`max_cc` + новый список `complex_functions` (топ по CC, порог
+      `min_cc`); `report architecture` и `report behavior` рендерят; **per-symbol cc/mi/volume/sloc в
+      query-досье** (`build_query_result`). **Приёмка выполнена:** на bquant `_create_plotly_zones_on_price`
+      CC 66/MI 12.5, `extract_zone_features` CC 59/MI 9.2; и разрешает коллизию «одинаковое число методов ≠
+      одинаковая сложность» — `NotebookSimulator` (23 метода, ΣCC 50) vs `StatisticalPlots` (23, ΣCC 111).
+      Числа детерминированы (проверено re-extract'ом). +15 тестов. **Отложено (по дизайну):** wily-стиль
+      (метрики во времени) — поздняя надстройка над `review`; comment-терм MI опущен (скоринг per-symbol).
 
 #### Tier 2 — среднее value÷cost, нужен небольшой дизайн
 

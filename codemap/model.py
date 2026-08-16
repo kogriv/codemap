@@ -44,7 +44,12 @@ from typing import Any
 #      dict-literal-only payload keys (result dicts, config, rcParams) — the
 #      `subscripted` flag lets aggregates surface the ~29% real column-like set
 #      while per-key queries and the F6 producer edge stay intact.
-SCHEMA_VERSION = "0.9"
+# 0.10: R1-C4 — per-function complexity metrics. `extras.complexity` on function
+#      nodes carries `cc` (McCabe cyclomatic), `volume` (Halstead), `sloc` (physical
+#      span) and `mi` (Maintainability Index, 0–100). Computed in the behavioral AST
+#      pass (source-only, stdlib-only, deterministic); Query.hotspots blends them with
+#      structural coupling so "complex by McCabe" ranks alongside "big by connectivity".
+SCHEMA_VERSION = "0.10"
 
 
 @dataclass

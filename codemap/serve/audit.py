@@ -110,4 +110,18 @@ def render_behavior(query: Query) -> str:
             "impls via the M1.5 table. **Candidate** edges are an over-approximation "
             "(dispatches to one of a family) — real for navigation, not for exact counts._"
         )
+
+    # -- complexity (R1-C4) -------------------------------------------------
+    scored = [(n, n.extras["complexity"]) for n in funcs if "complexity" in n.extras]
+    if scored:
+        ccs = [m["cc"] for _, m in scored]
+        avg_cc = sum(ccs) / len(ccs)
+        top = sorted(scored, key=lambda x: (-x[1]["cc"], x[0].id))[:10]
+        lines.append("")
+        lines.append(f"## Complexity ({len(scored)} functions, mean CC {avg_cc:.1f})")
+        lines.append("")
+        lines.append("_CC = McCabe cyclomatic; MI = Maintainability Index (0–100, higher is better)._")
+        lines.append("")
+        for n, m in top:
+            lines.append(f"- `{n.id}` — CC {m['cc']}, MI {m['mi']} ({m['sloc']} sloc)")
     return "\n".join(lines).rstrip() + "\n"

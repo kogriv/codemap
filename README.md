@@ -80,7 +80,8 @@ codemap serve --graph graph.json --source-root . --mcp
 
 - **Structure & API** — public surface, signatures, docstrings, deprecation.
 - **Dependencies & architecture** — import cycles, layers + direction/violations, coupling
-  (Ca/Ce/instability), god-objects & call-hubs.
+  (Ca/Ce/instability), god-objects & call-hubs, per-function complexity (cyclomatic / MI)
+  blended with structural coupling.
 - **Impact / blast radius** — who uses X, across the whole repo (core + tests + docs).
 - **Change review** — a diff → the symbols it touches, their callers, signature-change surface,
   touched columns, cross-root consumers, risk rank.

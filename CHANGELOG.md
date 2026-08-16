@@ -7,7 +7,7 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 Extracted into a standalone repository from its incubation home (the `bquant` monorepo), preserving the
 full M0–M16 development history; since extraction it has grown the MCP adapter (M17), graph freshness
-(M18), SCIP export (R1-C1) and the research track (R1). Graph schema **0.9**; **152 tests** (+1 SCIP-CLI
+(M18), SCIP export (R1-C1) and the research track (R1). Graph schema **0.10**; **152 tests** (+1 SCIP-CLI
 check when the `scip` binary is present); warm serve surface with 21 ops, an MCP adapter, and SCIP export.
 
 ### Milestones
@@ -47,6 +47,17 @@ check when the `scip` binary is present); warm serve surface with 21 ops, an MCP
   declare `!_TAG_FILE_SORTED\t1` and real tags sort by name→file→address (binary-searchable). Stdlib-only.
   On bquant: 1585 tags, byte-stable. +9 tests (`readtags`-CLI check when present). Docs:
   [docs/export.md](docs/export.md).
+- **R1-C4 — per-function complexity metrics** (schema **0.10**): function nodes carry
+  `extras.complexity` = `cc` (McCabe cyclomatic), `volume` (Halstead), `sloc` (physical span) and
+  `mi` (Maintainability Index, 0–100). Computed in the behavioural AST pass (same walk as the control
+  skeleton) — **source-only, stdlib-only (no radon), deterministic**; cyclomatic counts decision points
+  over the function's *own* body (nested defs are separate nodes, not double-counted). codemap's value
+  isn't the metrics (radon has those) but **blending them with the graph's structural signals**:
+  `Query.hotspots` annotates god-classes with `total_cc`/`max_cc` and adds a `complex_functions` list
+  (top by cyclomatic, `min_cc` threshold); `report architecture` and `report behavior` render them; the
+  `query` dossier carries per-symbol cc/mi/volume/sloc. This separates "big by connectivity" from "complex
+  by McCabe" — e.g. on bquant `NotebookSimulator` (23 methods, ΣCC 50) vs `StatisticalPlots` (23, ΣCC 111).
+  +15 tests. Closes the last open Tier-1 R1-C capability.
 - **R1 — research track opened** (docs only): survey of adjacent code-analysis / code-graph tools in
   `research/` — a landscape map (comparison matrix + integrate/wrap/learn verdicts) plus four theme reports
   (AI-context/repo-map, code-graph/index infra, query/dataflow engines, Python graph/arch peers). Grounded,

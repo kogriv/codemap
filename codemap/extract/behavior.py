@@ -24,12 +24,18 @@ same source files with the stdlib ``ast`` and adds a *bounded* behavioral layer:
 from __future__ import annotations
 
 import ast
+import math
 from pathlib import Path
 
 from codemap.model import Edge
 
 _BUILTINS = set(vars(__import__("builtins")))
 _SKIP_RECEIVERS = {"self", "cls", "super"}
+
+# Halstead operators are the AST operator-symbol node families (radon's scheme):
+# arithmetic/bitwise ``ast.operator``, unary ``ast.unaryop``, boolean ``ast.boolop``,
+# comparison ``ast.cmpop``. Operands are names and literal constants.
+_OPERATOR_NODES = (ast.operator, ast.unaryop, ast.boolop, ast.cmpop)
 
 
 def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
@@ -187,18 +193,24 @@ def _node_id(modpath: str, class_stack: list[str], funcname: str) -> str:
 
 def _own_calls(fnode):
     """Call nodes in a function's own body — not inside nested defs/classes."""
-    calls = []
+    return [n for n in _own_nodes(fnode) if isinstance(n, ast.Call)]
 
+
+def _own_nodes(fnode):
+    """Every AST node in a function's own body — not descending into nested defs/classes.
+
+    Same scope boundary as ``_own_calls``: a nested/closure ``def`` (or a class body)
+    is its own definition node with its own metrics, so we stop at it to avoid
+    double-counting its complexity in the enclosing function.
+    """
     def visit(node):
         for child in ast.iter_child_nodes(node):
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 continue  # belongs to the nested scope
-            if isinstance(child, ast.Call):
-                calls.append(child)
-            visit(child)
+            yield child
+            yield from visit(child)
 
-    visit(fnode)
-    return calls
+    yield from visit(fnode)
 
 
 # -- per-function resolution + control ---------------------------------------
@@ -239,6 +251,7 @@ def _process_function(graph, node_id, fnode, resolve) -> None:
     node = graph.nodes[node_id]
     node.extras["calls"] = counts
     node.extras["control"] = _control(fnode)
+    node.extras["complexity"] = _complexity(fnode)
 
 
 def _arg_shape(call) -> tuple:
@@ -330,3 +343,84 @@ def _control(fnode) -> dict:
     if isinstance(fnode, ast.AsyncFunctionDef):
         out["async"] = True
     return out
+
+
+# -- complexity metrics (R1-C4) ----------------------------------------------
+#
+# Source-only, deterministic, stdlib-only — computed in the same AST pass as the
+# control skeleton, over the function's *own* body (nested defs are separate nodes
+# with their own metrics). All numbers are intrinsic to the code, so they live on
+# the node in extras and need no source at query time. codemap's value here is not
+# the metrics themselves (radon has those) but combining them with the graph's
+# structural signals (coupling, fan-in/out) — see Query.hotspots.
+
+def _cyclomatic(fnode) -> int:
+    """McCabe cyclomatic complexity = 1 + number of decision points.
+
+    Decision points (radon-compatible): ``if``/``elif`` (each ``elif`` is a nested
+    ``If``), ternary ``IfExp``, ``for``/``while``, each ``except`` handler, each
+    boolean operand join (``a and b and c`` → +2), each comprehension clause and its
+    filters, and each ``match`` case.
+    """
+    cc = 1
+    for node in _own_nodes(fnode):
+        if isinstance(node, (ast.If, ast.IfExp, ast.For, ast.AsyncFor, ast.While,
+                             ast.ExceptHandler)):
+            cc += 1
+        elif isinstance(node, ast.BoolOp):
+            cc += len(node.values) - 1
+        elif isinstance(node, ast.comprehension):
+            cc += 1 + len(node.ifs)
+        elif isinstance(node, ast.match_case):
+            cc += 1
+    return cc
+
+
+def _halstead_volume(fnode) -> float:
+    """Halstead volume ``N * log2(η)`` over operator-symbol nodes + names/constants.
+
+    η = distinct operators + distinct operands; N = their total counts. A body with
+    no operators/operands (e.g. ``return``-only) has volume 0.
+    """
+    op_kinds: set[str] = set()
+    operands: set[str] = set()
+    n_ops = n_operands = 0
+    for node in _own_nodes(fnode):
+        if isinstance(node, _OPERATOR_NODES):
+            op_kinds.add(type(node).__name__)
+            n_ops += 1
+        elif isinstance(node, ast.Name):
+            operands.add(node.id)
+            n_operands += 1
+        elif isinstance(node, ast.Constant):
+            operands.add(f"{type(node.value).__name__}:{node.value!r}")
+            n_operands += 1
+    vocab = len(op_kinds) + len(operands)
+    length = n_ops + n_operands
+    if vocab == 0 or length == 0:
+        return 0.0
+    return round(length * math.log2(vocab), 2)
+
+
+def _maintainability(cc: int, volume: float, sloc: int) -> float:
+    """Maintainability Index, radon-normalized to 0–100 (higher = more maintainable).
+
+    ``171 − 5.2·ln(V) − 0.23·CC − 16.2·ln(SLOC)`` rescaled to [0, 100]. The comment
+    term is omitted (we score per symbol, not per file). ``ln`` inputs are floored at
+    1 so a trivial one-liner scores ~100 instead of blowing up.
+    """
+    ln_v = math.log(volume) if volume > 1 else 0.0
+    ln_sloc = math.log(sloc) if sloc > 1 else 0.0
+    raw = 171.0 - 5.2 * ln_v - 0.23 * cc - 16.2 * ln_sloc
+    return round(max(0.0, raw * 100.0 / 171.0), 1)
+
+
+def _complexity(fnode) -> dict:
+    """Per-function complexity: cyclomatic, Halstead volume, MI, and physical SLOC."""
+    cc = _cyclomatic(fnode)
+    volume = _halstead_volume(fnode)
+    end = getattr(fnode, "end_lineno", None)
+    start = getattr(fnode, "lineno", None)
+    sloc = (end - start + 1) if (end and start) else 1
+    return {"cc": cc, "volume": volume, "sloc": sloc,
+            "mi": _maintainability(cc, volume, sloc)}
