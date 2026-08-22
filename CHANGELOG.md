@@ -12,6 +12,14 @@ check when the `scip` binary is present); warm serve surface with 21 ops, an MCP
 
 ### Milestones
 
+- **R1-C7 — closed edge-type vocabulary** (no graph schema change): `model.EDGE_TYPES` declares the closed
+  set of 10 edge types (`contains`/`imports`/`export`/`inherits`/`decorated_by`/`calls`/`references`/
+  `implements`/`reads`/`writes`), each documented; node `kind` stays an open set by design (edges are typed,
+  nodes aren't). `tests/test_r1c7_edge_vocab.py` pins the set and fails if a real graph emits an undeclared
+  type (a new relationship must be added to the vocabulary, not emitted silently) or if a declared type stops
+  appearing (no dead vocabulary). Caught and fixed a drift in passing: both `model.py` and DESIGN §2 wrote
+  `exports` while the code emits `export`. +3 tests.
+
 - **R1-C8 — dead-code confidence + whitelist** (no graph schema change): `report dead-code` now **grades**
   each uncalled-private-function candidate instead of listing flat — **high** (no inbound edge or hook),
   **medium** (a decorator / registry may invoke it implicitly), **low** (something *references* it → likely

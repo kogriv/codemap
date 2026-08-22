@@ -51,6 +51,25 @@ from typing import Any
 #      structural coupling so "complex by McCabe" ranks alongside "big by connectivity".
 SCHEMA_VERSION = "0.10"
 
+# Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
+# (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship
+# codemap emits is one of these, each with a fixed meaning. This is the machine-
+# checkable contract — a new relationship must be added here (and documented) rather
+# than emitted silently; ``tests/test_r1c7_edge_vocab.py`` fails if a graph carries a
+# type not in this set (or if a declared type stops appearing on the dogfood target).
+EDGE_TYPES = frozenset({
+    "contains",       # parent → member (module→class/func, class→method)
+    "imports",        # module → module it imports (internal, resolved to canonical)
+    "export",         # package → symbol it re-exports (extras.public marks __all__)
+    "inherits",       # class → base class (extras.external for out-of-package bases)
+    "decorated_by",   # symbol → the decorator applied to it
+    "calls",          # caller function → callee (extras.resolution: how it resolved)
+    "references",     # consumer/doc/dispatch site → the core symbol it names
+    "implements",     # concrete class → the Protocol it structurally satisfies (M9)
+    "reads",          # function → string-keyed column it reads (extras.access)
+    "writes",         # function → string-keyed column it writes (extras.access)
+})
+
 
 @dataclass
 class Node:
@@ -73,7 +92,9 @@ class Node:
 class Edge:
     """A typed relationship between two nodes (by id)."""
 
-    type: str  # contains | imports | inherits | exports | decorated_by | calls | references | implements | reads | writes (§2)
+    type: str  # one of EDGE_TYPES (closed vocabulary, R1-C7): contains | imports |
+    #            export | inherits | decorated_by | calls | references | implements |
+    #            reads | writes  (§2)
     source: str
     target: str
     extras: dict[str, Any] = field(default_factory=dict)
