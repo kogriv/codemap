@@ -111,6 +111,35 @@ class RawAnswer:
                 "disclaimer": self.disclaimer, "payload": self.payload}
 
 
+@dataclass
+class SemanticHit:
+    """Retrieval-adapter output — one hit, **enriched to a codemap symbol**.
+
+    A retrieval adapter (a semantic-search tool) returns fuzzy locations (``file`` +
+    line range + ``score``). codemap's own graph then resolves each to the exact
+    symbol at that location (``Query.symbol_at``), so the answer is codemap-native —
+    the "fuzzy retrieval → exact structure" composition neither tool gives alone.
+    ``symbol`` is the resolved node id (None when the location isn't in the graph);
+    ``resolution`` records how it resolved.
+    """
+
+    file: str
+    start_line: int
+    score: float
+    end_line: int | None = None
+    symbol: str | None = None            # codemap node id at (file, start_line)
+    resolution: str = "unresolved"       # "symbol" | "unresolved"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "symbol": self.symbol,
+            "resolution": self.resolution,
+            "score": self.score,
+            "file": self.file,
+            "lines": [self.start_line, self.end_line],
+        }
+
+
 class Integration(abc.ABC):
     """One external tool, wired in adapter or router mode.
 
@@ -151,6 +180,17 @@ class Integration(abc.ABC):
 
     def extract_fragments(self, target: str, **kw: Any) -> GraphFragment:  # adapter
         raise NotImplementedError(f"{self.name} is not an adapter")
+
+    def search(self, capability: str, query: str, **kw: Any) -> list[dict[str, Any]]:
+        """Retrieval-adapter surface: run the tool, return raw hits.
+
+        Each hit is a plain dict ``{file, start_line, end_line, score}`` (locations,
+        not yet codemap symbols). codemap's ``serve.semantic.semantic_search``
+        enriches these into :class:`SemanticHit`\\s against the graph — the adapter
+        itself never needs the graph (which keeps ``integrations`` a near-leaf layer,
+        below ``query``). Implement this for a retrieval-class adapter.
+        """
+        raise NotImplementedError(f"{self.name} is not a search adapter")
 
     def route(self, capability: str, question: str, **kw: Any) -> RawAnswer:  # router
         raise NotImplementedError(f"{self.name} is not a router")

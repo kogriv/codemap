@@ -289,6 +289,19 @@ class Session:
             return {"entry_points": self.query.entry_points()}
         return self.query.flow(self._canon(sym), max_depth=int(args.get("depth", 5)))
 
+    def _op_semantic(self, args) -> dict:
+        """R1-C16: semantic search via an opt-in adapter, enriched to codemap symbols.
+
+        Resolves an ADAPTER providing ``semantic-search`` (opt-in via codemap.toml +
+        installed), asks it for fuzzy hits, and resolves each to the exact symbol via
+        the graph. ``root`` (arg, else ``source_root``, else cwd) is both the repo the
+        tool's index lives in and where file paths resolve. No adapter → empty hits.
+        """
+        from codemap.serve.semantic import semantic_search
+        root = args.get("root") or self.source_root or "."
+        return semantic_search(self.query, args["query"], root=root,
+                               limit=int(args.get("limit", 10)))
+
     def _op_source(self, args) -> dict:
         """Return the source span of a symbol (F12): {file, lines, code?}.
 
@@ -363,6 +376,7 @@ _OPS = {
     "diff": Session._op_diff,
     "communities": Session._op_communities,
     "flows": Session._op_flows,
+    "semantic": Session._op_semantic,
     "source": Session._op_source,
     "report": Session._op_report,
     "export": Session._op_export,

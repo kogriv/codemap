@@ -23,6 +23,8 @@
     codemap route  <capability> <question> [--root DIR]
         forward a capability to an opt-in external tool (DESIGN §13.1; needs
         codemap.toml [integrations].enabled + the tool installed)
+    codemap semantic <query> (--graph g.json | --build <path>) [--root DIR] [--limit N]
+        semantic search via an opt-in adapter, enriched to codemap symbols (R1-C16)
 """
 
 from __future__ import annotations
@@ -307,6 +309,40 @@ def _cmd_route(args) -> int:
     return 0
 
 
+def _cmd_semantic(args) -> int:
+    """Semantic search via an opt-in adapter, enriched to codemap symbols (R1-C16).
+
+    Resolves an installed + opted-in ADAPTER providing `semantic-search` (cocoindex
+    today), runs it in `--root`, and resolves each fuzzy hit to the exact codemap
+    symbol at that location. `--root` is the repo the tool's index was built in (and
+    where file paths resolve); it defaults to cwd. The core needs no adapter — with
+    none enabled+installed this prints an actionable hint, never crashes.
+    """
+    from codemap.serve.semantic import semantic_search
+    q = Query(_graph_from(args))
+    result = semantic_search(q, args.query, root=args.root, limit=args.limit)
+    if args.format == "json":
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    if not result["resolver"]:
+        raise SystemExit(
+            "error: no enabled + installed adapter provides 'semantic-search'. "
+            "Install one (e.g. `uv tool install 'cocoindex-code[full]'` + `ccc index`) "
+            "and enable it in codemap.toml [integrations].enabled. "
+            "For a router-only tool (e.g. gitnexus), use `codemap route semantic-search`.")
+    if result["disclaimer"]:
+        print(result["disclaimer"], file=sys.stderr)
+    print(f"# semantic: {args.query!r}  (via {result['resolver']})")
+    if not result["hits"]:
+        print("_no hits._")
+        return 0
+    for h in result["hits"]:
+        sym = h["symbol"] or f"(unresolved) {h['file']}"
+        lines = h["lines"]
+        print(f"  {h['score']:.3f}  {sym}  [{h['file']}:{lines[0]}-{lines[1]}]")
+    return 0
+
+
 def _cmd_check(args) -> int:
     """Enforce the [architecture] contract → exit 2 on any violation (R1-C3).
 
@@ -472,6 +508,17 @@ def build_parser() -> argparse.ArgumentParser:
     rt.add_argument("--root", default=".",
                     help="Dir with codemap.toml + the target tree (default: cwd).")
     rt.set_defaults(func=_cmd_route)
+
+    sm = sub.add_parser("semantic", help="Semantic search via an opt-in adapter, "
+                                         "enriched to codemap symbols (R1-C16).")
+    sm.add_argument("query", help="Natural-language query (e.g. 'detect swing pivots').")
+    _add_source(sm)
+    sm.add_argument("--root", default=".",
+                    help="Repo the adapter's index was built in + where paths resolve "
+                         "(also holds codemap.toml [integrations]); default: cwd.")
+    sm.add_argument("--limit", type=int, default=10, help="Max hits (default: 10).")
+    sm.add_argument("--format", choices=["markdown", "json"], default="markdown")
+    sm.set_defaults(func=_cmd_semantic)
 
     df = sub.add_parser("diff", help="API diff two graph.json snapshots (added/removed/changed + breaking).")
     df.add_argument("old", help="Baseline graph.json (the 'before').")

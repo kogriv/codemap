@@ -50,17 +50,19 @@ def all_integrations() -> list[Integration]:
 
 
 def resolve(capability: str, *, config: IntegrationConfig | None = None,
-            root: str = ".") -> Integration | None:
+            root: str = ".", mode: IntegrationMode | None = None) -> Integration | None:
     """Return an enabled + installed integration providing ``capability``, or None.
 
     Capability-first dispatch: the tool is picked for the caller. Requires all three
     gates — provides the capability, opted-in (``config.enabled``), and
     ``is_available()`` — so the core degrades cleanly when nothing satisfies them.
-    Deterministic tie-break by name.
+    ``mode`` narrows to one coupling mode (e.g. ADAPTER when the caller must enrich
+    the output, not just forward it). Deterministic tie-break by name.
     """
     cfg = config if config is not None else load_config(root)
     for integ in all_integrations():  # sorted by name → deterministic pick
         if (capability in integ.capabilities
+                and (mode is None or integ.mode is mode)
                 and cfg.is_enabled(integ.name)
                 and integ.is_available()):
             return integ

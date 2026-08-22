@@ -21,19 +21,20 @@ def which(binary: str) -> str | None:
 
 
 def run_json(cmd: list[str], *, timeout: float = 120.0,
-             input_text: str | None = None) -> Any | None:
+             input_text: str | None = None, cwd: str | None = None) -> Any | None:
     """Run ``cmd``, parse stdout as JSON, return it (or None on any failure).
 
     A non-zero exit, timeout, missing binary, or non-JSON stdout all yield None —
     the caller treats that as "the external tool couldn't answer" and falls back to
-    the deterministic core.
+    the deterministic core. ``cwd`` runs the tool in a specific directory (some
+    tools, e.g. a per-repo index, key off the working dir).
     """
     if not cmd or which(cmd[0]) is None:
         return None
     try:
         proc = subprocess.run(
             cmd, capture_output=True, text=True, timeout=timeout,
-            input=input_text,
+            input=input_text, cwd=cwd,
         )
     except (OSError, subprocess.TimeoutExpired):
         return None

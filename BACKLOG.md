@@ -452,7 +452,22 @@ Python-focus** — если задача его нарушает, это отм�
       утягивали ярлык в «(root)») — улучшило и R1-C18: на bquant ярлыки стали реальными (data/analysis/
       indicators вместо «(root) 45»). **Проверено на bquant:** 165 модулей, подсистемы, docstrings verbatim,
       god-objects, footer. +11 тестов. Полный прогон 220 passed/1 skip. Питается communities+flows+epistemic.
-- [ ] **R1-C16 Роутер/адаптер-слой над внешними тулами** (L) — 🆕 (2026-08-06, из разбора GitNexus). codemap
+- [x] **R1-C16 Роутер/адаптер-слой над внешними тулами** ✅ (2026-08-16, без схемы графа). **Обе половины
+      готовы и разведены.** Router-путь был (GitNexus passthrough, `codemap route`); достроена **adapter-
+      половина**: базовый контракт `SemanticHit` + retrieval-поверхность `Integration.search()`
+      (`integrations/base.py`); **cocoindex-адаптер** (`integrations/cocoindex.py`, Apache-2.0, capability
+      `semantic-search` — зовёт `ccc search --json` в cwd репо, отдаёт сырые хиты); **энричер**
+      `integrations/semantic.py` — резолвит ADAPTER (не router), мапит каждый fuzzy-хит `(file,line)` →
+      **точный символ codemap** через `Query.symbol_at`, дедуп по символу (лучший score), сортировка.
+      `registry.resolve(mode=ADAPTER)` — фильтр по режиму (semantic берёт именно адаптер, не роутер).
+      Поверхности: **CLI `codemap semantic "<query>"`** (--build/--graph, --root, --limit, --format) + serve-op
+      `semantic` + **MCP-tool `semantic_search`**. Лицензионная политика машинно-проверяется (adapter не-
+      permissive → ValueError). Ядро работает без тула (нет adapter → `{resolver:None, hits:[]}`, не падение).
+      **Приёмка выполнена:** detect (which ccc) ✅, opt-in (codemap.toml) ✅, оговорка (router-путь) ✅, **перевод
+      в символы** (adapter) ✅, degrade ✅. +12 тестов (FakeAdapter — обобщённый путь; monkeypatch cocoindex
+      argv/parse; live-skip если нет ccc). Доки `docs/integrations.md`. **Обобщено под будущие адаптеры**
+      (любой permissive retrieval-тул регистрируется так же). Оригинальная карточка ниже 👇
+- [ ] **R1-C16 (исходная формулировка)** (L) — 🆕 (2026-08-06, из разбора GitNexus). codemap
       не только самописный тул, но и **каркас-роутер** над сторонними: для способностей, которых у нас нет и
       строить свои нет смысла (семантический поиск, много языков, flow/community-нарратив), **вызывать чужой
       тул за адаптером** и переводить результат в наш нейтральный граф-контракт (реализует **DESIGN §13**).

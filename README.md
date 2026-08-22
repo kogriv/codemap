@@ -69,6 +69,9 @@ codemap export vault   --graph graph.json -o vault/
 codemap export scip    --graph graph.json -o index.scip   # SCIP index (needs [scip] extra)
 codemap export ctags   --graph graph.json -o tags         # universal-ctags tags file
 
+# semantic (concept) search via an opt-in adapter → codemap symbols (needs the tool + opt-in)
+codemap semantic "detect swing pivots" --build ./pkg --root pkg
+
 # warm resident process — JSON requests over stdin/stdout (21 ops)
 codemap serve --graph graph.json --source-root .
 
@@ -87,6 +90,8 @@ codemap serve --graph graph.json --source-root . --mcp
   touched columns, cross-root consumers, risk rank.
 - **Dispatch seams** — registry/factory families and the Protocol each impl satisfies.
 - **Dataflow** — producers/consumers of a string-keyed DataFrame column.
+- **Semantic search** (opt-in) — a concept query routed to an external adapter, with each fuzzy hit
+  resolved to the exact codemap symbol at its location (`codemap semantic`). See [docs/integrations.md](docs/integrations.md).
 - **Interop** — export the graph as a [SCIP](https://scip-code.org/) index (definitions + symbol
   info + inherits/implements relationships) so Sourcegraph, Glean and other SCIP consumers can drive
   go-to-definition, symbol search and type hierarchy over it. See [docs/export.md](docs/export.md).
@@ -128,6 +133,8 @@ the live graph, findings, and the milestone that closed them.
   in `codemap.toml` and enforce it with `codemap check` (CI gate; codemap dogfoods its own).
 - **[docs/api-diff.md](docs/api-diff.md)** — `codemap diff` two snapshots for added/removed/changed symbols
   and API breaking-change detection (release gate + `review --base`).
+- **[docs/integrations.md](docs/integrations.md)** — the opt-in router/adapter layer over external tools
+  (`codemap route` / `codemap semantic`); license policy; adding an integration.
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
 - **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each

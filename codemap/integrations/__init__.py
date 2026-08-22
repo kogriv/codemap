@@ -5,8 +5,9 @@ never depends on it — an integration is only reached when a user opts in
 (``codemap.toml``) and the tool is installed. See :mod:`codemap.integrations.base`
 for the five-mode model and the two output contracts.
 
-Concrete integrations register themselves on import (P2 gitnexus router, P3
-graphlens adapter); importing this package must have no external side effects.
+Concrete integrations register themselves on import (gitnexus router — PolyForm-NC;
+cocoindex adapter — Apache-2.0); importing this package must have no external side
+effects (dict inserts only; subprocess/availability calls are lazy).
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from .base import (
     Integration,
     IntegrationMode,
     RawAnswer,
+    SemanticHit,
     is_permissive,
 )
 from .gate import IntegrationConfig, load_config
@@ -29,13 +31,15 @@ from .registry import (
 
 # Import concrete integrations so they self-register (dict inserts only — no I/O;
 # availability/subprocess calls happen lazily at resolve/route time). DESIGN §13.1.
-from . import gitnexus as _gitnexus  # noqa: E402,F401
+from . import gitnexus as _gitnexus  # noqa: E402,F401  (router, PolyForm-NC)
+from . import cocoindex as _cocoindex  # noqa: E402,F401  (adapter, Apache-2.0)
 
 __all__ = [
     "GraphFragment",
     "Integration",
     "IntegrationMode",
     "RawAnswer",
+    "SemanticHit",
     "is_permissive",
     "IntegrationConfig",
     "load_config",

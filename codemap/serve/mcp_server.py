@@ -213,6 +213,14 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         behavior | architecture."""
         return op("report", {"kind": kind})
 
+    @server.tool()
+    def semantic_search(query: str, limit: int = 10) -> dict:
+        """Concept search → codemap symbols. Routes the natural-language `query` to an
+        opt-in semantic-search adapter (cocoindex), then resolves each fuzzy hit to the
+        exact codemap symbol at its location — fuzzy retrieval, exact structure. Returns
+        {resolver, hits:[{symbol, score, file, lines}]}; empty if no adapter is enabled."""
+        return op("semantic", {"query": query, "limit": limit})
+
     return server
 
 
@@ -221,4 +229,5 @@ MCP_TOOLS = (
     "stats", "search", "query", "resolve", "callers", "callees", "impact",
     "call_contract", "implementers", "family", "families", "column", "columns_of",
     "locate", "review", "architecture", "check", "diff", "communities", "flows", "source", "report",
+    "semantic_search",
 )

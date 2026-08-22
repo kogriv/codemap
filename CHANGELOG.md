@@ -12,6 +12,21 @@ check when the `scip` binary is present); warm serve surface with 21 ops, an MCP
 
 ### Milestones
 
+- **R1-C16 — external-tool router/adapter layer** (no graph schema change): codemap can call a
+  **user-installed** external tool for capabilities outside its scope — opt-in, off by default, bundling
+  nothing (calling ≠ distributing). Two modes on a license gradient: **router** (forward the answer as-is;
+  any license) and **adapter** (translate the output into codemap's own contract; permissive/MIT-Apache
+  only, machine-enforced at registration). The router half shipped earlier (GitNexus passthrough,
+  `codemap route`); this adds the **adapter** half and the flagship use: **semantic search enriched to
+  codemap symbols**. `codemap semantic "<query>"` (also the `semantic_search` MCP tool + serve op) routes a
+  concept query to an opt-in **cocoindex** adapter (Apache-2.0, local, no DB/key), then resolves each fuzzy
+  hit `(file, line)` to the **exact codemap symbol** at that location via the graph — fuzzy retrieval, exact
+  structure, the composition neither tool gives alone. Unresolvable hits are kept honestly as `unresolved`;
+  hits de-dup per symbol (best score). Enrichment lives in `serve` (needs the query layer); the adapter
+  stays graph-free so `integrations` remains a near-leaf layer (codemap's own architecture contract enforces
+  this — dogfood stays green). Generalized: any permissive retrieval tool registers the same way. Core works
+  with no tool installed (→ empty result, never an error). +12 tests. Docs: [docs/integrations.md](docs/integrations.md).
+
 - **M19.A — input scope manifest** (no `graph.json` schema change): codemap is deterministic on its output;
   this adds the symmetric thing for its **input**. `codemap/scope.py` resolves a scope (build args) to a
   sorted file list, content-hashes each (sha-256), builds a **profile** (files/bytes/loc by role & ext +
