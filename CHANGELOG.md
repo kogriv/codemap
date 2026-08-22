@@ -12,6 +12,16 @@ check when the `scip` binary is present); warm serve surface with 21 ops, an MCP
 
 ### Milestones
 
+- **R1-C8 — dead-code confidence + whitelist** (no graph schema change): `report dead-code` now **grades**
+  each uncalled-private-function candidate instead of listing flat — **high** (no inbound edge or hook),
+  **medium** (a decorator / registry may invoke it implicitly), **low** (something *references* it → likely
+  alive) — each with a provenance reason naming why. The **low** tier is the false-positive cut a call-only
+  tool (vulture) can't make: codemap's cross-root reference edges show a private helper is used by a test, a
+  re-export, or a registration. A `[dead_code].whitelist` (exact id / `fnmatch` glob) in `codemap.toml`
+  suppresses framework-wired candidates (argparse `set_defaults`, dispatch dicts), and `--min-confidence`
+  filters by tier. `Query.dead_code(...)` is the core; `dead_symbols()` stays a back-compat wrapper. Surfaces:
+  CLI `report dead-code --min-confidence`, serve/MCP `report` op. +10 tests. Docs: [docs/dead-code.md](docs/dead-code.md).
+
 - **R1-C16 — external-tool router/adapter layer** (no graph schema change): codemap can call a
   **user-installed** external tool for capabilities outside its scope — opt-in, off by default, bundling
   nothing (calling ≠ distributing). Two modes on a license gradient: **router** (forward the answer as-is;

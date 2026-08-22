@@ -211,6 +211,13 @@ def _cmd_report(args) -> int:
                else render_flows(q, args.symbol, depth=args.depth))
         print(out, end="")
         return 0
+    if args.kind == "dead-code":
+        from codemap.serve.audit import load_dead_code_whitelist
+        root = getattr(args, "source_root", None) or os.getcwd()
+        print(render_dead_code(Query(graph),
+                               whitelist=load_dead_code_whitelist(root),
+                               min_confidence=args.min_confidence), end="")
+        return 0
     renderer = _REPORTS[args.kind]
     payload = renderer(graph) if args.kind == "api-surface" else renderer(Query(graph))
     print(payload, end="")
@@ -460,6 +467,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--symbol", help="Symbol for `report impact` (short or full name).")
     r.add_argument("--depth", type=int, default=2,
                    help="report impact: transitive BFS depth (default 2).")
+    r.add_argument("--min-confidence", choices=["low", "medium", "high"], default=None,
+                   help="report dead-code: only show candidates at/above this confidence.")
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")
     r.set_defaults(func=_cmd_report)
 

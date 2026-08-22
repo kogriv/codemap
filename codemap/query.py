@@ -8,11 +8,17 @@ Larger scale would swap networkx for SQLite/Neo4j behind this same surface (§4)
 
 from __future__ import annotations
 
+import fnmatch
 import re
 
 import networkx as nx
 
 from codemap.model import Graph, Node
+
+# Dead-code confidence, most-certain first (R1-C8). "high" = no inbound edge of any
+# kind and no decorator/registry hook; "medium" = an implicit-use hook (decorator /
+# registry) could invoke it; "low" = something references it, so it's likely alive.
+_CONFIDENCE_RANK = {"low": 0, "medium": 1, "high": 2}
 
 _IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 # typing wrappers are containers, not the payload type we key flow on.
@@ -387,23 +393,78 @@ class Query:
         return out
 
     def dead_symbols(self) -> list[str]:
-        """Private functions with no incoming resolved call — dead-code candidates.
+        """Ids of all uncalled-private-function candidates (any confidence).
 
-        Restricted to ``private`` symbols: a private function nothing calls is a
-        far stronger signal than a public one (which may be external API). Still a
-        heuristic — call resolution is partial (~1/4 of sites; gaps/ CM-09), so
-        treat as candidates, never proof.
+        Thin back-compat wrapper over :meth:`dead_code` (unfiltered) — a private
+        function with no incoming resolved call. See ``dead_code`` for the graded,
+        provenance-annotated form. Sorted by id (as before the grading was added).
         """
-        out = []
+        return sorted(c["id"] for c in self.dead_code())
+
+    def dead_code(self, *, whitelist: tuple[str, ...] = (),
+                  min_confidence: str | None = None) -> list[dict]:
+        """Graded dead-code candidates with a provenance reason (R1-C8).
+
+        A candidate is a **private** function with no incoming *resolved call*
+        (dunders excluded — invoked implicitly). Restricted to private because a
+        public uncalled function may be external API. Call resolution is partial
+        (~1/4 of sites; gaps/ CM-09), so this is triage, never proof — but codemap's
+        cross-root graph lets us grade each candidate instead of listing flat, which
+        is what cuts the false positives a call-only tool (vulture) can't:
+
+        - **high** — no inbound edge of *any* kind (call / reference / re-export) and
+          no decorator or registry hook: the strongest dead signal.
+        - **medium** — no inbound reference, but a decorator or registry membership
+          could invoke it implicitly (a framework hook, dispatched impl).
+        - **low** — something *references* it (a re-export, a name put in a list, a
+          registration): probably alive; the reason names who, so you can judge.
+
+        ``whitelist`` suppresses candidates by exact id or glob (``fnmatch``).
+        ``min_confidence`` (``low``/``medium``/``high``) drops anything below it.
+        Sorted most-confident first, then by id.
+        """
+        out: list[dict] = []
         for n in self.graph.nodes.values():
             if n.kind != "function" or n.visibility != "private":
                 continue
             name = n.id.rsplit(".", 1)[-1]
             if name.startswith("__") and name.endswith("__"):
                 continue  # dunder — invoked implicitly
-            if n.id not in self._calls or self._calls.in_degree(n.id) == 0:
-                out.append(n.id)
-        return sorted(out)
+            if n.id in self._calls and self._calls.in_degree(n.id) > 0:
+                continue  # has a resolved caller — not a candidate
+            if any(fnmatch.fnmatch(n.id, pat) for pat in whitelist):
+                continue  # explicitly suppressed
+            out.append(self._grade_dead(n))
+
+        out.sort(key=lambda c: (-_CONFIDENCE_RANK[c["confidence"]], c["id"]))
+        if min_confidence:
+            floor = _CONFIDENCE_RANK[min_confidence]
+            out = [c for c in out if _CONFIDENCE_RANK[c["confidence"]] >= floor]
+        return out
+
+    def _grade_dead(self, n: Node) -> dict:
+        """Score one uncalled-private candidate → {id, confidence, root, reasons}."""
+        refs = self.references_to(n.id)  # inbound of every kind, across roots
+        registry = n.extras.get("registry")
+        if refs:
+            by: dict[tuple[str, str], int] = {}
+            for r in refs:
+                by[(r["root"], r["type"])] = by.get((r["root"], r["type"]), 0) + 1
+            reasons = [f"referenced ({t}) by {root}×{c}"
+                       for (root, t), c in sorted(by.items())]
+            confidence = "low"
+        elif n.decorators or registry:
+            reasons = [f"decorated by @{d.rsplit('.', 1)[-1]} — may be invoked implicitly"
+                       for d in (n.decorators or [])]
+            if registry:
+                reasons.append(
+                    f"registered as {registry.get('key', '?')!r} — may be dispatched")
+            confidence = "medium"
+        else:
+            reasons = ["no inbound calls, references, or decorators"]
+            confidence = "high"
+        return {"id": n.id, "confidence": confidence,
+                "root": self.root_of(n.id), "reasons": reasons}
 
     # -- impact / blast-radius (M6 — repo scope) -----------------------------
 

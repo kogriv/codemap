@@ -376,11 +376,18 @@ Python-focus** — если задача его нарушает, это отм�
       дескрипторов. **Осталось:** задокументировать закрытый список типов рёбер + тест, падающий при
       незадекларированном edge-type. **Приёмка (остаток):** `docs`/`model.py` перечисляют словарь; тест на
       closed-set. **Оценка:** S.
-- [ ] **R1-C8 Dead-code confidence + whitelist UX** (S) — паритет с vulture-UX поверх наших provenance.
-      **Scope:** градуированная уверенность (у codemap уже есть контекст cross-root, лечащий FP vulture) +
-      whitelist-файл + `--min-confidence`. **Зачем:** оформить существующее преимущество как удобный отчёт
-      («vulture без framework-false-positives»). **Приёмка:** dead-code отчёт даёт confidence и уважает
-      whitelist; провенанс-строка объясняет, почему не мёртвое. **Оценка:** S.
+- [x] **R1-C8 Dead-code confidence + whitelist UX** ✅ (2026-08-22, без схемы). `Query.dead_code(whitelist,
+      min_confidence)` — градуированные кандидаты (private-функция без входящего resolved-вызова) с
+      провенанс-причиной: **high** (нет ни одного входящего ребра/хука), **medium** (декоратор/registry могут
+      вызвать неявно — framework-hook/dispatch), **low** (на неё есть `references` — вероятно живая; причина
+      называет, кто ссылается, по роутам). Low-тир = отсечка FP, которую call-only vulture не может. Whitelist
+      (точный id / `fnmatch`-glob) из `[dead_code].whitelist` в codemap.toml + `--min-confidence` фильтр.
+      `render_dead_code` группирует по уверенности с причинами; `dead_symbols()` остался тонкой обёрткой
+      (обратная совместимость). Поверхности: CLI `report dead-code --min-confidence`, serve report-op (min_confidence
+      + whitelist из source_root). **Приёмка выполнена:** confidence ✅, whitelist уважается ✅ (dogfood: 42→4
+      после подавления argparse/dict-разводки `_cmd_*`/`_op_*` — ровно те framework-FP), провенанс-строка
+      объясняет «почему не мёртвое» ✅. +10 тестов (фикстур-граф со всеми тирами + exclusions + whitelist/filter
+      + loader). Доки `docs/dead-code.md`. Закрывает предпоследний Tier-2-пункт.
 
 #### Tier 3 — крупные / стратегические, строго по нужде
 

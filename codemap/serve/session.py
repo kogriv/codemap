@@ -331,6 +331,11 @@ class Session:
         if kind == "impact":
             return {"kind": kind, "markdown": render_impact(
                 self.query, args["symbol"], depth=int(args.get("depth", 2)))}
+        if kind == "dead-code":  # R1-C8: confidence + whitelist from [dead_code]
+            from codemap.serve.audit import load_dead_code_whitelist
+            wl = load_dead_code_whitelist(args.get("root") or self.source_root)
+            return {"kind": kind, "markdown": render_dead_code(
+                self.query, whitelist=wl, min_confidence=args.get("min_confidence"))}
         renderer = _REPORTS.get(kind)
         if renderer is None:
             raise ValueError(f"unknown report kind: {kind!r}")

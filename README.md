@@ -135,6 +135,8 @@ the live graph, findings, and the milestone that closed them.
   and API breaking-change detection (release gate + `review --base`).
 - **[docs/integrations.md](docs/integrations.md)** — the opt-in router/adapter layer over external tools
   (`codemap route` / `codemap semantic`); license policy; adding an integration.
+- **[docs/dead-code.md](docs/dead-code.md)** — graded dead-code candidates (high/medium/low + provenance
+  reason) with a `[dead_code]` whitelist and `--min-confidence` filter.
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
 - **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each

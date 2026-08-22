@@ -32,11 +32,31 @@ def render_dependencies(query: Query) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_dead_code(query: Query) -> str:
+def load_dead_code_whitelist(root: str | None) -> tuple[str, ...]:
+    """Read ``[dead_code].whitelist`` (exact ids / globs) from codemap.toml under ``root``.
+
+    Empty on absent/malformed file — a bad whitelist must never break a report.
+    """
+    from pathlib import Path
+    if not root:
+        return ()
+    path = Path(root) / "codemap.toml"
+    if not path.is_file():
+        return ()
+    try:
+        import tomllib
+        data = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, ModuleNotFoundError):
+        return ()
+    return tuple(data.get("dead_code", {}).get("whitelist", []) or [])
+
+
+def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
+                     min_confidence: str | None = None) -> str:
     by_root = query.orphan_modules_by_root()
     core_orphans = by_root.get("core", [])
     consumer = {r: v for r, v in by_root.items() if r != "core"}
-    dead = query.dead_symbols()
+    dead = query.dead_code(whitelist=whitelist, min_confidence=min_confidence)
     lines = [f"# Dead-code candidates — `{query.graph.target}`", ""]
     lines.append(
         "_Static heuristics only — dynamic imports, CLI entry points, test targets "
@@ -59,12 +79,28 @@ def render_dead_code(query: Query) -> str:
             f"_{breakdown} — tests/examples/scripts/research are never imported; "
             "expected orphan. Excluded from dead-code candidates (F8)._"
         )
+    # R1-C8: uncalled private functions, graded by confidence with a provenance reason.
     lines.append("")
-    lines.append(f"## Uncalled private functions: {len(dead)}")
+    filt = f" (min-confidence: {min_confidence})" if min_confidence else ""
+    wl = f", {len(whitelist)} whitelisted pattern(s)" if whitelist else ""
+    lines.append(f"## Uncalled private functions: {len(dead)}{filt}{wl}")
     lines.append("")
-    lines.append("_Private functions with no incoming resolved call._")
+    lines.append("_Private functions with no incoming resolved call, graded by how sure. "
+                 "**high** = no inbound edge or hook; **medium** = a decorator/registry "
+                 "may invoke it implicitly; **low** = something references it (likely alive)._")
     lines.append("")
-    lines.extend([f"- `{sid}`" for sid in dead] or ["_none._"])
+    if not dead:
+        lines.append("_none._")
+    for level in ("high", "medium", "low"):
+        rows = [c for c in dead if c["confidence"] == level]
+        if not rows:
+            continue
+        lines.append(f"### {level} ({len(rows)})")
+        lines.append("")
+        for c in rows:
+            reason = "; ".join(c["reasons"])
+            lines.append(f"- `{c['id']}` — {reason}")
+        lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
 
