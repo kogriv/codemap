@@ -33,6 +33,46 @@ def _type_tokens(type_str: str) -> set[str]:
 # edge types that carry a "who depends on whom" signal for blast-radius (M6).
 _IMPACT_EDGES = ("calls", "references", "inherits", "imports", "decorated_by")
 
+# Edges that carry "usage / dependency" for relevance ranking (R1-C6). Directed
+# user→used, so PageRank accumulates rank on heavily-depended-upon symbols. contains
+# is excluded on purpose (structural, would just inflate big modules).
+_RANK_EDGE_TYPES = ("calls", "imports", "references", "inherits", "implements")
+
+
+def _pagerank(g: "nx.DiGraph", personalization: dict[str, float] | None,
+              *, alpha: float = 0.85, max_iter: int = 100, tol: float = 1.0e-9) -> dict:
+    """Pure-Python personalized PageRank (power iteration) — no numpy/scipy dep.
+
+    networkx's ``pagerank`` needs scipy; codemap stays lightweight (griffe/jedi/
+    networkx only), so we run the standard algorithm ourselves. Deterministic: nodes
+    are processed in sorted order and the iteration is a fixed contraction.
+    """
+    nodes = sorted(g)
+    n = len(nodes)
+    if n == 0:
+        return {}
+    if personalization and sum(personalization.values()) > 0:
+        s = sum(personalization.values())
+        p = {v: personalization.get(v, 0.0) / s for v in nodes}
+    else:
+        p = {v: 1.0 / n for v in nodes}
+    outdeg = {v: g.out_degree(v) for v in nodes}
+    dangling = [v for v in nodes if outdeg[v] == 0]
+    x = dict(p)
+    for _ in range(max_iter):
+        xlast = x
+        x = {v: 0.0 for v in nodes}
+        danglesum = alpha * sum(xlast[v] for v in dangling)
+        for v in nodes:
+            share = alpha * xlast[v] / outdeg[v] if outdeg[v] else 0.0
+            for w in sorted(g.successors(v)):
+                x[w] += share
+        for v in nodes:
+            x[v] += danglesum * p[v] + (1.0 - alpha) * p[v]
+        if sum(abs(x[v] - xlast[v]) for v in nodes) < n * tol:
+            break
+    return x
+
 
 class Query:
     def __init__(self, graph: Graph) -> None:
@@ -624,6 +664,51 @@ class Query:
             dist += 1
         return {"entry": entry, "edges": edges, "reached": len(seen) - 1,
                 "max_depth": max((e["distance"] for e in edges), default=0)}
+
+    # -- relevance ranking (R1-C6) -------------------------------------------
+
+    def _expand_seeds(self, seeds) -> set[str]:
+        """Map each seed (node id / short name / file path) to concrete node ids."""
+        out: set[str] = set()
+        files = {n.file for n in self.graph.nodes.values() if n.file}
+        for s in seeds:
+            if s in self.graph.nodes:
+                out.add(s)
+            elif s in files:
+                out.update(n.id for n in self.graph.nodes.values() if n.file == s)
+            else:
+                out.update(n.id for n in self.find(s))  # short name → matches
+        return out
+
+    def rank(self, *, seeds=(), edge_types=_RANK_EDGE_TYPES,
+             root: str | None = None) -> dict[str, float]:
+        """Importance rank over usage edges via PageRank (R1-C6).
+
+        Without ``seeds``: global importance — heavily-depended-upon symbols (imports
+        /calls/references pointing at them) rank high. With ``seeds`` (node ids, short
+        names, or file paths): personalized restart biased to them → relevance to that
+        context (aider's repo-map trick). ``root`` restricts to one provenance root.
+        Deterministic: PageRank is a fixed power-iteration; scores rounded, ties broken
+        by id at the call sites that order them.
+        """
+        g = nx.DiGraph()
+        for nid, n in self.graph.nodes.items():
+            if n.kind in ("module", "class", "function") and (
+                    root is None or self.root_of(nid) == root):
+                g.add_node(nid)
+        ets = set(edge_types)
+        for e in self.graph.edges:
+            if e.type in ets and e.source in g and e.target in g:
+                g.add_edge(e.source, e.target)
+        if g.number_of_nodes() == 0:
+            return {}
+        personalization = None
+        if seeds:
+            seed_ids = {s for s in self._expand_seeds(seeds) if s in g}
+            if seed_ids:  # restart biased to seeds (normalized inside _pagerank)
+                personalization = {n: (1.0 if n in seed_ids else 0.0) for n in g}
+        pr = _pagerank(g, personalization)
+        return {n: round(v, 8) for n, v in pr.items()}
 
     # -- type flow (M4 — producers/consumers by signature type) --------------
 

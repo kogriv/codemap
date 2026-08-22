@@ -12,6 +12,17 @@ check when the `scip` binary is present); warm serve surface with 21 ops, an MCP
 
 ### Milestones
 
+- **R1-C6 — relevance ranking + token-budgeted context pack** (no graph schema change): codemap becomes a
+  first-class context provider. `Query.rank(seeds, root)` scores symbols by **personalized PageRank** over
+  usage edges (calls/imports/references/inherits/implements) — global importance with no seeds (hubs like
+  `logging_config`/`config` rank top on bquant), or relevance to a context with seeds (symbol id / short name
+  / file path; aider's repo-map trick). The PageRank is a **pure-Python power iteration** — no numpy/scipy
+  dependency (codemap stays lightweight) — and deterministic. `codemap pack --budget N [--seed X]`
+  (`serve/pack.py`, serve op + MCP `pack` tool) renders the highest-ranked symbols into a token budget
+  (~4 chars/token estimate, no tokenizer): output never exceeds the budget and top hubs land before leaves;
+  seeding on `analyze_zones` surfaces the zone subsystem instead of the global hubs. +12 tests. Docs:
+  [docs/pack.md](docs/pack.md). Closes the last open Tier-2 R1-C capability.
+
 - **R1-C7 — closed edge-type vocabulary** (no graph schema change): `model.EDGE_TYPES` declares the closed
   set of 10 edge types (`contains`/`imports`/`export`/`inherits`/`decorated_by`/`calls`/`references`/
   `implements`/`reads`/`writes`), each documented; node `kind` stays an open set by design (edges are typed,

@@ -302,6 +302,12 @@ class Session:
         return semantic_search(self.query, args["query"], root=root,
                                limit=int(args.get("limit", 10)))
 
+    def _op_pack(self, args) -> dict:
+        """R1-C6: token-budgeted context pack — most relevant graph slice under N tokens."""
+        from codemap.serve.pack import build_pack
+        return build_pack(self.query, budget=int(args.get("budget", 2000)),
+                          seeds=tuple(args.get("seeds") or ()))
+
     def _op_source(self, args) -> dict:
         """Return the source span of a symbol (F12): {file, lines, code?}.
 
@@ -382,6 +388,7 @@ _OPS = {
     "communities": Session._op_communities,
     "flows": Session._op_flows,
     "semantic": Session._op_semantic,
+    "pack": Session._op_pack,
     "source": Session._op_source,
     "report": Session._op_report,
     "export": Session._op_export,

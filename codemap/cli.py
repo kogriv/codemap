@@ -25,6 +25,8 @@
         codemap.toml [integrations].enabled + the tool installed)
     codemap semantic <query> (--graph g.json | --build <path>) [--root DIR] [--limit N]
         semantic search via an opt-in adapter, enriched to codemap symbols (R1-C16)
+    codemap pack (--graph g.json | --build <path>) [--budget N] [--seed X …]
+        token-budgeted context pack: most relevant graph slice under N tokens (R1-C6)
 """
 
 from __future__ import annotations
@@ -350,6 +352,19 @@ def _cmd_semantic(args) -> int:
     return 0
 
 
+def _cmd_pack(args) -> int:
+    """Token-budgeted context pack — most relevant graph slice under N tokens (R1-C6)."""
+    from codemap.serve.pack import build_pack, render_pack
+    q = Query(_graph_from(args))
+    seeds = tuple(args.seed or ())
+    if args.format == "json":
+        print(json.dumps(build_pack(q, budget=args.budget, seeds=seeds),
+                         ensure_ascii=False, indent=2, sort_keys=True))
+    else:
+        print(render_pack(q, budget=args.budget, seeds=seeds), end="")
+    return 0
+
+
 def _cmd_check(args) -> int:
     """Enforce the [architecture] contract → exit 2 on any violation (R1-C3).
 
@@ -528,6 +543,16 @@ def build_parser() -> argparse.ArgumentParser:
     sm.add_argument("--limit", type=int, default=10, help="Max hits (default: 10).")
     sm.add_argument("--format", choices=["markdown", "json"], default="markdown")
     sm.set_defaults(func=_cmd_semantic)
+
+    pk = sub.add_parser("pack", help="Token-budgeted context pack: the most relevant "
+                                     "graph slice under N tokens (R1-C6).")
+    _add_source(pk)
+    pk.add_argument("--budget", type=int, default=2000, help="Max tokens (default: 2000).")
+    pk.add_argument("--seed", action="append", metavar="X",
+                    help="Bias relevance to this symbol / file (repeatable). "
+                         "Omit for global importance.")
+    pk.add_argument("--format", choices=["markdown", "json"], default="markdown")
+    pk.set_defaults(func=_cmd_pack)
 
     df = sub.add_parser("diff", help="API diff two graph.json snapshots (added/removed/changed + breaking).")
     df.add_argument("old", help="Baseline graph.json (the 'before').")

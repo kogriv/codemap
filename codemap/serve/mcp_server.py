@@ -221,6 +221,14 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         {resolver, hits:[{symbol, score, file, lines}]}; empty if no adapter is enabled."""
         return op("semantic", {"query": query, "limit": limit})
 
+    @server.tool()
+    def pack(budget: int = 2000, seeds: list[str] | None = None) -> dict:
+        """Token-budgeted context pack: the most relevant slice of the graph under `budget`
+        tokens, ranked by PageRank importance — or by relevance to `seeds` (symbol / file
+        ids you're working on). Returns {budget, used_tokens, included, truncated,
+        items:[{id, kind, rank, tokens, text}]}, top hubs first."""
+        return op("pack", {"budget": budget, "seeds": seeds or []})
+
     return server
 
 
@@ -229,5 +237,5 @@ MCP_TOOLS = (
     "stats", "search", "query", "resolve", "callers", "callees", "impact",
     "call_contract", "implementers", "family", "families", "column", "columns_of",
     "locate", "review", "architecture", "check", "diff", "communities", "flows", "source", "report",
-    "semantic_search",
+    "semantic_search", "pack",
 )

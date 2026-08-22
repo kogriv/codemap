@@ -363,14 +363,18 @@ Python-focus** — если задача его нарушает, это отм�
       которых не видят хунки). **Приёмка выполнена:** на паре графов до/после diff помечает breaking
       (param made-required, removed symbol), added/deleted перечислены; тест на непарсящейся сигнатуре.
       Доки `docs/api-diff.md`. +21 тест.
-- [ ] **R1-C6 Relevance-ранжирование + token-budgeted pack** (L) — codemap как first-class context-provider.
-      **Scope:** (a) PageRank-подобный ранкинг узлов (personalized — смещение к seed-символам/файлам, как
-      aider repo-map); (b) режим `codemap pack --budget N` — отрендерить наиболее релевантный срез графа
-      (сигнатуры, ключевые рёбра) под N токенов (binary-search укладка). **Зачем:** сейчас codemap отвечает
-      на point-query; двух вещей нет — *ранжирования* (что показать) и *бюджетированного рендера*.
-      **Приёмка:** ранкинг детерминирован; `pack --budget` укладывается в лимит и на bquant включает
-      топ-хабы раньше листьев. **Оценка:** L. **R1.5 усилил:** personalized PageRank — второе независимое
-      появление (после aider — теперь HippoRAG 2 для multi-hop) → приём проверенный.
+- [x] **R1-C6 Relevance-ранжирование + token-budgeted pack** ✅ (2026-08-22, без схемы). codemap стал
+      first-class context-provider. (a) **`Query.rank(seeds, root)`** — personalized PageRank по usage-рёбрам
+      (`calls/imports/references/inherits/implements`, user→used); без seeds — глобальная важность (хабы
+      наверх), с seeds (id/короткое имя/путь файла) — relevance к контексту (приём aider). **PageRank — чистый
+      Python power-iteration** (без numpy/scipy — codemap лёгкий, как CC/MI без radon), детерминирован (sorted
+      обход, округление). (b) **`codemap pack --budget N [--seed X]`** (`serve/pack.py`) — ранжированный срез
+      под токен-бюджет: жадно добавляет по убыванию ранга, пока влезает; оценка токенов ≈ 4 симв/токен
+      (детерминированно, без токенайзера). Поверхности: CLI `pack`, serve-op `pack`, **MCP-tool `pack`**.
+      **Приёмка выполнена:** ранкинг детерминирован ✅; `pack` **никогда не превышает бюджет** ✅ (проверено на
+      5/30/100/100k); на bquant топ-хабы (`logging_config`/`config`/`exceptions`) раньше листьев ✅;
+      seed=`analyze_zones` → наверх zone-символы вместо глобальных хабов ✅. +12 тестов. Доки `docs/pack.md`.
+      **Закрывает последний Tier-2-пункт.** Отложено: bit-точный токенайзер (эвристики хватает).
 - [x] **R1-C7 Закрытый словарь edge-kind + структурные descriptor-id** ✅ (2026-08-22, без схемы).
       Структурные descriptor-id доказаны SCIP-экспортом (R1-C1). **Остаток закрыт:** `model.EDGE_TYPES` —
       закрытый frozenset из 10 типов (`contains/imports/export/inherits/decorated_by/calls/references/
