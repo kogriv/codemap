@@ -38,7 +38,7 @@ A **semantic (vector) code-search** tool: tree-sitter chunks source into semanti
 | license | MIT | Apache-2.0 |
 
 ## Hands-on measurements (target: bquant, R2 scope)
-Index build: **280 scope files → 6403 chunks** (python 5185, markdown 1128, json 90 — the stray `manifest.json`). **Cold CPU build: 559 s (~9.3 min)** on this 4-core box (model load + 6403 chunk embeds); **incremental re-index of unchanged content: ~1 s** (content-hash cache — measured; the CocoIndex thesis, proven). Index artifact **~40 MB** (SQLite ~20 MB + LMDB) for 4.3 MB of source — **~9× input** (codemap ~1.1×, GitNexus ~28×). **GPU unavailable:** `[full]` pulled **torch 2.13.0+cu130**, whose wheel is compiled for **sm_75+ only**; the box's **GTX 1080 Ti is sm_61 (Pascal)** → `cudaErrorNoKernelImageForDevice`. A *packaging* cutoff, not the hardware — and unlike GitNexus's onnxruntime CUDA-13 EP, which *did* run on sm_61 (different runtime, different arch policy). Embeds forced to CPU (`CUDA_VISIBLE_DEVICES=""`).
+Index build: **280 scope files → 6403 chunks** (python 5185, markdown 1128, json 90 — the stray `manifest.json`). **Cold CPU build: 559 s (~9.3 min)** on this 4-core box (model load + 6403 chunk embeds); **incremental re-index of unchanged content: ~1 s** (content-hash cache — measured; the CocoIndex thesis, proven). Index artifact **~40 MB** (SQLite ~20 MB + LMDB) for 4.3 MB of source — **~9× input** (codemap ~1.1×, GitNexus ~28×). **GPU unavailable:** `[full]` pulled **torch 2.13.0+cu130**, whose wheel is compiled for **sm_75+ only**; the box's **GTX 1080 Ti is sm_61 (Pascal)** → `cudaErrorNoKernelImageForDevice`. A *packaging* cutoff, not the hardware — and unlike GitNexus's onnxruntime CUDA-13 EP, which *did* run on sm_61 (different runtime, different arch policy). Embeds forced to CPU (`CUDA_VISIBLE_DEVICES=""`). *(This paragraph records the original 4-core/Pascal run; the GPU path was measured separately on an RTX 3070 — see the GPU follow-up at the end.)*
 
 | Task | Correct? | Cost | Latency | Deterministic? | Notes |
 |---|---|---|---|---|---|
@@ -53,7 +53,7 @@ Index build: **280 scope files → 6403 chunks** (python 5185, markdown 1128, js
 - **accuracy** — semantic retrieval is genuinely on-target for *concept* queries; for *exact symbol* lookup it's fuzzy (def not top-ranked) — but `grep` covers exact lookup precisely.
 - **determinism** — the *answer* is byte-identical across runs ✓ (CPU embeddings stable); the *artifact* is a binary LMDB/SQLite blob, not `git diff`-able ◐.
 - **cost** — install heavy (~1 GB torch + sentence-transformers); the on-disk index for 280 files is modest (embedded store). Query cost = 1 embedding, sub-second.
-- **speed** — cold CPU build **~9 min** (559 s, 6403 chunks, 4 cores); **incremental ~1 s** (content-hash — its headline). GPU would cut the cold build sharply, but is blocked here (see below).
+- **speed** — cold CPU build **~9 min** (559 s, 6403 chunks, 4 cores); **incremental ~1 s** (content-hash — its headline). GPU cuts the cold build **~4.5×** — measured 2026-08-22 on an RTX 3070 (48 s vs 216 s, same box, same scope); see the GPU follow-up.
 - **setup friction** — moderate: no DB and no API key (a real advantage over the parent framework), but the `[full]` install is large, needs a proxy-free path for the HF model, and **its bundled torch drops pre-Turing GPUs** (Pascal fails) — CPU-only in practice on older cards.
 - **language coverage** — multi (tree-sitter) vs codemap's Python-deep.
 - **license** — **Apache-2.0** — the key enabler: unlike GitNexus (PolyForm-NC), `ccc` is legally wrappable/adaptable by codemap.
@@ -72,7 +72,7 @@ Index build: **280 scope files → 6403 chunks** (python 5185, markdown 1128, js
   - **A DB-free embedded store makes local semantic search genuinely zero-infra.** The parent CocoIndex framework leans on Postgres+pgvector; `ccc` ships LMDB+SQLite so `pipx install → index → search` needs no service. That "provisions nothing" ergonomic is exactly codemap's own value applied to the retrieval half.
   - **Incremental delta-embedding as a first-class engine property**, not a bolt-on — the right shape for R1-C9.
 - **What we did NOT check** (honest boundary):
-  - **GPU-accelerated embedding** — blocked by torch 2.13/cu130 dropping Pascal (sm_61); measured CPU only. A Pascal-supporting torch (cu121/cu126) swap is untried.
+  - ~~**GPU-accelerated embedding**~~ — **closed 2026-08-22 on an RTX 3070**, see the GPU follow-up below. The Pascal-supporting `cu121/cu126` torch swap remains untried and is now moot for us.
   - **Retrieval quality at scale** (precision/recall over a labelled query set) — only spot-checked relevance on a handful of queries.
   - **MCP transport** end-to-end (measured the CLI, same index) and the **agent skill** flow.
   - **Multi-language** behavior (Python/Markdown only, on the shared scope) and the **RRF/BM25 fusion** internals.
@@ -80,3 +80,43 @@ Index build: **280 scope files → 6403 chunks** (python 5185, markdown 1128, js
 
 ## Verdict & backlog effect
 **wrap (opt-in semantic-search adapter) + learn (incremental engine).** `ccc` is the **first license-clean (Apache-2.0) semantic-search tool** fit to sit behind codemap's R1-C16 router/adapter — it fills the fuzzy-retrieval gap GitNexus surfaced, without GitNexus's NC blocker. It confirms **R1-C16** (semantic search is a wrap-not-build capability, and here's the tool to wrap) and feeds **R1-C9** (content-hash incremental is real and cheap) and **R1-C6** (relevance/retrieval). It does **none** of codemap's structural work (T2–T5 N/A) — which is precisely why the two compose rather than compete.
+
+## Follow-up: the GPU path, measured (2026-08-22)
+
+The R2 pass left GPU embedding open because `[full]` pulls **torch 2.13.0+cu130**, whose wheel
+ships no Pascal cubin — the original box's GTX 1080 Ti (sm_61) died on
+`cudaErrorNoKernelImageForDevice`. Re-run on a second machine with an **RTX 3070 (sm_86)**;
+identical tool versions (**cocoindex-code 0.2.41 / cocoindex 1.0.20 / torch 2.13.0+cu130**) and
+the **same canonical scope** (`sha256:300e0a01…5e47d2`, 280 files, `bquant@cb89a24`,
+materialized), so only the hardware differs.
+
+**The packaging cutoff, verified directly.** `torch.cuda.get_arch_list()` returns
+`['sm_75','sm_80','sm_86','sm_90','sm_100','sm_120']` — sm_61 is absent from the wheel, sm_86 is
+present. That is the whole story: not a hardware limit, a build-target list. A 4096³ matmul runs
+in 0.026 s/iter on the 3070, so the kernels are real.
+
+**Cold-build cost, same box, same scope, daemon restarted between arms:**
+
+| device | wall | chunks | GPU peak |
+|---|---|---|---|
+| `cpu`  | **216 s** | 6403 | 0 % |
+| `cuda` | **48 s**  | 6403 | 69 % |
+
+**≈4.5× from the GPU.** The 0 % reading in the CPU arm is what makes the attribution honest —
+an earlier apparent "GPU load" turned out to be the machine's console user, not the run.
+
+**Two measurement traps worth recording**, both of which produce plausible-looking wrong numbers:
+1. **`ccc` runs a background daemon** (`~/.cocoindex_code/daemon.pid`) that loads the model once
+   and serves every subsequent `ccc index`. Changing `COCOINDEX_CODE_DEVICE` — or setting
+   `CUDA_VISIBLE_DEVICES=""` — has **no effect** on an already-running daemon: three "different"
+   configurations all returned ~34 s because they hit the same warm process. **The daemon must be
+   killed between device arms**, and the device set in `~/.cocoindex_code/global_settings.yml`
+   (`embedding.device`), not only in the environment.
+2. **Device defaults to auto-detect** (`device: null`), and sentence-transformers then picks CUDA
+   when it is available. So the out-of-the-box path is already GPU on a supported card — the
+   CPU number above only appears if you pin `device: cpu` deliberately.
+
+**Cross-machine note:** the recorded 559 s baseline was a 4-core box; this box is 12c/24t but
+~30 % slower per core, so its CPU arm lands at 216 s. Against that baseline the end-to-end gain
+here is ~11.6×, of which ~2.6× is cores and ~4.5× is the GPU. Quote the same-box pair, not the
+cross-machine ratio.

@@ -282,6 +282,15 @@ not the card, decides. So `ccc` embedded 6403 chunks on CPU in ~9 minutes. The r
 of unchanged content takes **~1 second** — content-hash delta processing, a working proof of the incremental
 graph we've deferred as R1-C9.
 
+**Sequel (2026-08-22).** We got a second box with an RTX 3070 and settled it. `torch.cuda.get_arch_list()`
+prints the verdict without ceremony: `sm_75, sm_80, sm_86, sm_90, sm_100, sm_120`. Not a hardware limit — a
+list someone chose at build time, and sm_61 is simply not on it. On sm_86 the same cold build drops from
+**216 s to 48 s**. Two footnotes came out of the measuring, and both are the kind that quietly falsify a
+benchmark: `ccc` keeps a **background daemon** holding the model, so three "different" device settings all
+returned the same 34 s because they hit the same warm process — the daemon has to die between arms. And the
+device **auto-detects**, so the honest CPU number only appears if you pin `device: cpu` on purpose. The first
+number we believed was measuring nothing at all.
+
 ### The lesson (reusable)
 1. **"Does less" can be worth more than "does more."** Capability is not the axis that decides integrate /
    wrap / learn — **fit × license** is. A tool that does one thing cleanly, composes with your core, and

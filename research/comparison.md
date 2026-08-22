@@ -63,8 +63,9 @@ def ranks #5 not #1), but bundled **`ccc grep`** (tree-sitter, no index) pinpoin
 wins:** a concept query ("detect swing high/low pivot points within a zone") nails
 `strategies/swing/pivot_points.py` (0.72) with zero knowledge of names — the fuzzy leg codemap lacks.
 **Determinism** ◐: answer byte-identical across runs, artifact is a binary LMDB/SQLite blob. Runs **fully
-local, no DB, no API key** (280 files → 6403 chunks; **incremental re-index ≈ 1 s**). GPU blocked (its torch
-2.13/cu130 dropped Pascal sm_61). **Apache-2.0** makes it the first license-clean semantic-search tool codemap
+local, no DB, no API key** (280 files → 6403 chunks; **incremental re-index ≈ 1 s**). GPU blocked on **Pascal only**
+(its torch 2.13/cu130 ships no sm_61 cubin); on an RTX 3070 the cold build runs **~4.5× faster** (48 s vs
+216 s, same box, same scope). **Apache-2.0** makes it the first license-clean semantic-search tool codemap
 can *wrap* (vs GitNexus's NC). See the [card](tools/cocoindex-code.md).
 
 ## Quality summary
