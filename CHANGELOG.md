@@ -5,12 +5,45 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
-Extracted into a standalone repository from its incubation home (the `bquant` monorepo), preserving the
-full M0–M16 development history; since extraction it has grown the MCP adapter (M17), graph freshness
-(M18), SCIP export (R1-C1) and the research track (R1). Graph schema **0.10**; **152 tests** (+1 SCIP-CLI
-check when the `scip` binary is present); warm serve surface with 21 ops, an MCP adapter, and SCIP export.
+## [0.0.2] - 2026-08-23
+
+First internal (unpublished) cut. Extracted into a standalone repository from its incubation home (the
+`bquant` monorepo), preserving the full M0–M16 development history; since extraction it has grown the MCP
+adapter (M17), graph freshness (M18), the input scope manifest (M19.A), SCIP + ctags export (R1-C1/C2),
+complexity metrics (R1-C4), relevance ranking + context pack (R1-C6), the closed edge vocabulary (R1-C7),
+graded dead-code (R1-C8), the external-tool router/adapter layer (R1-C16), **attribute-access edges
+(R1-C20)** and **incremental rebuild (R1-C9)**. Graph schema **0.11**; **363 tests** (+ optional
+SCIP/ctags CLI checks when those binaries are present); warm serve surface (23 ops), an MCP adapter, and
+SCIP/ctags export. Not published to PyPI (the name `codemap` is taken there — see release notes).
 
 ### Milestones
+
+- **R1-C20 — attribute-access edges** (schema **0.11**): closes the issue #1 honesty gap — `impact` on a
+  class field returned `refs: []` / `risk: "none"` even with real read/write sites, because attribute nodes
+  had no inbound edges. A new closed-vocabulary `accesses` edge (function → the attribute it reads/writes,
+  `extras.access`/`resolution`) is emitted by `extract/attrflow.py`: `self.field` / `ClassName.field` /
+  construction kwargs on the fast `ast` tier, `obj.field` on a typed local via jedi receiver-type inference
+  on the deep tier; unresolved sites are honest counters, never edges to nothing. `accesses` joins
+  `_IMPACT_EDGES` (attribute-scoped — columns stay out), so a field's blast-radius is real; `Query.readers`/
+  `writers`, a serve `accessors` op + MCP tool, an `attributes` block in the dossier, CLI render. Honesty
+  fix: a field with no modelled accessor reports `risk: "unknown"` (+reason), never `none`. On bquant: 1619
+  fast + 158 deep `accesses` edges; `impact` on `SwingThresholds.zigzag_deviation` → 6 refs (was `[]`).
+  +15 tests. Docs: [docs/attribute-edges.md](docs/attribute-edges.md). Closes #1.
+
+- **R1-C9 — incremental rebuild** (no graph schema change): `codemap build --incremental` recomputes only
+  changed modules and splices the rest from the previous graph. The cheap, tier-independent passes (griffe +
+  structure + dispatch + family + dataflow, ~4s) run whole and fresh every time; the two expensive jedi
+  passes run only on the *affected* modules (changed/added/removed + fresh importers + old dependents), which
+  is where ~93s of a ~97s deep build lives. Reuses the `.meta.json` scope sidecar (M19.A) for content-hash
+  change detection; falls back to a full rebuild past 50% affected. On bquant a one-file deep edit rebuilds
+  in ~5s vs ~60s (~12×). Fast tier is byte-identical to a full build; the deep tier matches a full build up
+  to jedi's own run-to-run inference variance (two full `--deep` builds already differ by a few deep edges —
+  a documented property of the deep tier, not the splice). `model.to_dict` now orders edges by full content
+  so a spliced build serializes identically. +12 tests. Docs: [docs/incremental.md](docs/incremental.md).
+
+- **Fixes:** stale dogfood tests repointed after bquant removed `MACDZoneAnalyzer` (deprecation-detection now
+  pinned on a dedicated fixture; blast-radius on `ZoneInfo`); gitnexus router disclaimer test made
+  environment-independent (mock `which`). Closes #2.
 
 - **R1-C6 — relevance ranking + token-budgeted context pack** (no graph schema change): codemap becomes a
   first-class context provider. `Query.rank(seeds, root)` scores symbols by **personalized PageRank** over

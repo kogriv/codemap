@@ -7,4 +7,4 @@ See DESIGN.md.
 from codemap.model import Edge, Graph, Node
 
 __all__ = ["Graph", "Node", "Edge"]
-__version__ = "0.0.1"
+__version__ = "0.0.2"
