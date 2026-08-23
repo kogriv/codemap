@@ -155,6 +155,15 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("columns_of", {"symbol": symbol})
 
     @server.tool()
+    def accessors(attribute: str) -> dict:
+        """Who reads / writes a class `attribute` (field blast-radius; R1-C20).
+
+        The attribute analog of `column`: `{reads: [funcs], writes: [funcs]}`.
+        Lower bound — attribute access is modelled best-effort (self./ClassName./
+        construction, and obj.field on the deep tier)."""
+        return op("accessors", {"attribute": attribute})
+
+    @server.tool()
     def locate(file: str, line: int | None = None,
                start: int | None = None, end: int | None = None) -> dict:
         """Map a diff location to symbol(s): pass `file` + `line`, or `file` + `start`/
@@ -236,6 +245,7 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 MCP_TOOLS = (
     "stats", "search", "query", "resolve", "callers", "callees", "impact",
     "call_contract", "implementers", "family", "families", "column", "columns_of",
+    "accessors",
     "locate", "review", "architecture", "check", "diff", "communities", "flows", "source", "report",
     "semantic_search", "pack",
 )

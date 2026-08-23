@@ -397,24 +397,28 @@ Python-focus** — если задача его нарушает, это отм�
       объясняет «почему не мёртвое» ✅. +10 тестов (фикстур-граф со всеми тирами + exclusions + whitelist/filter
       + loader). Доки `docs/dead-code.md`. Закрывает предпоследний Tier-2-пункт.
 
-- [ ] **R1-C20 Рёбра доступа к атрибутам (`impact`/refs для полей класса)** (L, P0=S) — 🆕 (2026-08-22, из
-      dogfood на bquant при планировании rename поля dataclass, G16). **Гэп:** `impact` на атрибуте класса
-      возвращает `refs:[]` и **`risk:"none"`** при реальных read/write-сайтах — атрибут-ноды извлекаются, но
-      **ни одно ребро в них не входит** (`reads`/`writes` 575/1829 все на `column:*`, M12). Аффирмативная
-      ложь «ничего не зависит» там, где надо `unknown`/`unmodelled`. **Scope (полное, не урезанное решение):**
-      новый закрытый edge-type `accesses` (`extras.access ∈ {read,write}`, R1-C7 + бамп схемы) + пасс
-      `extract/attrflow.py` (по образцу `dataflow.py`): `self.field`, `ClassName.field`, construction-kwargs —
-      fast-tier `ast`; `obj.field` на типизированном локале — deep-tier `jedi`; неразрешённое = счётчик, не
-      ребро в неузел (R1-C13-f2). Вплести `accesses` в `_IMPACT_EDGES` для атрибут-таргетов; `Query.readers`/
-      `writers`; поля в досье класса. **P0 (ships first, дёшево):** атрибут с нулём смоделированных входящих
-      рёбер → `unknown`/`unmodelled`, **никогда `none`** — снимает *ложь* сразу, безопасно до экстракции.
-      **Зачем:** «что сломается при rename/retype поля» — топовый refactor-вопрос и причина существования
-      `impact`; сейчас на нём codemap слеп. **Приёмка:** `impact` на `SwingThresholds.peak_prominence` даёт
-      его core-сайты (не `[]`); P0 отдельно убирает `risk:"none"` → `unknown`; R1-C7 guard-тест требует новый
-      тип в словаре и его наличие на dogfood-графе. **Оценка:** L (P0=S). **Доки:** гэп
-      `gaps/attribute_impact_gap_2026-08-22.md`, дизайн `docs/design/attribute_edges.md` (открытые решения
-      D1–D4 — до кода). **Смыкается с** M12 (columns-lineage — тот же приём для строковых ключей), R1-C7
-      (словарь), R1-C13 (epistemic/resolved-or-flagged). Issue [#1](https://github.com/kogriv/codemap/issues/1).
+- [x] **R1-C20 Рёбра доступа к атрибутам (`impact`/refs для полей класса)** ✅ (2026-08-23, схема 0.11) — из
+      dogfood на bquant при планировании rename поля dataclass (G16). **Гэп:** `impact` на атрибуте класса
+      возвращал `refs:[]` и **`risk:"none"`** при реальных сайтах — атрибут-ноды извлекались, но **ни одно
+      ребро в них не входило** (`reads`/`writes` все на `column:*`, M12). Аффирмативная ложь «ничего не
+      зависит» там, где нужен `unknown`. **Сделано:** новый закрытый edge-type `accesses`
+      (`extras.access ∈ {read,write}`, `extras.resolution`, R1-C7 + бамп схемы 0.10→0.11) + пасс
+      `extract/attrflow.py` (по образцу `dataflow.py`): `self.field` (`self`), `ClassName.field` (`class`),
+      construction-kwargs → write (`construct`) — fast-tier `ast`; `obj.field` на типизированном локале
+      (`deep`) — deep-tier `jedi` через **инференс типа получателя** (не goto — goto садится на assignment
+      внутри метода, а не на ноду поля); неразрешённое = счётчик (`extras.attr_access`), не ребро в неузел
+      (R1-C13-f2). `accesses` вплетён в `_IMPACT_EDGES` (атрибут-скоуп — колонки остаются вне impact);
+      `Query.readers`/`writers`, serve-op `accessors` + MCP-tool, блок `attributes` в досье, CLI-рендер.
+      **P0 honesty:** `impact` на атрибуте без смоделированного accessor'а → `risk:"unknown"` + `risk_reason`,
+      **никогда `none`** (для функции/класса пустой radius остаётся честным `none`). **Приёмка выполнена:** на
+      bquant fast-tier 1619 `accesses`-рёбер (self 1027 / construct 587 / class 5), deep +158; `impact` на
+      `SwingThresholds.zigzag_deviation` даёт 6 refs (было `[]`/`none`); 210 атрибутов без accessor'а честно
+      `unknown` ✅. +15 тестов (фикстура `attrpkg`: все формы + property-нода griffe + soundness-гейты + deep).
+      R1-C7 guard-тест обновлён (`accesses` в словаре + на dogfood-графе). **Открытие в ходе:** griffe моделит
+      `@property` как **attribute**-ноду, не function → чтение `obj.prop` — легитимное `accesses`-ребро (D-corr,
+      §7 дизайна). **Доки:** `docs/attribute-edges.md`, дизайн `docs/design/attribute_edges.md` (D1–D4 закрыты:
+      B/да/да/да), гэп `gaps/attribute_impact_gap_2026-08-22.md`. **Смыкается с** M12, R1-C7, R1-C13.
+      Issue [#1](https://github.com/kogriv/codemap/issues/1).
 
 #### Tier 3 — крупные / стратегические, строго по нужде
 

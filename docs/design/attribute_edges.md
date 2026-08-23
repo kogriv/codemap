@@ -1,7 +1,16 @@
 # Design — Attribute access edges (impact/refs for class fields)
 
-**Status:** design, pre-code. **Motivates:** gap [attribute_impact_gap_2026-08-22](../../gaps/attribute_impact_gap_2026-08-22.md),
+**Status:** ✅ **shipped** (2026-08-23, schema 0.11). **Motivates:** gap
+[attribute_impact_gap_2026-08-22](../../gaps/attribute_impact_gap_2026-08-22.md),
 issue [#1](https://github.com/kogriv/codemap/issues/1). **Backlog:** R1-C20.
+**User docs:** [docs/attribute-edges.md](../attribute-edges.md).
+
+**Decisions resolved (§9):** D1 = **B** (new `accesses` edge type); D2 = **yes**
+(`accesses` joins `_IMPACT_EDGES`, attribute-scoped); D3 = **yes** (construction kwargs
+are writes); D4 = **yes** (the honesty fix shipped with the extraction). One correction
+during build (§7): griffe models `@property` as an *attribute* node, not a function, so
+a property read *is* an `accesses` edge — the only layer that can capture it; the "not
+in v1" boundary below no longer applies to property reads.
 
 codemap models relationships between *symbols* (calls/imports/inherits/decorated_by/references) and between
 functions and *string-keyed columns* (reads/writes, M12) — but **not between code and Python attributes**.

@@ -84,6 +84,15 @@ def build_query_result(q: Query, name: str) -> dict:
                 "complexity": q.graph.nodes[f].extras.get("complexity")}
             for f in funcs
         }
+    attrs = [n.id for n in matches if n.kind == "attribute"]
+    if attrs:
+        # R1-C20: standing on a field, who reads/writes it (accesses edges, issue #1).
+        accessed = {
+            a: acc for a in attrs
+            if (acc := _nonempty({"reads": q.readers(a), "writes": q.writers(a)}))
+        }
+        if accessed:
+            result["attributes"] = accessed
     if matches:
         used_by = {}
         for n in matches:
@@ -214,6 +223,11 @@ class Session:
 
     def _op_columns_of(self, args) -> dict:
         return self.query.columns_of(self._canon(args["symbol"]))
+
+    def _op_accessors(self, args) -> dict:
+        # R1-C20: who reads/writes a class attribute (accesses edges, issue #1).
+        aid = self._canon(args["attribute"])
+        return {"reads": self.query.readers(aid), "writes": self.query.writers(aid)}
 
     def _op_callers(self, args) -> list:
         return self.query.callers(self._canon(args["symbol"]))
@@ -375,6 +389,7 @@ _OPS = {
     "column": Session._op_column,
     "columns": Session._op_columns,
     "columns_of": Session._op_columns_of,
+    "accessors": Session._op_accessors,
     "callers": Session._op_callers,
     "callees": Session._op_callees,
     "implementers": Session._op_implementers,

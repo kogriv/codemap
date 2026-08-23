@@ -49,7 +49,14 @@ from typing import Any
 #      span) and `mi` (Maintainability Index, 0–100). Computed in the behavioral AST
 #      pass (source-only, stdlib-only, deterministic); Query.hotspots blends them with
 #      structural coupling so "complex by McCabe" ranks alongside "big by connectivity".
-SCHEMA_VERSION = "0.10"
+# 0.11: R1-C20 — attribute-access edges. `accesses` edge (function → the `attribute`
+#      node it reads/writes), `extras.access` (`read` | `write`) + `extras.resolution`
+#      (`self` | `class` | `construct` | `deep`). Emitted by the `extract/attrflow.py`
+#      pass (fast `ast` for self./ClassName./construction-kwargs, deep `jedi` for typed
+#      `obj.field`). Wired into impact/references_to so a field's blast-radius is real;
+#      an attribute with no modelled accessor reports risk `unknown` (lower bound), never
+#      `none` (closes the issue #1 honesty gap — see gaps/attribute_impact_gap_2026-08-22).
+SCHEMA_VERSION = "0.11"
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship
@@ -68,6 +75,7 @@ EDGE_TYPES = frozenset({
     "implements",     # concrete class → the Protocol it structurally satisfies (M9)
     "reads",          # function → string-keyed column it reads (extras.access)
     "writes",         # function → string-keyed column it writes (extras.access)
+    "accesses",       # function → attribute node it reads/writes (extras.access, R1-C20)
 })
 
 
@@ -94,7 +102,7 @@ class Edge:
 
     type: str  # one of EDGE_TYPES (closed vocabulary, R1-C7): contains | imports |
     #            export | inherits | decorated_by | calls | references | implements |
-    #            reads | writes  (§2)
+    #            reads | writes | accesses  (§2)
     source: str
     target: str
     extras: dict[str, Any] = field(default_factory=dict)

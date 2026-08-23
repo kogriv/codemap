@@ -185,6 +185,12 @@ def _print_query_text(r) -> None:
                 print("  reads columns:", ", ".join(c["reads"]))
             if c.get("writes"):
                 print("  writes columns:", ", ".join(c["writes"]))
+    for aid, acc in r.get("attributes", {}).items():
+        print(f"\n[{aid}] attribute")
+        if acc.get("reads"):
+            print("  read by:", ", ".join(acc["reads"]))
+        if acc.get("writes"):
+            print("  written by:", ", ".join(acc["writes"]))
     for sid, by_root in r.get("used_by", {}).items():
         if by_root:
             summary = ", ".join(f"{root}: {n}" for root, n in sorted(by_root.items()))

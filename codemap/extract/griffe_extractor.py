@@ -21,6 +21,7 @@ from pathlib import Path
 
 import griffe
 
+from codemap.extract.attrflow import add_attrflow
 from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import add_dispatch, add_family_links
@@ -59,6 +60,8 @@ def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
     add_family_links(graph)
     # M12 (F6): column/string-key dataflow (reads/writes on `df['col']`).
     add_dataflow(graph, root, module_name)
+    # R1-C20 (issue #1): attribute-access edges (accesses: function → attribute).
+    add_attrflow(graph, root, module_name, deep=deep, search_path=search_path)
     return graph
 
 

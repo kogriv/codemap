@@ -31,7 +31,12 @@ def _type_tokens(type_str: str) -> set[str]:
 
 
 # edge types that carry a "who depends on whom" signal for blast-radius (M6).
-_IMPACT_EDGES = ("calls", "references", "inherits", "imports", "decorated_by")
+# ``accesses`` (R1-C20) always targets an ``attribute`` node, so adding it here
+# extends impact/references_to to fields *only* — it never touches non-attribute
+# blast-radius. Columns' ``reads``/``writes`` stay out on purpose (M12): a column
+# is a data key, not a symbol whose change breaks a caller.
+_IMPACT_EDGES = ("calls", "references", "inherits", "imports", "decorated_by",
+                 "accesses")
 
 # Edges that carry "usage / dependency" for relevance ranking (R1-C6). Directed
 # user→used, so PageRank accumulates rank on heavily-depended-upon symbols. contains
@@ -120,6 +125,16 @@ class Query:
                 self._col_writers.setdefault(e.target, set()).add(e.source)
             elif e.type == "reads":
                 self._col_readers.setdefault(e.target, set()).add(e.source)
+        # attribute access (R1-C20): attribute id -> {writers, readers}, from the
+        # `accesses` edges (extras.access read/write). Powers readers()/writers()
+        # and the honest field-impact answer (issue #1).
+        self._attr_writers: dict[str, set[str]] = {}
+        self._attr_readers: dict[str, set[str]] = {}
+        for e in graph.edges:
+            if e.type == "accesses":
+                bucket = (self._attr_writers if e.extras.get("access") == "write"
+                          else self._attr_readers)
+                bucket.setdefault(e.target, set()).add(e.source)
         # provenance (M6): node id -> root (core | tests | docs | ...).
         self._root_of = {n.id: n.extras.get("root", "core") for n in graph.nodes.values()}
         # inbound index for impact/blast-radius: target -> [(source, edge_type)].
@@ -413,6 +428,28 @@ class Query:
                 writes.append(col_id[len("column:"):])
         return {"reads": sorted(reads), "writes": sorted(writes)}
 
+    # -- attribute access (R1-C20, issue #1) ---------------------------------
+
+    def readers(self, attr_id: str) -> list[str]:
+        """Functions that *read* the attribute ``attr_id`` (resolves name/re-export).
+
+        The attribute analog of ``column().reads``: standing on a class field, see
+        who consumes it. Lower bound — attribute resolution is best-effort (fast
+        ``self.``/``ClassName.``/construction; deep ``obj.field``), like the calls
+        layer. Returns ``[]`` for an unknown id or one with no modelled reader.
+        """
+        canon = self.canonical(attr_id) or attr_id
+        return sorted(self._attr_readers.get(canon, set()))
+
+    def writers(self, attr_id: str) -> list[str]:
+        """Functions that *write* the attribute ``attr_id`` (assignment / construction).
+
+        The write side of :meth:`readers`; construction kwargs (``Cls(field=…)``)
+        count as writes to ``Cls.field`` (D3). Lower bound, same caveat.
+        """
+        canon = self.canonical(attr_id) or attr_id
+        return sorted(self._attr_writers.get(canon, set()))
+
     # -- registry families (M9/F4, surfaced for extension recipes — F10) ------
 
     def families(self) -> list[dict]:
@@ -575,21 +612,38 @@ class Query:
         for r in refs:
             by_distance[r["distance"]] = by_distance.get(r["distance"], 0) + 1
         max_distance = max(by_distance) if by_distance else 0
-        return {"symbol": symbol_id, "refs": refs, "by_root": by_root,
-                "by_distance": by_distance, "max_distance": max_distance,
-                "risk": self._impact_risk(len(refs), max_distance, len(by_root))}
+        node = self.graph.nodes.get(symbol_id)
+        kind = node.kind if node else None
+        out = {"symbol": symbol_id, "refs": refs, "by_root": by_root,
+               "by_distance": by_distance, "max_distance": max_distance,
+               "risk": self._impact_risk(len(refs), max_distance, len(by_root),
+                                         kind=kind)}
+        # Honesty (R1-C20 P0, issue #1): a field with no modelled accessor is a
+        # *lower bound*, not proof of safety — attribute access resolution is
+        # best-effort. Say so instead of the affirmative "none".
+        if kind == "attribute" and not refs:
+            out["risk_reason"] = ("attribute access is modelled best-effort; "
+                                  "no accessor found is a lower bound, not proof "
+                                  "nothing depends on this field")
+        return out
 
     @staticmethod
-    def _impact_risk(breadth: int, reach: int, roots: int) -> str:
+    def _impact_risk(breadth: int, reach: int, roots: int, *,
+                     kind: str | None = None) -> str:
         """Heuristic change-risk from blast-radius shape (breadth × reach × root-spread).
 
         Not a proof — a triage signal (like dead-code confidence). Breadth (how many
         references) dominates; transitive ``reach`` and ``roots`` (how many provenance
         roots — core/tests/docs/… — are touched) amplify it, since a symbol used
         across roots is costlier to change. Pair with the ref list before acting.
+
+        For an ``attribute`` (R1-C20) an empty blast-radius is ``unknown``, not
+        ``none``: attribute access is modelled best-effort, so "no accessor" is a
+        lower bound. For a function/class the call/reference layer does target them,
+        so empty stays the honest ``none``.
         """
         if breadth == 0:
-            return "none"
+            return "unknown" if kind == "attribute" else "none"
         if breadth >= 30 or roots >= 4 or (breadth >= 15 and reach >= 3):
             return "high"
         if breadth >= 5 or roots >= 2 or reach >= 2:

@@ -25,7 +25,7 @@ def test_edge_types_pinned():
     # updates this test too (guards accidental drift in the constant).
     assert EDGE_TYPES == {
         "contains", "imports", "export", "inherits", "decorated_by",
-        "calls", "references", "implements", "reads", "writes",
+        "calls", "references", "implements", "reads", "writes", "accesses",
     }
 
 
