@@ -51,10 +51,14 @@ def test_flagship_symbol_signature(graph):
     assert not node.is_deprecated
 
 
-def test_deprecated_detection(graph):
-    node = graph.nodes["bquant.indicators.macd.MACDZoneAnalyzer"]
+def test_deprecated_detection():
+    # bquant no longer ships a deprecated symbol (MACDZoneAnalyzer was removed), so
+    # the deprecation-detection feature is pinned on a dedicated fixture instead.
+    g = extract(Path(__file__).resolve().parent / "fixtures" / "deprpkg")
+    node = g.nodes["deprpkg.api.OldThing"]
     assert node.kind == "class"
     assert node.is_deprecated is True
+    assert g.nodes["deprpkg.api.LiveThing"].is_deprecated is False
 
 
 def test_determinism(graph):
@@ -72,7 +76,12 @@ def test_api_surface_report(graph):
     report = render_api_surface(graph)
     assert report.startswith("# API surface — `bquant`")
     assert "analyze_zones(df: pd.DataFrame) -> ZoneAnalysisBuilder" in report
-    # deprecated marker rendered for MACDZoneAnalyzer
+
+
+def test_api_surface_renders_deprecated_marker():
+    # the deprecated-marker rendering, pinned on the fixture (see test_deprecated_detection).
+    g = extract(Path(__file__).resolve().parent / "fixtures" / "deprpkg")
+    report = render_api_surface(g)
     assert "**⚠ deprecated**" in report
-    lines = [l for l in report.splitlines() if "MACDZoneAnalyzer" in l]
+    lines = [l for l in report.splitlines() if "OldThing" in l]
     assert lines and "deprecated" in lines[0]

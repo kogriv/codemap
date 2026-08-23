@@ -145,13 +145,15 @@ def test_repo_scope_deterministic():
 
 # -- real bquant: F1 blast radius now visible ---------------------------------
 
-def test_bquant_macd_blast_radius():
+def test_bquant_blast_radius_spans_tests():
+    # ZoneInfo is a flagship model used across the package and its test suite — its
+    # blast-radius must reach the tests root (was MACDZoneAnalyzer before its removal).
     if not BQUANT.is_dir():
         pytest.skip("bquant sibling repo not found")
     g = extract_repo(BQUANT, consumers=(BQUANT_REPO / "tests",), mode="thin")
     q = Query(g)
-    rep = q.impact("bquant.indicators.macd.MACDZoneAnalyzer")
-    # the backward-compat test suite must now show up as inbound refs.
+    rep = q.impact("bquant.analysis.zones.models.ZoneInfo")
+    # the test suite must show up as inbound refs (repo-scoped blast radius).
     assert "tests" in rep["by_root"]
     assert sum(rep["by_root"]["tests"].values()) >= 10
 

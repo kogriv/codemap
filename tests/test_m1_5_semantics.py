@@ -63,9 +63,12 @@ def test_subclasses_query(q):
 
 # -- CM-06: decorated_by -----------------------------------------------------
 
-def test_decorated_by_deprecated(q):
-    decorated = q.decorated_with("deprecated")
-    assert "bquant.indicators.macd.MACDZoneAnalyzer" in decorated
+def test_decorated_by_deprecated():
+    # bquant no longer ships a @deprecated symbol (MACDZoneAnalyzer removed); the
+    # decorated_by/decorated_with feature is pinned on the deprpkg fixture.
+    g = extract(Path(__file__).resolve().parent / "fixtures" / "deprpkg")
+    decorated = Query(g).decorated_with("deprecated")
+    assert "deprpkg.api.OldThing" in decorated
 
 
 def test_decorated_by_edge_present(graph):
