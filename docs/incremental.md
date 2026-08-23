@@ -55,3 +55,21 @@ so the build falls back to it (reported as `mode: full`).
   untouched (`mode: unchanged`) — the hot path for a future file watcher (M3.2).
 - **Scope-driven.** Change detection is the content-hash scope manifest (`codemap
   scope`), not mtimes — a touched-but-unchanged file triggers nothing.
+
+## Serving a fresh graph without a restart
+
+A long-lived `codemap serve` (or `serve --mcp`) caches the graph it loaded at start.
+After you rebuild the artifact, tell the server to pick it up:
+
+```bash
+codemap build ./pkg -o graph.json --deep --incremental   # ~5s
+# then, in the running server session:
+#   reload            # serve op / MCP tool → swaps in the new graph.json
+```
+
+`stats.freshness` describes the graph **actually being served**: if the on-disk artifact
+was rebuilt after the server loaded it, freshness is flagged `stale: true` with the
+on-disk build time and a "call `reload`" reason — a served snapshot is never labelled
+fresh while it's behind the file (issue #3). `reload` returns before/after counts so you
+can see what changed. Together, `build --incremental` + `reload` are the manual form of
+the deferred file-watcher (M3.2): rebuild fast, pick up without restarting.

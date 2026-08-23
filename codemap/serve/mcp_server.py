@@ -79,8 +79,17 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 
     @server.tool()
     def stats() -> dict:
-        """Graph overview: target, schema version, node/edge counts by kind/type."""
+        """Graph overview: target, schema version, node/edge counts by kind/type, and
+        `freshness` for the graph ACTUALLY served — `stale: true` (+reason) if the
+        on-disk artifact was rebuilt after this server loaded it. Call `reload` then."""
         return op("stats")
+
+    @server.tool()
+    def reload() -> dict:
+        """Reload the on-disk graph into this server without restarting — pick up an
+        external rebuild (e.g. `codemap build --incremental`). Returns before/after
+        counts and refreshed freshness. No-op with a reason if started from --build."""
+        return op("reload")
 
     @server.tool()
     def search(term: str, kind: str | None = None, limit: int = 50) -> dict:
@@ -243,7 +252,7 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 
 # tool names registered above (kept in sync for tests / introspection)
 MCP_TOOLS = (
-    "stats", "search", "query", "resolve", "callers", "callees", "impact",
+    "stats", "reload", "search", "query", "resolve", "callers", "callees", "impact",
     "call_contract", "implementers", "family", "families", "column", "columns_of",
     "accessors",
     "locate", "review", "architecture", "check", "diff", "communities", "flows", "source", "report",

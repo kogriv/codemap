@@ -52,20 +52,42 @@ def read_meta(graph_path: str) -> dict | None:
         return None
 
 
-def freshness(graph_path: str | None, *, now: float | None = None) -> dict | None:
-    """Freshness of a graph file: ``{built_at, age_seconds, rebuild?}`` or None.
+def freshness(graph_path: str | None, *, now: float | None = None,
+              served_mtime: float | None = None) -> dict | None:
+    """Freshness of a graph: ``{built_at, age_seconds, rebuild?, stale?, ...}`` or None.
 
-    ``built_at``/``age_seconds`` come from the file mtime (universal). ``rebuild``
+    ``built_at``/``age_seconds`` describe the graph **actually in hand**. For a one-shot
+    read that is the on-disk file's mtime. For a long-lived server that cached the graph
+    at start, pass ``served_mtime`` (the file mtime captured when it loaded): then the
+    report is about the *served* snapshot, and if the on-disk file has since advanced,
+    it is flagged ``stale: True`` with ``on_disk_built_at`` + a ``reason`` — never the
+    silent "fresh" that issue #3 caught (a stale answer labelled current). ``rebuild``
     (the recorded ``argv``/``cwd``) is present only when a sidecar exists.
     """
     if not graph_path:
         return None
-    try:
-        mtime = os.path.getmtime(graph_path)
-    except OSError:
-        return None
     now = time.time() if now is None else now
-    out = {"built_at": round(mtime), "age_seconds": max(0, round(now - mtime))}
+    try:
+        disk_mtime = os.path.getmtime(graph_path)
+    except OSError:
+        disk_mtime = None
+    if disk_mtime is None and served_mtime is None:
+        return None  # nothing on disk and nothing served — unknown
+
+    base = served_mtime if served_mtime is not None else disk_mtime
+    out = {"built_at": round(base), "age_seconds": max(0, round(now - base))}
+    # On-disk divergence: the served snapshot is older than the artifact on disk
+    # (an external rebuild happened) — or the artifact is gone. Say so, don't reassure.
+    if served_mtime is not None:
+        if disk_mtime is None:
+            out["stale"] = True
+            out["reason"] = ("the on-disk graph is gone since this server loaded it; "
+                             "restart to serve a current graph")
+        elif disk_mtime > served_mtime + 1e-6:
+            out["stale"] = True
+            out["on_disk_built_at"] = round(disk_mtime)
+            out["reason"] = ("the on-disk graph was rebuilt after this server loaded "
+                             "it; call `reload` (or restart) to serve the current graph")
     meta = read_meta(graph_path)
     if meta and meta.get("argv"):
         out["rebuild"] = {"argv": meta["argv"], "cwd": meta.get("cwd")}

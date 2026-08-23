@@ -128,6 +128,19 @@ class Session:
         # M18: path of the loaded graph file, if any — lets `stats` report the map's
         # age so a caller knows it may be stale. None for an in-memory graph.
         self.graph_path = graph_path
+        # #3: the mtime of the artifact WHEN WE LOADED IT — so `stats` describes the
+        # graph actually being served, not the file on disk (which may have been
+        # rebuilt out from under a long-lived server). None for an in-memory graph.
+        self._served_mtime = self._current_mtime()
+
+    def _current_mtime(self) -> float | None:
+        import os
+        if not self.graph_path:
+            return None
+        try:
+            return os.path.getmtime(self.graph_path)
+        except OSError:
+            return None
 
     def _canon(self, name_or_id: str) -> str:
         """Resolve a name / re-export id to the canonical node id (F13).
@@ -181,12 +194,43 @@ class Session:
             "node_kinds": dict(Counter(n.kind for n in self.graph.nodes.values())),
             "edge_types": dict(Counter(e.type for e in self.graph.edges)),
         }
-        # M18: age of the loaded graph file (may be stale vs current source).
+        # M18 + #3: age of the graph WE SERVE (not the on-disk file), with an explicit
+        # stale flag when the artifact was rebuilt after we loaded it.
         from codemap.freshness import freshness
-        fr = freshness(self.graph_path)
+        fr = freshness(self.graph_path, served_mtime=self._served_mtime)
         if fr is not None:
             out["freshness"] = fr
         return out
+
+    def _op_reload(self, args) -> dict:
+        """Reload the on-disk artifact into the served graph, without a restart (#3).
+
+        Picks up an external rebuild (e.g. ``codemap build --incremental``) so the
+        server stops answering from its startup snapshot. Returns what changed and the
+        refreshed freshness. A no-op-with-reason when the server has no on-disk graph
+        (started from ``--build``) — restart to refresh those.
+        """
+        from codemap.freshness import freshness
+        from codemap import store
+        if not self.graph_path:
+            return {"reloaded": False,
+                    "reason": "server was started from an in-memory build; "
+                              "restart to refresh"}
+        before = {"nodes": len(self.graph.nodes), "edges": len(self.graph.edges)}
+        try:
+            graph = store.load(self.graph_path)
+        except (OSError, ValueError) as exc:
+            return {"reloaded": False,
+                    "reason": f"could not read {self.graph_path}: "
+                              f"{type(exc).__name__}: {exc}"}
+        self.graph = graph
+        self.query = Query(graph)
+        self._served_mtime = self._current_mtime()
+        after = {"nodes": len(graph.nodes), "edges": len(graph.edges)}
+        return {"reloaded": True, "before": before, "after": after,
+                "changed": before != after,
+                "freshness": freshness(self.graph_path,
+                                       served_mtime=self._served_mtime)}
 
     def _op_query(self, args) -> dict:
         return build_query_result(self.query, args["name"])
@@ -381,6 +425,7 @@ class Session:
 _OPS = {
     "ping": Session._op_ping,
     "stats": Session._op_stats,
+    "reload": Session._op_reload,
     "query": Session._op_query,
     "impact": Session._op_impact,
     "resolve": Session._op_resolve,
