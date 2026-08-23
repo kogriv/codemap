@@ -62,6 +62,9 @@ def test_launcher_none_when_neither_present(monkeypatch):
 
 
 def test_route_wraps_answer_with_disclaimer(monkeypatch):
+    # mock the launcher probe too — else this passes only where gitnexus is installed
+    # (which("gitnexus") is None on a clean box → route degrades before run_json).
+    monkeypatch.setattr(gitnexus, "which", lambda b: "/usr/bin/gitnexus")
     monkeypatch.setattr(gitnexus, "run_json", lambda argv, **kw: {"hits": ["z"]})
     ans = gitnexus.GitNexusRouter().route("semantic-search", "zones")
     assert isinstance(ans, RawAnswer)
@@ -72,7 +75,10 @@ def test_route_wraps_answer_with_disclaimer(monkeypatch):
 
 
 def test_route_degrades_when_tool_fails(monkeypatch):
-    # run_json returns None on any failure → payload None, no crash.
+    # launcher present, but the tool call itself fails: run_json returns None →
+    # payload None, no crash. (Mock which too, else the launcher-absent path would
+    # satisfy this for the wrong reason where gitnexus isn't installed.)
+    monkeypatch.setattr(gitnexus, "which", lambda b: "/usr/bin/gitnexus")
     monkeypatch.setattr(gitnexus, "run_json", lambda argv, **kw: None)
     ans = gitnexus.GitNexusRouter().route("semantic-search", "zones")
     assert ans.payload is None
