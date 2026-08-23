@@ -31,12 +31,13 @@ from codemap.model import Edge, Graph, Node
 _NODE_KINDS = {"module", "class", "function", "attribute"}
 
 
-def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
-    """Build a code graph from a Python package directory.
+def build_structural(package_path: str | Path):
+    """The cheap, deterministic base: griffe load + definition nodes + structural
+    edges (contains / imports / inherits / decorated_by / export). No behavioral
+    layer. Shared by :func:`extract` and the incremental path (R1-C9), which both
+    add the (expensive, tier-sensitive) behavioral passes on top.
 
-    ``deep=True`` runs the jedi-backed call resolver (M5) — richer call-graph
-    (local-variable type inference) at ~1 min build cost; default is the fast
-    ast tier (sub-second). See ``extract/behavior.py``.
+    Returns ``(graph, root, module_name, search_path)``.
     """
     pkg_dir = Path(package_path).resolve()
     if not pkg_dir.is_dir():
@@ -52,8 +53,20 @@ def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
 
     _collect(graph, root, search_path, module_name, aliases, imports)
     _resolve_edges(graph, module_name, aliases, imports)
+    return graph, root, module_name, search_path
+
+
+def add_behavioral_layer(graph, root, module_name, search_path, *, deep: bool,
+                         behavior_only=None, attr_only=None) -> None:
+    """Add every behavioral pass on top of a structural base (in the fixed order).
+
+    ``behavior_only`` / ``attr_only`` (module-path sets) restrict the two expensive
+    jedi-sensitive passes to those modules — the incremental hook (R1-C9). The cheap,
+    tier-independent passes (dispatch / family / dataflow) always run whole.
+    """
     # M4/M5: call-graph + control skeleton (deep=jedi type inference).
-    add_behavior(graph, root, module_name, deep=deep, search_path=search_path)
+    add_behavior(graph, root, module_name, deep=deep, search_path=search_path,
+                 only=behavior_only)
     # M7: bridge factory/registry dispatch seams using the M1.5 registry table.
     add_dispatch(graph, root, module_name)
     # M9 (F4): link registry-family members to the Protocol they satisfy.
@@ -61,7 +74,19 @@ def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
     # M12 (F6): column/string-key dataflow (reads/writes on `df['col']`).
     add_dataflow(graph, root, module_name)
     # R1-C20 (issue #1): attribute-access edges (accesses: function → attribute).
-    add_attrflow(graph, root, module_name, deep=deep, search_path=search_path)
+    add_attrflow(graph, root, module_name, deep=deep, search_path=search_path,
+                 only=attr_only)
+
+
+def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
+    """Build a code graph from a Python package directory.
+
+    ``deep=True`` runs the jedi-backed call resolver (M5) — richer call-graph
+    (local-variable type inference) at ~1 min build cost; default is the fast
+    ast tier (sub-second). See ``extract/behavior.py``.
+    """
+    graph, root, module_name, search_path = build_structural(package_path)
+    add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
     return graph
 
 

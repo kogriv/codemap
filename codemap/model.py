@@ -125,10 +125,18 @@ class Graph:
     # -- canonical serialization (deterministic — DESIGN §2.2) --------------
 
     def to_dict(self) -> dict[str, Any]:
+        import json as _json
         nodes = [asdict(self.nodes[nid]) for nid in sorted(self.nodes)]
+        # Sort by the full edge content, not just (type, source, target): two edges
+        # can share that triple but differ in `extras` (e.g. a behavioral `calls` and
+        # a registry-dispatch `calls`). Including a stable render of `extras` in the
+        # key makes the order **insertion-independent**, so an incremental rebuild
+        # (R1-C9), which splices edges in a different order, serializes identically to
+        # a full build.
         edges = sorted(
             (asdict(e) for e in self.edges),
-            key=lambda e: (e["type"], e["source"], e["target"]),
+            key=lambda e: (e["type"], e["source"], e["target"],
+                           _json.dumps(e["extras"], sort_keys=True, ensure_ascii=False)),
         )
         return {
             "codemap_schema": SCHEMA_VERSION,

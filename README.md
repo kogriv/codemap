@@ -144,6 +144,10 @@ the live graph, findings, and the milestone that closed them.
   reason) with a `[dead_code]` whitelist and `--min-confidence` filter.
 - **[docs/pack.md](docs/pack.md)** — `codemap pack`: PageRank ranking + token-budgeted context slice for
   AI agents (global importance or seed-focused relevance).
+- **[docs/attribute-edges.md](docs/attribute-edges.md)** — `accesses` edges: who reads/writes a class field,
+  honest field-level `impact` (`accessors`; `unknown` vs `none`).
+- **[docs/incremental.md](docs/incremental.md)** — `codemap build --incremental`: recompute only changed
+  modules (~12× faster on `--deep`), byte-identical on the fast tier.
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
 - **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each

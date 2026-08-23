@@ -39,15 +39,20 @@ _OPERATOR_NODES = (ast.operator, ast.unaryop, ast.boolop, ast.cmpop)
 
 
 def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
-                 search_path=None) -> None:
+                 search_path=None, only=None) -> None:
     """Augment ``graph`` (built by the griffe pass) with the behavioral layer.
 
     ``deep=True`` swaps the ast name-resolver for jedi type inference on calls
     (``search_path`` is the dir containing the package, used as the jedi project).
+    ``only`` (a set of module paths) restricts the pass to those modules — the
+    incremental hook (R1-C9): the caller reuses the old graph's edges/extras for the
+    modules left out. When ``None`` (default) every module is processed.
     """
     modules = _index_modules(griffe_root)
     project = _jedi_project(search_path) if deep else None
     for modpath in sorted(modules):
+        if only is not None and modpath not in only:
+            continue
         mod = modules[modpath]
         fp = getattr(mod, "filepath", None)
         if not fp:

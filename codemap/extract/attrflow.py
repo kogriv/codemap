@@ -54,13 +54,15 @@ from codemap.model import Edge
 
 
 def add_attrflow(graph, griffe_root, target_pkg: str, *, deep: bool = False,
-                 search_path=None) -> None:
+                 search_path=None, only=None) -> None:
     """Add ``accesses`` edges (function → attribute) for read/write sites.
 
     ``deep=True`` enables the jedi tier for ``obj.field`` on typed locals; the fast
     tier (``self.``/``ClassName.``/construction kwargs) needs only stdlib ``ast``.
     Per-function ``extras.attr_access`` coverage counts (out / resolved / unresolved)
     are recorded so the graph reports its own honesty, like ``extras.calls``.
+    ``only`` (a set of module paths) restricts the pass — the incremental hook
+    (R1-C9), mirroring :func:`add_behavior`.
     """
     modules = _index_modules(griffe_root)
     project = _jedi_project(search_path) if deep else None
@@ -68,6 +70,8 @@ def add_attrflow(graph, griffe_root, target_pkg: str, *, deep: bool = False,
     # (func_id, attr_id, access, resolution) — dedup collapses repeated sites.
     edges: set[tuple[str, str, str, str]] = set()
     for modpath in sorted(modules):
+        if only is not None and modpath not in only:
+            continue
         if "samples.embedded" in modpath:
             continue  # embedded datasets are data, not code (matches dataflow.py)
         mod = modules[modpath]

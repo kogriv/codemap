@@ -72,6 +72,7 @@ def _graph_from(args):
 
 
 def _cmd_build(args) -> int:
+    incr_info = None
     if args.consumer or args.docs:
         graph = extract_repo(
             args.path,
@@ -80,6 +81,8 @@ def _cmd_build(args) -> int:
             mode=args.mode,
             deep=args.deep,
         )
+    elif getattr(args, "incremental", False) and args.out:
+        graph, incr_info = _incremental_build(args)
     else:
         graph = extract(args.path, deep=args.deep)
     if args.out:
@@ -96,10 +99,33 @@ def _cmd_build(args) -> int:
             scope = None  # scope manifest is provenance, never fatal to a build
         write_meta(args.out, argv=getattr(args, "_argv", []),
                    cwd=os.getcwd(), target=graph.target, scope=scope)
+        if incr_info is not None:
+            print(f"[incremental] {incr_info['mode']}: "
+                  f"{len(incr_info['affected'])} module(s) recomputed", file=sys.stderr)
         print(args.out)
     else:
         print(store.dumps(graph))
     return 0
+
+
+def _incremental_build(args):
+    """Incremental rebuild (R1-C9): reuse the old --out graph + its scope sidecar.
+
+    Falls back to a full extract when there's no prior graph/scope to build on (first
+    build, missing sidecar, or a different target).
+    """
+    from codemap.freshness import read_meta
+    from codemap.incremental import update_graph
+    from codemap.scope import resolve_scope
+    old_meta = read_meta(args.out)
+    old_scope = (old_meta or {}).get("scope")
+    if not (Path(args.out).exists() and old_scope):
+        return extract(args.path, deep=args.deep), {"mode": "full", "affected": []}
+    old_graph = store.load(args.out)
+    new_scope = resolve_scope(args.path)
+    if old_graph.target != Path(args.path).resolve().name:
+        return extract(args.path, deep=args.deep), {"mode": "full", "affected": []}
+    return update_graph(old_graph, args.path, old_scope, new_scope, deep=args.deep)
 
 
 def _cmd_scope(args) -> int:
@@ -462,6 +488,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Repo-scope: docs root (*.md) → doc nodes + references. Repeatable.")
     b.add_argument("--mode", choices=["thin", "full"], default="thin",
                    help="Consumer granularity: thin=per-file (default), full=per-function.")
+    b.add_argument("--incremental", action="store_true",
+                   help="Reuse an existing --out graph + its scope sidecar: recompute "
+                        "only changed modules (R1-C9). Identical to a full build; much "
+                        "faster on --deep. Single-package only (no --consumer/--docs).")
     b.set_defaults(func=_cmd_build)
 
     sc = sub.add_parser("scope", help="Resolve the input scope manifest (scope_id + profile), or --diff two.")
