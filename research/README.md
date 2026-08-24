@@ -47,6 +47,9 @@ against codemap" gets answered with numbers, not adjectives.
 - **[positioning.md](positioning.md)** — the *publication layer*: article-ready build-story + positioning,
   distilled from the cards (realizes R1-C14). Story Zero (codemap + roadmap) + one build-story per notable
   разбор. Facts live in the cards; this narrates them.
+- **[blog/](blog/)** — the *editorial layer*: the plan for turning the build-story into a published
+  Markdown dev-blog series (order, titles, hooks, per-post status). Narrates from `positioning.md`; the
+  posts themselves land as `blog/NN-*.md`.
 
 ### The разбор convention (codemap-native)
 

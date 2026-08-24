@@ -65,7 +65,7 @@ language to learn.
   `scope_id` makes it deterministic on its *input* — a content hash of exactly the files that went in, with a
   git binding. (Same id ⇒ provably identical input — the thing that makes tool-vs-tool comparison honest.)
 
-Schema **0.9**, ~**159 tests**, warm serve + MCP + SCIP export.
+Schema **0.11**, ~**369 tests**, warm serve (29 ops / 26 MCP tools) + SCIP export.
 
 ### Where it sits in the field (measured, not asserted)
 The R1 survey placed codemap in an **under-served spot**: a *semantic (resolved) code graph* that is
