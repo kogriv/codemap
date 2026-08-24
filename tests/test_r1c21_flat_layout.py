@@ -286,3 +286,34 @@ def test_a_mixed_core_counts_as_flat(tmp_path):
         "from alpha import f\n\n\ndef use():\n    return f()\n", encoding="utf-8")
     g = _repo_graph(repo)
     assert _imports(g)[("tests.test_alpha", "core.alpha")] == {"resolution": "flat"}
+
+
+# -- issue #8: one check's caption must not describe another's condition -------
+
+def test_namespace_note_does_not_claim_an_empty_graph(tmp_path):
+    """The regression #8 caught: the namespace *note* was rendered with the empty-graph
+    *warning*'s "everything below is unknown" — over a section computed from 404 edges.
+    A correct result captioned as unknown is the mirror of the bug the banners exist for."""
+    md = render_dead_code(Query(_repo_graph(_xroot(tmp_path, packaged=False))))
+    note = [ln for ln in md.splitlines() if "no __init__.py" in ln]
+    assert note and "empty import graph" not in note[0]
+    assert note[0].startswith("> ℹ️")          # a note, not a warning
+
+
+def test_empty_graph_warning_keeps_its_consequence(tmp_path):
+    """…while the check that *does* invalidate the findings still says so, loudly."""
+    md = render_dead_code(Query(extract(_lonely(tmp_path))))
+    warn = [ln for ln in md.splitlines() if "0 import edges" in ln]
+    assert warn and warn[0].startswith("> ⚠️")
+    assert "unknown" in warn[0]
+
+
+def test_severity_is_per_check(tmp_path):
+    """Severity belongs to the check, so presenters cannot mislabel it."""
+    from codemap.diagnostics import NOTE, WARNING
+    by_code = {d["code"]: d for d in diagnostics(extract(_namespace_copy(tmp_path)))}
+    assert by_code[NAMESPACE_TARGET]["severity"] == NOTE
+    assert "consequence" not in by_code[NAMESPACE_TARGET]
+    lonely = {d["code"]: d for d in diagnostics(extract(_lonely(tmp_path)))}
+    assert lonely[NO_IMPORT_EDGES]["severity"] == WARNING
+    assert lonely[NO_IMPORT_EDGES]["consequence"]

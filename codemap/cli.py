@@ -89,7 +89,9 @@ def _cmd_build(args) -> int:
     # R1-C21: a well-formed but vacuous graph must announce itself — silence is what
     # lets an unparsed layout read as a clean bill of health downstream.
     for d in diagnostics(graph):
-        print(f"[warning] {d['message']}", file=sys.stderr)
+        # each check owns its severity and its consequence — a note is not a warning (#8)
+        text = " ".join(p for p in (d["message"], d.get("consequence")) if p)
+        print(f"[{d.get('severity', 'warning')}] {text}", file=sys.stderr)
     if args.out:
         store.save(graph, args.out)
         # M18: record the build recipe beside the graph so `codemap refresh` can

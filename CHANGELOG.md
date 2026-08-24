@@ -37,6 +37,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 - A second check for the dimension the first one missed: **≥1 consumer/doc root supplied but not one
   reference from them reaches the core**. The case that prompted it had 75 import edges — so the
   "empty graph" check stayed quiet — and none of them crossed a root boundary.
+- Each check carries its own **severity** (`warning` invalidates the findings below it; `note` states a
+  fact and invalidates nothing) and its own consequence sentence, rendered through one shared presenter.
+  Fixes issue [#8](https://github.com/kogriv/codemap/issues/8), where the namespace-package *note* was
+  captioned with the empty-graph *warning*'s "derived from that empty import graph — unknown, not clean"
+  over a report computed from 404 import edges: the mirror of the bug the banners exist to prevent.
 
 ## [0.0.2] - 2026-08-23
 

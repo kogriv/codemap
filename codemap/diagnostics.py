@@ -19,6 +19,13 @@ NO_IMPORT_EDGES = "no_import_edges"
 NAMESPACE_TARGET = "namespace_target"
 NO_CROSS_ROOT_EDGES = "no_cross_root_edges"
 
+#: A ``warning`` invalidates the conclusions a surface draws from the graph — read them as
+#: unknown. A ``note`` states a fact about how the graph was built and invalidates nothing.
+#: Each check owns its own ``consequence`` sentence: presenters must not supply one, or a
+#: correct result ends up captioned with another check's meaning (issue #8).
+WARNING = "warning"
+NOTE = "note"
+
 
 def import_graph_diagnostic(graph) -> dict | None:
     """Flag an empty import graph over a multi-module target, else ``None``.
@@ -34,7 +41,10 @@ def import_graph_diagnostic(graph) -> dict | None:
         return None
     return {
         "code": NO_IMPORT_EDGES,
+        "severity": WARNING,
         "modules": modules,
+        "consequence": ("Findings below are derived from that empty import graph — read "
+                        "them as **unknown**, not as a clean bill of health."),
         "message": (
             f"0 import edges across {modules} modules — the import graph is empty, so "
             "layers, cycles, coupling and orphan detection are vacuous rather than clean. "
@@ -60,6 +70,7 @@ def namespace_target_diagnostic(graph) -> dict | None:
         return None
     return {
         "code": NAMESPACE_TARGET,
+        "severity": NOTE,   # a fact about provenance; it invalidates nothing (issue #8)
         "target": graph.target,
         "message": (
             f"`{graph.target}` has no __init__.py — it is a namespace package, so its "
@@ -91,7 +102,10 @@ def cross_root_diagnostic(graph) -> dict | None:
             return None
     return {
         "code": NO_CROSS_ROOT_EDGES,
+        "severity": WARNING,
         "roots": outer,
+        "consequence": ("Any cross-root finding below — who uses a symbol outside its own "
+                        "root — is **unknown**, not empty."),
         "message": (
             f"{len(outer)} non-core root(s) supplied ({', '.join(outer)}) but not one "
             "reference from them reaches the core — cross-root `impact` will read as "
@@ -106,3 +120,19 @@ def diagnostics(graph) -> list[dict]:
     checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph),
               cross_root_diagnostic(graph))
     return [d for d in checks if d is not None]
+
+
+def render_lines(graph) -> list[str]:
+    """Markdown blockquote lines for a report header (empty when the graph looks sound).
+
+    Presenters call this instead of formatting diagnostics themselves — a caption that
+    belongs to one check must never end up under another (issue #8: the namespace *note*
+    was rendered with the empty-import-graph *warning*'s "everything below is unknown",
+    on a graph with 404 import edges).
+    """
+    lines: list[str] = []
+    for d in diagnostics(graph):
+        mark = "⚠️" if d.get("severity", WARNING) == WARNING else "ℹ️"
+        text = " ".join(part for part in (d["message"], d.get("consequence")) if part)
+        lines.extend([f"> {mark} {text}", ""])
+    return lines
