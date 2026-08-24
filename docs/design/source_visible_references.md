@@ -146,3 +146,32 @@ precision still 100%, zero phantom targets.
 | grader untouched | `_grade_dead` unchanged |
 | graph size | codemap +7.7%, bquant +5.0% |
 | no schema bump | no new edge type; `extras` keys only |
+
+---
+
+## D6 (follow-up, issue #9) — a local binding is not a reference
+
+**Decision: suppress by scope, in function scopes only.**
+
+D1 resolved a bare `Name` load against the module's members, which over-attributes when the name is
+**locally bound**: Python binds per scope, so after `_x = 1` anywhere in a function, every read of `_x`
+there is the local. Six forms produced false edges (assignment, parameter, `for`-target, `with ... as`,
+`except ... as`, a nested `def` of the same name) — the reporter saw one and expected parameters to be
+handled; they were not, the test name simply did not collide.
+
+- **`global` / `nonlocal` opt back out** — the name genuinely *is* the module binding then.
+- **Module scope is never filtered.** Rebinding at module level (`_panel = wrap(_panel)`) does not create a
+  different symbol; it is the same node the graph already holds.
+- **Function-local imports do *not* suppress.** An import binds the name to the symbol it imports, which is
+  what the edge records. The first cut treated them as shadowing and dropped a real bquant edge
+  (`register_builtin_indicators → IndicatorFactory`, imported inside the function body) — found by measuring
+  the delta, not by reading the code. Residual, documented: a local import that *aliases* a different symbol
+  sharing a module member's name still resolves to the module member. Rarer than the identity case.
+  (Whether a local-only import resolves at all is a separate, pre-existing matter — it depends on griffe's
+  module import map, which records some function-local imports and not others.)
+
+**Acceptance:** the six forms produce no edge and their targets stay `high`; `global` keeps its edge; the
+module-level dispatch table keeps its edges; **0 edges suppressed** on codemap and bquant (measured
+back-to-back, since the live bquant tree is being edited concurrently and cross-time diffs on it are not
+meaningful). +10 tests, suite 415 → **425**.
+

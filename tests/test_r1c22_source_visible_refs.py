@@ -144,3 +144,54 @@ def test_codemap_no_longer_calls_its_own_dispatch_table_dead():
     dc = {c["id"]: c["confidence"] for c in Query(extract(CODEMAP)).dead_code()}
     cmds = [i for i in dc if i.startswith("codemap.cli._cmd_")]
     assert cmds and all(dc[i] != "high" for i in cmds)
+
+
+# -- R1-C22-f1: over-attribution, the mirror of the above (issue #9) -----------
+
+SHADOWS = "refpkg.shadows"
+
+
+@pytest.mark.parametrize("func,shadowed", [
+    ("by_assign", "_shadowed_assign"),      # x = 1  — binds for the whole scope
+    ("by_param", "_shadowed_param"),        # a parameter of the same name
+    ("by_loop", "_shadowed_loop"),          # for-target
+    ("by_with", "_shadowed_with"),          # with ... as
+    ("by_except", "_shadowed_except"),      # except ... as
+    ("by_nested", "_shadowed_nested"),      # a nested def of the same name
+])
+def test_a_local_binding_is_not_a_reference(g, func, shadowed):
+    """Python binds per *scope*: once a name is bound anywhere in a function, every read
+    of it there is the local. Attributing that read to a module-level function of the same
+    name invents a reference — and hides a dead function in `low` (issue #9)."""
+    assert not _edges(g, "references", f"{SHADOWS}.{func}", f"{SHADOWS}.{shadowed}")
+
+
+def test_shadowed_functions_stay_high(g):
+    """The consequence that matters: they are as dead as their unshadowed twins."""
+    dc = {c["id"]: c["confidence"] for c in Query(g).dead_code()}
+    for name in ("_shadowed_assign", "_shadowed_param", "_shadowed_loop",
+                 "_shadowed_with", "_shadowed_except", "_shadowed_nested"):
+        assert dc.get(f"{SHADOWS}.{name}") == "high", name
+
+
+def test_global_declaration_opts_back_out(g):
+    """`global x` says the name *is* the module binding — not a local shadow."""
+    assert _edges(g, "references", f"{SHADOWS}.by_global", f"{SHADOWS}._rebound_global")
+
+
+def test_a_local_import_does_not_count_as_shadowing(g):
+    """An import binds the name to the symbol it imports — the very thing an edge records.
+    Treating it as a shadow dropped a real edge on bquant
+    (`register_builtin_indicators → IndicatorFactory`, imported inside its own body)."""
+    from codemap.extract.behavior import _local_bindings
+    import ast
+    src = (FIX / "shadows.py").read_text(encoding="utf-8")
+    fn = next(n for n in ast.parse(src).body
+              if isinstance(n, ast.FunctionDef) and n.name == "by_local_import")
+    assert "_json_default" not in _local_bindings(fn)
+
+
+def test_module_scope_rebinding_is_not_shadowing(g):
+    """At module level a rebinding is the *same* symbol, so the dispatch table in
+    panels.py must keep its edges — the suppression is function-scope only."""
+    assert _edges(g, "references", "refpkg.panels", "refpkg.panels._panel_a")

@@ -57,6 +57,14 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   it always demoted on an inbound edge, and now it has them. `high` went 46 → 29 (codemap) and 5 → 2
   (bquant); additions only (bquant +364 edge pairs, 0 removed). No schema change.
   See [docs/dead-code.md](docs/dead-code.md#what-counts-as-a-reference).
+- **…and a local variable no longer counts as a reference to the function it shadows** (R1-C22-f1; issue
+  [#9](https://github.com/kogriv/codemap/issues/9)) — the mirror of the above. Python binds per scope, so a
+  read of a locally-bound name is the local, not a module function of the same name; six binding forms
+  (assignment, parameter, `for`, `with ... as`, `except ... as`, a nested `def`) produced false edges and
+  hid a dead function in `low`. `global`/`nonlocal` opt back out, module-level rebinding is unaffected, and
+  function-local **imports** deliberately do not suppress — an import binds the name to the symbol it
+  imports, which is what the edge records. Measured inert on real code: 0 edges suppressed on either package.
+
 
 ## [0.0.2] - 2026-08-23
 

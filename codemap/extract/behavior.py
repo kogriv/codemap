@@ -481,6 +481,55 @@ def _own_name_loads(scope, *, decorators_of=None):
             if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load) and id(n) not in skip]
 
 
+def _local_bindings(scope) -> set[str]:
+    """Names bound in a **function** scope, which therefore never mean the module symbol.
+
+    Python binds per scope, not per statement: once a name is assigned anywhere in a
+    function, every read of it in that function is the local — so a local that happens to
+    share a name with a module-level function is not a reference to it (R1-C22-f1, issue
+    #9, the mirror of the under-attribution #7 fixed).
+
+    Covers assignment / augmented / walrus / `for` / `with ... as` / `except ... as`
+    (all of which produce a `Name` store or an explicit name), parameters, and nested
+    `def`/`class` names. ``global``/``nonlocal`` opt a name back out: it really is the
+    module binding then.
+
+    A **function-local import** is deliberately *not* treated as shadowing. It binds the
+    name to the symbol it imports, which is the very thing the edge records — suppressing
+    it would drop a real reference (measured: it dropped
+    ``register_builtin_indicators → IndicatorFactory`` on bquant, where the function
+    imports that class inside its own body). The residual case — a local import that
+    aliases a *different* symbol sharing a name with a module member — resolves to the
+    module member instead; rarer than the identity case, and the same class of
+    over-attribution this function otherwise fixes.
+
+    The **module** scope is deliberately not filtered by the caller: rebinding a name at
+    module level (`_panel = wrap(_panel)`) does not create a different symbol — it is the
+    same node the graph already has.
+    """
+    bound: set[str] = set()
+    declared_global: set[str] = set()
+
+    args = getattr(scope, "args", None)
+    if args is not None:
+        for a in [*args.posonlyargs, *args.args, *args.kwonlyargs, args.vararg, args.kwarg]:
+            if a is not None:
+                bound.add(a.arg)
+    # names a nested def/class binds in *this* scope (their bodies are separate scopes)
+    for child in ast.iter_child_nodes(scope):
+        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            bound.add(child.name)
+
+    for node in _own_nodes(scope):
+        if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
+            bound.add(node.id)
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            bound.add(node.name)
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            declared_global.update(node.names)
+    return bound - declared_global
+
+
 def _annotation_nodes(node):
     """The annotation sub-trees hanging off one AST node (params, return, AnnAssign)."""
     if isinstance(node, ast.AnnAssign) and node.annotation is not None:
@@ -533,8 +582,12 @@ def _emit_name_references(graph, src_id, scope, modpath, imports, modmembers,
     Labelled ``resolution="name"`` so an intra-core name-load stays distinguishable from
     the consumer/doc references, and deduped per target with a site count.
     """
+    # R1-C22-f1: a load of a locally-bound name is the local, not the module symbol.
+    local = set() if isinstance(scope, ast.Module) else _local_bindings(scope)
     counts: dict[tuple[str, str], int] = {}
     for node, kind in _own_name_loads(scope, decorators_of=decorators_of):
+        if node.id in local:
+            continue
         target, resolution = _resolve_name(node.id, modpath, imports, modmembers)
         if resolution not in ("module", "imported") or not target:
             continue

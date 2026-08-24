@@ -108,3 +108,44 @@ edges. The criterion is *additions only, each traceable to a source-visible refe
 false-positive counts above go to zero*.
 
 Design decisions and sizing: [docs/design/source_visible_references.md](../docs/design/source_visible_references.md).
+
+---
+
+## 5. Follow-up (issue #9) — the mirror: over-attribution
+
+**Reported 2026-08-24 on `b105d33`**, after the reporter verified the fix end-to-end on the same repo:
+**10 of 10 now graded correctly** (was 9 of 10 wrong), and both ways the fix could have overshot were
+checked and clean — a name appearing only in a docstring/string literal creates no reference, and neither
+does a name that is only ever *stored*. Cross-root edges still verify: 1248 of them, 0 false.
+
+**The remaining case.** A **Load of a locally-bound name** that happens to match a module-level function was
+attributed to that function:
+
+```python
+def unrelated():
+    _dead_shadowed = 1      # binds the name for the whole scope
+    return _dead_shadowed   # reads the LOCAL, not the function
+```
+
+Python binds per *scope*, not per statement, so `unrelated` never touches the function — yet the graph grew
+`unrelated → _dead_shadowed`, and an equally dead function hid in `low` instead of `high`. Bounded harm
+(nothing live is deleted; `--min-confidence high` just misses one), and it is the exact mirror of §1: the
+same question — *does this name occurrence actually resolve to that function?* — answered "too often"
+instead of "not often enough".
+
+**Wider than reported.** The issue names assignment, and expects parameters to be already handled. Measured
+here, **four** binding forms produced false edges — assignment, **parameter**, `for`-target and `with ... as`
+— plus `except ... as` and a nested `def` of the same name. The parameter case looked correct in the
+reporter's test only because the parameter name did not collide.
+
+**One thing the obvious rule got wrong.** Treating *function-local imports* as shadowing dropped a **real**
+edge on bquant: `register_builtin_indicators → IndicatorFactory`, where the function imports that class in
+its own body. An import binds the name to the symbol it imports — which is precisely what the edge records —
+so unlike an assignment it must not suppress. Caught by measuring the delta, not by review.
+
+Fixed in R1-C22-f1: `_local_bindings` per function scope (`global`/`nonlocal` opt back out; module scope is
+never filtered, since rebinding there is the same symbol). Verified inert on real code — **0 edges
+suppressed** on codemap and on bquant.
+
+Issue [#9](https://github.com/kogriv/codemap/issues/9).
+
