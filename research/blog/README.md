@@ -85,7 +85,7 @@ Status legend: 🔲 not started · ✍️ drafting · 🔎 review · ✅ publish
   longer just "rebuild."
 
 ### P1 — "The competitor wasn't broken. We were." (graphlens)
-- **Status:** 🔲  ← **recommended first to publish**
+- **Status:** ✍️ drafting (kept out of repo until published)  ← **recommended first to publish**
 - **Role:** the trust-builder. A near-takedown we talked ourselves out of.
 - **Hook:** we almost published that a rival's impact analysis was broken — it returned
   *zero* callers for a class codemap mapped fully. The bug was our `PATH`.
