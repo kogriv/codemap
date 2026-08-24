@@ -6,9 +6,9 @@ the code it analyzes. One canonical, deterministic graph store → many renders:
 dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review,
 and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code-intelligence tools.
 
-**Status:** 🟢 M0–M19.A implemented + research track (R1/R2) — schema 0.9, **160 tests green** (+ a SCIP-CLI
-check that runs when the `scip` binary is present), warm serve surface with 21 ops, an MCP adapter, and
-SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
+**Status:** 🟢 M0–M19.A implemented + research track (R1/R2) — schema 0.11, **369 tests green** (+ a SCIP-CLI
+check that runs when the `scip` binary is present), warm serve surface with 29 ops (26 exposed as MCP tools),
+and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
 v1 boundaries), **[BACKLOG.md](BACKLOG.md)** (roadmap), and **[research/](research/)** (tool landscape).
 
 ## Why it exists
@@ -75,7 +75,7 @@ codemap semantic "detect swing pivots" --build ./pkg --root pkg
 # token-budgeted context pack — most relevant graph slice under N tokens (ranked; --seed to focus)
 codemap pack --graph graph.json --budget 2000 --seed analyze_zones
 
-# warm resident process — JSON requests over stdin/stdout (21 ops)
+# warm resident process — JSON requests over stdin/stdout (29 ops)
 codemap serve --graph graph.json --source-root .
 
 # …or expose the same surface as MCP tools for an AI-agent host (needs [mcp] extra)
