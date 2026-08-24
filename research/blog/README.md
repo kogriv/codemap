@@ -102,7 +102,7 @@ Status legend: 🔲 not started · ✍️ drafting · 🔎 review · ✅ publish
 - **Length:** ~2000 words. **Depends on:** nothing (self-contained; that's why it leads).
 
 ### P2 — "The one that does more — and why that's fine." (GitNexus)
-- **Status:** ✍️ drafting (EN + RU, kept out of repo)
+- **Status:** 🔎 draft approved, ready to publish (EN + RU, kept out of repo)
 - **Role:** thesis-proving. The richer rival that turns out to *demonstrate* the pitch.
 - **Hook:** a rival that does semantic search + clustering + flows + 14 languages, in a
   1.7 GB install. The 2 a.m. fear: they lapped us. The measured answer: they're the other
@@ -121,7 +121,7 @@ Status legend: 🔲 not started · ✍️ drafting · 🔎 review · ✅ publish
 - **Length:** ~2200 words. **Depends on:** P0 for the "wrap vs absorb" framing (link it).
 
 ### P3 — "The competitor that does *less* — and that's why we take it." (cocoindex-code)
-- **Status:** ✍️ drafting (EN + RU, kept out of repo)
+- **Status:** 🔎 draft approved, ready to publish (EN + RU, kept out of repo)
 - **Role:** the composition/licensing turn. The emptiest coverage row = the most useful find.
 - **Hook:** the tool that did *less* than anything else we measured — four of five tasks
   N/A — is the one we're actually adopting. Not for its features. For its license.
@@ -173,13 +173,34 @@ Status legend: 🔲 not started · ✍️ drafting · 🔎 review · ✅ publish
 
 ---
 
+## Where the drafts live (and why not here)
+
+Drafts are written **outside this repository** and are never committed: the repo is public
+and mirrored, and unfinished prose has no business in public git history. Only this
+editorial plan lives in-repo (a plan, not a draft) — the same way `positioning.md` already
+carries the narrative publicly.
+
+Each post is written **bilingually**, as two sibling files: `NN-slug.md` (EN, the canonical
+publish) and `NN-slug.ru.md` (RU mirror — a full translation, same frontmatter, same
+numbers).
+
+**Current state:** P0, P1, P2, P3 drafted and approved in both languages (~10k words). Not
+yet published anywhere — inter-post cross-links are still `[...](#)` placeholders, to be
+filled with real URLs as each post goes live (recommended order: P1 → P0 → P2 → P3).
+
+**One editorial note carried into the drafts:** the GPU aside in P3 names hardware by
+*architecture* ("an older Pascal card", "a newer Ampere card"), not by machine or model
+inventory. The technical point — the `sm_61` vs `sm_75+` arch lottery — survives intact; the
+infrastructure specifics don't travel.
+
 ## Ready to draft now vs blocked
 
-- **Draftable immediately (all evidence exists):** P0, P1, P2, P3. Recommend drafting in
-  publish order A — **P1 first** (leads), then P0, then P2, P3.
+- **Drafted & approved (EN + RU):** P0, P1, P2, P3 — done; awaiting publication only.
 - **Blocked on a dogfood episode:** P4 (needs a "graph diff caught X" story), P5 (needs a
   concrete provenance before/after). Capture these opportunistically while dogfooding on
-  bquant, into `gaps/`, then promote to positioning §Future stories, then draft.
+  bquant, into `gaps/`, then promote to positioning §Future stories, then draft. **This is
+  the only remaining writing work in the series** — it is deliberately not forced: the
+  episodes have to happen, not be invented.
 
 ## Per-post checklist (before a post goes 🔎→✅)
 
