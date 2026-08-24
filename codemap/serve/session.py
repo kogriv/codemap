@@ -200,6 +200,13 @@ class Session:
         fr = freshness(self.graph_path, served_mtime=self._served_mtime)
         if fr is not None:
             out["freshness"] = fr
+        # R1-C21: same spirit as freshness — say when the graph may be *vacuous* (0 import
+        # edges from a layout the extractor didn't understand), rather than letting every
+        # downstream conclusion silently inherit the emptiness.
+        from codemap.diagnostics import diagnostics
+        diags = diagnostics(self.graph)
+        if diags:
+            out["diagnostics"] = diags
         return out
 
     def _op_reload(self, args) -> dict:

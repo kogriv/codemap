@@ -22,6 +22,7 @@ from __future__ import annotations
 import ast
 
 from codemap.extract.behavior import _index_modules, _named_functions, _node_id
+from codemap.extract.gsource import module_file
 from codemap.model import Edge, Node
 
 _COLUMN_PREFIX = "column:"
@@ -43,11 +44,11 @@ def add_dataflow(graph, griffe_root, target_pkg: str) -> None:
         if "samples.embedded" in modpath:
             continue  # embedded datasets are data, not code
         mod = modules[modpath]
-        fp = getattr(mod, "filepath", None)
-        if not fp:
+        fp = module_file(mod)  # None for a namespace dir (R1-C21)
+        if fp is None:
             continue
         try:
-            tree = ast.parse(open(fp, encoding="utf-8").read())
+            tree = ast.parse(fp.read_text(encoding="utf-8"))
         except (OSError, SyntaxError):
             continue
         for fnode, class_stack in _named_functions(tree):

@@ -11,6 +11,7 @@ report. No schema change: pure aggregation over the import graph / calls / conta
 
 from __future__ import annotations
 
+from codemap.diagnostics import diagnostics
 from codemap.query import Query
 
 
@@ -33,6 +34,12 @@ def render_architecture(query: Query) -> str:
     out = [f"# Architecture overview — `{a['target']}`", ""]
     out.append(f"_{len(core_mods)} core modules, {ig.number_of_edges()} import edges._")
     out.append("")
+    # R1-C21: with an empty import graph, "no layer violations" and "acyclic" below are
+    # *vacuous*, not clean. Say so before the reader takes the silence for a good result.
+    for d in diagnostics(query.graph):
+        out.append(f"> ⚠️ {d['message']} Everything below is derived from that empty "
+                   "import graph — read it as **unknown**, not as a clean bill of health.")
+        out.append("")
 
     # -- layers -------------------------------------------------------------
     lay = a["layers"]

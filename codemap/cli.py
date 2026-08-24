@@ -38,6 +38,7 @@ import sys
 from pathlib import Path
 
 from codemap import store
+from codemap.diagnostics import diagnostics
 from codemap.extract import extract, extract_repo
 from codemap.query import Query
 from codemap.serve import (
@@ -85,6 +86,10 @@ def _cmd_build(args) -> int:
         graph, incr_info = _incremental_build(args)
     else:
         graph = extract(args.path, deep=args.deep)
+    # R1-C21: a well-formed but vacuous graph must announce itself — silence is what
+    # lets an unparsed layout read as a clean bill of health downstream.
+    for d in diagnostics(graph):
+        print(f"[warning] {d['message']}", file=sys.stderr)
     if args.out:
         store.save(graph, args.out)
         # M18: record the build recipe beside the graph so `codemap refresh` can

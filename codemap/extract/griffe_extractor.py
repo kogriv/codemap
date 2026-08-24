@@ -25,6 +25,7 @@ from codemap.extract.attrflow import add_attrflow
 from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import add_dispatch, add_family_links
+from codemap.extract.gsource import module_file
 from codemap.model import Edge, Graph, Node
 
 # griffe object kinds we turn into definition nodes (aliases handled separately).
@@ -161,9 +162,14 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
         )
 
     seen: set[tuple[str, str]] = set()
+    unresolved: list[tuple[str, str]] = []
+
+    # pass A — package-qualified targets. Exact, and run first so that a pair reachable
+    # both ways is recorded as exact rather than inferred.
     for src_module, target_path in imports:
         if not (target_path == target_pkg or target_path.startswith(target_pkg + ".")):
-            continue  # external (pandas, typing, ...) — out of the internal dep graph
+            unresolved.append((src_module, target_path))  # external, or flat (pass B)
+            continue
         tgt_module = _containing_module(target_path, module_ids)
         if tgt_module is None or tgt_module == src_module:
             continue
@@ -172,6 +178,39 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
             continue
         seen.add(key)
         graph.add_edge(Edge("imports", src_module, tgt_module))
+
+    # pass B — flat layout (R1-C21): sibling modules importing each other by bare name
+    # (`from alpha import X`), which works at runtime because the directory itself is on
+    # sys.path. griffe records the source-literal target, so pass A cannot tell it from
+    # `pandas.DataFrame`. Retry it against the importer's own package — and label it, since
+    # this is an inference about sys.path, not something the source states.
+    known_modules = set(module_ids)
+    for src_module, target_path in unresolved:
+        tgt_module = _flat_sibling(src_module, target_path, known_modules)
+        if tgt_module is None or tgt_module == src_module:
+            continue
+        key = (src_module, tgt_module)
+        if key in seen:
+            continue
+        seen.add(key)
+        graph.add_edge(
+            Edge("imports", src_module, tgt_module, extras={"resolution": "flat"})
+        )
+
+
+def _flat_sibling(src_module: str, target_path: str, known_modules: set[str]) -> str | None:
+    """The flat-layout sibling of ``src_module`` named by ``target_path``, or None.
+
+    Deliberately narrow (design D2): it only ever sees targets that resolved to nothing
+    as package-qualified, and it only fires when the target's head names a module sitting
+    **beside the importer**. Measured on two real packages (codemap, bquant): fires zero
+    times, so a correctly-laid-out package cannot be disturbed by it.
+    """
+    if "." not in src_module:
+        return None  # a top-level module has no package for siblings to live in
+    parent = src_module.rsplit(".", 1)[0]
+    candidate = f"{parent}.{target_path.split('.', 1)[0]}"
+    return candidate if candidate in known_modules else None
 
 
 def _containing_module(symbol_path: str, module_ids: list[str]) -> str | None:
@@ -190,7 +229,7 @@ def _add_node(graph, obj, root) -> None:
         Node(
             id=obj.canonical_path,
             kind=obj.kind.value,
-            file=_rel(obj.filepath, root),
+            file=_rel(module_file(obj), root),  # None for a namespace dir (R1-C21)
             lineno=getattr(obj, "lineno", None),
             endlineno=getattr(obj, "endlineno", None),
             signature=_signature(obj),

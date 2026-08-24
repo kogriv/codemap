@@ -1,9 +1,20 @@
 # Design — Flat module layout (sibling imports, namespace directories)
 
-**Status:** 🟡 **open — decisions D1–D5 pending approval, no code written yet.**
-**Motivates:** gap [flat_layout_gap_2026-08-24](../../gaps/flat_layout_gap_2026-08-24.md), issues
+**Status:** ✅ **shipped** (2026-08-24, **no schema change**). **Motivates:** gap
+[flat_layout_gap_2026-08-24](../../gaps/flat_layout_gap_2026-08-24.md), issues
 [#4](https://github.com/kogriv/codemap/issues/4) (crash) and
 [#5](https://github.com/kogriv/codemap/issues/5) (silent 0 import edges). **Backlog:** R1-C21.
+**User docs:** [docs/flat-layout.md](../flat-layout.md).
+
+**Decisions resolved (§9):** D1 = **A** (sibling-aware retry in `_resolve_edges`); D2 = **A**
+(per-import, guarded); D3 = **yes** (`extras.resolution="flat"`, no schema bump); D4 =
+normalize `filepath` at one boundary + **proceed and name it**; D5 = **derive** (build stderr,
+`stats.diagnostics`, and three reports).
+
+**One correction during build (§10):** the blindness was not confined to `imports` edges — the
+**call layer** was blind to the same layout, because `_resolve` tests targets against the package
+prefix and a flat target has none. Qualifying the *import map* once (`gsource.module_imports`)
+fixes calls and attribute access together, instead of teaching each pass the layout separately.
 
 A **flat module directory** — sibling `.py` files importing each other by bare name (`from alpha import X`),
 valid at runtime because the directory itself is on `sys.path` — currently either **crashes** codemap (no
@@ -151,12 +162,41 @@ recompute it from the graph it already holds.
 - **Regression guard in CI** — the flat fixture is built alongside the packaged one, so this layout cannot
   silently regress again (gap §4.4).
 
-## 9. Decisions to resolve
+## 9. Decisions — resolved
 
-| # | Question | Recommendation |
+| # | Question | Decision (as shipped) |
 |---|---|---|
-| **D1** | How to resolve sibling imports | **A** — sibling-aware retry in `_resolve_edges` |
-| **D2** | When the rewrite applies | **A** — per-import, guarded (unresolved + names a sibling module) |
-| **D3** | Label the inference on the edge | **yes** — `extras.resolution="flat"`; no schema bump |
-| **D4** | Namespace crash: scope & policy | normalize `filepath` at one boundary (5 sites); **proceed + name it** |
-| **D5** | 0-imports signal | **derive** — build stderr + `stats` + both reports; no stored field |
+| **D1** | How to resolve sibling imports | **A** — two-pass `_resolve_edges`: exact first, then a `_flat_sibling` retry |
+| **D2** | When the rewrite applies | **A** — per-import, guarded (target unresolved **and** its head names a module beside the importer) |
+| **D3** | Label the inference on the edge | **yes** — `extras.resolution="flat"`; **no** `SCHEMA_VERSION` bump (no new edge type) |
+| **D4** | Namespace crash: scope & policy | `extract/gsource.py` normalizes `filepath` for all 5 sites; the build **proceeds** and names the directory |
+| **D5** | 0-imports signal | **derived** in `codemap/diagnostics.py` — build stderr, `stats.diagnostics`, 3 reports; nothing stored |
+
+## 10. What shipped (and the one thing this design missed)
+
+- **`codemap/extract/gsource.py`** — the normalization boundary: `module_file()` (`None` for the
+  namespace list shape, used by all five consumers), `is_namespace_dir()`, and
+  **`module_imports()`**, which package-qualifies flat sibling targets once, for every pass.
+- **`codemap/extract/griffe_extractor.py`** — two-pass import resolution + `_flat_sibling()`.
+- **`codemap/diagnostics.py`** — `import_graph_diagnostic` (0 imports over ≥2 modules) and
+  `namespace_target_diagnostic` (derived from the target node's `file is None`), wired into
+  `cli build`, `stats`, and `report architecture` / `dependencies` / `dead-code`.
+
+**The miss.** §2–§4 reasoned only about `imports` edges. The first test run showed
+`beta.doubled()` → `alpha.base_width()` still unresolved: `behavior._resolve` classifies a call
+target by package prefix, and a flat target has none — so the **call layer was blind to the same
+layout**, and nothing in the design had noticed. Repairing it *at the import map* rather than
+inside `_resolve` keeps the inference in one place and fixed attribute access (`attrflow`) for
+free. Also added during implementation: **`report dependencies`**, which renders "acyclic" from
+the same empty graph and therefore had the identical defect to the two reports D5 named.
+
+### Acceptance — met
+
+| criterion | result |
+|---|---|
+| flat fixture, both shapes | builds; `beta → alpha` present, labelled `flat`; namespace diagnostic emitted |
+| package-qualified import stays exact | `gamma → alpha` carries no label |
+| **no regression on a real package** | `bquant` graph **byte-identical** before/after (fast tier); `attrpkg` **byte-identical** on `--deep` |
+| inference fires zero times on sound packages | asserted on `bquant` in CI |
+| honesty half stands alone | a 0-import build warns at build time, in `stats`, and in all three reports |
+| regression guard | `tests/test_r1c21_flat_layout.py` — 20 tests, fixture `flatpkg`; suite 369 → **389** |

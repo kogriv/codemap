@@ -148,6 +148,9 @@ the live graph, findings, and the milestone that closed them.
   honest field-level `impact` (`accessors`; `unknown` vs `none`).
 - **[docs/incremental.md](docs/incremental.md)** — `codemap build --incremental`: recompute only changed
   modules (~12× faster on `--deep`), byte-identical on the fast tier.
+- **[docs/flat-layout.md](docs/flat-layout.md)** — flat module directories (sibling imports, no
+  `__init__.py`): labelled `resolution="flat"` edges, and the empty-import-graph warning that stops a
+  vacuous graph from reading as a clean one.
 - **[research/blog/](research/blog/)** — **the build-story series**: field notes on building
   codemap and measuring it against rival tools (EN + RU). See the section below.
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.

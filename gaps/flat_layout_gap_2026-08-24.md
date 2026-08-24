@@ -11,6 +11,12 @@ failure class as F14 (`canonical` picks 1 of N silently) and issue #3 (a stale g
 **Related:** `attribute_impact_gap_2026-08-22.md` (same shape: an affirmative answer where `unknown` was
 due), `dogfood_axes.md` **B2 robustness**, R1-C13 (lower-bound labels).
 **Design:** [docs/design/flat_layout.md](../docs/design/flat_layout.md). **Backlog:** R1-C21.
+**Status:** ✅ **closed same day** (2026-08-24, no schema change) — both halves fixed and both are now
+regression-guarded. Sibling imports resolve and carry `extras.resolution="flat"`; the namespace crash is
+gone (normalized at one boundary — it lived in **five** consumers, not one); and, independently, a build
+with 0 import edges over ≥2 modules announces itself at build time, in `stats`, and in three reports.
+`bquant`'s graph is **byte-identical** before/after, so no correct package moved. Suite 369 → **389**.
+One thing this gap did not see: the **call layer** was blind to the same layout — see design §10.
 
 ## 1. The gap
 

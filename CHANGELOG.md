@@ -5,6 +5,29 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+
+- **Flat module layouts no longer defeat the build** (R1-C21; issues
+  [#4](https://github.com/kogriv/codemap/issues/4), [#5](https://github.com/kogriv/codemap/issues/5)) —
+  found within twenty minutes of pointing codemap at a second real target. A directory of sibling modules
+  importing each other by bare name used to either **crash** (no `__init__.py`: griffe reports a namespace
+  package whose `filepath` is a `list`, fed straight to `Path()` by five separate consumers) or, with an
+  `__init__.py`, **succeed with zero `imports` edges** — after which `architecture` reported "no layer
+  violations / acyclic" and `dead-code` called every live module an orphan. Sibling imports now resolve,
+  labelled `extras.resolution="flat"` because the layout is an inference about `sys.path` rather than
+  something the source states; call resolution and attribute access read the same qualified import map.
+  A correctly-laid-out package is untouched: `bquant`'s graph is **byte-identical** before and after, and
+  the inference is asserted to fire zero times there. No schema change.
+  See [docs/flat-layout.md](docs/flat-layout.md).
+
+### Added
+
+- **Graph diagnostics** (`codemap/diagnostics.py`) — a build that produces **0 import edges across ≥2
+  modules** now says so at build time (stderr), in `stats` (a `diagnostics` list beside `freshness`), and
+  at the top of `report architecture` / `dependencies` / `dead-code`, *before* any conclusion drawn from
+  the empty graph. A namespace-package target is named as well. Derived, never stored — `graph.json`
+  gains no field. This half stands alone: it stays correct for any layout the extractor fails to parse.
+
 ## [0.0.2] - 2026-08-23
 
 First internal (unpublished) cut. Extracted into a standalone repository from its incubation home (the

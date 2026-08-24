@@ -27,6 +27,7 @@ import ast
 import math
 from pathlib import Path
 
+from codemap.extract.gsource import module_file, module_imports
 from codemap.model import Edge
 
 _BUILTINS = set(vars(__import__("builtins")))
@@ -49,20 +50,21 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
     modules left out. When ``None`` (default) every module is processed.
     """
     modules = _index_modules(griffe_root)
+    known_modules = set(modules)  # R1-C21: flat-layout sibling lookup
     project = _jedi_project(search_path) if deep else None
     for modpath in sorted(modules):
         if only is not None and modpath not in only:
             continue
         mod = modules[modpath]
-        fp = getattr(mod, "filepath", None)
-        if not fp:
+        fp = module_file(mod)  # None for a namespace dir (R1-C21)
+        if fp is None:
             continue
         try:
-            source = Path(fp).read_text(encoding="utf-8")
+            source = fp.read_text(encoding="utf-8")
             tree = ast.parse(source)
         except (OSError, SyntaxError):
             continue
-        imports = dict(mod.imports or {})
+        imports = module_imports(mod, modpath, known_modules)  # R1-C21: flat-aware
         modmembers = set(mod.members.keys())
         script = _jedi_script(source, fp, project) if deep else None
         for fnode, class_stack in _named_functions(tree):

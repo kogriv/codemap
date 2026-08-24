@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from codemap.diagnostics import diagnostics
 from codemap.query import Query
 
 
@@ -10,6 +11,12 @@ def render_dependencies(query: Query) -> str:
     lines = [f"# Module dependencies — `{query.graph.target}`", ""]
     lines.append(f"_{g.number_of_nodes()} modules, {g.number_of_edges()} import edges._")
     lines.append("")
+    # R1-C21: an empty import graph makes every conclusion here vacuous rather
+    # than clean ("acyclic", "orphan modules") — name it before listing them.
+    for d in diagnostics(query.graph):
+        lines.append(f"> \u26a0\ufe0f {d['message']} The findings below are derived from "
+                     "that empty import graph — **unknown**, not clean.")
+        lines.append("")
 
     cycles = query.import_cycles()
     lines.append(f"## Import cycles: {len(cycles)}")
@@ -64,6 +71,12 @@ def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
         "**Candidates, not proof.**_"
     )
     lines.append("")
+    # R1-C21: an empty import graph makes every conclusion here vacuous rather
+    # than clean ("acyclic", "orphan modules") — name it before listing them.
+    for d in diagnostics(query.graph):
+        lines.append(f"> \u26a0\ufe0f {d['message']} The findings below are derived from "
+                     "that empty import graph — **unknown**, not clean.")
+        lines.append("")
     # F8: on a repo-scoped graph, consumer roots are orphan by nature (nobody
     # imports an entrypoint). Only core orphans are candidate dead code.
     lines.append(f"## Orphan modules — core (no incoming imports): {len(core_orphans)}")

@@ -27,6 +27,7 @@ from __future__ import annotations
 import ast
 
 from codemap.extract.behavior import _index_modules, _named_functions, _node_id, _own_calls
+from codemap.extract.gsource import module_file
 from codemap.model import Edge
 
 _DISPATCH_VERBS = ("get", "create", "make", "build", "new")
@@ -43,11 +44,11 @@ def add_dispatch(graph, griffe_root, target_pkg: str) -> None:
     edges: dict[tuple[str, str, str], str] = {}  # (src, tgt, kind) -> resolution (best)
     for modpath in sorted(modules):
         mod = modules[modpath]
-        fp = getattr(mod, "filepath", None)
-        if not fp:
+        fp = module_file(mod)  # None for a namespace dir (R1-C21)
+        if fp is None:
             continue
         try:
-            tree = ast.parse(open(fp, encoding="utf-8").read())
+            tree = ast.parse(fp.read_text(encoding="utf-8"))
         except (OSError, SyntaxError):
             continue
         funcs = _named_functions(tree)
