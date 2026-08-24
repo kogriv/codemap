@@ -88,6 +88,21 @@ class _CoreIndex:
             key=len,
             reverse=True,
         )
+        # R1-C21-f1 (issue #6): whether the *core* is itself a flat layout, which decides
+        # if a consumer's bare-name import can reach it at all. Structural, not statistical:
+        # a properly packaged core is never on sys.path, so `from alpha import f` in a
+        # script cannot be reaching `core/alpha.py` — inferring an edge there would invent
+        # one. Both flat shapes satisfy this: a namespace directory (root has no file), or a
+        # directory whose own imports needed the flat inference.
+        root = graph.nodes.get(core_pkg)
+        self.core_is_flat = (root is not None and root.file is None) or any(
+            e.type == "imports" and e.extras.get("resolution") == "flat" for e in graph.edges
+        )
+        self.top_modules = {
+            mid.split(".", 1)[1].split(".")[0]
+            for mid in self.module_ids
+            if mid.startswith(core_pkg + ".")
+        }
         self.exports: dict[str, str] = {}
         for e in graph.edges:
             if e.type == "export":
@@ -95,6 +110,20 @@ class _CoreIndex:
 
     def is_core(self, qualname: str) -> bool:
         return qualname == self.core_pkg or qualname.startswith(self.core_pkg + ".")
+
+    def qualify_flat(self, module_name: str) -> str | None:
+        """Core-qualify a consumer's **bare-name** import, or None (R1-C21-f1, issue #6).
+
+        `from alpha import f` in a consumer root names the same module that a sibling
+        inside the package names that way — the flat layout puts the core directory on
+        `sys.path`, so both reach it. Gated on ``core_is_flat`` (see ``__init__``) and on
+        the head naming a real top-level core module, so it is inert on a packaged core.
+        """
+        if not self.core_is_flat or self.is_core(module_name):
+            return None
+        if module_name.split(".")[0] not in self.top_modules:
+            return None
+        return f"{self.core_pkg}.{module_name}"
 
     def resolve(self, qualname: str) -> str | None:
         """Canonical node id for a core-qualified path, or None if out of core."""
@@ -153,7 +182,7 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode) -> None:
     rel = str(py.resolve().relative_to(base))
     graph.add_node(Node(id=mod_id, kind="module", file=rel, extras={"root": label}))
 
-    symbol_map, module_aliases = _consumer_imports(tree, index)
+    symbol_map, module_aliases, flat_targets = _consumer_imports(tree, index)
     # module -> core module `imports` edges (dedup).
     seen_imp: set[str] = set()
     for tgt in list(symbol_map.values()) + [p for p in module_aliases.values()]:
@@ -161,7 +190,10 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode) -> None:
         cm = cm if cm in index.node_ids and _is_module(graph, cm) else index._containing_module(tgt)
         if cm and cm not in seen_imp:
             seen_imp.add(cm)
-            graph.add_edge(Edge("imports", mod_id, cm))
+            # R1-C21-f1: label the sys.path inference on the import edge, exactly as the
+            # in-package resolution does; the calls/references it enables stay "imported".
+            extras = {"resolution": "flat"} if tgt in flat_targets else {}
+            graph.add_edge(Edge("imports", mod_id, cm, extras=extras))
 
     if mode == "full":
         _materialize_defs(graph, tree, mod_id, label)
@@ -212,24 +244,45 @@ def _consumer_imports(tree, index: _CoreIndex):
     """
     symbol_map: dict[str, str] = {}
     module_aliases: dict[str, str] = {}
+    flat_targets: set[str] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom):
-            if node.level or not node.module or not index.is_core(node.module):
+            if node.level or not node.module:
                 continue
+            module, flat = node.module, False
+            if not index.is_core(module):
+                # R1-C21-f1: a bare-name import of a core module, in a flat layout.
+                qualified = index.qualify_flat(module)
+                if qualified is None:
+                    continue
+                module, flat = qualified, True
             for alias in node.names:
                 if alias.name == "*":
-                    module_aliases.setdefault(node.module.split(".")[0], node.module)
+                    module_aliases.setdefault(module.split(".")[0], module)
+                    if flat:
+                        flat_targets.add(module)
                     continue
-                symbol_map[alias.asname or alias.name] = f"{node.module}.{alias.name}"
+                target = f"{module}.{alias.name}"
+                symbol_map[alias.asname or alias.name] = target
+                if flat:
+                    flat_targets.add(target)
         elif isinstance(node, ast.Import):
             for alias in node.names:
-                if not index.is_core(alias.name):
-                    continue
+                name, flat = alias.name, False
+                if not index.is_core(name):
+                    qualified = index.qualify_flat(name)
+                    if qualified is None:
+                        continue
+                    name, flat = qualified, True
                 if alias.asname:
-                    module_aliases[alias.asname] = alias.name
+                    module_aliases[alias.asname] = name
                 else:
-                    module_aliases[alias.name.split(".")[0]] = alias.name.split(".")[0]
-    return symbol_map, module_aliases
+                    # a flat `import alpha` binds the bare name, not the core prefix.
+                    local = (alias.name if flat else name).split(".")[0]
+                    module_aliases[local] = name if flat else name.split(".")[0]
+                if flat:
+                    flat_targets.add(name)
+    return symbol_map, module_aliases, flat_targets
 
 
 def _dotted(node) -> str | None:

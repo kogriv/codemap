@@ -146,3 +146,47 @@ Four parts, in descending value-per-line — the first two remove the *lie* and 
 
 Design decisions, tiers and boundaries: [docs/design/flat_layout.md](../docs/design/flat_layout.md).
 Backlog: **R1-C21** (see `BACKLOG.md`).
+
+---
+
+## 5. Follow-up (issue #6) — the same layout, across the root boundary
+
+**Reported 2026-08-24 on `428069c`**, after the reporter re-ran the fix on the real repo. The inside-the-package
+half works there: `imports` 0 → **75** (all labelled `flat`), `calls` 316 → **469**. But the half `--consumer`
+exists for is still dark.
+
+**The gap.** A consumer root importing a core module **by bare name** produces no edge at all — same import
+form, same inference, different side of the root boundary:
+
+```bash
+codemap build core --consumer tests -o g.json     # core/gamma.py and tests/test_alpha.py
+                                                  # both write `from alpha import f`
+inside core:   imports core.gamma → core.alpha  resolution=flat   ✅
+from tests:    (nothing)                                          ❌
+```
+
+**Cause:** `extract/roots.py::_consumer_imports` gates on `index.is_core(node.module)` — the import's module
+must already be core-qualified. A flat import's module is the bare `alpha`, so the whole statement is skipped
+before any resolution is attempted. `gsource.module_imports` (R1-C21) never runs here: it qualifies the import
+map of *core modules loaded by griffe*, and consumer roots are scanned by a separate ast pass.
+
+**Why it matters as much as the first half.** `--consumer` exists so `impact` can answer "who uses X across the
+whole repo". On a flat layout that answer is *still* a confident zero — `report impact` says "No inbound
+references — isolated in the analysed roots" while, on the reporter's repo, **8 files outside the symbol's own
+module call it**, across four consumer roots. And the R1-C21 diagnostic does **not** fire, because the import
+count is no longer 0 — it is 75, just none of them crossing a root boundary. The honesty check was written
+one dimension too narrow.
+
+**Reporter's correction to §2.3.** The "grep finds it in 10+ files" figure in issue #5 counted *mentions*, not
+call sites. Honest split on that repo: 13 files mention the symbol, **9 contain real call sites** (8 outside its
+own module). The gap holds either way; recorded because the numbers in this file are meant to be reproducible,
+and that one was not measured as carefully as it reads.
+
+**Measured before designing the fix** (same question as §2.4, other side of the boundary): across bquant's
+consumer roots (`tests`, `examples`, `scripts`, `research`) there are **559** non-`bquant` imports, of which
+**0** would be flat-qualified by the naive head-match rule. Low risk again — but §11 of the design does not
+lean on that number, because a *proper* package makes the inference not merely rare but **wrong**: its core
+directory is never on `sys.path`, so a bare `import config` in a script cannot be reaching `pkg/config.py`.
+
+Design: [docs/design/flat_layout.md §11](../docs/design/flat_layout.md). Backlog: **R1-C21-f1**.
+Issue [#6](https://github.com/kogriv/codemap/issues/6).

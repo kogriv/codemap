@@ -200,3 +200,61 @@ the same empty graph and therefore had the identical defect to the two reports D
 | inference fires zero times on sound packages | asserted on `bquant` in CI |
 | honesty half stands alone | a 0-import build warns at build time, in `stats`, and in all three reports |
 | regression guard | `tests/test_r1c21_flat_layout.py` — 20 tests, fixture `flatpkg`; suite 369 → **389** |
+
+---
+
+## 11. Follow-up — across the root boundary (issue #6, R1-C21-f1)
+
+§1–§10 fixed the layout **inside** the package. A consumer root (`--consumer tests`) writing the *same*
+bare-name import got nothing: `roots.py::_consumer_imports` skips any statement whose module is not already
+core-qualified, so a flat import is discarded before resolution is attempted, and
+`gsource.module_imports` never sees it (it qualifies the import map of griffe-loaded *core* modules;
+consumer roots are a separate ast pass). Net effect for a user: `impact` still answers "no inbound
+references" on a flat repo — the very question `--consumer` exists to answer.
+
+### D6 — scope the inference across the root boundary
+
+**Decision: yes, but gated on the core actually being flat.**
+
+The measurement says the naive rule is safe here too (0 of 559 non-`bquant` imports in bquant's consumer
+roots would be qualified). It is not enough on its own, because on a *proper* package the inference is not
+merely unlikely, it is **wrong**: that package's directory is never on `sys.path`, so a bare
+`import config` in a script **cannot** be reaching `pkg/config.py`, and rewriting it would invent an edge.
+The gate is therefore structural, not statistical:
+
+> Apply cross-root flat qualification **only when the core is itself a flat layout** — the core root is a
+> namespace package (no `__init__.py`), or the graph already contains at least one `imports` edge labelled
+> `resolution="flat"`.
+
+Both shapes of the layout satisfy it (a namespace directory; a flat directory with an `__init__.py` and
+internal flat imports), and a correctly-packaged core cannot: it has an `__init__.py` and no `flat` edges,
+so the rule is inert there by construction rather than by luck.
+
+Note the gate keys on **evidence, not on the presence of `__init__.py`**. A core that ships one but still
+imports its own modules by bare name only works because the directory is on `sys.path` — it *is* flat, and
+a consumer's bare import does reach it. (Found by a test whose "packaged" fixture had a flat sibling import
+in it: the gate was right and the fixture was wrong. Both behaviours are pinned now.)
+
+Labelling follows §4 unchanged: the module-level inference is visible on the `imports` edge
+(`resolution="flat"`); the `calls` / `references` edges it enables keep `resolution="imported"`, exactly as
+they do inside the package.
+
+### D7 — the honesty check was one dimension too narrow
+
+`import_graph_diagnostic` asks "are there **any** import edges?". On this repo the answer became *yes, 75* —
+while every one of them stayed inside core and not a single reference crossed a root boundary. So the check
+missed precisely the case the fix had created.
+
+**Decision:** add a second derived check — **≥1 consumer/doc root supplied, but zero edges from any
+non-core node into core**. Same discipline as D5: derived from the graph (consumer nodes carry
+`extras["root"]`), nothing stored, and it stays correct for any future cause of cross-root blindness, not
+just this one.
+
+### Acceptance
+
+| criterion | result |
+|---|---|
+| reproducer from #6 | `tests.test_alpha → core.alpha` import edge (labelled `flat`) + a `calls` edge into `core.alpha.f` |
+| a proper package is inert | bquant repo-scoped graph (core + `tests` consumer) **byte-identical** before/after |
+| the gate, not the odds | with an `__init__.py` core and no internal flat edges, cross-root bare imports stay unresolved (asserted) |
+| the widened check fires | consumer root supplied + zero cross-root edges → diagnostic at build, in `stats`, in the reports |

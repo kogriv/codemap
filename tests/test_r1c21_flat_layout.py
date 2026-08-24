@@ -23,7 +23,8 @@ from pathlib import Path
 import pytest
 
 from codemap import store
-from codemap.diagnostics import NAMESPACE_TARGET, NO_IMPORT_EDGES, diagnostics
+from codemap.diagnostics import (NAMESPACE_TARGET, NO_CROSS_ROOT_EDGES,
+                                 NO_IMPORT_EDGES, diagnostics)
 from codemap.extract import extract
 from codemap.query import Query
 from codemap.serve.architecture import render_architecture
@@ -190,3 +191,98 @@ def test_build_warns_on_stderr(tmp_path, capsys):
     assert main(["build", str(_lonely(tmp_path)), "-o", str(out)]) == 0
     assert "0 import edges" in capsys.readouterr().err
     assert store.load(str(out)).nodes  # and still writes a usable graph
+
+
+# -- follow-up: across the root boundary (issue #6, R1-C21-f1) ----------------
+
+def _xroot(tmp_path: Path, *, packaged: bool) -> Path:
+    """A repo whose core is flat (or properly packaged) plus a consumer root that
+    imports it **by bare name** — the same statement on both sides of the boundary."""
+    repo = tmp_path / ("packaged" if packaged else "flat")
+    (repo / "core").mkdir(parents=True)
+    (repo / "tests").mkdir()
+    if packaged:
+        (repo / "core" / "__init__.py").write_text("", encoding="utf-8")
+    (repo / "core" / "alpha.py").write_text("def f():\n    return 1\n", encoding="utf-8")
+    # a packaged core imports its own modules the packaged way; a flat one does not.
+    sibling = "from core.alpha import f" if packaged else "from alpha import f"
+    (repo / "core" / "beta.py").write_text(
+        f"{sibling}\n\n\ndef use():\n    return f()\n", encoding="utf-8")
+    (repo / "tests" / "test_alpha.py").write_text(
+        "from alpha import f\n\n\ndef test_f():\n    assert f() == 1\n", encoding="utf-8")
+    return repo
+
+
+def _repo_graph(repo: Path):
+    from codemap.extract.roots import extract_repo
+    return extract_repo(repo / "core", consumers=(repo / "tests",), mode="full")
+
+
+def test_consumer_root_bare_import_reaches_core(tmp_path):
+    """The #6 reproducer: `tests/` writes the identical bare-name import that a sibling
+    writes, and used to produce no edge at all."""
+    g = _repo_graph(_xroot(tmp_path, packaged=False))
+    imports = {(e.source, e.target): e.extras for e in g.edges if e.type == "imports"}
+    assert imports[("tests.test_alpha", "core.alpha")] == {"resolution": "flat"}
+
+
+def test_consumer_call_into_core_is_recorded(tmp_path):
+    """`impact` answers from these — an import edge alone would not fix the headline."""
+    g = _repo_graph(_xroot(tmp_path, packaged=False))
+    calls = {(e.source, e.target) for e in g.edges if e.type == "calls"}
+    assert ("tests.test_alpha.test_f", "core.alpha.f") in calls
+
+
+def test_impact_sees_the_consumer(tmp_path):
+    """The question `--consumer` exists for, which used to return "isolated"."""
+    q = Query(_repo_graph(_xroot(tmp_path, packaged=False)))
+    assert [r for r in q.references_to("core.alpha.f") if r["root"] == "tests"]
+
+
+def test_a_packaged_core_stays_inert(tmp_path):
+    """Design D6's gate is structural, not statistical: a packaged core is never on
+    sys.path, so a consumer's bare `from alpha import f` **cannot** be reaching it and
+    must not be inferred into an edge."""
+    g = _repo_graph(_xroot(tmp_path, packaged=True))
+    assert not [e for e in g.edges if e.source == "tests.test_alpha"
+                and e.extras.get("resolution") == "flat"]
+
+
+def test_packaged_core_still_resolves_the_qualified_form(tmp_path):
+    """…while the correct import in the same layout keeps working, unlabelled."""
+    repo = _xroot(tmp_path, packaged=True)
+    (repo / "tests" / "test_alpha.py").write_text(
+        "from core.alpha import f\n\n\ndef test_f():\n    assert f() == 1\n", encoding="utf-8")
+    g = _repo_graph(repo)
+    imports = {(e.source, e.target): e.extras for e in g.edges if e.type == "imports"}
+    assert imports[("tests.test_alpha", "core.alpha")] == {}
+
+
+def test_cross_root_blindness_is_flagged(tmp_path):
+    """D7: the R1-C21 check asked "any imports at all?" and stayed quiet at 75 edges,
+    none of which crossed a root. One check per dimension."""
+    repo = _xroot(tmp_path, packaged=True)
+    (repo / "tests" / "test_alpha.py").write_text("import os\n", encoding="utf-8")
+    diag = [d for d in diagnostics(_repo_graph(repo)) if d["code"] == NO_CROSS_ROOT_EDGES]
+    assert diag and "tests" in diag[0]["roots"]
+
+
+def test_cross_root_check_is_quiet_when_the_boundary_is_crossed(tmp_path):
+    assert NO_CROSS_ROOT_EDGES not in [
+        d["code"] for d in diagnostics(_repo_graph(_xroot(tmp_path, packaged=False)))]
+
+
+def test_single_package_graph_has_no_boundary_to_flag(flat):
+    """No consumer roots supplied → nothing to say."""
+    assert NO_CROSS_ROOT_EDGES not in [d["code"] for d in diagnostics(flat)]
+
+
+def test_a_mixed_core_counts_as_flat(tmp_path):
+    """The gate keys on **evidence**, not on the presence of `__init__.py`: a core that
+    ships one but still imports its own modules by bare name only works because the
+    directory is on sys.path — so it is flat, and a consumer's bare import reaches it."""
+    repo = _xroot(tmp_path, packaged=True)
+    (repo / "core" / "beta.py").write_text(          # …but imports its sibling flat
+        "from alpha import f\n\n\ndef use():\n    return f()\n", encoding="utf-8")
+    g = _repo_graph(repo)
+    assert _imports(g)[("tests.test_alpha", "core.alpha")] == {"resolution": "flat"}

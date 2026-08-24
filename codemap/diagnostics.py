@@ -17,6 +17,7 @@ from __future__ import annotations
 
 NO_IMPORT_EDGES = "no_import_edges"
 NAMESPACE_TARGET = "namespace_target"
+NO_CROSS_ROOT_EDGES = "no_cross_root_edges"
 
 
 def import_graph_diagnostic(graph) -> dict | None:
@@ -69,7 +70,39 @@ def namespace_target_diagnostic(graph) -> dict | None:
     }
 
 
+def cross_root_diagnostic(graph) -> dict | None:
+    """Flag consumer/doc roots that reach the core **not at all** (R1-C21-f1, issue #6).
+
+    ``--consumer`` exists so ``impact`` can answer "who uses X across the whole repo".
+    If roots were supplied and *nothing* in them references the core, the answer to that
+    question is a confident zero — and the far likelier cause is that their imports were
+    not understood than that four directories of code genuinely use none of it.
+
+    Deliberately separate from :func:`import_graph_diagnostic`: the case that prompted it
+    had 75 import edges (so the "empty graph" check stayed quiet) and none of them crossing
+    a root boundary. One check per dimension, rather than one check trying to be general.
+    """
+    root_of = {n.id: (n.extras.get("root") or "core") for n in graph.nodes.values()}
+    outer = sorted({r for r in root_of.values() if r != "core"})
+    if not outer:
+        return None  # single-package graph: no boundary to cross
+    for e in graph.edges:
+        if root_of.get(e.source, "core") != "core" and root_of.get(e.target, "core") == "core":
+            return None
+    return {
+        "code": NO_CROSS_ROOT_EDGES,
+        "roots": outer,
+        "message": (
+            f"{len(outer)} non-core root(s) supplied ({', '.join(outer)}) but not one "
+            "reference from them reaches the core — cross-root `impact` will read as "
+            "\"isolated\" for every symbol. Usually an import form the scanner did not "
+            "understand, not an unused core."
+        ),
+    }
+
+
 def diagnostics(graph) -> list[dict]:
     """Every diagnostic that applies to ``graph`` (empty list when it looks sound)."""
-    checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph))
+    checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph),
+              cross_root_diagnostic(graph))
     return [d for d in checks if d is not None]

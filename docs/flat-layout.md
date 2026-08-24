@@ -49,6 +49,27 @@ a package by directory. Imports between them are resolved by codemap's flat-layo
 inference (edges labelled resolution="flat"), not by packaging.
 ```
 
+## Consumer roots
+
+`--consumer tests` exists so `impact` can answer *"who uses this across the whole repo — core, tests,
+scripts"*. On a flat layout those roots import the core the same bare way, and that resolves too:
+
+```bash
+codemap build ./shared --consumer ./tests --consumer ./scripts -o graph.json
+```
+
+```json
+{"type": "imports", "source": "tests.test_alpha", "target": "shared.alpha",
+ "extras": {"resolution": "flat"}}
+```
+
+This is **gated on the core actually being flat** — a namespace directory, or one whose own modules already
+needed the inference. On a properly packaged core the gate is inert by construction, not by luck: that
+directory is never on `sys.path`, so a bare `import config` in a script cannot be reaching `pkg/config.py`,
+and inferring an edge there would invent one. The gate reads evidence rather than the presence of an
+`__init__.py`: a core that ships one but still imports its own modules by bare name is flat in practice and
+is treated as such.
+
 ## When the graph is empty, codemap says so
 
 The expensive part of the original defect was not a wrong number — it was a **confident
@@ -69,6 +90,10 @@ the extractor did not understand …
 - in **`stats`** (a `diagnostics` list, beside `freshness`);
 - at the top of **`report architecture`**, **`report dependencies`** and
   **`report dead-code`**, before any conclusion drawn from the empty graph.
+
+A second check covers the dimension the first one misses: **consumer roots were supplied, but not one
+reference from them reaches the core**. That case has plenty of import edges — just none crossing a root
+boundary — so the empty-graph check stays quiet while cross-root `impact` reads "isolated" for everything.
 
 This check is independent of the resolution above: it stays correct for any layout codemap
 fails to parse in future, and it is **derived, never stored** — `graph.json` gains no field,

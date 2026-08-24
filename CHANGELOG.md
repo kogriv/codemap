@@ -19,6 +19,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   A correctly-laid-out package is untouched: `bquant`'s graph is **byte-identical** before and after, and
   the inference is asserted to fire zero times there. No schema change.
   See [docs/flat-layout.md](docs/flat-layout.md).
+- **…and across the root boundary** (R1-C21-f1; issue
+  [#6](https://github.com/kogriv/codemap/issues/6)) — a consumer root (`--consumer tests`) writing the
+  *same* bare-name import produced no edge at all, so `impact` still answered "isolated" for every symbol
+  on a flat repo. Consumer-root imports are now qualified the same way, **gated on the core actually being
+  flat**: a properly packaged core is never on `sys.path`, so a bare `import config` in a script cannot be
+  reaching `pkg/config.py` and no edge is invented (the gate reads evidence — a namespace root, or existing
+  `flat` edges — not the presence of `__init__.py`). bquant's full repo-scoped graph is byte-identical.
 
 ### Added
 
@@ -27,6 +34,9 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   at the top of `report architecture` / `dependencies` / `dead-code`, *before* any conclusion drawn from
   the empty graph. A namespace-package target is named as well. Derived, never stored — `graph.json`
   gains no field. This half stands alone: it stays correct for any layout the extractor fails to parse.
+- A second check for the dimension the first one missed: **≥1 consumer/doc root supplied but not one
+  reference from them reaches the core**. The case that prompted it had 75 import edges — so the
+  "empty graph" check stayed quiet — and none of them crossed a root boundary.
 
 ## [0.0.2] - 2026-08-23
 
