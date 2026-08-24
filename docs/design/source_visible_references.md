@@ -1,6 +1,11 @@
 # Design — References the source shows and the graph misses
 
-**Status:** 🟡 **open — decisions D1–D5 pending approval, no code written yet.**
+**Status:** ✅ **shipped** (2026-08-24, **no schema change**).
+**User docs:** [docs/dead-code.md](../dead-code.md#what-counts-as-a-reference).
+
+**Decisions resolved (§below):** D1 = **yes** (`references`, `resolution="name"`), D2 = **yes**
+(module-sourced `calls`), D3 = **yes** (measured first — the feared cost did not materialise),
+D4 = **no grader change**, D5 = additions-only, met.
 **Motivates:** gap [dead_code_high_band_2026-08-24](../../gaps/dead_code_high_band_2026-08-24.md), issue
 [#7](https://github.com/kogriv/codemap/issues/7). **Backlog:** R1-C22.
 
@@ -90,12 +95,54 @@ deliberately **add true edges**, so the criterion changes:
 - Report the edge-count delta for each package in the merge notes — a graph that grows should say by how
   much and why.
 
-## Decisions to resolve
+## Decisions — resolved
 
-| # | Question | Recommendation |
+| # | Question | Decision (as shipped) |
 |---|---|---|
-| **D1** | Model function-as-value | **yes** — `references` edge, `extras.resolution="name"`; no schema bump |
+| **D1** | Model function-as-value | **yes** — `references`, `extras.resolution="name"`, deduped with a `sites` count |
 | **D2** | Module-level calls | **yes** — `calls` sourced from the module node |
-| **D3** | Nested-def calls | **yes in principle** — but measure the delta (5202 sites on bquant) and be ready to split it out |
-| **D4** | Change the grader | **no** — the edges fix it; the report was never the bug |
-| **D5** | Acceptance | additions-only + measured FP counts to zero, **not** byte-identity |
+| **D3** | Nested-def calls | **yes** — attributed to the innermost enclosing definition, `extras.via="nested"` |
+| **D4** | Change the grader | **no** — untouched; the edges fixed the report by themselves |
+| **D5** | Acceptance | additions-only, measured FPs to zero — met (below) |
+
+## What shipped, and three things the design did not foresee
+
+- `extract/behavior.py` — `_own_name_loads` / `_resolve_name` / `_emit_name_references` (D1),
+  `_module_level_nodes` / `_process_module_level` (D2), `_named_functions_scoped` /
+  `_nearest_owner` / `_collect_nested_calls` / `_emit_nested_calls` (D3).
+- `codemap/incremental.py` — the R1-C9 splice had to learn the new edges, or an incremental
+  rebuild silently dropped them (caught by its own byte-identity test, not by inspection).
+
+**① Most name-loads are annotations, not dispatch.** The first run emitted 278 `references`
+on bquant against a ~149 estimate; the surplus was `def analyze(...) -> AnalysisResult`. Both
+are real references, but they mean different things — a dispatch table implies the symbol
+*runs*, an annotation implies a *contract* — so they are labelled apart
+(`resolution="annotation"`, 213 vs 80 on bquant) instead of blurred under one name.
+
+**② D3's cost was a phantom.** The design costed it at 5202 nested call sites on bquant and
+reserved the right to split it out. Measured properly: of those 5202, **279** resolve to an
+internal target and only **21** are pairs the owner does not already call directly (codemap:
+624 → 32 → **4**). The expensive-looking number was call *sites*, not new *edges*; measuring
+the actual delta turned a deferred decision into a five-line one.
+
+**③ The accuracy benchmark's ground truth was stale.** `c10_closure` listed
+`expected: []` with `outer→helper` recorded as a *limitation* — while the case's own
+docstring already said "the resolvable edge is from the enclosing function `outer` to
+`helper`". D3 emits exactly that, so the harness scored the fix as a false positive. The
+label was recording the old behaviour as if it were the correct answer; it is now
+`decidable` with `outer→helper` expected, and `outer→inner` / `inner→helper` still
+limitations (`inner` is not a definition node). Deep recall-overall: 58% → **62.5%**,
+precision still 100%, zero phantom targets.
+
+## Acceptance — met
+
+| criterion | result |
+|---|---|
+| all three forms modelled | fixture `refpkg` covers value / annotation / module-level / nested (14 tests) |
+| **additions only** | bquant (untouched code): **+364 edge pairs, 0 removed**. codemap: +164, 1 removed — the one being `add_behavior → _named_functions`, a call this very change replaced |
+| measured FPs → zero | `high` band: codemap **46 → 29**, bquant **5 → 2** — exactly the 31 the audit called genuinely unreferenced |
+| every addition traceable | all 278 name-references on bquant have their target's name literally present in the source file (checked) |
+| no duplicate call pairs | nested attribution yields to an existing direct call; asserted |
+| grader untouched | `_grade_dead` unchanged |
+| graph size | codemap +7.7%, bquant +5.0% |
+| no schema bump | no new edge type; `extras` keys only |

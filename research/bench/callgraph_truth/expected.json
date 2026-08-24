@@ -1,67 +1,153 @@
 {
   "_README": "Hand-labeled ground truth for codemap's call-graph, per micro-case. Edges are [src, tgt] as suffixes relative to the case package (the harness prepends '<case>.'). 'expected' = call edges a SOUND static analyzer should emit (min_tier: the cheapest tier that can get it — 'fast' or 'deep'); every expected target is a real definition node. 'ceiling' = true call relationships that are statically UNDECIDABLE for any sound tool (higher-order via param, getattr dispatch, registry value-dispatch) — informational, they define the honest recall gap, never penalized. 'limitation' = true relationships codemap does not model by a documented design choice (closure bodies not attributed to a def node; string-registry seams routed through the bridge channel, not as calls edges) — informational, excluded from precision. Targets that are not graph nodes ('phantom') are a soundness signal the harness reports separately; a phantom emitted for a DECIDABLE edge (wrong resolution) counts against precision, a phantom for a limitation edge only raises the soundness flag.",
-
   "c01_direct_call": {
     "difficulty": "decidable",
-    "expected": [["a", "b", "fast"]],
+    "expected": [
+      [
+        "a",
+        "b",
+        "fast"
+      ]
+    ],
     "ceiling": [],
     "limitation": []
   },
   "c02_self_method": {
     "difficulty": "decidable",
-    "expected": [["Widget.render", "Widget.paint", "fast"]],
+    "expected": [
+      [
+        "Widget.render",
+        "Widget.paint",
+        "fast"
+      ]
+    ],
     "ceiling": [],
     "limitation": []
   },
   "c03_cross_module": {
     "difficulty": "decidable",
-    "expected": [["run", "other.helper", "fast"]],
+    "expected": [
+      [
+        "run",
+        "other.helper",
+        "fast"
+      ]
+    ],
     "ceiling": [],
     "limitation": []
   },
   "c04_higher_order": {
     "difficulty": "undecidable-tail",
-    "expected": [["run", "apply", "fast"]],
-    "ceiling": [["apply", "target"]],
+    "expected": [
+      [
+        "run",
+        "apply",
+        "fast"
+      ]
+    ],
+    "ceiling": [
+      [
+        "apply",
+        "target"
+      ]
+    ],
     "limitation": []
   },
   "c05_decorator": {
     "difficulty": "decidable",
-    "expected": [["run", "worker", "fast"]],
+    "expected": [
+      [
+        "run",
+        "worker",
+        "fast"
+      ]
+    ],
     "ceiling": [],
     "limitation": []
   },
   "c06_inheritance": {
     "difficulty": "decidable",
-    "expected": [["Derived.run", "Base.base_op", "fast"]],
+    "expected": [
+      [
+        "Derived.run",
+        "Base.base_op",
+        "fast"
+      ]
+    ],
     "ceiling": [],
     "limitation": [],
     "note": "both tiers resolve self.<inherited>() to the base class that defines it (R1-C13-f1 fixed: _class_members maps each inherited member to its owning-class id, so no phantom same-class target)."
   },
   "c07_getattr_dynamic": {
     "difficulty": "undecidable",
-    "expected": [["run", "Obj", "fast"]],
-    "ceiling": [["run", "Obj.handle"]],
+    "expected": [
+      [
+        "run",
+        "Obj",
+        "fast"
+      ]
+    ],
+    "ceiling": [
+      [
+        "run",
+        "Obj.handle"
+      ]
+    ],
     "limitation": []
   },
   "c08_local_var": {
     "difficulty": "decidable-deep",
-    "expected": [["run", "Widget", "fast"], ["run", "Widget.act", "deep"]],
+    "expected": [
+      [
+        "run",
+        "Widget",
+        "fast"
+      ],
+      [
+        "run",
+        "Widget.act",
+        "deep"
+      ]
+    ],
     "ceiling": [],
     "limitation": []
   },
   "c09_registry_dispatch": {
     "difficulty": "design-boundary",
     "expected": [],
-    "ceiling": [["run", "build_a"], ["run", "build_b"]],
+    "ceiling": [
+      [
+        "run",
+        "build_a"
+      ],
+      [
+        "run",
+        "build_b"
+      ]
+    ],
     "limitation": [],
     "note": "string-keyed dict dispatch — value-flow undecidable as a calls edge; codemap routes such seams through its registry-bridge channel (M7), not as resolved calls."
   },
   "c10_closure": {
-    "difficulty": "limitation",
-    "expected": [],
+    "difficulty": "decidable",
+    "expected": [
+      [
+        "outer",
+        "helper",
+        "fast"
+      ]
+    ],
     "ceiling": [],
-    "limitation": [["outer", "inner"], ["inner", "helper"]],
-    "note": "nested-closure calls are not attributed to a definition node. R1-C13-f2 fixed the soundness wart: the extractor no longer emits outer->outer.inner to a non-node — the closure relationship is simply not modeled (dropped), rather than pointing at nothing. Materializing closure nodes remains future work."
+    "limitation": [
+      [
+        "outer",
+        "inner"
+      ],
+      [
+        "inner",
+        "helper"
+      ]
+    ],
+    "note": "a call inside a closure is attributed to the innermost enclosing definition node (R1-C22 D3, issue #7): outer->helper is emitted on both tiers, carrying extras.via='nested' because the call's *existence* is certain while its source node is an approximation of location. Before R1-C22 the whole closure body was dropped and this edge did not exist — the label recorded that limitation as if it were the right answer, even though this case's own docstring already called outer->helper the resolvable edge. Still not modelled: outer->inner and inner->helper, since `inner` is not a definition node (materializing closure nodes remains future work)."
   }
 }

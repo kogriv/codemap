@@ -10,6 +10,12 @@ reference that is plainly visible in the same module, two lines below the defini
 is merely blind), R1-C8 (the graded dead-code this regrades), R1-C13 (lower-bound labels).
 **Design:** [docs/design/source_visible_references.md](../docs/design/source_visible_references.md).
 **Backlog:** R1-C22.
+**Status:** ✅ **closed same day** (2026-08-24, no schema change) — all three mechanisms modelled. The
+`high` band went **46 → 29** on codemap and **5 → 2** on bquant, i.e. exactly the 31 candidates this audit
+called genuinely unreferenced; additions only (bquant +364 edge pairs, **0 removed**). Two surprises worth
+carrying: most name-loads turned out to be *annotations*, now labelled apart from the dispatch form; and
+D3's feared cost was a phantom (5202 call sites → 21 new edges). The accuracy benchmark's `c10_closure`
+ground truth had to be corrected — it recorded the old limitation as the right answer.
 
 ## 1. The gap
 

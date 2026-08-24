@@ -67,10 +67,18 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
         imports = module_imports(mod, modpath, known_modules)  # R1-C21: flat-aware
         modmembers = set(mod.members.keys())
         script = _jedi_script(source, fp, project) if deep else None
-        for fnode, class_stack in _named_functions(tree):
+        nested: dict[tuple[str, str], dict] = {}
+        for fnode, class_stack, scope in _named_functions_scoped(tree):
             node_id = _node_id(modpath, class_stack, fnode.name)
             if node_id not in graph.nodes:
-                continue  # nested closure — not a definition node
+                # R1-C22 D3: a closure / dynamically-built class body is not a definition
+                # node, but the calls inside it are real. Attribute them to the innermost
+                # definition that *does* exist instead of discarding them.
+                owner = _nearest_owner(graph, modpath, scope)
+                if owner is not None:
+                    _collect_nested_calls(graph, owner, fnode, modpath, imports,
+                                          modmembers, script, target_pkg, nested)
+                continue
             members = _class_members(mod, class_stack, modules) if class_stack else {}
             class_prefix = ".".join([modpath, *class_stack]) if class_stack else ""
             if script is not None:
@@ -80,6 +88,20 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                 def resolve(call, _cp=class_prefix, _im=imports, _mm=modmembers, _me=members):
                     return _resolve(call, modpath, _cp, _im, _mm, _me)
             _process_function(graph, node_id, fnode, resolve)
+            # R1-C22 D1: functions/classes named as *values* here (dispatch tables,
+            # `default=` callbacks) — a use the call layer cannot see.
+            _emit_name_references(graph, node_id, fnode, modpath, imports, modmembers,
+                                  decorators_of=fnode)
+        # R1-C22 D2: module-level statements are a scope of their own, never walked
+        # above — import-time calls and dispatch tables live here.
+        if script is not None:
+            def mod_resolve(call, _s=script):
+                return _resolve_jedi(call, _s, target_pkg)
+        else:
+            def mod_resolve(call, _im=imports, _mm=modmembers):
+                return _resolve(call, modpath, "", _im, _mm, {})
+        _process_module_level(graph, modpath, tree, mod_resolve, imports, modmembers)
+        _emit_nested_calls(graph, nested)
 
 
 # -- jedi (deep tier) --------------------------------------------------------
@@ -431,3 +453,186 @@ def _complexity(fnode) -> dict:
     sloc = (end - start + 1) if (end and start) else 1
     return {"cc": cc, "volume": volume, "sloc": sloc,
             "mi": _maintainability(cc, volume, sloc)}
+
+
+def _own_name_loads(scope, *, decorators_of=None):
+    """Bare ``Name`` loads in a scope's own body that **use a symbol**, not call it.
+
+    Yields ``(node, kind)`` where kind is ``"name"`` (the value form — a dict entry, a
+    list element, a ``default=`` callback, an assignment RHS) or ``"annotation"`` (the
+    symbol names a *type*). Both are real references and both were missing from the graph,
+    but they mean different things — a dispatch table implies runtime liveness, an
+    annotation implies a contract — so R1-C22 labels them apart rather than blurring them.
+
+    Excludes the callee position (that is a `calls` edge) and the scope's own decorator
+    list (that is `decorated_by`).
+    """
+    nodes = list(_own_nodes(scope)) if not isinstance(scope, ast.Module) \
+        else list(_module_level_nodes(scope))
+    skip = {id(n.func) for n in nodes if isinstance(n, ast.Call)}
+    for deco in (decorators_of.decorator_list if decorators_of is not None else []):
+        skip |= {id(n) for n in ast.walk(deco)}
+    annotated: set[int] = set()
+    for n in nodes + ([decorators_of] if decorators_of is not None else []):
+        for ann in _annotation_nodes(n):
+            annotated |= {id(x) for x in ast.walk(ann)}
+    return [(n, "annotation" if id(n) in annotated else "name")
+            for n in nodes
+            if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load) and id(n) not in skip]
+
+
+def _annotation_nodes(node):
+    """The annotation sub-trees hanging off one AST node (params, return, AnnAssign)."""
+    if isinstance(node, ast.AnnAssign) and node.annotation is not None:
+        yield node.annotation
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if node.returns is not None:
+            yield node.returns
+        args = node.args
+        for a in [*args.posonlyargs, *args.args, *args.kwonlyargs,
+                  args.vararg, args.kwarg]:
+            if a is not None and a.annotation is not None:
+                yield a.annotation
+
+
+def _module_level_nodes(tree):
+    """Every node in module-level code — not descending into any def/class body.
+
+    `add_behavior` walks named functions, so import-time statements were never visited:
+    `_register_all_indicators()` at the bottom of a module produced no edge, and the whole
+    class of import-time behaviour (registration, availability probes, singletons) was
+    invisible to the call graph (R1-C22).
+    """
+    def visit(node):
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                continue  # its own definition node — walked separately
+            yield child
+            yield from visit(child)
+
+    yield from visit(tree)
+
+
+def _resolve_name(name, modpath, imports, modmembers):
+    """(target_id, resolution) for a bare name used as a value — the `_resolve` rules for
+    ``ast.Name`` minus the call. Only module/imported become edges."""
+    pkg = modpath.split(".")[0] + "."
+    if name in imports:
+        tgt = imports[name]
+        return (tgt, "imported") if tgt.startswith(pkg) else (tgt, "external")
+    if name in modmembers:
+        return f"{modpath}.{name}", "module"
+    return None, "unresolved"
+
+
+def _emit_name_references(graph, src_id, scope, modpath, imports, modmembers,
+                          *, decorators_of=None) -> None:
+    """`references` edges for functions/classes named as values (R1-C22 D1).
+
+    No new edge type: `references` is already "dispatch site → the symbol it names".
+    Labelled ``resolution="name"`` so an intra-core name-load stays distinguishable from
+    the consumer/doc references, and deduped per target with a site count.
+    """
+    counts: dict[tuple[str, str], int] = {}
+    for node, kind in _own_name_loads(scope, decorators_of=decorators_of):
+        target, resolution = _resolve_name(node.id, modpath, imports, modmembers)
+        if resolution not in ("module", "imported") or not target:
+            continue
+        tgt_node = graph.nodes.get(target)
+        if tgt_node is None or tgt_node.kind not in ("function", "class"):
+            continue  # a value, not a callable definition — nothing to reference
+        if target == src_id:
+            continue  # self-reference (recursion by name) says nothing about liveness
+        counts[(target, kind)] = counts.get((target, kind), 0) + 1
+    for target, kind in sorted(counts):
+        graph.add_edge(Edge("references", src_id, target,
+                            extras={"resolution": kind, "sites": counts[(target, kind)]}))
+
+
+def _process_module_level(graph, modpath, tree, resolve, imports, modmembers) -> None:
+    """Calls and value-references in module-level code, sourced from the module (D1/D2)."""
+    by_target: dict[str, dict] = {}
+    for call in (n for n in _module_level_nodes(tree) if isinstance(n, ast.Call)):
+        target, resolution = resolve(call)
+        if resolution in _EDGE_RESOLUTIONS and target and target in graph.nodes:
+            agg = by_target.setdefault(target, {"resolution": resolution, "shapes": []})
+            agg["shapes"].append(_arg_shape(call))
+    for target in sorted(by_target):
+        agg = by_target[target]
+        graph.add_edge(Edge("calls", modpath, target,
+                            extras={"resolution": agg["resolution"],
+                                    **_arg_contract(agg["shapes"])}))
+    _emit_name_references(graph, modpath, tree, modpath, imports, modmembers)
+
+
+def _named_functions_scoped(tree):
+    """Like :func:`_named_functions`, plus the **full** enclosing scope names.
+
+    ``_named_functions`` tracks only class nesting, which is all a definition id needs.
+    R1-C22 D3 also has to answer "which definition *contains* this code" for a function
+    that is not a definition node itself (a closure, or a method of a dynamically-built
+    class), so the whole def/class chain is carried here. Kept as a separate generator
+    because `dataflow`/`dispatch`/`attrflow` unpack the two-tuple.
+    """
+    results = []
+
+    def visit(node, class_stack, scope):
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.ClassDef):
+                visit(child, class_stack + [child.name], scope + [child.name])
+            elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                results.append((child, list(class_stack), list(scope)))
+                visit(child, class_stack, scope + [child.name])
+            else:
+                visit(child, class_stack, scope)
+
+    visit(tree, [], [])
+    return results
+
+
+def _nearest_owner(graph, modpath, scope) -> str | None:
+    """The innermost enclosing definition of ``scope`` that is a real graph node.
+
+    A call inside a closure is a real call; only the *node it is attributed to* is an
+    approximation, so the edge carries ``extras.via="nested"`` (R1-C13 discipline).
+    """
+    for cut in range(len(scope), 0, -1):
+        candidate = ".".join([modpath, *scope[:cut]])
+        if candidate in graph.nodes:
+            return candidate
+    return modpath if modpath in graph.nodes else None
+
+
+def _collect_nested_calls(graph, owner, fnode, modpath, imports, modmembers,
+                          script, target_pkg, out) -> None:
+    """Resolve a non-node function's own calls and stage them under ``owner`` (D3)."""
+    for call in _own_calls(fnode):
+        if script is not None:
+            target, resolution = _resolve_jedi(call, script, target_pkg)
+        else:
+            target, resolution = _resolve(call, modpath, "", imports, modmembers, {})
+        if resolution not in _EDGE_RESOLUTIONS or not target or target not in graph.nodes:
+            continue
+        if target == owner:
+            continue  # a closure calling its own enclosing function — recursion, not a dep
+        agg = out.setdefault((owner, target), {"resolution": resolution, "shapes": []})
+        agg["shapes"].append(_arg_shape(call))
+
+
+def _emit_nested_calls(graph, nested) -> None:
+    """Emit staged nested calls, skipping pairs the owner already calls directly (D3).
+
+    A duplicate ``owner → target`` edge would double-count in every degree/hub metric, so
+    an existing direct call wins: the relationship is already recorded, and this would add
+    only a weaker-provenance copy of it.
+    """
+    if not nested:
+        return
+    existing = {(e.source, e.target) for e in graph.edges if e.type == "calls"}
+    for (owner, target) in sorted(nested):
+        if (owner, target) in existing:
+            continue
+        agg = nested[(owner, target)]
+        graph.add_edge(Edge("calls", owner, target,
+                            extras={"resolution": agg["resolution"], "via": "nested",
+                                    **_arg_contract(agg["shapes"])}))

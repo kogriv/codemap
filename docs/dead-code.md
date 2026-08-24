@@ -19,6 +19,31 @@ or a registry points at is *referenced*, so codemap says so and grades it down i
 of listing it as dead. The reason names who references it, across roots (core / tests /
 docs / …) when the graph was built repo-scoped.
 
+### What counts as a reference
+
+Grading is only as good as the edges it can see, and three source-visible forms used to
+produce none — so a live function landed in **high**, the band a reader acts on
+([#7](https://github.com/kogriv/codemap/issues/7); measured at 20 of 51 candidates across
+two real packages, codemap's own included). All three are modelled now:
+
+| Form | Example | Edge |
+|---|---|---|
+| **function as a value** | `PANELS = {"a": _panel_a}`, `json.dumps(o, default=_json_default)` | `references`, `extras.resolution="name"` |
+| **type annotation** | `def render(...) -> Report:` | `references`, `extras.resolution="annotation"` |
+| **module-level call** | `_register_all_indicators()` at import time | `calls`, sourced from the **module** node |
+| **call inside a closure** | a call in a nested `def` or a dynamically-built class body | `calls` from the innermost enclosing definition, `extras.via="nested"` |
+
+Two of those are missing **call** edges, so this was never only a dead-code question:
+`impact`, `callers` and `flows` were reading a call graph with import-time work and
+closure bodies cut out of it.
+
+Annotations are labelled apart from values on purpose: a dispatch table implies the
+function runs, an annotation implies a contract. Both keep a symbol out of **high**, and
+the distinction is on the edge if you want to weigh them differently. `extras.via="nested"`
+marks the one approximation here — the call's *existence* is certain, only the definition
+it is attributed to is inferred (a closure that is built and returned but never invoked
+still yields an edge from its enclosing function).
+
 ```bash
 codemap report dead-code --build ./pkg                 # all tiers, grouped
 codemap report dead-code --build ./pkg --min-confidence high   # only the strongest signals

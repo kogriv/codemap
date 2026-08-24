@@ -39,11 +39,15 @@ from codemap.scope import diff_scopes
 # Behavioral `calls` resolutions produced by add_behavior (vs registry-dispatch,
 # which add_dispatch produces whole & fresh — those must NOT be spliced from old).
 _BEHAVIOR_CALL_RES = frozenset({"module", "self", "imported", "deep"})
+# R1-C22: `references` resolutions the behavioral pass owns (a name used as a value, or
+# as a type annotation). The consumer/doc references carry other resolutions and belong
+# to the repo-scope pass, which the incremental path does not touch.
+_BEHAVIOR_REF_RES = frozenset({"name", "annotation"})
 # Node-extras keys owned by the two jedi-sensitive passes (spliced for unaffected).
 _BEHAVIORAL_EXTRAS = ("calls", "control", "complexity", "attr_access")
 # Old edge types whose target landing in a changed/removed module makes the source
 # module stale (it must re-resolve). Only the spliced passes matter here.
-_DEP_EDGE_TYPES = frozenset({"calls", "accesses"})
+_DEP_EDGE_TYPES = frozenset({"calls", "accesses", "references"})
 
 # Above this fraction of modules affected, a full rebuild is cheaper (and trivially
 # correct) — no point splicing most of the graph.
@@ -110,6 +114,8 @@ def _splice_unaffected(new_graph, old_graph, unaffected, module_of) -> None:
             keep = module_of(e.source) in unaffected
         elif e.type == "accesses":
             keep = module_of(e.source) in unaffected
+        elif e.type == "references" and e.extras.get("resolution") in _BEHAVIOR_REF_RES:
+            keep = module_of(e.source) in unaffected  # R1-C22: name/annotation refs
         if keep:
             new_graph.add_edge(copy.deepcopy(e))
     for nid, node in new_graph.nodes.items():

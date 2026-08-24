@@ -43,6 +43,21 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   captioned with the empty-graph *warning*'s "derived from that empty import graph — unknown, not clean"
   over a report computed from 404 import edges: the mirror of the bug the banners exist to prevent.
 
+- **The `high` dead-code band is trustworthy again** (R1-C22; issue
+  [#7](https://github.com/kogriv/codemap/issues/7)) — it graded a private function "no inbound calls,
+  references, or decorators" while its name sat two lines below the definition. Measured across two real
+  packages (codemap's own included) that was **20 of 51** candidates, from three forms the graph did not
+  model: a function used **as a value** (dispatch table, `default=` callback), a call at **module level**
+  (import-time statements were never walked), and a call inside a **nested def** (the closure was dropped
+  wholesale). All three are modelled now — `references` with `extras.resolution="name"` / `"annotation"`
+  (labelled apart: a dispatch table implies the symbol runs, an annotation implies a contract), `calls`
+  sourced from the module node, and closure calls attributed to the innermost enclosing definition with
+  `extras.via="nested"`. Two of the three were missing **call** edges, so `impact`, `callers` and `flows`
+  were reading a call graph with import-time work and closure bodies cut out. The grader is untouched:
+  it always demoted on an inbound edge, and now it has them. `high` went 46 → 29 (codemap) and 5 → 2
+  (bquant); additions only (bquant +364 edge pairs, 0 removed). No schema change.
+  See [docs/dead-code.md](docs/dead-code.md#what-counts-as-a-reference).
+
 ## [0.0.2] - 2026-08-23
 
 First internal (unpublished) cut. Extracted into a standalone repository from its incubation home (the
