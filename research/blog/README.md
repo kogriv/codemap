@@ -67,7 +67,7 @@ Either way the *numbering below is by narrative role* (P0 = intro), not by publi
 Status legend: 🔲 not started · ✍️ drafting · 🔎 review · ✅ published
 
 ### P0 — "A code graph an agent can trust" (the launch / Story Zero)
-- **Status:** 🔲
+- **Status:** 🔎 draft approved, ready to publish (EN + RU, kept out of repo)
 - **Role:** the anchor — what codemap is, why it exists, where it sits in the field.
 - **Hook:** agents navigating code have two bad options — grep (exact but structure-blind)
   and embeddings/RAG (fuzzy, non-deterministic, perpetually stale). The third path, a
@@ -85,7 +85,7 @@ Status legend: 🔲 not started · ✍️ drafting · 🔎 review · ✅ publish
   longer just "rebuild."
 
 ### P1 — "The competitor wasn't broken. We were." (graphlens)
-- **Status:** ✍️ drafting (kept out of repo until published)  ← **recommended first to publish**
+- **Status:** 🔎 draft approved, ready to publish (EN + RU, kept out of repo)  ← **first to publish**
 - **Role:** the trust-builder. A near-takedown we talked ourselves out of.
 - **Hook:** we almost published that a rival's impact analysis was broken — it returned
   *zero* callers for a class codemap mapped fully. The bug was our `PATH`.
@@ -102,7 +102,7 @@ Status legend: 🔲 not started · ✍️ drafting · 🔎 review · ✅ publish
 - **Length:** ~2000 words. **Depends on:** nothing (self-contained; that's why it leads).
 
 ### P2 — "The one that does more — and why that's fine." (GitNexus)
-- **Status:** 🔲
+- **Status:** ✍️ drafting (EN + RU, kept out of repo)
 - **Role:** thesis-proving. The richer rival that turns out to *demonstrate* the pitch.
 - **Hook:** a rival that does semantic search + clustering + flows + 14 languages, in a
   1.7 GB install. The 2 a.m. fear: they lapped us. The measured answer: they're the other
@@ -121,7 +121,7 @@ Status legend: 🔲 not started · ✍️ drafting · 🔎 review · ✅ publish
 - **Length:** ~2200 words. **Depends on:** P0 for the "wrap vs absorb" framing (link it).
 
 ### P3 — "The competitor that does *less* — and that's why we take it." (cocoindex-code)
-- **Status:** 🔲
+- **Status:** ✍️ drafting (EN + RU, kept out of repo)
 - **Role:** the composition/licensing turn. The emptiest coverage row = the most useful find.
 - **Hook:** the tool that did *less* than anything else we measured — four of five tasks
   N/A — is the one we're actually adopting. Not for its features. For its license.
