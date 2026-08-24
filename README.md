@@ -148,12 +148,31 @@ the live graph, findings, and the milestone that closed them.
   honest field-level `impact` (`accessors`; `unknown` vs `none`).
 - **[docs/incremental.md](docs/incremental.md)** — `codemap build --incremental`: recompute only changed
   modules (~12× faster on `--deep`), byte-identical on the fast tier.
+- **[research/blog/](research/blog/)** — **the build-story series**: field notes on building
+  codemap and measuring it against rival tools (EN + RU). See the section below.
 - **[BACKLOG.md](BACKLOG.md)** — milestones M0–M18, the research track (R1), and deferred work.
 - **[gaps/](gaps/)** — dogfood runs, coverage analysis, the living [axis register](gaps/dogfood_axes.md).
 - **[research/](research/)** — survey of adjacent code-analysis tools and how codemap relates to each
   (integrate / wrap / learn); source of the R1 capability roadmap. See
   **[research/positioning.md](research/positioning.md)** for the publication-layer narrative and
   **[research/comparison.md](research/comparison.md)** for the hands-on coverage matrix.
+
+## Writing — the build-story series
+
+Field notes on building codemap, and on measuring it honestly against the nearest rival
+tools. Published here in the repo; every post exists in English and Russian.
+**Index: [research/blog/](research/blog/README.md).**
+
+| # | Post | |
+|---|------|---|
+| 0 | **A code graph an agent can trust** — what codemap is, the bet it makes, and the honest limits. | [EN](research/blog/00-a-code-graph-an-agent-can-trust.md) · [RU](research/blog/00-a-code-graph-an-agent-can-trust.ru.md) |
+| 1 | **The competitor wasn't broken. We were.** — I nearly published that a rival's impact analysis was broken. The bug was my `PATH`. | [EN](research/blog/01-the-competitor-wasnt-broken.md) · [RU](research/blog/01-the-competitor-wasnt-broken.ru.md) |
+| 2 | **The one that does more — and why that's fine.** — a 1.7 GB hybrid rival that proved the thesis instead of threatening it. | [EN](research/blog/02-the-one-that-does-more.md) · [RU](research/blog/02-the-one-that-does-more.ru.md) |
+| 3 | **The competitor that does *less* — and that's why I take it.** — the emptiest coverage row was the most useful find. For its license, not its features. | [EN](research/blog/03-the-one-that-does-less.md) · [RU](research/blog/03-the-one-that-does-less.ru.md) |
+
+New here? Read **1 → 0 → 2 → 3**. Every number in every post reproduces from a
+[tool card](research/tools/) or the [comparison hub](research/comparison.md) — measurements,
+not verdict.
 
 ## License
 
