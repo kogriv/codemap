@@ -39,7 +39,8 @@ _REPORTS = {
 # disclaimers). Absence of the label = structural/complete (imports, contains,
 # inherits, exports — exact). One label per answer (no per-edge confidence: edges
 # already carry `resolution`). From the GitNexus разбор, built natively.
-_PARTIAL_OPS = frozenset({"callers", "callees", "impact", "flows", "call_contract"})
+_PARTIAL_OPS = frozenset({"callers", "callees", "impact", "flows", "call_contract",
+                          "tests", "covers"})
 _EPISTEMIC_PARTIAL = {
     "epistemic": "partial",
     "reason": "leans on static call resolution (partial for Python) — a lower "
@@ -284,6 +285,18 @@ class Session:
         aid = self._canon(args["attribute"])
         return {"reads": self.query.readers(aid), "writes": self.query.writers(aid)}
 
+    def _op_tests(self, args) -> dict:
+        """R1-C24: which tests exercise a symbol, nearest band first, honestly labelled."""
+        return self.query.tests_for(
+            self._canon(args["symbol"]),
+            depth=int(args.get("depth", 3)), cap=int(args.get("cap", 25)))
+
+    def _op_covers(self, args) -> dict:
+        """The inverse — what a test actually reaches (same index, read forward)."""
+        return self.query.covers(
+            self._canon(args["test"]),
+            depth=int(args.get("depth", 3)), cap=int(args.get("cap", 25)))
+
     def _op_callers(self, args) -> list:
         return self.query.callers(self._canon(args["symbol"]))
 
@@ -446,6 +459,8 @@ _OPS = {
     "columns": Session._op_columns,
     "columns_of": Session._op_columns_of,
     "accessors": Session._op_accessors,
+    "tests": Session._op_tests,
+    "covers": Session._op_covers,
     "callers": Session._op_callers,
     "callees": Session._op_callees,
     "implementers": Session._op_implementers,

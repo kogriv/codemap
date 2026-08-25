@@ -203,8 +203,12 @@ def module_count_diagnostic(graph) -> dict | None:
     expected = inputs.get("python_files")
     if expected is None:
         return None  # pre-0.12 graph, or a build that recorded no input count
+    # Core only: ``inputs`` counts the extractor's walk of the target package, so a
+    # repo-scoped graph's consumer modules (``--consumer tests``) are not in that number
+    # and must not be compared against it.
     from_py = sum(1 for n in graph.nodes.values()
-                  if n.kind == "module" and (n.file or "").endswith(".py"))
+                  if n.kind == "module" and (n.file or "").endswith(".py")
+                  and (n.extras.get("root") or "core") == "core")
     skipped = len(inputs.get("skipped") or [])
     if from_py > expected:
         direction = (f"{from_py} modules built from {expected} input file(s) — a module "

@@ -25,7 +25,9 @@ _INSTRUCTIONS = (
     "diff into a change-set review, `architecture` for the system shape, `check` to "
     "enforce the [architecture] contract, `diff` for a two-snapshot API breaking-change "
     "report, `communities` "
-    "for module subsystems and `flows` for forward call-flow from an entry. Relational "
+    "for module subsystems and `flows` for forward call-flow from an entry. `tests` "
+    "answers which tests exercise a symbol (and `covers` the inverse) on a repo-scoped "
+    "graph. Relational "
     "tools accept a short name or re-export id; when a name is ambiguous the response "
     "carries a `resolved.ambiguous` flag — check it before trusting the answer."
 )
@@ -119,6 +121,21 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
     def callees(symbol: str) -> dict:
         """Internal symbols that `symbol` statically calls."""
         return op("callees", {"symbol": symbol})
+
+    @server.tool()
+    def tests(symbol: str, depth: int = 3, cap: int = 25) -> dict:
+        """Which tests exercise `symbol` — the NEAREST band of test functions that reach
+        it, as runnable pytest node ids. `confidence` is high/medium by distance and
+        `unknown` when nothing is found within `depth`: unknown means unknown, never
+        "untested". Needs a repo-scoped graph (`--consumer tests --mode full`). Raise
+        `depth` above 3 only for low-confidence candidates."""
+        return op("tests", {"symbol": symbol, "depth": depth, "cap": cap})
+
+    @server.tool()
+    def covers(test: str, depth: int = 3, cap: int = 25) -> dict:
+        """The inverse of `tests`: which core symbols this test reaches, by distance.
+        Use it to check whether a test exercises what its name claims."""
+        return op("covers", {"test": test, "depth": depth, "cap": cap})
 
     @server.tool()
     def impact(symbol: str, depth: int = 2, limit: int = 40, full: bool = False) -> dict:
@@ -253,7 +270,8 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 # tool names registered above (kept in sync for tests / introspection)
 MCP_TOOLS = (
     "stats", "reload", "search", "query", "resolve", "callers", "callees", "impact",
-    "call_contract", "implementers", "family", "families", "column", "columns_of",
+    "call_contract", "tests", "covers", "implementers", "family", "families",
+    "column", "columns_of",
     "accessors",
     "locate", "review", "architecture", "check", "diff", "communities", "flows", "source", "report",
     "semantic_search", "pack",

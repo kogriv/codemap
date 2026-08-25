@@ -250,6 +250,38 @@ def _print_query_text(r) -> None:
         print("  read by:", ", ".join(col["reads"]) or "—")
 
 
+def _cmd_tests(args) -> int:
+    """Which tests exercise a symbol — ending in a line you can paste (R1-C24)."""
+    from codemap.serve.session import Session
+    session = Session(_graph_from(args))
+    op = "covers" if args.covers else "tests"
+    key = "test" if args.covers else "symbol"
+    env = session.handle({"op": op, "args": {key: args.name,
+                                             "depth": args.depth, "cap": args.cap}})
+    if not env.get("ok"):
+        print(env.get("error", "not found"), file=sys.stderr)
+        return 1
+    r = env["result"]
+    if args.format == "json":
+        print(json.dumps(r, ensure_ascii=False, indent=2))
+        return 0 if (r.get("tests") or r.get("symbols")) else 1
+    if args.covers:
+        print(f"# {r['node_id'] or r['test']} covers {r['total']} symbol(s)")
+        for row in r["symbols"]:
+            print(f"  {row['distance']}  {row['id']}")
+    else:
+        print(f"# tests for {r['symbol']} — confidence: {r['confidence']}"
+              + (f", {r['distance']} hop(s) away" if r["distance"] else ""))
+        for row in r["tests"]:
+            print(f"  {row['node_id']}")
+    for c in r["caveats"]:
+        print(f"  · {c}", file=sys.stderr)
+    ids = [row["node_id"] for row in r.get("tests", []) if row.get("node_id")]
+    if ids:
+        print("\npytest " + " ".join(ids))
+    return 0 if (r.get("tests") or r.get("symbols")) else 1
+
+
 def _cmd_report(args) -> int:
     graph = _graph_from(args)
     if args.format == "json":
@@ -543,6 +575,19 @@ def build_parser() -> argparse.ArgumentParser:
     _add_source(q)
     q.add_argument("--format", choices=["json", "text"], default="json")
     q.set_defaults(func=_cmd_query)
+
+    t = sub.add_parser("tests", help="Which tests exercise a symbol (or --covers: the "
+                                     "inverse). Needs a repo-scoped graph.")
+    t.add_argument("name", help="Symbol (short or full), or a test id with --covers.")
+    _add_source(t)
+    t.add_argument("--covers", action="store_true",
+                   help="Inverse: what does this test reach.")
+    t.add_argument("--depth", type=int, default=3,
+                   help="Hops to search back. Beyond 3 the answer is low-confidence "
+                        "(measured: precision 1.00 at 3 hops, 0.33 at 5).")
+    t.add_argument("--cap", type=int, default=25, help="Max tests listed (default 25).")
+    t.add_argument("--format", choices=["text", "json"], default="text")
+    t.set_defaults(func=_cmd_tests)
 
     r = sub.add_parser("report", help="Render a report over the graph.")
     r.add_argument("kind", choices=_REPORT_KINDS)

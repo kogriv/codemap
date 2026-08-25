@@ -1,6 +1,12 @@
 # Design — Test mapping: which tests cover this symbol (axis A10)
 
-**Status:** ⬜ **open** — decisions below are recommendations, not yet built.
+**Status:** ✅ **shipped** (2026-08-25, no schema change).
+**User docs:** [../test-mapping.md](../test-mapping.md).
+**Decisions resolved:** D1 = **derived**, as recommended; D2 = nearest band with a **measured** cutoff of 3
+(the design left the number open — the coverage.py run found a cliff, not a taper), cap 25, both labels;
+D3 = tier in the envelope + a caveat on `fast`; **D4 = measured and NOT built** (1 symbol of 1043 on a suite
+with a conftest — see gap §7); D5 = `tests_for`/`covers` → ops `tests`/`covers` → `codemap tests`, pytest node
+ids; D6 = measured, and **it overturned its own success metric** (gap §6).
 **Motivates:** gap [test_mapping_2026-08-25](../../gaps/test_mapping_2026-08-25.md).
 **Backlog:** R1-C24.
 **Related design:** [scope.md](scope.md) (consumer roots and roles — where "this is a test" comes from),

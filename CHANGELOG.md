@@ -27,8 +27,34 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   reaching `pkg/config.py` and no edge is invented (the gate reads evidence — a namespace root, or existing
   `flat` edges — not the presence of `__init__.py`). bquant's full repo-scoped graph is byte-identical.
 
+### Added
+
+- **`codemap tests <symbol>` — which tests exercise a symbol** (R1-C24, axis A10), as runnable pytest node
+  ids, ending in a `pytest …` line you can paste. Plus `--covers` for the inverse, serve ops `tests`/`covers`
+  (29 → 31 ops, 26 → 28 MCP tools), and `Query.tests_for` / `Query.covers`. Needs a repo-scoped graph
+  (`--consumer tests --mode full`); anything less says so instead of returning an empty list.
+  The direct answer that existed before — `callers` — is empty for **82%** of core symbols, because a test
+  calls `extract()` and `extract()` calls two hundred things. This walks backwards and returns the *nearest
+  band* of tests, ranked by graph distance and nothing else (name similarity would be a guess about intent).
+  **Validated against `coverage.py`, not asserted.** Running the suite with per-test contexts gave a
+  precision cliff — median precision 1.00 at 1–3 hops returning 2–8 tests, then **0.67 at four hops
+  returning 78** — so the default depth is 3, taken from that table. At the cutoff: **57%** of exercised
+  symbols get an answer (deep tier, 43% fast), median precision **1.00**, and **93%** of answers contain at
+  least one test coverage.py confirms executes the symbol.
+  The other **16% come back `unknown`, never "untested"** — the fifth time this project has had to replace a
+  confident nothing with an honest unknown. Its dominant cause is named rather than left mysterious: a method
+  called on an object the test constructed resolves to no edge.
+  The pytest **fixture seam was measured and deliberately not built**: on a suite that has a conftest (894
+  tests, 48% taking a fixture parameter, 68 fixtures), exactly **1 symbol of 1043** is reachable only through
+  a fixture. See [docs/test-mapping.md](docs/test-mapping.md).
+
 ### Fixed
 
+- **The conservation check no longer misfires on a repo-scoped graph** (R1-C23-f1) — caught in the first
+  hour of using it: `--consumer tests --mode full` reported "137 modules built from 48 input file(s)",
+  because `inputs.python_files` counts the extractor's walk of the *core* while the module count included
+  consumer roots. It now counts core modules only. A point in the check's own favour: it fired on the first
+  live discrepancy it met, which happened to be its own.
 - **Robustness on hard Python** (R1-C23, axis B2) — a deliberate probe, one module per awkward construct,
   built cleanly and printed **nothing**. Most of it came through honestly (metaclasses, a `type()`-built
   class recorded as an *attribute* rather than an invented class, PEP 562/695, `match`, `async`,

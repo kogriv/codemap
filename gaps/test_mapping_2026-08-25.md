@@ -11,7 +11,12 @@ step the human needs is not), `dispatch_bridging_2026-07-28.md` (F5 — pytest f
 exactly the kind M7 bridged for bquant's plugin registry).
 **Design:** [docs/design/test_mapping.md](../docs/design/test_mapping.md).
 **Backlog:** R1-C24.
-**Status:** ⬜ open — measured, designed, not yet built.
+**Status:** ✅ **closed same day** (2026-08-25, no schema change) — `Query.tests_for` / `covers`, serve ops
+`tests`/`covers`, `codemap tests <symbol>` emitting runnable pytest node ids. Validated against **coverage.py**
+ground truth rather than asserted: at the measured cutoff, **57%** of exercised symbols get an answer (deep;
+43% fast), **median precision 1.00**, and **93%** of answers contain at least one test coverage.py confirms
+executes the symbol. The other 16% come back `unknown`, never "untested". **D4 (the fixture seam) was measured
+and deliberately not built** — see §6. Tests 484 → **503**.
 
 ## 1. The gap
 
@@ -111,3 +116,64 @@ per-test symbol set for a sample; the milestone's honesty claim is precision/rec
 in the manner of `soundness_dogfood_2026-07-30.md` — not "the answer looks reasonable".
 
 Design decisions and sizing: [docs/design/test_mapping.md](../docs/design/test_mapping.md).
+
+---
+
+## 6. What the measurement decided that the design could not
+
+The design named the acceptance (precision/recall against `coverage.py`) but guessed at two things. Running
+the suite under `coverage.py` with per-test contexts settled both, and overturned one of them.
+
+### The distance cutoff is a cliff, not a taper
+
+Precision of the nearest non-empty band, by how far back that band was:
+
+| nearest hop | symbols | median precision | mean | median tests returned |
+|---|---|---|---|---|
+| 1 | 63 | 1.00 | 0.98 | 2 |
+| 2 | 91 | 1.00 | 0.79 | 4 |
+| 3 | 44 | 1.00 | 0.73 | 8 |
+| **4** | 61 | **0.67** | 0.59 | **78** |
+| 5 | 29 | 0.33 | 0.47 | 78 |
+| 6 | 5 | 0.23 | 0.42 | 78 |
+
+At the fourth hop the walk reaches shared test infrastructure and starts answering "most of the suite" —
+the answer size jumps 8 → 78 in one step. So the default depth is **3**, chosen from this table. Deeper
+walks remain available and are labelled `low`.
+
+### "Recall on the nearest band" was the wrong acceptance metric — and the design said it was the one that mattered
+
+Against coverage's truth set, median recall of the returned band is **0.43** over the symbols that get an
+answer (p25 0.17, p75 1.00) — and **0.02** across all exercised symbols, counting an `unknown` as zero. The
+low figure is not a defect, and the spread says why: recall collapses exactly where the truth set is widest.
+For `Graph.add_edge` the truth set is **151 tests** — every test that executes one of its lines — and the
+band returns 3, so recall is 0.02. Reporting 151 is reporting the suite.
+
+So the honest claim had to change with it. The feature does not answer *"every test that covers X"*; it
+answers *"the closest tests to X"*, and the number that turned out to matter is **93% of answers contain at
+least one genuinely covering test** at a median precision of 1.00. Recall against the executed-set is
+published here — in both denominators — because it is the number a reader would otherwise assume, not because
+it is the target. The bench that produces it is
+[`research/bench/test_mapping_accuracy.py`](../research/bench/test_mapping_accuracy.py), so the claim is
+re-runnable rather than a sentence in a document.
+
+### And the honesty rule needed a fifth application
+
+**16% of symbols that coverage.py proves are exercised get no answer within the cutoff.** An empty list would
+read as "nothing tests this" — the same confident-nothing as #1, #3, #5, #7 and R1-C23. They return
+`confidence: "unknown"` with an explicit caveat instead. The dominant cause is identified rather than left
+mysterious: **a method called on an object the test constructed** — consumer-root call resolution is
+name-based, so `Engine().run()` produces no edge to `Engine.run`, on either tier.
+
+## 7. D4 (the pytest fixture seam) — measured, then deliberately not built
+
+The design required this to be measured on a suite that *has* a `conftest.py` before being built, since
+codemap's own suite has none. Measured on bquant — 894 tests, **48% of them taking a fixture parameter**, 68
+fixtures, and (as expected) **zero** edges from a test to the fixture that produces it:
+
+> symbols reachable **only** through a fixture and not through any test body: **1 of 1043**.
+
+On codemap the same number is **0**. The fixtures call the same entry points the test bodies do, so bridging
+the seam buys attribution, not coverage. Building a conftest-chain resolver for 0.1% would be gold-plating
+against this project's own stop criterion, so it is recorded here and left. If the number is materially
+different in another repo, that is the trigger to build it.

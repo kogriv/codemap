@@ -43,6 +43,34 @@ _IMPACT_EDGES = ("calls", "references", "inherits", "imports", "decorated_by",
 # is excluded on purpose (structural, would just inflate big modules).
 _RANK_EDGE_TYPES = ("calls", "imports", "references", "inherits", "implements")
 
+# Test-mapping walk (R1-C24). Execution and naming relations only: `imports` is
+# module→module and would spread the answer across the package without saying anything
+# about what a *test* runs; `inherits` is kept because exercising a subclass does exercise
+# its base. Deliberately narrower than _IMPACT_EDGES, which answers a different question.
+_TEST_WALK_EDGES = ("calls", "references", "accesses", "inherits")
+
+#: How far back a *confident* answer may look. Not taste — measured against coverage.py
+#: ground truth on codemap's own suite (R1-C24 D6), where precision falls off a cliff and
+#: the answer size explodes at the fourth hop:
+#:
+#:   nearest hop   symbols   median precision   median tests returned
+#:             1        63               1.00                       2
+#:             2        91               1.00                       4
+#:             3        44               1.00                       8
+#:             4        61               0.67                      78
+#:             5        29               0.33                      78
+#:
+#: By the fourth hop the walk has reached shared test infrastructure and is answering
+#: "most of the suite" — worse than useless as a default, so it is available only when
+#: asked for explicitly, and labelled `low`.
+_TEST_MAX_DEPTH = 3
+_TEST_DEEP_DEPTH = 6
+#: Cap on tests listed per answer. Truncation is always *stated* — a silently trimmed
+#: list reads as "these are all of them", which is issue #5 in a new costume.
+_TEST_CAP = 25
+#: Distance → how much the answer is worth, from the same measurement.
+_TEST_CONFIDENCE = {1: "high", 2: "high", 3: "medium"}
+
 
 def _pagerank(g: "nx.DiGraph", personalization: dict[str, float] | None,
               *, alpha: float = 0.85, max_iter: int = 100, tol: float = 1.0e-9) -> dict:
@@ -142,6 +170,13 @@ class Query:
         for e in graph.edges:
             if e.type in _IMPACT_EDGES:
                 self._inbound.setdefault(e.target, []).append((e.source, e.type))
+        # R1-C24: the same index forward, for `covers` (what does this test exercise).
+        self._outbound: dict[str, list[tuple[str, str]]] = {}
+        for e in graph.edges:
+            if e.type in _IMPACT_EDGES:
+                self._outbound.setdefault(e.source, []).append((e.target, e.type))
+        self._module_ids = [n.id for n in graph.nodes.values() if n.kind == "module"]
+        self._test_ids = {i for i in self.graph.nodes if self._is_test(i)}
 
     # -- lookups -------------------------------------------------------------
 
@@ -950,4 +985,180 @@ class Query:
             "god_classes": [_class_entry(c, n) for c, n in god],
             "complex_functions": complex_fns[:limit],
             "call_hubs": hubs[:limit],
+        }
+
+    # -- test mapping (R1-C24, axis A10) -------------------------------------
+
+    def _module_of(self, node_id: str) -> "Node | None":
+        """The module node containing ``node_id`` — longest module id that prefixes it."""
+        best = None
+        for mid in self._module_ids:
+            if node_id == mid or node_id.startswith(mid + "."):
+                if best is None or len(mid) > len(best):
+                    best = mid
+        return self.graph.nodes.get(best) if best else None
+
+    def _is_test(self, node_id: str) -> bool:
+        """Would pytest collect this node as a test? (design D1 — derived, not stored)
+
+        Three conditions, all syntax over data already in the graph: it lives under a
+        consumer root whose role is ``tests``; its module file is a file pytest collects
+        (``test_*.py`` / ``*_test.py`` — which is what keeps helper packages under
+        ``tests/fixtures/`` out); and the function itself follows the naming rule,
+        including the ``Test*`` class case. Derived rather than stamped at build time so
+        the artifact does not carry one framework's naming convention, and so an existing
+        graph gains the feature with no rebuild.
+        """
+        node = self.graph.nodes.get(node_id)
+        if node is None or node.kind != "function" or self.root_of(node_id) != "tests":
+            return False
+        mod = self._module_of(node_id)
+        if mod is None or not mod.file:
+            return False
+        base = mod.file.rsplit("/", 1)[-1]
+        if not (base.startswith("test_") or base.endswith("_test.py")):
+            return False
+        tail = node_id[len(mod.id) + 1:].split(".")
+        if not tail or not tail[-1].startswith("test"):
+            return False
+        if len(tail) == 1:
+            return True
+        return len(tail) == 2 and tail[0].startswith("Test")
+
+    def pytest_nodeid(self, node_id: str) -> str | None:
+        """Graph id → the id you can paste after ``pytest`` (design D5).
+
+        ``tests.test_x.TestFoo.test_y`` → ``tests/test_x.py::TestFoo::test_y``. Without
+        this the answer is a reading exercise instead of a command.
+        """
+        mod = self._module_of(node_id)
+        if mod is None or not mod.file:
+            return None
+        tail = node_id[len(mod.id) + 1:]
+        return mod.file + ("::" + "::".join(tail.split(".")) if tail else "")
+
+    def _test_caveats(self, *, truncated: int, searched: int, found: bool) -> list[str]:
+        """The two labels every answer carries, plus whatever this graph earns.
+
+        Both are required (R1-C13): an over-set because reaching a symbol is not
+        asserting on it, and a lower bound because dynamic dispatch is invisible.
+        """
+        out = [
+            "over-set: a test that reaches this symbol does not necessarily assert on it",
+            "lower bound: dynamic dispatch, fixtures resolved by name and monkeypatched "
+            "calls are invisible to a static graph",
+        ]
+        tier = (self.graph.provenance or {}).get("tier")
+        if tier == "fast":
+            out.append("built on the fast tier — method calls are largely unresolved "
+                       "(21% vs 56% measured); rebuild with `--deep` for a usable set")
+        elif tier is None:
+            out.append("graph records no tier (built before schema 0.12) — if it is the "
+                       "fast tier, method calls are largely unresolved")
+        if not self._test_ids:
+            out.append("no test functions in this graph — build repo-scoped with "
+                       "`--consumer tests --mode full` (thin mode yields files, not tests)")
+        if truncated:
+            out.append(f"{truncated} further test(s) at this distance not listed (cap)")
+        if not found:
+            out.append(f"unknown, not none: no test reaches this symbol within {searched} "
+                       "hop(s). 16% of symbols that coverage.py proves are exercised look "
+                       "like this — ask for a deeper walk (`depth=6`) for low-confidence "
+                       "candidates, but do not read silence as 'untested'")
+        else:
+            out.append(f"searched {searched} hop(s) back")
+        return out
+
+    def tests_for(self, symbol_id: str, *, depth: int = _TEST_MAX_DEPTH,
+                  cap: int = _TEST_CAP) -> dict:
+        """Which tests exercise ``symbol_id`` — nearest band first (R1-C24, axis A10).
+
+        Distance 1 is not the question: measured on codemap's own repo, only **18%** of
+        core symbols have a direct inbound edge from a test (68/380), because a test calls
+        ``extract()`` and ``extract()`` calls two hundred things. Bounded backwards
+        reachability answers 59% on the fast tier and 80% on deep.
+
+        Nor is "everything reachable" the answer: that returns a median of 21 tests and a
+        maximum of 126 out of 416 — the suite. So the walk returns the **nearest non-empty
+        band** (median 6.5), and deeper bands only on request. Ranking is the feature here,
+        not a polish item.
+
+        Ranking is by graph distance and nothing else: distance is a fact about the graph,
+        while name similarity or file adjacency would be a guess about intent, which is
+        outside "source-only, deterministic".
+        """
+        targets = self._member_ids(symbol_id)
+        seen = set(targets)
+        frontier = set(targets)
+        for dist in range(1, max(1, depth) + 1):
+            nxt: set[str] = set()
+            for node in sorted(frontier):
+                for src, etype in self._inbound.get(node, []):
+                    if src not in seen and etype in _TEST_WALK_EDGES:
+                        seen.add(src)
+                        nxt.add(src)
+            if not nxt:
+                frontier = nxt
+                break
+            frontier = nxt
+            hits = sorted(n for n in nxt if n in self._test_ids)
+            if hits:
+                return self._tests_envelope(symbol_id, hits, dist, cap, dist)
+        return self._tests_envelope(symbol_id, [], None, cap, depth)
+
+    def _tests_envelope(self, symbol_id, hits, dist, cap, searched) -> dict:
+        shown, truncated = hits[:cap], max(0, len(hits) - cap)
+        return {
+            "symbol": symbol_id,
+            "tier": (self.graph.provenance or {}).get("tier"),
+            "distance": dist,
+            # `unknown` — never "none". A confident empty is the failure this project has
+            # now shipped five fixes for (#1 risk:"none", #3, #5, #7, R1-C23).
+            "confidence": _TEST_CONFIDENCE.get(dist, "low") if dist else "unknown",
+            "tests": [self._test_row(t, dist) for t in shown],
+            "total_at_distance": len(hits),
+            "truncated": truncated,
+            "caveats": self._test_caveats(truncated=truncated, searched=searched,
+                                          found=bool(dist)),
+        }
+
+    def _test_row(self, node_id: str, dist) -> dict:
+        n = self.graph.nodes.get(node_id)
+        return {"id": node_id, "node_id": self.pytest_nodeid(node_id),
+                "line": getattr(n, "lineno", None), "distance": dist}
+
+    def covers(self, test_id: str, *, depth: int = _TEST_MAX_DEPTH,
+               cap: int = _TEST_CAP) -> dict:
+        """The inverse: which core symbols a test reaches (R1-C24 / design D5).
+
+        Same index read the other way, so it costs nothing extra — and it answers "is
+        this test exercising the thing its name claims?" during review.
+        """
+        out: dict[str, int] = {}
+        seen = {test_id}
+        frontier = {test_id}
+        for dist in range(1, max(1, depth) + 1):
+            nxt: set[str] = set()
+            for node in sorted(frontier):
+                for e in self._outbound.get(node, []):
+                    tgt, etype = e
+                    if tgt in seen or etype not in _TEST_WALK_EDGES:
+                        continue
+                    seen.add(tgt)
+                    nxt.add(tgt)
+                    if self.root_of(tgt) == "core":
+                        out.setdefault(tgt, dist)
+            if not nxt:
+                break
+            frontier = nxt
+        rows = sorted(out.items(), key=lambda kv: (kv[1], kv[0]))
+        return {
+            "test": test_id,
+            "node_id": self.pytest_nodeid(test_id),
+            "tier": (self.graph.provenance or {}).get("tier"),
+            "symbols": [{"id": s, "distance": d} for s, d in rows[:cap]],
+            "total": len(rows),
+            "truncated": max(0, len(rows) - cap),
+            "caveats": self._test_caveats(truncated=max(0, len(rows) - cap),
+                                          searched=depth, found=bool(rows)),
         }

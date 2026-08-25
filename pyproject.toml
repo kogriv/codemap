@@ -25,3 +25,9 @@ codemap = "codemap.cli:main"
 where = ["."]
 include = ["codemap*"]
 exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+# Packages under tests/fixtures are *inputs* to the extractor, not tests. One of them
+# (tmworld, R1-C24) deliberately contains a file pytest would otherwise collect, because
+# the test-mapping rule keys on that same collection convention.
+norecursedirs = ["tests/fixtures"]
