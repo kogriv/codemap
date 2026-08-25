@@ -69,8 +69,8 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P1 — graphlens | ✅ EN + RU | [graphlens card](../tools/graphlens.md) |
 | P2 — GitNexus | ✅ EN + RU | [GitNexus card](../tools/gitnexus.md) |
 | P3 — cocoindex-code | ✅ EN + RU | [cocoindex-code card](../tools/cocoindex-code.md) |
-| P4 — the determinism story | 🔲 **blocked** | needs a real "graph diff caught X" episode in [`gaps/`](../../gaps/) |
-| P5 — the provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode |
+| P4 — the determinism story | 🟡 **unblocked 2026-08-25** — episode captured, post not written | [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md) §2 |
+| P5 — the provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode; R1-C24 (test-mapping) is where one would come from |
 | P6 — next tool (#4) / methods post | 🔲 later | lands when the next R2 разбор does |
 
 **P4 and P5 are the only writing left, and they are deliberately not forced.** Both need an
@@ -78,6 +78,17 @@ episode that actually *happened* — a graph diff that caught a real regression 
 provenance split that changed a real decision. Inventing one would break the single rule the
 series rests on. Capture them opportunistically while dogfooding, into `gaps/`, then promote
 to [positioning.md](../positioning.md) §Future stories, then write the post.
+
+**P4's episode landed on its own (2026-08-24), and it is better than the one that was being
+waited for.** Not "a graph diff caught a regression" but the sharper inverse: a determinism
+*test* went red, and the cause was the input moving under it, not the tool. Nothing in the
+artifact could tell those two apart — the same source tree, built by two codemap versions four
+commits apart, yields 30 vs 38 edges and 12 vs 7 `high` dead-code verdicts, and **both files
+declare `codemap_schema: "0.11"`**. That reframes the post: the interesting half of determinism
+is not that the output is stable, it is that a stable output is worthless if you cannot say what
+went in. Written up in [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md);
+the fix is R1-C25. Write the post **after** R1-C25 ships, so it ends with the repair rather than
+the complaint.
 
 Sketches (so the shape is ready when the episode lands):
 
