@@ -17,6 +17,9 @@ Emits (M0 + M1 + M1.5):
 
 from __future__ import annotations
 
+import ast
+import os
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import griffe
@@ -25,12 +28,27 @@ from codemap.extract.attrflow import add_attrflow
 from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import add_dispatch, add_family_links
-from codemap.extract.gsource import module_file
+from codemap.extract.gsource import module_file, module_identity
 from codemap.provenance import build_provenance
 from codemap.model import Edge, Graph, Node
 
 # griffe object kinds we turn into definition nodes (aliases handled separately).
 _NODE_KINDS = {"module", "class", "function", "attribute"}
+
+#: Why an input file produced no module (R1-C23 / design D2).
+SKIP_ENCODING, SKIP_SYNTAX, SKIP_IO, SKIP_UNREAD = "encoding", "syntax", "io", "unread"
+
+
+@dataclass
+class _Walk:
+    """What one structural walk accumulates besides nodes and edges."""
+
+    aliases: list = field(default_factory=list)   # (parent_module, name, target, public)
+    imports: list = field(default_factory=list)   # (module_id, target_symbol_path)
+    #: canonical real path → the module id that claimed it (R1-C23/D1, symlink cycles)
+    claimed: dict = field(default_factory=dict)
+    #: module ids skipped because their file was already read under another name
+    aliased: list = field(default_factory=list)   # (skipped_id, owner_id)
 
 
 def build_structural(package_path: str | Path):
@@ -50,11 +68,14 @@ def build_structural(package_path: str | Path):
     root = griffe.load(module_name, search_paths=[str(search_path)])
 
     graph = Graph(target=module_name)
-    aliases: list[tuple[str, str, str, bool]] = []  # (parent_module, name, target, public)
-    imports: list[tuple[str, str]] = []  # (module_id, target_symbol_path)
+    walk = _Walk()
 
-    _collect(graph, root, search_path, module_name, aliases, imports)
-    _resolve_edges(graph, module_name, aliases, imports)
+    _collect(graph, root, search_path, module_name, walk)
+    _resolve_edges(graph, module_name, walk.aliases, walk.imports)
+    # R1-C23/D2: an input the extractor could not read used to vanish without a word,
+    # and the graph then reported on a tree it had not fully seen. Record what was
+    # missed *in the artifact*, so a consumer holding only the graph is told.
+    graph.provenance = {"inputs": _input_report(graph, pkg_dir, search_path, walk)}
     return graph, root, module_name, search_path
 
 
@@ -92,27 +113,137 @@ def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
     # R1-C25: even a library-built graph says which tool and which tier made it. The
     # input identity (scope_id, source commit) is added by whoever resolved the scope —
     # `extract` deliberately does not hash the tree a second time.
-    graph.provenance = build_provenance(tier="deep" if deep else "fast")
+    graph.provenance = build_provenance(tier="deep" if deep else "fast",
+                                        inputs=graph.provenance.get("inputs"))
     return graph
 
 
 # -- pass 1: definition nodes + contains/inherits/decorated_by, collect aliases/imports --
 
-def _collect(graph, obj, root, target_pkg, aliases, imports) -> None:
+def _enumerate_sources(pkg_dir: Path) -> list[Path]:
+    """Every ``.py`` under the package, each real file once (R1-C23 / design D1+D2).
+
+    Symlinks *are* followed — a symlinked source directory is a legitimate layout — but a
+    directory whose real path was already walked is not re-entered, which is what keeps a
+    ``loop -> .`` link from generating an unbounded tree. Deterministic order.
+    """
+    out: list[Path] = []
+    seen: set[str] = set()
+    for dirpath, dirnames, filenames in os.walk(pkg_dir, followlinks=True):
+        real = os.path.realpath(dirpath)
+        if real in seen:
+            dirnames[:] = []
+            continue
+        seen.add(real)
+        dirnames[:] = sorted(d for d in dirnames if d != "__pycache__")
+        out.extend(Path(dirpath) / n for n in sorted(filenames) if n.endswith(".py"))
+    return out
+
+
+def _skip_reason(path: Path) -> str:
+    """Why this file produced no module — asked only of files that produced none."""
+    try:
+        src = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return SKIP_ENCODING
+    except OSError:
+        return SKIP_IO
+    try:
+        ast.parse(src)
+    except (SyntaxError, ValueError):
+        return SKIP_SYNTAX
+    return SKIP_UNREAD          # parses here but griffe produced nothing — say so plainly
+
+
+def _input_report(graph, pkg_dir: Path, root: Path, walk) -> dict:
+    """What the walk read, and what it could not (R1-C23 / design D2).
+
+    Lives in the graph's ``provenance`` rather than in a sidecar because a consumer
+    holding only ``graph.json`` is exactly the one who must be told that the tree was
+    read incompletely. Paths are relative to the search root — the artifact travels.
+    """
+    files = _enumerate_sources(pkg_dir)
+    have = {n.file for n in graph.nodes.values() if n.kind == "module" and n.file}
+    py = sorted(_rel(f, root) for f in files)
+    skipped = [{"path": rel, "reason": _skip_reason(root / rel)}
+               for rel in py if rel not in have]
+    report: dict = {"python_files": len(py)}
+    if skipped:
+        report["skipped"] = skipped
+    if walk.aliased:
+        report["aliased_modules"] = [
+            {"id": mid, "same_as": owner} for mid, owner in sorted(walk.aliased)
+        ]
+    return report
+
+
+def _star_import_targets(module) -> list[str]:
+    """Modules pulled in by ``from X import *`` (R1-C23 / design D3).
+
+    Fed into the same ``imports`` list griffe fills, so the target resolves — and gets
+    the flat-layout retry — through exactly one code path.
+
+    Cost is why this is a substring gate before a parse: ``module.source`` is already in
+    griffe's cache, and scanning every module of the dogfood target for ``import *`` takes
+    0.065s and yields zero candidates. Only a file that contains the text is parsed, so
+    the answer is exact rather than a regex guess about what is inside a string literal.
+    """
+    try:
+        src = module.source
+    except Exception:                       # no source (namespace dir, synthetic)
+        return []
+    if "import *" not in src:
+        return []
+    try:
+        tree = ast.parse(src)
+    except (SyntaxError, ValueError):
+        return []                            # unreadable: D2's report owns this file
+    modpath = module.canonical_path
+    f = module_file(module)
+    is_pkg = f is not None and f.name == "__init__.py"
+    base = modpath.split(".") if is_pkg else modpath.split(".")[:-1]
+    targets = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom):
+            continue
+        if not any(a.name == "*" for a in node.names):
+            continue
+        if node.level:
+            anchor = base[:len(base) - (node.level - 1)]
+            target = ".".join(anchor + ([node.module] if node.module else []))
+        else:
+            target = node.module or ""
+        if target:
+            targets.append(target)
+    return targets
+
+
+def _collect(graph, obj, root, target_pkg, walk) -> None:
     if obj.kind.value == "module":
+        _claim(obj, walk)  # the root claims its own path before any member is walked
         _add_node(graph, obj, root)
         for name, tgt in (obj.imports or {}).items():
-            imports.append((obj.canonical_path, tgt))
+            walk.imports.append((obj.canonical_path, tgt))
+        # R1-C23/D3: griffe expands `from .m import *` into member aliases but records
+        # no import, so the dependency itself was invisible — a star-import is the least
+        # explicit dependency in the language and the one most worth surfacing.
+        for tgt in _star_import_targets(obj):
+            walk.imports.append((obj.canonical_path, tgt))
     for name, member in obj.members.items():
         if member.is_alias:
             # capture ALL re-exports (public flag kept) — a symbol can be importable
             # via a module without being in its __all__ (e.g. bquant.analysis.zones
             # re-exports analyze_zones but its __all__ lists only the legacy API).
-            aliases.append(
+            walk.aliases.append(
                 (obj.canonical_path, name, member.target_path, member.is_public)
             )
             continue
         if member.kind.value not in _NODE_KINDS:
+            continue
+        # R1-C23/D1: a directory symlink into its own ancestry makes the same file
+        # reachable under unboundedly many names. Refuse the second name — before the
+        # `contains` edge, or the graph keeps an edge to a node that is never added.
+        if member.kind.value == "module" and not _claim(member, walk):
             continue
         if member.kind.value != "module":  # modules add themselves in the branch above
             _add_node(graph, member, root)
@@ -121,7 +252,28 @@ def _collect(graph, obj, root, target_pkg, aliases, imports) -> None:
         if member.kind.value == "class":
             _emit_inherits(graph, member, target_pkg)
         if member.kind.value in {"module", "class"}:
-            _collect(graph, member, root, target_pkg, aliases, imports)
+            _collect(graph, member, root, target_pkg, walk)
+
+
+def _claim(module, walk) -> bool:
+    """Claim a module's real path for it; False when another module already holds it.
+
+    The survivor is whichever module the walk reached first — the walk descends from the
+    package root, so that is always the shallower, real name (``hardpkg.api`` over
+    ``hardpkg.loop.api``). A module with no resolvable path cannot be proven a duplicate
+    and is always kept: omitting real code is the worse error.
+    """
+    key = module_identity(module)
+    if key is None:
+        return True
+    owner = walk.claimed.get(key)
+    if owner is None:
+        walk.claimed[key] = module.canonical_path
+        return True
+    if owner == module.canonical_path:
+        return True
+    walk.aliased.append((module.canonical_path, owner))
+    return False
 
 
 # -- semantic edges resolvable inline (griffe gives absolute targets) --------
@@ -242,9 +394,23 @@ def _add_node(graph, obj, root) -> None:
             visibility="public" if obj.is_public else "private",
             decorators=decorators,
             is_deprecated=any(d.split(".")[-1] == "deprecated" for d in decorators),
-            extras=_extras(obj, decorators),
+            extras=_stub_marked(_extras(obj, decorators), obj),
         )
     )
+
+
+def _stub_marked(extras: dict, obj) -> dict:
+    """Label a symbol that exists only in a ``.pyi`` stub (R1-C23 / design D5).
+
+    A stub-only module has no runtime counterpart, so its symbols are declarations, not
+    code. Labelling beats both alternatives: dropping them loses the declared surface of
+    a stubs distribution, and leaving them unmarked presents a function that does not
+    exist as if it did. Consumers that reason about execution (dead-code) exclude them.
+    """
+    f = module_file(obj)
+    if f is not None and f.suffix == ".pyi":
+        extras = {**extras, "stub": True}
+    return extras
 
 
 def _extras(obj, decorators) -> dict:

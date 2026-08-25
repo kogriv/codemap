@@ -85,8 +85,20 @@ def test_repo_scope_records_its_roots():
 # -- D2 tool identity: never fabricated -----------------------------------------
 
 def test_tool_identity_has_no_placeholder_values():
+    """A field is present because it is known, or absent. Never `"unknown"`."""
     ident = tool_identity()
-    assert all(isinstance(v, str) and v and v != "unknown" for v in ident.values())
+    assert all(v and v != "unknown"
+               for k, v in ident.items() if isinstance(v, str))
+    assert isinstance(ident.get("dirty", False), bool)
+
+
+def test_a_dirty_checkout_is_not_the_same_builder_as_a_clean_one():
+    """`tool.dirty` mirrors what `source` records about the target, for the same reason.
+    Measured the hard way: a worktree at HEAD and a dirty checkout of the same HEAD both
+    reported the identical commit while plainly not being the same builder (R1-C23)."""
+    from codemap.provenance import _is_dirty
+    assert _is_dirty(Path(__file__).resolve().parents[1]) in (True, False)
+    assert _is_dirty(Path("/")) is None
 
 
 def test_commit_is_absent_not_invented_outside_a_checkout(tmp_path):

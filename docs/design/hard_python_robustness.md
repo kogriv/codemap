@@ -1,6 +1,12 @@
 # Design — Robustness on hard Python (axis B2)
 
-**Status:** ⬜ **open** — decisions below are recommendations, not yet built.
+**Status:** ✅ **shipped** (2026-08-25, no schema change of its own — it rides R1-C25's 0.12).
+**User docs:** [../hard-python.md](../hard-python.md).
+**Decisions resolved:** D1 = **B** (canonical-path visited set), D2 = collect + `build` warning + carried in
+`provenance.inputs` (R1-C25 landed first, as sequenced), D3 = **edge only**, name expansion deferred and
+recorded, D4 = **yes**, same `annotation` label, measured at +26/+3 edges, D5 = **B** (label, exclude from
+dead-code) and `.pyi` left out of the scope manifest as it was, D6 = **yes** — the conservation check is the
+milestone's most valuable piece, D7 met.
 **Motivates:** gap [hard_python_robustness_2026-08-25](../../gaps/hard_python_robustness_2026-08-25.md).
 **Backlog:** R1-C23.
 **Related design:** [flat_layout.md](flat_layout.md) (the same "one normalisation boundary" lesson),

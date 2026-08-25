@@ -12,7 +12,8 @@ tree, and a claim without its qualifiers cannot be checked.
     "scope_id": "sha256:a14c14e0…",
     "source": {"vcs": "git", "commit": "6bbb142deadb", "ref": "main", "dirty": false},
     "tier": "fast",
-    "tool": {"name": "codemap", "version": "0.0.2", "commit": "16fe7de"}
+    "tool": {"name": "codemap", "version": "0.0.2", "commit": "16fe7de", "dirty": false},
+    "inputs": {"python_files": 89}
   },
   "nodes": [], "edges": []
 }
@@ -22,9 +23,13 @@ tree, and a claim without its qualifiers cannot be checked.
 |---|---|
 | `tool.name` / `version` | the package that wrote the file |
 | `tool.commit` | short HEAD of codemap's own checkout — **absent** when codemap was installed from a wheel; never guessed |
+| `tool.dirty` | whether codemap's own checkout had uncommitted changes. Two builds from one commit with different working trees are two different tools |
 | `tier` | `fast` (ast) or `deep` (jedi). Two tiers answer call-graph questions differently, so this is part of the identity |
 | `scope_id` | sha-256 over the sorted `path\tsha256` list of every input file — the identity of the tree that was read |
 | `source.commit` / `ref` / `dirty` | the target's VCS state, when the target is in a git repo. `dirty` covers **the scanned roots only**, not the whole repo |
+| `inputs.python_files` | how many `.py` files the walk found — the input half of the conservation check below |
+| `inputs.skipped` | files that produced **no module**, each with a reason (`syntax` / `encoding` / `io` / `unread`). Absent when there are none |
+| `inputs.aliased_modules` | modules skipped because their real file was already read under another name (a directory symlink). Absent when there are none |
 | `roots` | present on a repo-scoped build (`--consumer` / `--docs`): core, consumers, docs, mode — names only |
 
 ## Two rules the block obeys
@@ -111,3 +116,26 @@ share one field.
 
 **Design:** [design/graph_provenance.md](design/graph_provenance.md).
 **Gap:** [../gaps/graph_provenance_2026-08-25.md](../gaps/graph_provenance_2026-08-25.md).
+
+## What the graph says about what it could not read
+
+`inputs` is here rather than in the sidecar for one reason: a consumer holding only
+`graph.json` is exactly the one who must be told the tree was read incompletely. A file
+with a syntax error or a non-UTF-8 byte used to vanish without a word, and every report
+then answered over a tree codemap had not fully seen.
+
+```
+[warning] 2 input file(s) produced no module (1 encoding, 1 syntax):
+pkg/broken.py, pkg/latin1.py  Anything those files define or depend on is missing,
+not absent — dead-code, layers and impact are all short by that much.
+```
+
+Two derived checks read `inputs` (they are recomputed on read, never stored):
+
+- **unread inputs** — the warning above, wherever the graph is presented.
+- **module conservation** — modules cannot outnumber the files that define them, nor
+  fall short of them unexplained. Both directions are *provably* wrong states, so there
+  is no threshold to tune. It flags a symlink-cycle explosion without knowing what a
+  symlink is, and an unexplained shortfall without knowing what a syntax error is.
+
+See [hard-python.md](hard-python.md) for what produces these conditions.

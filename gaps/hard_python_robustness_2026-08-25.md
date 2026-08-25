@@ -12,7 +12,13 @@ nothing; the damage is visible only if you already know the answer.
 read), `dead_code_high_band_2026-08-24.md` (R1-C13 lower-bound labels).
 **Design:** [docs/design/hard_python_robustness.md](../docs/design/hard_python_robustness.md).
 **Backlog:** R1-C23.
-**Status:** ⬜ open — measured, designed, not yet built.
+**Status:** ✅ **closed same day** (2026-08-25, no schema change beyond R1-C25's 0.12) — all five closed.
+The symlink build now yields **15 modules, not 615**; both unreadable files are named on stdout and travel in
+`provenance.inputs.skipped`; `star → meta` exists; the quoted annotation resolves; stub symbols are labelled
+and excluded from dead-code. Measured on **frozen** copies across the two tool versions (the dogfood target
+was being edited mid-session, so a live before/after would have been meaningless): **bquant +26 edges, 0
+removed** — all of them quoted annotations; **codemap +3, 0 removed**; node counts unchanged on both.
+Tests 453 → **484**.
 
 ## 1. The probe
 
@@ -136,3 +142,25 @@ The criterion is *the fixture's numbers match the truth column of §3, the codem
 additions only (plus whatever B2-3/B2-4 legitimately add), and every skipped input is named on stdout.*
 
 Design decisions and sizing: [docs/design/hard_python_robustness.md](../docs/design/hard_python_robustness.md).
+
+---
+
+## 6. What the work turned up
+
+**The cost estimate was right for once, and for the boring reason.** D3 found no star imports in either real
+package (the probe is the only user), and D4 added 26 edges on bquant and 3 on codemap. Nothing removed. The
+expensive-looking half — D1 — is a no-op on any tree without a symlink cycle.
+
+**A measurement trap, caught by disbelief rather than by care.** The first before/after of codemap-on-codemap
+showed +20 nodes and 6 *removed* edges, which no part of this change could explain. Cause: the "old" build ran
+with its worktree as the working directory, and griffe resolved the package name `codemap` from `sys.path`
+(the cwd) rather than from the `search_paths` it was handed — so the old tool had analysed **its own source**,
+not the frozen copy. Re-run from a neutral directory with `PYTHONPATH`, the delta was +3 and nothing removed.
+Worth recording twice over: it is a live example of the R1-C25 thesis (two graphs, no way to tell from the
+artifacts which tool read which tree), and it is a hint that `search_paths` is not authoritative for griffe —
+not chased here, but not forgotten either.
+
+**And it fed a correction back into R1-C25.** Both builds in that comparison reported the *same*
+`tool.commit`, because one was a clean worktree at HEAD and the other a dirty checkout of the same HEAD.
+Provenance recorded `dirty` for the target and not for the tool. It does now: two builds from one commit with
+different working trees are two different tools.

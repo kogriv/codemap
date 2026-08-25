@@ -184,12 +184,12 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
 
     if not module_ids or len(affected) >= _FULL_FALLBACK_FRACTION * len(module_ids):
         add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
-        graph.provenance = build_provenance(tier=tier)
+        graph.provenance = build_provenance(tier=tier, inputs=graph.provenance.get("inputs"))
         return graph, {"mode": "full", "affected": sorted(affected)}
 
     add_behavioral_layer(graph, root, module_name, search_path, deep=deep,
                          behavior_only=affected, attr_only=affected)
     unaffected = module_ids - affected
     _splice_unaffected(graph, old_graph, unaffected, module_of)
-    graph.provenance = build_provenance(tier=tier)
+    graph.provenance = build_provenance(tier=tier, inputs=graph.provenance.get("inputs"))
     return graph, {"mode": "incremental", "affected": sorted(affected)}

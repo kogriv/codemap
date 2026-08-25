@@ -95,7 +95,8 @@ def _cmd_build(args) -> int:
         tier="deep" if args.deep else "fast", scope=scope,
         # roots come from extract_repo in this same call; never inherited from a graph
         # loaded off disk, which is how a stale scope would sneak into a fresh build.
-        roots=graph.provenance.get("roots") if (args.consumer or args.docs) else None)
+        roots=graph.provenance.get("roots") if (args.consumer or args.docs) else None,
+        inputs=graph.provenance.get("inputs"))
     # R1-C21: a well-formed but vacuous graph must announce itself — silence is what
     # lets an unparsed layout read as a clean bill of health downstream.
     for d in diagnostics(graph):

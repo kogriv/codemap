@@ -27,6 +27,34 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   reaching `pkg/config.py` and no edge is invented (the gate reads evidence — a namespace root, or existing
   `flat` edges — not the presence of `__init__.py`). bquant's full repo-scoped graph is byte-identical.
 
+### Fixed
+
+- **Robustness on hard Python** (R1-C23, axis B2) — a deliberate probe, one module per awkward construct,
+  built cleanly and printed **nothing**. Most of it came through honestly (metaclasses, a `type()`-built
+  class recorded as an *attribute* rather than an invented class, PEP 562/695, `match`, `async`,
+  `singledispatch`, monkeypatching — and `dead-code high` was empty). Five things did not, all silently:
+  - **a directory symlink into its own ancestry** produced **615 modules for 15 real ones**, 2378 nodes for
+    58, nested 40 deep — while `codemap scope` on the same tree answered `files: 17`. Symlinks are still
+    followed (a symlinked source tree is a legitimate layout), but a directory whose real path was already
+    walked is not re-entered, and the skipped duplicate is recorded in `provenance.inputs.aliased_modules`.
+  - **a file the extractor could not read simply disappeared** — a syntax error or a non-UTF-8 byte removed
+    a module with no message, after which every report answered over a tree codemap had not fully seen. The
+    build now names them, and the list travels in `provenance.inputs.skipped` with a reason each.
+  - **`from X import *` produced no `imports` edge at all**, so the least explicit dependency in the language
+    was invisible to layers, cycles and `check`. It now resolves through the same path as any other import.
+  - **quoted and `TYPE_CHECKING` annotations were invisible** — R1-C22 taught the graph that an annotation is
+    a reference and it only learned the unquoted form, while the quoted one is the idiom for a type that
+    would otherwise be a circular import. Same edge, same `resolution="annotation"` label.
+  - **a stub-only `.pyi` module was presented as real code.** Its symbols now carry `extras.stub` and are
+    never dead-code candidates: "nothing calls it" says nothing about a symbol with no body.
+- **A conservation check over every build** — modules cannot outnumber the files that define them, nor fall
+  short of them beyond the files already accounted for as unreadable. Both directions are provably wrong
+  states, so there is no threshold to tune; the point is the cause not met yet — it flags the symlink
+  explosion without knowing what a symlink is, and would have fired on issue #5.
+  Measured across the two tool versions on **frozen** copies (the dogfood target was being edited
+  concurrently): bquant **+26 edges, 0 removed**, all of them quoted annotations; codemap **+3, 0 removed**;
+  node counts unchanged. See [docs/hard-python.md](docs/hard-python.md).
+
 ### Added
 
 - **Build provenance in the graph** (R1-C25; **schema 0.11 → 0.12**) — `graph.json` gains a top-level
@@ -38,8 +66,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   **Timestamp-free and path-free by construction**: two builds of an unchanged tree stay byte-identical
   *including* the block, and no absolute path can enter it (`build_provenance` raises; a test enforces it),
   so the graph remains safe to attach to a ticket. `tool.commit` is **absent, never guessed**, when codemap
-  runs from an installed wheel. Wall clock, `argv` and `cwd` stay in the `*.meta.json` sidecar — identity
-  travels with the graph, the rebuild recipe stays home. See [docs/provenance.md](docs/provenance.md).
+  runs from an installed wheel. `tool.dirty` mirrors what `source` records about the target, and for the same
+  reason — two builds from one commit with different working trees are two different tools (learned the hard
+  way while measuring R1-C23: a clean worktree and a dirty checkout of the same HEAD reported the identical
+  commit). Wall clock, `argv` and `cwd` stay in the `*.meta.json` sidecar — identity travels with the graph,
+  the rebuild recipe stays home. See [docs/provenance.md](docs/provenance.md).
 - **`codemap_schema` is finally read.** It was written and never checked, so a graph predating an
   extraction change was consumed in silence and answered with the new tool's confidence over the old tool's
   blindness. A mismatch now raises a diagnostic through the shared channel — CLI stderr, `stats`, and the

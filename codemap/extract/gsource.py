@@ -34,6 +34,28 @@ def is_namespace_dir(obj) -> bool:
     return isinstance(getattr(obj, "filepath", None), list)
 
 
+def module_identity(obj) -> str | None:
+    """The **real** path behind a module — symlinks resolved (R1-C23 / design D1).
+
+    A directory symlink that points into its own ancestry makes the same file reachable
+    under unboundedly many module names: a single ``loop -> .`` link turned a 17-file
+    package into **615 modules** nested 40 deep, silently. Resolving to a canonical path
+    lets the walk notice it has read this file already.
+
+    A namespace package has search locations rather than a file; its first location
+    identifies it well enough for that purpose.
+    """
+    fp = getattr(obj, "filepath", None)
+    if isinstance(fp, list):
+        fp = fp[0] if fp else None
+    if fp is None:
+        return None
+    try:
+        return str(Path(fp).resolve())
+    except OSError:
+        return None
+
+
 def module_imports(mod, modpath: str, known_modules) -> dict[str, str]:
     """``mod.imports``, with flat-layout sibling targets package-qualified (R1-C21).
 

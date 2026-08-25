@@ -496,6 +496,9 @@ class Query:
         - **low** — something *references* it (a re-export, a name put in a list, a
           registration): probably alive; the reason names who, so you can judge.
 
+        Symbols declared only in a ``.pyi`` stub are excluded outright (R1-C23): a stub
+        is a declaration, not code, so "nothing calls it" says nothing about it.
+
         ``whitelist`` suppresses candidates by exact id or glob (``fnmatch``).
         ``min_confidence`` (``low``/``medium``/``high``) drops anything below it.
         Sorted most-confident first, then by id.
@@ -507,6 +510,8 @@ class Query:
             name = n.id.rsplit(".", 1)[-1]
             if name.startswith("__") and name.endswith("__"):
                 continue  # dunder — invoked implicitly
+            if n.extras.get("stub"):
+                continue  # R1-C23/D5: a `.pyi` declaration has no body to be dead
             if n.id in self._calls and self._calls.in_degree(n.id) > 0:
                 continue  # has a resolved caller — not a candidate
             if any(fnmatch.fnmatch(n.id, pat) for pat in whitelist):

@@ -6,7 +6,7 @@ the code it analyzes. One canonical, deterministic graph store → many renders:
 dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review,
 and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code-intelligence tools.
 
-**Status:** 🟢 M0–M19.A implemented + research track (R1/R2) — schema 0.12, **453 tests green** (+ a SCIP-CLI
+**Status:** 🟢 M0–M19.A implemented + research track (R1/R2) — schema 0.12, **484 tests green** (+ a SCIP-CLI
 check that runs when the `scip` binary is present), warm serve surface with 29 ops (26 exposed as MCP tools),
 and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
 v1 boundaries), **[BACKLOG.md](BACKLOG.md)** (roadmap), and **[research/](research/)** (tool landscape).
@@ -148,6 +148,9 @@ the live graph, findings, and the milestone that closed them.
   honest field-level `impact` (`accessors`; `unknown` vs `none`).
 - **[docs/incremental.md](docs/incremental.md)** — `codemap build --incremental`: recompute only changed
   modules (~12× faster on `--deep`), byte-identical on the fast tier.
+- **[docs/hard-python.md](docs/hard-python.md)** — what the extractor does with metaclasses, dynamic
+  classes, star imports, quoted annotations, `.pyi` stubs and symlinked trees; and the conditions where it
+  warns instead of answering.
 - **[docs/provenance.md](docs/provenance.md)** — the `provenance` block: which tool, which tier, which
   input tree built a graph; what stays in the sidecar; the schema-mismatch warning and `diff`'s
   comparability check.

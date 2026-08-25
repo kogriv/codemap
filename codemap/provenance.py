@@ -66,14 +66,36 @@ def _tool_commit() -> str | None:
     return _commit_of(Path(__file__).resolve().parent.parent)
 
 
+@lru_cache(maxsize=8)
+def _is_dirty(root: Path) -> bool | None:
+    """Does the checkout at ``root`` have uncommitted changes? None when not a checkout."""
+    if not (Path(root) / ".git").exists():
+        return None
+    try:
+        out = subprocess.run(("git", "-C", str(root), "status", "--porcelain"),
+                             capture_output=True, text=True, check=True)
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return bool(out.stdout.strip())
+
+
 def tool_identity() -> dict:
-    """``{name, version?, commit?}`` — only the fields we actually know."""
+    """``{name, version?, commit?, dirty?}`` — only the fields we actually know.
+
+    ``dirty`` mirrors what ``source`` records about the target, and for the same reason:
+    two builds from the same commit with different working trees are two different tools.
+    Measured the hard way — comparing a worktree at HEAD against a dirty checkout of the
+    same HEAD, both reported the identical commit and were plainly not the same builder.
+    """
+    root = Path(__file__).resolve().parent.parent
     ident: dict = {"name": TOOL_NAME}
-    version, commit = _tool_version(), _tool_commit()
+    version, commit, dirty = _tool_version(), _tool_commit(), _is_dirty(root)
     if version:
         ident["version"] = version
     if commit:
         ident["commit"] = commit
+    if dirty is not None:
+        ident["dirty"] = dirty
     return ident
 
 
@@ -100,9 +122,14 @@ def relative_root(root: str | Path | None, path: str | Path) -> str:
 
 
 def build_provenance(*, tier: str, scope: dict | None = None,
-                     roots: dict | None = None) -> dict:
+                     roots: dict | None = None, inputs: dict | None = None) -> dict:
     """Assemble the ``provenance`` block. Deterministic; no clock, no absolute path."""
     prov: dict = {"tool": tool_identity(), "tier": tier}
+    if inputs:
+        # R1-C23/D2: what the extractor read, and what it could not. Belongs with the
+        # identity rather than in the sidecar — a consumer holding only the graph is
+        # exactly the one who must be told the tree was read incompletely.
+        prov["inputs"] = inputs
     if scope:
         if scope.get("scope_id"):
             prov["scope_id"] = scope["scope_id"]

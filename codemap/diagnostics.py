@@ -19,6 +19,8 @@ NO_IMPORT_EDGES = "no_import_edges"
 NAMESPACE_TARGET = "namespace_target"
 NO_CROSS_ROOT_EDGES = "no_cross_root_edges"
 SCHEMA_MISMATCH = "schema_mismatch"
+UNREAD_INPUTS = "unread_inputs"
+MODULE_COUNT_MISMATCH = "module_count_mismatch"
 
 #: A ``warning`` invalidates the conclusions a surface draws from the graph — read them as
 #: unknown. A ``note`` states a fact about how the graph was built and invalidates nothing.
@@ -159,10 +161,78 @@ def schema_diagnostic(graph) -> dict | None:
     }
 
 
+def unread_inputs_diagnostic(graph) -> dict | None:
+    """Flag input files the extractor could not read (R1-C23 / design D2).
+
+    A file with a syntax error or a non-UTF-8 byte used to vanish from the graph in
+    silence, after which every report answered over a tree it had not fully seen —
+    the same shape as issue #5, where absence of data rendered as a clean bill of health.
+    """
+    skipped = ((graph.provenance or {}).get("inputs") or {}).get("skipped") or []
+    if not skipped:
+        return None
+    by_reason = {}
+    for s in skipped:
+        by_reason.setdefault(s.get("reason", "unread"), []).append(s.get("path"))
+    listed = ", ".join(f"{len(v)} {k}" for k, v in sorted(by_reason.items()))
+    sample = ", ".join(sorted(p for v in by_reason.values() for p in v)[:5])
+    return {
+        "code": UNREAD_INPUTS,
+        "severity": WARNING,
+        "skipped": skipped,
+        "consequence": ("Anything those files define or depend on is **missing**, not "
+                        "absent — dead-code, layers and impact are all short by that much."),
+        "message": (
+            f"{len(skipped)} input file(s) produced no module ({listed}): {sample}"
+            + (" …" if len(skipped) > 5 else "")
+        ),
+    }
+
+
+def module_count_diagnostic(graph) -> dict | None:
+    """Conservation law over the build: modules cannot outnumber the files that define
+    them, nor silently fall short of them (R1-C23 / design D6).
+
+    Deliberately not a heuristic and deliberately not tuned — both directions are
+    *provably* wrong states, so there is no threshold to argue about. It is the check
+    that catches a cause we have not met yet: it flags the symlink-cycle explosion
+    without knowing what a symlink is, and an unexplained shortfall without knowing what
+    a syntax error is. It would have fired on issue #5.
+    """
+    inputs = (graph.provenance or {}).get("inputs") or {}
+    expected = inputs.get("python_files")
+    if expected is None:
+        return None  # pre-0.12 graph, or a build that recorded no input count
+    from_py = sum(1 for n in graph.nodes.values()
+                  if n.kind == "module" and (n.file or "").endswith(".py"))
+    skipped = len(inputs.get("skipped") or [])
+    if from_py > expected:
+        direction = (f"{from_py} modules built from {expected} input file(s) — a module "
+                     "cannot outnumber the files that define it. The tree was probably "
+                     "walked more than once (a directory symlink into its own ancestry).")
+    elif from_py < expected - skipped:
+        direction = (f"{from_py} modules built from {expected} input file(s), only "
+                     f"{skipped} of which are accounted for as unreadable — "
+                     f"{expected - skipped - from_py} file(s) went missing unexplained.")
+    else:
+        return None
+    return {
+        "code": MODULE_COUNT_MISMATCH,
+        "severity": WARNING,
+        "modules": from_py,
+        "input_files": expected,
+        "consequence": ("Every aggregate below — counts, layers, cycles, hotspots, "
+                        "dead-code — is computed over that graph, so read it as "
+                        "**unknown**."),
+        "message": direction,
+    }
+
+
 def diagnostics(graph) -> list[dict]:
     """Every diagnostic that applies to ``graph`` (empty list when it looks sound)."""
     checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph),
-              cross_root_diagnostic(graph), schema_diagnostic(graph))
+              cross_root_diagnostic(graph), schema_diagnostic(graph),
+              unread_inputs_diagnostic(graph), module_count_diagnostic(graph))
     return [d for d in checks if d is not None]
 
 

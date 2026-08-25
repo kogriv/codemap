@@ -476,9 +476,35 @@ def _own_name_loads(scope, *, decorators_of=None):
     for n in nodes + ([decorators_of] if decorators_of is not None else []):
         for ann in _annotation_nodes(n):
             annotated |= {id(x) for x in ast.walk(ann)}
-    return [(n, "annotation" if id(n) in annotated else "name")
-            for n in nodes
-            if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load) and id(n) not in skip]
+    found = [(n, "annotation" if id(n) in annotated else "name")
+             for n in nodes
+             if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load) and id(n) not in skip]
+    # R1-C23/D4: a *quoted* annotation was invisible. R1-C22 taught the graph that an
+    # annotation is a reference and it only learned the unquoted form — while the quoted
+    # one is the standard idiom for a type that would otherwise be a circular import, so
+    # the dependencies most worth seeing were exactly the ones dropped.
+    for n in nodes + ([decorators_of] if decorators_of is not None else []):
+        for ann in _annotation_nodes(n):
+            for const in ast.walk(ann):
+                if isinstance(const, ast.Constant) and isinstance(const.value, str):
+                    found += [(nm, "annotation")
+                              for nm in _string_annotation_names(const.value)]
+    return found
+
+
+def _string_annotation_names(text: str) -> list[ast.Name]:
+    """Name loads inside a string annotation (``-> "Base"``, ``Optional["Node"]``).
+
+    Parsed, not pattern-matched, so ``"dict[str, Node]"`` yields ``Node`` and a string
+    that is not a type expression yields nothing. An unparseable annotation is a type
+    checker's problem, not a graph edge — it is skipped in silence.
+    """
+    try:
+        tree = ast.parse(text, mode="eval")
+    except (SyntaxError, ValueError):
+        return []
+    return [n for n in ast.walk(tree)
+            if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)]
 
 
 def _local_bindings(scope) -> set[str]:
