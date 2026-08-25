@@ -26,6 +26,7 @@ from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import add_dispatch, add_family_links
 from codemap.extract.gsource import module_file
+from codemap.provenance import build_provenance
 from codemap.model import Edge, Graph, Node
 
 # griffe object kinds we turn into definition nodes (aliases handled separately).
@@ -88,6 +89,10 @@ def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
     """
     graph, root, module_name, search_path = build_structural(package_path)
     add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
+    # R1-C25: even a library-built graph says which tool and which tier made it. The
+    # input identity (scope_id, source commit) is added by whoever resolved the scope —
+    # `extract` deliberately does not hash the tree a second time.
+    graph.provenance = build_provenance(tier="deep" if deep else "fast")
     return graph
 
 

@@ -53,6 +53,14 @@ so the build falls back to it (reported as `mode: full`).
   deterministic.
 - **No-op is free.** If no package `.py` file changed, the old graph is returned
   untouched (`mode: unchanged`) — the hot path for a future file watcher (M3.2).
+- **…but only when the *builder* is unchanged too** (R1-C25). The source tree is not the
+  only input: the same source read by a different extractor is a different graph. Before
+  looking at the tree, `update_graph` compares the graph's recorded tool identity and tier
+  (see [provenance.md](provenance.md)) against the running one, and falls back to a **full**
+  rebuild when they differ (`mode: full`, `reason: builder-changed`). A graph built before
+  schema 0.12 records no provenance and counts as a different builder — the conservative
+  direction: a needless full rebuild costs a minute, a silently stale graph costs a wrong
+  answer.
 - **Scope-driven.** Change detection is the content-hash scope manifest (`codemap
   scope`), not mtimes — a touched-but-unchanged file triggers nothing.
 

@@ -1,6 +1,12 @@
 # Design — Graph provenance: the artifact says what produced it
 
-**Status:** ⬜ **open** — decisions below are recommendations, not yet built.
+**Status:** ✅ **shipped** (2026-08-25, schema **0.11 → 0.12**).
+**User docs:** [../provenance.md](../provenance.md).
+**Decisions resolved:** D1 = **yes** (top-level block, bump, no clock), D2 = version always + commit when
+resolvable, D3 = **warn, never refuse** (routed through `diagnostics.py`, so CLI/`stats`/reports get it at
+once), D4 = **yes** (comparability header + envelope field), D5 = enforced — `build_provenance` raises on an
+absolute path, D6 = split as tabled, D7 met. **Unforeseen:** `--incremental` shared the same blind spot and
+needed the same guard (gap §6).
 **Motivates:** gap [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md).
 **Backlog:** R1-C25. **Blocks:** R1-C23 D2 and D6 (both need a carrier).
 **Related design:** [scope.md](scope.md) (`scope_id` — the input identity this makes portable).

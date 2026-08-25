@@ -16,7 +16,12 @@ it).
 **Unblocks:** blog post **P4** (determinism), held back since 2026-08-02 for want of a real episode — §2 is
 that episode. (P5's "provenance" is a different sense — multi-root *role* provenance; it is R1-C24's
 neighbourhood, not this one's.)
-**Status:** ⬜ open — measured, designed, not yet built.
+**Status:** ✅ **closed same day** (2026-08-25, schema **0.11 → 0.12**) — the block ships. The §2 experiment
+inverts: the `4858899` graph now renders under *"graph declares schema 0.11, this codemap writes 0.12 — the
+artifact predates this tool"*, and `diff` on the pair leads with *"the pair cannot be verified"* before its
+"✅ No breaking changes". **bquant's graph is byte-identical apart from the new block** (2833 nodes / 8123
+edges, unchanged), and two CLI builds of it are byte-identical **including** `provenance`. Tests 425 → **453**.
+One thing the design did not foresee — see §6.
 
 ## 1. The gap
 
@@ -104,3 +109,31 @@ This is the first change since 0.11 that genuinely earns a **schema bump** (a ne
 itself the point: the field exists to mark shape changes, and shape is finally changing.
 
 Design decisions and sizing: [docs/design/graph_provenance.md](../docs/design/graph_provenance.md).
+
+---
+
+## 6. What the work turned up that the design missed
+
+**`build --incremental` had the same blind spot one level down.** It decided from the source tree alone: no
+`.py` changed → return the old graph untouched. That is wrong the moment *codemap itself* changes — the same
+source read by a different extractor is a different graph, which is the entire thesis of §2. An upgrade
+followed by `--incremental` would have returned yesterday's graph, built by yesterday's tool, and reported
+`mode: unchanged` while doing it.
+
+Found only because the provenance block made the question askable. `update_graph` now compares the stored
+tool identity and tier against the running one and falls back to a **full** rebuild (`reason:
+"builder-changed"`); a graph with no provenance counts as a different builder, which is the conservative
+direction — a needless full rebuild costs a minute, a silently stale graph costs a wrong answer.
+
+**And a small live demonstration.** Between the first and last build of this milestone, the dogfood target's
+recorded `source.commit` moved from `6bbb142` to `f8765cc` — the neighbouring agent committed to bquant
+mid-session. That is exactly the condition that made `test_determinism_with_semantics` red on 2026-08-24, and
+it is now a field in the artifact rather than an hour of manual bisection.
+
+**And the lesson was applied to the tests that started it.** Four `test_determinism_*` tests built the live
+bquant checkout twice and compared bytes. Pointed at a tree someone else is editing, that does not measure
+codemap's determinism — it measures whether anybody committed in the last fifteen seconds, and it went red
+again during this very milestone (the neighbouring agent landed `f8765cc` mid-run). They now build a
+**frozen snapshot** (`tests/frozen.py`), which is the same discipline this gap argues for at the artifact
+level: freeze the input, or you are measuring the wrong thing. Verified separately on a frozen bquant copy —
+two extracts byte-identical, 3.9 MB.

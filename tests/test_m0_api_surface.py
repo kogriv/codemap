@@ -12,6 +12,7 @@ import pytest
 from codemap import store
 from codemap.extract import extract
 from codemap.serve import render_api_surface
+from tests.frozen import frozen
 
 # codemap/ lives at the repo root next to bquant/; tests/ is one level down.
 # Real-bquant acceptance target: the bquant repo checked out as a sibling
@@ -62,7 +63,10 @@ def test_deprecated_detection():
 
 
 def test_determinism(graph):
-    assert store.dumps(extract(BQUANT)) == store.dumps(extract(BQUANT))
+    """On a **frozen** snapshot: a moving target makes this test measure the target
+    (R1-C25 — see tests/frozen.py)."""
+    src = frozen(BQUANT)
+    assert store.dumps(extract(src)) == store.dumps(extract(src))
 
 
 def test_roundtrip(graph, tmp_path):

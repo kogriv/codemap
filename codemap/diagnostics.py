@@ -18,6 +18,7 @@ from __future__ import annotations
 NO_IMPORT_EDGES = "no_import_edges"
 NAMESPACE_TARGET = "namespace_target"
 NO_CROSS_ROOT_EDGES = "no_cross_root_edges"
+SCHEMA_MISMATCH = "schema_mismatch"
 
 #: A ``warning`` invalidates the conclusions a surface draws from the graph — read them as
 #: unknown. A ``note`` states a fact about how the graph was built and invalidates nothing.
@@ -115,10 +116,53 @@ def cross_root_diagnostic(graph) -> dict | None:
     }
 
 
+def schema_diagnostic(graph) -> dict | None:
+    """Flag a stored graph whose schema is not the running tool's (R1-C25 / D3).
+
+    ``codemap_schema`` was written and never read: a graph built before an extraction
+    change was consumed by a later tool without a word, and answered with that tool's
+    confidence over the older tool's blindness. Measured: one frozen tree, two codemap
+    builds four commits apart — 30 edges vs 38, and ``dead-code high`` 12 vs 7 — with
+    **both files declaring 0.11**, because only open ``extras`` had changed. So the
+    check cannot prove semantic equivalence; what it can do is stop a *known* mismatch
+    from passing silently.
+
+    Only fires for a graph that came from a file (``loaded_schema is None`` on a fresh
+    build). Never a refusal: every stored graph in existence predates 0.12, and turning
+    an upgrade into an outage is not the honest option — a labelled answer is (R1-C13).
+    """
+    from codemap.model import SCHEMA_VERSION
+    from codemap.provenance import MATCH, NEWER, OLDER, describe, schema_status
+    if graph.loaded_schema is None:
+        return None
+    status = schema_status(graph.loaded_schema or None, SCHEMA_VERSION)
+    if status == MATCH:
+        return None
+    declared = graph.loaded_schema or "none declared"
+    direction = {OLDER: "predates this tool",
+                 NEWER: "is newer than this tool"}.get(status, "declares no usable version")
+    return {
+        "code": SCHEMA_MISMATCH,
+        "severity": WARNING,
+        "loaded": graph.loaded_schema,
+        "running": SCHEMA_VERSION,
+        "status": status,
+        "provenance": describe(graph.provenance),
+        "consequence": ("Findings below may differ from a fresh build of the same source "
+                        "— rebuild before trusting a close call."),
+        "message": (
+            f"graph declares schema {declared}, this codemap writes {SCHEMA_VERSION} "
+            f"— the artifact {direction}. Extraction semantics change without a schema "
+            f"bump (open `extras`), so the two are not interchangeable. "
+            f"Built by: {describe(graph.provenance)}."
+        ),
+    }
+
+
 def diagnostics(graph) -> list[dict]:
     """Every diagnostic that applies to ``graph`` (empty list when it looks sound)."""
     checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph),
-              cross_root_diagnostic(graph))
+              cross_root_diagnostic(graph), schema_diagnostic(graph))
     return [d for d in checks if d is not None]
 
 

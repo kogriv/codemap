@@ -188,7 +188,11 @@ class Session:
     def _op_stats(self, args) -> dict:
         out = {
             "target": self.graph.target,
-            "schema": SCHEMA_VERSION,
+            # R1-C25: two different facts that used to share one field. `schema` was the
+            # *running tool's* version reported over a graph that might declare another.
+            "schema": self.graph.loaded_schema or SCHEMA_VERSION,
+            "tool_schema": SCHEMA_VERSION,
+            "provenance": self.graph.provenance or None,
             "nodes": len(self.graph.nodes),
             "edges": len(self.graph.edges),
             "node_kinds": dict(Counter(n.kind for n in self.graph.nodes.values())),

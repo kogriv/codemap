@@ -40,6 +40,7 @@ from pathlib import Path
 from codemap import store
 from codemap.diagnostics import diagnostics
 from codemap.extract import extract, extract_repo
+from codemap.provenance import build_provenance
 from codemap.query import Query
 from codemap.serve import (
     build_query_result,
@@ -86,6 +87,15 @@ def _cmd_build(args) -> int:
         graph, incr_info = _incremental_build(args)
     else:
         graph = extract(args.path, deep=args.deep)
+    # R1-C25: stamp the input's identity into the graph itself. The scope manifest is
+    # resolved here once and reused for the sidecar below — the graph gets the part that
+    # must travel with it (scope_id, source commit), the sidecar keeps the rebuild recipe.
+    scope = _resolve_scope_quietly(args)
+    graph.provenance = build_provenance(
+        tier="deep" if args.deep else "fast", scope=scope,
+        # roots come from extract_repo in this same call; never inherited from a graph
+        # loaded off disk, which is how a stale scope would sneak into a fresh build.
+        roots=graph.provenance.get("roots") if (args.consumer or args.docs) else None)
     # R1-C21: a well-formed but vacuous graph must announce itself — silence is what
     # lets an unparsed layout read as a clean bill of health downstream.
     for d in diagnostics(graph):
@@ -98,12 +108,6 @@ def _cmd_build(args) -> int:
         # rebuild it, and so the graph's age is meaningful to `serve`/stats.
         # M19.A: also record the input scope manifest (scope_id + profile + git).
         from codemap.freshness import write_meta
-        from codemap.scope import resolve_scope
-        try:
-            scope = resolve_scope(args.path, consumers=tuple(args.consumer or ()),
-                                  docs=tuple(args.docs or ()))
-        except Exception:
-            scope = None  # scope manifest is provenance, never fatal to a build
         write_meta(args.out, argv=getattr(args, "_argv", []),
                    cwd=os.getcwd(), target=graph.target, scope=scope)
         if incr_info is not None:
@@ -113,6 +117,16 @@ def _cmd_build(args) -> int:
     else:
         print(store.dumps(graph))
     return 0
+
+
+def _resolve_scope_quietly(args):
+    """The input scope manifest, or None. Never fatal — a build must not fail on it."""
+    from codemap.scope import resolve_scope
+    try:
+        return resolve_scope(args.path, consumers=tuple(args.consumer or ()),
+                             docs=tuple(args.docs or ()))
+    except Exception:
+        return None
 
 
 def _incremental_build(args):
@@ -431,8 +445,18 @@ def _cmd_diff(args) -> int:
     ``--exit-code`` it behaves like a release gate: exit 1 when any breaking
     change (a removed public symbol or an incompatible signature change) is found.
     """
+    from codemap.provenance import comparability
     from codemap.serve.apidiff import build_apidiff, render_apidiff
     old, new = store.load(args.old), store.load(args.new)
+    # R1-C25/D4: two graphs built by different tools are a before/after of the *tool*,
+    # not of the code. Never a refusal — comparing across an upgrade is legitimate; what
+    # was missing is being told, since a clean "no breaking changes" reads as proof.
+    cmp = comparability(old.provenance, new.provenance)
+    if not cmp["comparable"]:
+        for line in cmp["differences"]:
+            print(f"[warning] {line}", file=sys.stderr)
+        print(f"[warning] differences below may be tool changes, not code changes "
+              f"(old: {cmp['old']} | new: {cmp['new']})", file=sys.stderr)
     print(render_apidiff(old, new), end="")
     if args.exit_code and not build_apidiff(old, new)["ok"]:
         return 1

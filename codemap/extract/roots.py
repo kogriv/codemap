@@ -33,6 +33,7 @@ from pathlib import Path
 
 from codemap.extract.behavior import _arg_contract, _arg_shape
 from codemap.extract.griffe_extractor import extract
+from codemap.provenance import canonicalize
 from codemap.model import Edge, Graph, Node
 
 _CONSUMER_SKIP_DIRS = {"__pycache__", ".venv", ".git", "node_modules"}
@@ -66,6 +67,15 @@ def extract_repo(
         _scan_consumer_root(graph, Path(path).resolve(), index, mode)
     for path in docs:
         _scan_doc_root(graph, Path(path).resolve(), index)
+    # R1-C25: the roots are part of what this graph *is* — a core-only graph and a
+    # repo-scoped one answer `impact` differently, and `diff` must not silently compare
+    # the two. Names only, never locations (design D5).
+    graph.provenance = canonicalize({**graph.provenance, "roots": {
+        "core": Path(core).name,
+        "consumers": sorted(Path(p).name for p in consumers),
+        "docs": sorted(Path(p).name for p in docs),
+        "mode": mode,
+    }})
     return graph
 
 

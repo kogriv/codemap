@@ -15,6 +15,7 @@ from codemap import store
 from codemap.extract import extract
 from codemap.query import Query
 from codemap.serve import render_behavior
+from tests.frozen import frozen
 
 # Real-bquant acceptance target: the bquant repo checked out as a sibling
 # (../bquant/bquant is the package). Whole module skips when absent (FOSS CI).
@@ -108,4 +109,7 @@ def test_behavior_report(q):
 
 
 def test_determinism_with_behavior():
-    assert store.dumps(extract(BQUANT)) == store.dumps(extract(BQUANT))
+    """On a **frozen** snapshot: a moving target makes this test measure the target
+    (R1-C25 — see tests/frozen.py)."""
+    src = frozen(BQUANT)
+    assert store.dumps(extract(src)) == store.dumps(extract(src))

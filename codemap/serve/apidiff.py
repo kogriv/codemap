@@ -22,6 +22,9 @@ def build_apidiff(old: Graph, new: Graph) -> dict:
     # a removed public symbol is itself a breaking change — fold into the count.
     d["summary"]["breaking_total"] = d["summary"]["breaking"] + d["summary"]["removed"]
     d["ok"] = d["summary"]["breaking_total"] == 0
+    # R1-C25/D4: the envelope says whether the pair is a before/after of the code at all.
+    from codemap.provenance import comparability
+    d["provenance"] = comparability(old.provenance, new.provenance)
     return d
 
 
@@ -41,6 +44,15 @@ def render_apidiff(old: Graph, new: Graph) -> str:
     out.append(f"{verdict} {s['added']} added, {s['removed']} removed, "
                f"{s['changed_symbols']} changed.")
     out.append("")
+    # R1-C25/D4: a verdict about the code is only a verdict about the code when both
+    # graphs came from the same tool. Say so above the verdict, not in a footnote.
+    prov = d.get("provenance") or {}
+    if prov and not prov.get("comparable", True):
+        out.append("> ⚠️ These graphs are not directly comparable: "
+                   + "; ".join(prov["differences"])
+                   + f". Old: {prov['old']} | new: {prov['new']}. "
+                     "Differences below may be tool changes, not code changes.")
+        out.append("")
 
     removed = d["removed"]
     if removed:

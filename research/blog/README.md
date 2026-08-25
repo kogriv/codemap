@@ -69,7 +69,7 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P1 — graphlens | ✅ EN + RU | [graphlens card](../tools/graphlens.md) |
 | P2 — GitNexus | ✅ EN + RU | [GitNexus card](../tools/gitnexus.md) |
 | P3 — cocoindex-code | ✅ EN + RU | [cocoindex-code card](../tools/cocoindex-code.md) |
-| P4 — the determinism story | 🟡 **unblocked 2026-08-25** — episode captured, post not written | [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md) §2 |
+| P4 — the determinism story | 🟡 **ready to write** — episode captured, fix shipped (R1-C25) | [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md) §2, §6 |
 | P5 — the provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode; R1-C24 (test-mapping) is where one would come from |
 | P6 — next tool (#4) / methods post | 🔲 later | lands when the next R2 разбор does |
 
@@ -87,8 +87,8 @@ commits apart, yields 30 vs 38 edges and 12 vs 7 `high` dead-code verdicts, and 
 declare `codemap_schema: "0.11"`**. That reframes the post: the interesting half of determinism
 is not that the output is stable, it is that a stable output is worthless if you cannot say what
 went in. Written up in [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md);
-the fix is R1-C25. Write the post **after** R1-C25 ships, so it ends with the repair rather than
-the complaint.
+the fix is **R1-C25, shipped 2026-08-25** (schema 0.12) — so the post can end with the repair
+rather than the complaint. Nothing blocks it now but the writing.
 
 Sketches (so the shape is ready when the episode lands):
 

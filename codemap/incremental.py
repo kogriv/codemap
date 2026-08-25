@@ -32,8 +32,11 @@ from __future__ import annotations
 import copy
 from pathlib import Path
 
-from codemap.extract.griffe_extractor import add_behavioral_layer, build_structural
+from codemap.extract.griffe_extractor import (
+    add_behavioral_layer, build_structural, extract,
+)
 from codemap.model import Graph
+from codemap.provenance import build_provenance, tool_identity
 from codemap.scope import diff_scopes
 
 # Behavioral `calls` resolutions produced by add_behavior (vs registry-dispatch,
@@ -126,6 +129,19 @@ def _splice_unaffected(new_graph, old_graph, unaffected, module_of) -> None:
                     node.extras[k] = copy.deepcopy(old_extras[k])
 
 
+def _same_builder(provenance: dict, tier: str) -> bool:
+    """Was the old graph produced by *this* codemap, on this tier? (R1-C25)
+
+    A graph with no provenance (pre-0.12) cannot answer, so it is treated as a
+    different builder — the conservative direction: a needless full rebuild costs a
+    minute, a silently stale graph costs a wrong answer.
+    """
+    if not provenance:
+        return False
+    return (provenance.get("tool") == tool_identity()
+            and provenance.get("tier") == tier)
+
+
 def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dict,
                  *, deep: bool = False) -> tuple[Graph, dict]:
     """Incrementally rebuild ``old_graph`` for the current source tree.
@@ -137,6 +153,15 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
     affected modules and spliced from the old graph for the rest.
     """
     target_pkg = old_graph.target
+    tier = "deep" if deep else "fast"
+    # R1-C25: the input is not the only thing that can change. `unchanged` below decides
+    # from the source tree alone, so an upgraded codemap over an untouched tree used to
+    # return yesterday's graph built by yesterday's extractor — the exact confusion the
+    # provenance block exists to name. A different tool or tier is a full rebuild.
+    if not _same_builder(old_graph.provenance, tier):
+        graph = extract(package_path, deep=deep)
+        return graph, {"mode": "full", "affected": [], "reason": "builder-changed"}
+
     d = diff_scopes(old_scope, new_scope)
     changed = {m for p in d["changed"] if (m := _path_to_module(p, target_pkg))}
     added = {m for p in d["added"] if (m := _path_to_module(p, target_pkg))}
@@ -146,6 +171,7 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
     # edits don't touch it). Return the old graph untouched.
     if not (changed or added or removed):
         return old_graph, {"mode": "unchanged", "affected": []}
+
 
     graph, root, module_name, search_path = build_structural(package_path)
     module_ids = {n.id for n in graph.nodes.values() if n.kind == "module"}
@@ -158,10 +184,12 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
 
     if not module_ids or len(affected) >= _FULL_FALLBACK_FRACTION * len(module_ids):
         add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
+        graph.provenance = build_provenance(tier=tier)
         return graph, {"mode": "full", "affected": sorted(affected)}
 
     add_behavioral_layer(graph, root, module_name, search_path, deep=deep,
                          behavior_only=affected, attr_only=affected)
     unaffected = module_ids - affected
     _splice_unaffected(graph, old_graph, unaffected, module_of)
+    graph.provenance = build_provenance(tier=tier)
     return graph, {"mode": "incremental", "affected": sorted(affected)}

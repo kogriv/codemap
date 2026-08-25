@@ -56,7 +56,16 @@ from typing import Any
 #      `obj.field`). Wired into impact/references_to so a field's blast-radius is real;
 #      an attribute with no modelled accessor reports risk `unknown` (lower bound), never
 #      `none` (closes the issue #1 honesty gap — see gaps/attribute_impact_gap_2026-08-22).
-SCHEMA_VERSION = "0.11"
+# 0.12: R1-C25 — build provenance. New top-level ``provenance`` block: tool identity
+#       (name/version/commit — commit absent, never guessed, when installed from a
+#       wheel), ``tier`` (fast|deep), input ``scope_id`` (M19.A) and the source vcs
+#       commit + dirty flag. **Timestamp-free and path-free by construction** — the
+#       clock and the absolute `cwd` stay in the `*.meta.json` sidecar, so the graph
+#       remains byte-identical across two builds of a frozen tree and safe to publish.
+#       ``codemap_schema`` is now *read* on load: a mismatch raises a diagnostic instead
+#       of being silently accepted (gaps/graph_provenance_2026-08-25 — the same tree
+#       built four commits apart gave 30 vs 38 edges under one declared schema).
+SCHEMA_VERSION = "0.12"
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship
@@ -115,6 +124,11 @@ class Graph:
     target: str
     nodes: dict[str, Node] = field(default_factory=dict)
     edges: list[Edge] = field(default_factory=list)
+    #: R1-C25 — what produced this graph (see ``codemap/provenance.py``). Serialized.
+    provenance: dict[str, Any] = field(default_factory=dict)
+    #: The ``codemap_schema`` this graph was *loaded* from, or None for a fresh build.
+    #: Not serialized and not part of equality — it describes the file, not the graph.
+    loaded_schema: str | None = field(default=None, compare=False, repr=False)
 
     def add_node(self, node: Node) -> None:
         self.nodes[node.id] = node
@@ -141,6 +155,9 @@ class Graph:
         return {
             "codemap_schema": SCHEMA_VERSION,
             "target": self.target,
+            # R1-C25: always emitted, even empty — a stable shape diffs cleanly, and an
+            # empty block is itself the honest statement "this build recorded nothing".
+            "provenance": self.provenance,
             "nodes": nodes,
             "edges": edges,
         }
@@ -148,6 +165,12 @@ class Graph:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Graph":
         g = cls(target=data["target"])
+        g.provenance = data.get("provenance") or {}
+        # Read the schema the file declares (R1-C25/D3). It used to be written and never
+        # read, so a graph predating an extraction change was consumed without a word.
+        # "" (not None) when the file declared nothing: None must keep meaning
+        # "this graph was never loaded from a file", so a fresh build stays quiet.
+        g.loaded_schema = data.get("codemap_schema", "")
         for n in data["nodes"]:
             g.add_node(Node(**n))
         for e in data["edges"]:

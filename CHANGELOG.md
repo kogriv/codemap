@@ -29,6 +29,38 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Added
 
+- **Build provenance in the graph** (R1-C25; **schema 0.11 → 0.12**) — `graph.json` gains a top-level
+  `provenance` block: tool name/version/**commit**, `tier` (`fast`/`deep`), the input `scope_id` (M19.A)
+  and the target's VCS commit + dirty flag. The artifact used to have four keys and no answer to *"which
+  tool, from what tree?"*. Measured: one frozen source tree built by codemap four commits apart gave **30
+  edges vs 38** and **12 vs 7** `high` dead-code verdicts — with **both files declaring
+  `codemap_schema: "0.11"`**, correctly, because only open `extras` had changed. Provenance is not schema.
+  **Timestamp-free and path-free by construction**: two builds of an unchanged tree stay byte-identical
+  *including* the block, and no absolute path can enter it (`build_provenance` raises; a test enforces it),
+  so the graph remains safe to attach to a ticket. `tool.commit` is **absent, never guessed**, when codemap
+  runs from an installed wheel. Wall clock, `argv` and `cwd` stay in the `*.meta.json` sidecar — identity
+  travels with the graph, the rebuild recipe stays home. See [docs/provenance.md](docs/provenance.md).
+- **`codemap_schema` is finally read.** It was written and never checked, so a graph predating an
+  extraction change was consumed in silence and answered with the new tool's confidence over the old tool's
+  blindness. A mismatch now raises a diagnostic through the shared channel — CLI stderr, `stats`, and the
+  three report headers at once. A **warning, never a refusal**: every stored graph predates 0.12, and
+  turning an upgrade into an outage is not the honest option. `stats` also stops conflating two facts:
+  `schema` is what the **graph** declares, `tool_schema` what the running tool writes.
+- **`codemap diff` compares provenance before symbols.** Two graphs built by different tools, tiers or
+  scope roots are a before/after of the *tool*, not of the code; the pair is now labelled as not
+  comparable, above the verdict. On the evidence pair, `diff`'s "✅ No breaking changes" was true at the API
+  level while the two graphs disagreed about which functions were dead — which is exactly how a clean
+  verdict gets read as proof.
+- **`build --incremental` checks the builder, not only the tree** (found by R1-C25, not designed for it) —
+  it used to decide from the source alone: no `.py` changed, return the old graph. After a codemap upgrade
+  that returns yesterday's graph built by yesterday's extractor, reporting `mode: unchanged` while doing it.
+  It now compares the stored tool identity and tier against the running one and falls back to a **full**
+  rebuild (`reason: "builder-changed"`); a graph with no provenance counts as a different builder.
+- **The determinism tests now freeze their input** (`tests/frozen.py`). Four of them built the live bquant
+  checkout twice and compared bytes — which measures whether anyone edited bquant between the two calls, not
+  whether codemap is deterministic. One went red during this milestone for exactly that reason. Same
+  discipline as the block above, one level down: freeze the input, or you are measuring the wrong thing.
+
 - **Graph diagnostics** (`codemap/diagnostics.py`) — a build that produces **0 import edges across ≥2
   modules** now says so at build time (stderr), in `stats` (a `diagnostics` list beside `freshness`), and
   at the top of `report architecture` / `dependencies` / `dead-code`, *before* any conclusion drawn from
