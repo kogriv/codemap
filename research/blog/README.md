@@ -17,10 +17,11 @@ One rule threads all of them: **measurements, not verdict.**
 | 1 | **The competitor wasn't broken. We were.** — I nearly published that a rival's impact analysis was broken. The bug was my `PATH`. | [EN](01-the-competitor-wasnt-broken.md) | [RU](01-the-competitor-wasnt-broken.ru.md) |
 | 2 | **The one that does more — and why that's fine.** — a 1.7 GB hybrid rival that turned out to prove the thesis instead of threatening it. | [EN](02-the-one-that-does-more.md) | [RU](02-the-one-that-does-more.ru.md) |
 | 3 | **The competitor that does *less* — and that's why I take it.** — the emptiest coverage row was the most useful find. Not for its features; for its license. | [EN](03-the-one-that-does-less.md) | [RU](03-the-one-that-does-less.ru.md) |
+| 4 | **My determinism test went red. The tool was fine.** — the input was moving under it, and nothing in the artifact could tell that from a real bug. | [EN](04-the-determinism-test-that-was-right.md) | [RU](04-the-determinism-test-that-was-right.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
-readers can start at 0.
+readers can start at 0. Post 4 is the one where the method is turned on the author.
 
 ---
 
@@ -69,8 +70,8 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P1 — graphlens | ✅ EN + RU | [graphlens card](../tools/graphlens.md) |
 | P2 — GitNexus | ✅ EN + RU | [GitNexus card](../tools/gitnexus.md) |
 | P3 — cocoindex-code | ✅ EN + RU | [cocoindex-code card](../tools/cocoindex-code.md) |
-| P4 — the determinism story | 🟡 **ready to write** — episode captured, fix shipped (R1-C25) | [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md) §2, §6 |
-| P5 — the provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode; R1-C24 (test-mapping) is where one would come from |
+| P4 — the determinism story | ✅ EN + RU | [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md) §2, §6; [positioning](../positioning.md) build-story #4 |
+| P5 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
 | P6 — next tool (#4) / methods post | 🔲 later | lands when the next R2 разбор does |
 
 **P4 and P5 are the only writing left, and they are deliberately not forced.** Both need an
@@ -79,16 +80,17 @@ provenance split that changed a real decision. Inventing one would break the sin
 series rests on. Capture them opportunistically while dogfooding, into `gaps/`, then promote
 to [positioning.md](../positioning.md) §Future stories, then write the post.
 
-**P4's episode landed on its own (2026-08-24), and it is better than the one that was being
-waited for.** Not "a graph diff caught a regression" but the sharper inverse: a determinism
+**P4 is written (2026-08-25).** Its episode landed on its own (2026-08-24), and it is better
+than the one that was being waited for. Not "a graph diff caught a regression" but the sharper inverse: a determinism
 *test* went red, and the cause was the input moving under it, not the tool. Nothing in the
 artifact could tell those two apart — the same source tree, built by two codemap versions four
 commits apart, yields 30 vs 38 edges and 12 vs 7 `high` dead-code verdicts, and **both files
 declare `codemap_schema: "0.11"`**. That reframes the post: the interesting half of determinism
 is not that the output is stable, it is that a stable output is worthless if you cannot say what
 went in. Written up in [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md);
-the fix is **R1-C25, shipped 2026-08-25** (schema 0.12) — so the post can end with the repair
-rather than the complaint. Nothing blocks it now but the writing.
+the fix is **R1-C25, shipped 2026-08-25** (schema 0.12), so the post ends with the repair
+rather than the complaint — including the finding the repair made *askable*: `--incremental`
+had the same blind spot one level down.
 
 Sketches (so the shape is ready when the episode lands):
 
@@ -109,6 +111,6 @@ Sketches (so the shape is ready when the episode lands):
 - [ ] Rival framed as peer/collaborator; no takedown tone.
 - [ ] Positioning line near the top; the standing invitation at the foot ("measured your
       tool and I got it wrong? open an issue").
-- [ ] Current facts (schema 0.11 / 369 tests / 29 ops — 26 MCP tools), not a stale snapshot.
+- [ ] Current facts (schema 0.12 / 503 tests / 31 ops — 28 MCP tools), not a stale snapshot.
 - [ ] Code snippets runnable or faithfully quoted (`file:line` where quoted from source).
 - [ ] Both language files updated together; cross-links and the index table above updated.

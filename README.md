@@ -181,8 +181,9 @@ tools. Published here in the repo; every post exists in English and Russian.
 | 1 | **The competitor wasn't broken. We were.** — I nearly published that a rival's impact analysis was broken. The bug was my `PATH`. | [EN](research/blog/01-the-competitor-wasnt-broken.md) · [RU](research/blog/01-the-competitor-wasnt-broken.ru.md) |
 | 2 | **The one that does more — and why that's fine.** — a 1.7 GB hybrid rival that proved the thesis instead of threatening it. | [EN](research/blog/02-the-one-that-does-more.md) · [RU](research/blog/02-the-one-that-does-more.ru.md) |
 | 3 | **The competitor that does *less* — and that's why I take it.** — the emptiest coverage row was the most useful find. For its license, not its features. | [EN](research/blog/03-the-one-that-does-less.md) · [RU](research/blog/03-the-one-that-does-less.ru.md) |
+| 4 | **My determinism test went red. The tool was fine.** — the input was moving under it, and the artifact could not say so. How the graph learned to name what built it. | [EN](research/blog/04-the-determinism-test-that-was-right.md) · [RU](research/blog/04-the-determinism-test-that-was-right.ru.md) |
 
-New here? Read **1 → 0 → 2 → 3**. Every number in every post reproduces from a
+New here? Read **1 → 0 → 2 → 3 → 4**. Every number in every post reproduces from a
 [tool card](research/tools/) or the [comparison hub](research/comparison.md) — measurements,
 not verdict.
 

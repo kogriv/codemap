@@ -314,6 +314,116 @@ number we believed was measuring nothing at all.
 
 ---
 
+## Build-story #4 — "The determinism test went red, and the tool was fine" (ourselves)
+
+*Source: [gaps/graph_provenance_2026-08-25.md](../gaps/graph_provenance_2026-08-25.md), R1-C25. The first
+build-story whose subject is codemap rather than a rival — and the only one where the measurement was
+forced on us instead of planned.*
+
+### The setup
+
+Determinism is the headline claim. Same source in, byte-identical `graph.json` out — that is what makes the
+artifact reviewable in a pull request, and it is the property every other claim leans on. There is a test
+that pins it: build the dogfood target twice, compare the bytes.
+
+On 2026-08-24, mid-way through an unrelated fix, it went **red**.
+
+### The half-hour of being wrong about which thing was broken
+
+The obvious reading is that the extractor is nondeterministic — some dict ordering, some set iteration, some
+cache warmth. We had already documented one real case of exactly that (jedi's deep tier is
+cache-sensitive; two full deep builds differ by a handful of edges). So the first instinct was to go hunting
+in our own sorting code.
+
+The cause was elsewhere: **another process was editing the target between the two builds.** A neighbouring
+agent was committing to `bquant` while the test read it. Files vanished between the two `extract()` calls.
+
+Nothing in the artifact could distinguish those two explanations. Two `graph.json` files that differ, and no
+field in either one says *which tool read which tree at which revision*. It took a manual rebuild on a frozen
+copy to settle it — a snapshot of the same sources, built twice: byte-identical.
+
+### The measurement that came out of it
+
+Once we asked the question properly, it got worse. Take a **frozen** tree — nothing moving, byte-identical
+input — and build it with codemap at two commits four apart:
+
+| | edges | `report dead-code` **high** |
+|---|---|---|
+| built at `4858899` | 30 | **12** |
+| built at `16fe7de` | 38 | **7** |
+
+Five functions that one graph calls dead and the other calls live. **Both files declare
+`codemap_schema: "0.11"`**, and the tool loaded either without a word.
+
+And the schema field was *right* not to move. The change in between (R1-C22) added no node kind and no edge
+type — only keys under `extras`, which the design deliberately leaves open. **The semantics changed
+correctly and the version correctly stayed put.** That is the whole finding: a schema version describes the
+*shape* of a file; nothing described the *process* that produced it.
+
+`codemap diff` on that pair answers:
+
+```
+✅ **No breaking changes.** 0 added, 0 removed, 0 changed.
+```
+
+True at the API level, and exactly why it could not be the safety net. Two graphs that disagree about which
+functions are dead are, to `diff`, the same program.
+
+### Why the sidecar didn't already cover it
+
+We had provenance — in `graph.json.meta.json` (M18/M19.A): `argv`, `built_at`, `cwd`, and a scope block with
+a content-hash `scope_id`. Four reasons it did not close the hole:
+
+1. **It is a separate file**, and every way a graph actually travels — attached to a ticket, committed to a
+   sibling repo, handed to an agent — moves `graph.json` and leaves the sidecar behind.
+2. **It is `.gitignore`d**, so it is precisely the half you cannot share.
+3. **It is best-effort.** The sidecar sitting in our own working tree had no `scope` key at all.
+4. **It records `cwd`** — an absolute personal path, which makes it the one file that must *not* be
+   published. An awkward home for data meant to travel.
+
+### The fix, and the two rules it obeys
+
+A `provenance` block **inside** the graph (schema 0.11 → 0.12): tool name/version/commit/dirty, tier, the
+input `scope_id`, and the target's VCS commit and dirty flag.
+
+- **No clock.** A `built_at` field would destroy the byte-identity this exists to make checkable. Wall time
+  stays in the sidecar.
+- **No absolute paths.** The graph is the half that travels, so `build_provenance` raises on one and a test
+  enforces it.
+
+`codemap_schema` is finally *read*: a mismatch raises a warning through the same channel every other build
+diagnostic uses — CLI, `stats`, and the report headers. A warning, never a refusal; every stored graph
+predates 0.12, and turning an upgrade into an outage is not the honest option. And `diff` now compares
+provenance before it compares symbols.
+
+### The finding we could not have asked for before
+
+With the block in place, one more question became askable: what does `build --incremental` do when the
+*tool* changes and the source does not? It decided from the source tree alone — no `.py` changed, return the
+old graph — so after an upgrade it would hand back yesterday's graph, built by yesterday's extractor, and
+report `mode: unchanged` while doing it. It now compares the recorded builder and falls back to a full
+rebuild.
+
+### The lesson (reusable)
+
+**A test that reads a moving target measures the target.** Four of our `test_determinism_*` tests built the
+live sibling checkout twice; they now build a frozen snapshot, which is the same discipline the provenance
+block applies at the artifact level. Freeze the input, or you are measuring something else.
+
+And the sharper half: **determinism is a claim about a pair of builds, so it is unfalsifiable unless the
+artifact carries the identity of its input.** We had spent months making the output reproducible and had
+never made it *checkable*.
+
+### What we take, what we keep
+- **Take:** the input identity we already computed (`scope_id`, M19.A) and were throwing away — it now
+  travels inside the graph.
+- **Keep:** timestamp-free canonical JSON. The block had to be squeezed in without breaking it, which is why
+  it carries a content hash and a commit rather than a clock.
+- **Verdict:** the headline property survived, but only after being made falsifiable. Until then it was a
+  claim we believed rather than one we could check.
+
+---
+
 ## Article-ready sound bites (each backed by a card)
 
 - "We almost published that a competitor's impact analysis was broken. It was our `PATH`. The hour we spent
@@ -336,6 +446,12 @@ number we believed was measuring nothing at all.
   [GitNexus card](tools/gitnexus.md)
 - "Then we ran it for real: ~18 minutes to embed on CPU, a CUDA-13 runtime side-loaded to use the GPU. The
   retrieval half works — and its cost is exactly why you wrap it, not absorb it." → build-story #2
+- "A determinism test went red and the tool was fine — the input was moving under it. Nothing in the artifact
+  could tell those two apart, which is when we learned that 'deterministic' is unfalsifiable unless the graph
+  says what it was built from." → build-story #4
+- "One frozen source tree, two builds of our own tool four commits apart: 30 edges versus 38, and 12 versus 7
+  functions graded confidently dead. Both files declared the same schema version — correctly, because only
+  open `extras` had changed. Provenance is not schema." → build-story #4
 - "The emptiest row in our matrix — four of five tasks N/A — is the most useful tool we found. Not for what
   it does, but for its license: it's the first semantic search we're free to *wrap*, not just route to." →
   build-story #3
