@@ -70,6 +70,26 @@ and inferring an edge there would invent one. The gate reads evidence rather tha
 `__init__.py`: a core that ships one but still imports its own modules by bare name is flat in practice and
 is treated as such.
 
+## The deep tier
+
+`--deep` used to be a **downgrade** on a flat layout: jedi resolves `from leaf import helper`
+correctly, to `leaf.helper`, and the internal/external test read a name without the package
+prefix as external — so every cross-module call was dropped. On one real flat target that was
+**158 cross-module call edges on the fast tier and 0 on deep**.
+
+The jedi boundary now applies the same sibling inference as the import map, and the two tiers
+are a **union**: when jedi has no usable answer, the name-based resolver is consulted instead
+of the call being discarded. `calls(deep)` is a superset of `calls(fast)`, which is what
+choosing the expensive tier is supposed to buy.
+
+Call edges keep `resolution="deep"` — that field names *which tier resolved the call*, not
+which layout its target has. The flat inference stays visible where it belongs: on the
+`imports` edge (`resolution="flat"`).
+
+One thing deliberately not done: when jedi resolves a name to a definition **outside** the
+package, that answer stands. It is a judgement, not a failure, and a name-based guess could
+match an internal symbol of the same name by coincidence.
+
 ## When the graph is empty, codemap says so
 
 The expensive part of the original defect was not a wrong number — it was a **confident

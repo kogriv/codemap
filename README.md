@@ -6,7 +6,7 @@ the code it analyzes. One canonical, deterministic graph store → many renders:
 dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review,
 and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code-intelligence tools.
 
-**Status:** 🟢 M0–M19.A implemented + research track (R1/R2) — schema 0.12, **503 tests green** (+ a SCIP-CLI
+**Status:** 🟢 M0–M19.A implemented + research track (R1/R2) — schema 0.12, **512 tests green** (+ a SCIP-CLI
 check that runs when the `scip` binary is present), warm serve surface with 31 ops (28 exposed as MCP tools),
 and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
 v1 boundaries), **[BACKLOG.md](BACKLOG.md)** (roadmap), and **[research/](research/)** (tool landscape).

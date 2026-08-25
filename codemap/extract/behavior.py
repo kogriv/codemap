@@ -77,16 +77,15 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                 owner = _nearest_owner(graph, modpath, scope)
                 if owner is not None:
                     _collect_nested_calls(graph, owner, fnode, modpath, imports,
-                                          modmembers, script, target_pkg, nested)
+                                          modmembers, script, target_pkg, nested,
+                                          known_modules)
                 continue
             members = _class_members(mod, class_stack, modules) if class_stack else {}
             class_prefix = ".".join([modpath, *class_stack]) if class_stack else ""
-            if script is not None:
-                def resolve(call, _s=script):
-                    return _resolve_jedi(call, _s, target_pkg)
-            else:
-                def resolve(call, _cp=class_prefix, _im=imports, _mm=modmembers, _me=members):
-                    return _resolve(call, modpath, _cp, _im, _mm, _me)
+            def fast(call, _cp=class_prefix, _im=imports, _mm=modmembers, _me=members):
+                return _resolve(call, modpath, _cp, _im, _mm, _me)
+            resolve = (_deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules)
+                       if script else fast)
             _process_function(graph, node_id, fnode, resolve)
             # R1-C22 D1: functions/classes named as *values* here (dispatch tables,
             # `default=` callbacks) — a use the call layer cannot see.
@@ -94,12 +93,10 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                                   decorators_of=fnode)
         # R1-C22 D2: module-level statements are a scope of their own, never walked
         # above — import-time calls and dispatch tables live here.
-        if script is not None:
-            def mod_resolve(call, _s=script):
-                return _resolve_jedi(call, _s, target_pkg)
-        else:
-            def mod_resolve(call, _im=imports, _mm=modmembers):
-                return _resolve(call, modpath, "", _im, _mm, {})
+        def mod_fast(call, _im=imports, _mm=modmembers):
+            return _resolve(call, modpath, "", _im, _mm, {})
+        mod_resolve = (_deep_then_fast(graph, script, target_pkg, mod_fast, modpath, known_modules)
+                       if script else mod_fast)
         _process_module_level(graph, modpath, tree, mod_resolve, imports, modmembers)
         _emit_nested_calls(graph, nested)
 
@@ -125,7 +122,28 @@ def _callee_pos(func):
     return None
 
 
-def _resolve_jedi(call, script, target_pkg):
+def _flat_qualify(full_name: str, modpath: str, known_modules) -> str | None:
+    """A jedi answer that names a **sibling module** by bare name → its package id.
+
+    The mirror of :func:`codemap.extract.gsource.module_imports` at the jedi boundary
+    (R1-C26, issue #10). In a flat layout the directory itself is on ``sys.path``, so
+    ``from leaf import helper`` makes jedi report ``leaf.helper`` — a perfectly correct
+    answer that every ``startswith(pkg + ".")`` test reads as *external*. The deep tier
+    was never taught the flat-layout inference R1-C21 gave the structural and fast layers,
+    so on such a target it classified every cross-module call as external and dropped it.
+
+    Same guard as the import-edge rule: only a name that is not already package-internal,
+    and only when its head names a module sitting **beside** the caller.
+    """
+    if "." not in modpath:
+        return None
+    parent = modpath.rsplit(".", 1)[0]
+    head = full_name.split(".", 1)[0]
+    candidate = f"{parent}.{head}"
+    return f"{parent}.{full_name}" if candidate in known_modules else None
+
+
+def _resolve_jedi(call, script, target_pkg, *, modpath="", known_modules=frozenset()):
     """Resolve a call-site to a definition via jedi type inference.
 
     Returns (target_id, resolution). ``deep`` = internal hit; ``external`` =
@@ -140,13 +158,17 @@ def _resolve_jedi(call, script, target_pkg):
         return "", "unresolved"
     if not defs:
         return "", "unresolved"
-    internal = sorted(
-        d.full_name for d in defs
-        if d.full_name and (d.full_name == target_pkg or d.full_name.startswith(target_pkg + "."))
-    )
+    names = sorted(d.full_name for d in defs if d.full_name)
+    internal = [n for n in names
+                if n == target_pkg or n.startswith(target_pkg + ".")]
     if internal:
         return internal[0], "deep"
-    return "", "external"
+    # R1-C26: a flat-layout sibling is internal, it just does not look it.
+    for n in names:
+        qualified = _flat_qualify(n, modpath, known_modules)
+        if qualified:
+            return qualified, "deep"
+    return ("", "external") if names else ("", "unresolved")
 
 
 # -- griffe context ----------------------------------------------------------
@@ -245,6 +267,35 @@ def _own_nodes(fnode):
 # -- per-function resolution + control ---------------------------------------
 
 _EDGE_RESOLUTIONS = {"module", "self", "imported", "deep"}
+
+
+def _deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules):
+    """Deep tier = jedi **union** the name resolver, not jedi instead of it (R1-C26).
+
+    The two tiers used to be exclusive: with ``deep=True`` every call went to jedi and the
+    name-based resolver was never consulted, so anything jedi could not see was lost even
+    when the cheap tier had it. That made ``--deep`` a *downgrade* on a flat layout — jedi
+    cannot follow ``from leaf import helper`` when ``leaf`` is a sibling on ``sys.path``, so
+    the reporter's target went from 158 cross-module call edges on fast to **0** on deep
+    (issue #10). It also cost a handful of true edges on ordinary packaged targets.
+
+    Fallback only on ``unresolved`` — jedi finding *nothing*. When jedi answers
+    ``external`` it resolved the name to a definition outside the package, and that answer
+    is better than a name-based guess that might match an internal symbol by coincidence.
+    """
+    def resolve(call):
+        target, resolution = _resolve_jedi(call, script, target_pkg,
+                                           modpath=modpath, known_modules=known_modules)
+        # Fall back when jedi produced nothing emittable: no answer at all, or an internal
+        # name that is not a graph node (a local it typed to its own scope-path, or a
+        # `self.x` it bound to the subclass while the method lives on the base). Both used
+        # to be discarded by the soundness downgrade in `_process_function`, *after* the
+        # cheaper resolver was already out of reach.
+        if resolution == "unresolved" or (resolution == "deep"
+                                          and target not in graph.nodes):
+            return fast(call)
+        return target, resolution
+    return resolve
 
 
 def _process_function(graph, node_id, fnode, resolve) -> None:
@@ -683,13 +734,16 @@ def _nearest_owner(graph, modpath, scope) -> str | None:
 
 
 def _collect_nested_calls(graph, owner, fnode, modpath, imports, modmembers,
-                          script, target_pkg, out) -> None:
+                          script, target_pkg, out, known_modules=frozenset()) -> None:
     """Resolve a non-node function's own calls and stage them under ``owner`` (D3)."""
+    def fast(call):
+        return _resolve(call, modpath, "", imports, modmembers, {})
+    # R1-C26: the same union the named-function path uses — a closure's calls must not be
+    # resolved by a weaker rule than its neighbours'.
+    resolve = (_deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules)
+               if script is not None else fast)
     for call in _own_calls(fnode):
-        if script is not None:
-            target, resolution = _resolve_jedi(call, script, target_pkg)
-        else:
-            target, resolution = _resolve(call, modpath, "", imports, modmembers, {})
+        target, resolution = resolve(call)
         if resolution not in _EDGE_RESOLUTIONS or not target or target not in graph.nodes:
             continue
         if target == owner:

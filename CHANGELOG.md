@@ -50,6 +50,23 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **`--deep` was a *downgrade* on a flat layout** (R1-C26; issue
+  [#10](https://github.com/kogriv/codemap/issues/10)) — reported after the flat-layout fixes were verified on
+  a real target: the import graph came alive (0 → 407 edges) but *"0 of 338 in-core call edges cross a module
+  boundary"*. The tiers were **exclusive**: with `--deep` every call went to jedi and the name-based resolver
+  was never consulted. Measured on that target: **487 calls / 158 cross-module on fast, 336 / 0 on deep** —
+  paying for the better tier and receiving less, which is the one direction of failure a user cannot
+  anticipate. The mechanism was not "jedi failed": jedi resolves `from leaf import helper` **correctly**, to
+  `leaf.helper`, and the internal test `startswith(pkg + ".")` reads a name without the package prefix as
+  external. The same defect R1-C21 fixed for griffe's import map, one layer down, at a boundary nobody had
+  taught. It also cost 5 true edges on codemap and 5 on bquant, where nothing is flat.
+  Now the jedi boundary applies the same sibling inference, and the two tiers are a **union**: when jedi has
+  no usable answer — no answer at all, or an internal name that is not a graph node — the name resolver is
+  consulted instead of the call being dropped. When jedi resolves a name *outside* the package that answer
+  stands: it is a judgement, not a failure. **`calls(deep) ⊇ calls(fast)`** now holds — fast-only edges
+  158 → 0 on the reporter's target (cross-module 0 → **234**), 5 → 0 on codemap, 5 → 1 on bquant, where the
+  single remaining difference is deep being *more precise*. Accuracy-bench precision unchanged at 100%.
+  See [docs/flat-layout.md](docs/flat-layout.md#the-deep-tier).
 - **The conservation check no longer misfires on a repo-scoped graph** (R1-C23-f1) — caught in the first
   hour of using it: `--consumer tests --mode full` reported "137 modules built from 48 input file(s)",
   because `inputs.python_files` counts the extractor's walk of the *core* while the module count included
