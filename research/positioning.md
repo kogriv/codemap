@@ -424,6 +424,104 @@ never made it *checkable*.
 
 ---
 
+## Build-story #5 — "A month of dogfooding, then one more repository found seven bugs in two days" (ourselves)
+
+*Sources: [gaps/flat_layout_gap_2026-08-24.md](../gaps/flat_layout_gap_2026-08-24.md),
+[gaps/dead_code_high_band_2026-08-24.md](../gaps/dead_code_high_band_2026-08-24.md),
+[gaps/deep_tier_regression_2026-08-25.md](../gaps/deep_tier_regression_2026-08-25.md); issues
+[#4](https://github.com/kogriv/codemap/issues/4)–[#10](https://github.com/kogriv/codemap/issues/10);
+R1-C21, R1-C21-f1, R1-C21-f2, R1-C22, R1-C22-f1, R1-C26.*
+
+### The setup
+
+By 2026-08-24 codemap had been dogfooded for a month, deliberately and systematically: **eleven axes
+closed** (A1–A11, B1), each a pre-registered angle with hypotheses written before the run — reverse
+impact, call chains, extension recipes, string dataflow, change-sets, RAG self-sufficiency, reachability,
+an agent working through the warm `serve` process, whole-graph architecture, diff review, soundness.
+Twenty-one findings, each closed by a milestone.
+
+And the failure class was **already known**. "A confident *nothing* where the honest answer is *I don't
+know*" had been the standing enemy for weeks: `impact` on a class attribute answering `risk:"none"` (#1),
+`canonical` silently picking one symbol out of twenty-five (F14), 71% of `column` nodes turning out to be
+dict-literal keys rather than columns (F15). We were not naive about it. We were hunting it.
+
+Then the same author pointed the tool at a **different repository** — a second real target whose engine
+lives in a flat directory of sibling modules rather than a package.
+
+### The first twenty minutes
+
+Two defects, on the very first build, before a single question had been asked of the graph.
+
+Without `__init__.py` it **crashed**: griffe classifies such a directory as a namespace package whose
+`filepath` is a `list[Path]`, and **five** separate consumers handed that straight to `Path()`. The error
+message named none of it.
+
+With an `__init__.py`, worse — it **succeeded**. Zero `imports` edges, and every report then built a
+confident story on that emptiness: `architecture` announced *no layer violations* and *acyclic*;
+`dead-code` called every live module in the engine an orphan. A graph of nothing, rendered as a clean bill
+of health.
+
+### Then it kept going
+
+Seven issues in roughly forty-eight hours: the crash (#4), the silent zero (#5), consumer-root imports
+still resolving to nothing so `impact` answered *isolated* for every symbol (#6), a diagnostic whose
+consequence sentence had gone stale and told the reader the findings came from an empty import graph while
+that graph held 404 edges (#8), the dead-code `high` band (#7), its mirror-image follow-up (#9), and the
+deep tier (#10).
+
+**Four of the seven were about the shape. Three were bugs the shape merely made visible** — and those
+three are the interesting ones.
+
+### The one that stung
+
+Issue #7 arrived with a line worth quoting: *"a working graph is what made this visible."* Fixing #5 had
+given the reporter a functioning import graph for the first time, and the first thing that graph did was
+expose a defect with nothing to do with flat layouts.
+
+`report dead-code` grades an uncalled private function `high` — "no inbound calls, references or
+accesses". Checked against the source: **20 of 51 `high` candidates were false, 39%**, through three
+distinct mechanisms — a function passed as a value, a call at module level, a call from a nested `def`.
+And the detail that makes the point: **each package exhibited only two of the three.** No single target
+could have shown the whole defect.
+
+It reproduced on **codemap's own package** — 46 `high` candidates of its own, 17 of them wrong. That code
+had been sitting under our own dogfood for a month.
+
+### And the one that was pure waste
+
+Issue #10: `--deep` returned *less* than the free `--fast` tier. On the reporter's target fast found 487
+call edges, 158 of them crossing a module boundary; deep found 336, of which **zero** did. The tiers had
+been mutually exclusive — jedi *instead of* the name resolver — so deep silently lost real edges on
+properly packaged targets too, five on codemap and five on bquant. Anyone paying a minute for the
+expensive tier had been getting a worse answer for months.
+
+### The lesson (reusable)
+
+**A dogfood target is a shape, not a sample.** Coverage of *questions* is not coverage of *inputs*. Eleven
+axes were eleven ways of asking, and all eleven were asked of one tree laid out one way; no amount of care
+in choosing the next question substitutes for a second shape. What changed here was not a fresh pair of
+eyes — same author, same instincts, same known failure class. Only the input was new.
+
+The corollary is measured, not hoped: **the second shape cost the first nothing.** R1-C21 left bquant's
+graph *byte-identical*. R1-C22 was additions only (+364 edge pairs on bquant, **0 removed**). The
+deep-tier union lost no true edge. Adding a shape did not trade one target's correctness for another's —
+it revealed work that had simply never been done.
+
+And the smaller, sharper habit: **treat "0 of anything" as a diagnostic, not a datum.** Zero import edges
+across two or more modules is not a finding about the code; it is a finding about the tool. That check now
+fires at build time, in `stats`, and in three reports.
+
+### What we take, what we keep
+- **Take:** a permanent second target of a different shape, and a `flat` label on every edge inferred from
+  a layout rather than stated by the source — the inference stays visible instead of being swallowed.
+- **Keep:** the honest-nothing rule, now with seven more applications behind it. Every one of these seven
+  was that same rule violated in a different subsystem.
+- **Verdict:** the most productive stretch of the project came from using it for real work on a tree we did
+  not choose. The suite went 369 → 512 across the arc, and not one of those tests would have been written
+  from our own repository.
+
+---
+
 ## Article-ready sound bites (each backed by a card)
 
 - "We almost published that a competitor's impact analysis was broken. It was our `PATH`. The hour we spent
@@ -457,6 +555,13 @@ never made it *checkable*.
   build-story #3
 - "Same embedding model, two tools, opposite GPU outcomes: GitNexus's onnxruntime ran on a 1080 Ti, ccc's
   torch hard-failed. The runtime, not the card, decides." → [cocoindex-code card](tools/cocoindex-code.md)
+- "A month of dogfooding across eleven pre-registered axes, then one more repository produced seven bugs in
+  forty-eight hours. Not a fresh pair of eyes — the same author, the same known failure class. Only the
+  input was new." → build-story #5
+- "A dogfood target is a shape, not a sample. Three of those seven bugs had nothing to do with the new
+  layout; they reproduced on our own package, where they had been sitting under our own dogfood for a
+  month. One of them was wrong 39% of the time, and no single target exhibited more than two of its three
+  mechanisms." → build-story #5
 
 ---
 

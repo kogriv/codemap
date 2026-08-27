@@ -18,10 +18,12 @@ One rule threads all of them: **measurements, not verdict.**
 | 2 | **The one that does more — and why that's fine.** — a 1.7 GB hybrid rival that turned out to prove the thesis instead of threatening it. | [EN](02-the-one-that-does-more.md) | [RU](02-the-one-that-does-more.ru.md) |
 | 3 | **The competitor that does *less* — and that's why I take it.** — the emptiest coverage row was the most useful find. Not for its features; for its license. | [EN](03-the-one-that-does-less.md) | [RU](03-the-one-that-does-less.ru.md) |
 | 4 | **My determinism test went red. The tool was fine.** — the input was moving under it, and nothing in the artifact could tell that from a real bug. | [EN](04-the-determinism-test-that-was-right.md) | [RU](04-the-determinism-test-that-was-right.ru.md) |
+| 5 | **A month of dogfooding. Then one more repository found seven bugs in two days.** — eleven pre-registered axes, all asked of one tree. What was missing was not an angle but a shape. | [EN](05-the-second-repository.md) | [RU](05-the-second-repository.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
-readers can start at 0. Post 4 is the one where the method is turned on the author.
+readers can start at 0. Posts 4 and 5 are the ones where the method is turned on the author — 4 on a
+claim of his, 5 on the limits of how he was testing it.
 
 ---
 
