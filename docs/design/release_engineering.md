@@ -189,10 +189,34 @@ milestone was: installed from PyPI into a clean venv, run from a directory conta
 commit, which is the correct no-checkout answer. The page carries `license_expression: MIT`, five project
 URLs, twelve classifiers and `requires_python >=3.11`.
 
-**No release workflow was added.** Publishing happened by hand this once, on an explicit instruction. A
-tag-triggered workflow with a trusted publisher is the better shape for a second release — reproducible,
-and it never puts a token anywhere — but it is a decision about how the owner wants to release, not
-something to install on their behalf while shipping the first one.
+**Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
+publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
+
+```bash
+git status --short                  # must be empty, on the pushed commit
+uv build
+.venv/bin/twine check dist/*
+.venv/bin/twine upload dist/*       # ~/.pypirc, [pypi]
+# then verify from PyPI into a clean venv, and tag vX.Y.Z (use `git tag -F`, not -m:
+# backticks inside double quotes are command substitution to the shell)
+```
+
+At this cadence the automation would be scaffolding around an act performed a few times a year, and CI
+already covers what a release workflow would mostly be re-checking — the suite on four interpreters, and
+a wheel built, installed and run outside the source tree.
+
+### A note on `pip show`, so nobody "fixes" it later
+
+`pip show codmap` prints an empty `License:` and `Home-page:` under **pip < ~25**. Nothing is missing:
+the metadata carries `License-Expression: MIT` and five `Project-URL` entries (verified on the published
+artifact), and **pip 26.2 renders both correctly** — `Home-page` resolved from `Project-URL: Homepage`,
+and the licence under its real field name. It is a display gap in older pip, not a packaging defect.
+
+Making those two lines non-empty on old pip would mean *reverting the metadata*: PEP 639 forbids pairing
+`License-Expression` with the deprecated free-text `License` or a `License ::` classifier, and `Home-page`
+is not settable from a modern `[project]` table at all. That is going backwards on the standard to please
+a superseded pip. `Author:` is blank in every pip version for the same benign reason — PEP 621 collapses
+`authors = [{name, email}]` into `Author-email: kogriv <…>`, which is where the name is.
 
 What *is* in scope: making the PyPI page truthful the moment there is one — license expression, project
 URLs, classifiers, keywords, author — and rewriting README's **Install** section, which today shows only
