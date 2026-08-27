@@ -109,7 +109,7 @@ A launch post that only flatters isn't believed, and neither is a graph. The rea
 ## Try it, and catch me where I'm wrong
 
 ```bash
-pip install codemap        # (name TBD — see the repo)
+pip install codmap         # the distribution; the command and the import are `codemap`
 codemap build ./yourpkg --deep -o graph.json
 codemap serve --graph graph.json            # warm process, JSON over stdin/stdout
 codemap serve --graph graph.json --mcp      # …or as MCP tools for an agent

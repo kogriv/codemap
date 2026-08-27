@@ -114,7 +114,7 @@ LSIF не разрешённые; языковой сервер эфемерен
 ## Попробуйте — и поймайте меня на ошибке
 
 ```bash
-pip install codemap        # (имя пока обсуждается — см. репозиторий)
+pip install codmap         # имя дистрибутива; команда и импорт — `codemap`
 codemap build ./yourpkg --deep -o graph.json
 codemap serve --graph graph.json            # тёплый процесс, JSON по stdin/stdout
 codemap serve --graph graph.json --mcp      # …или как MCP-инструменты для агента
