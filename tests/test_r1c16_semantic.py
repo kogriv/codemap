@@ -84,8 +84,17 @@ def test_adapter_must_be_permissive():
 
 # -- resolution: adapter-mode picks the adapter, never the router -------------
 
-def test_resolve_adapter_mode_skips_router():
+def test_resolve_adapter_mode_skips_router(monkeypatch):
     # gitnexus (router) also provides semantic-search; mode=ADAPTER must skip it.
+    #
+    # `resolve` also gates on `is_available()`, which for cocoindex means the `ccc` binary
+    # being on PATH — irrelevant to the dispatch rule under test, and the reason this test
+    # passed on a developer machine that happened to have `ccc` and failed the moment it
+    # first ran anywhere else (M20). Stub availability, in keeping with this module's
+    # stated design: no external tool is needed to exercise the mechanism.
+    from codemap.integrations.cocoindex import CocoIndexAdapter
+    monkeypatch.setattr(CocoIndexAdapter, "is_available", lambda self: True)
+
     cfg = IntegrationConfig(enabled=frozenset({"gitnexus", "cocoindex"}))
     got = resolve("semantic-search", config=cfg, mode=IntegrationMode.ADAPTER)
     assert got is not None and got.mode is IntegrationMode.ADAPTER

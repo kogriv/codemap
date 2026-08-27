@@ -16,7 +16,7 @@ had never been checked because there had never been a second interpreter — and
 
 | Job | Holds | Notes |
 |-----|-------|-------|
-| `tests` | README's "tests green"; `requires-python` | matrix over **3.11, 3.12, 3.13, 3.14**, `fail-fast: false` so one version's break does not hide another's |
+| `tests` | README's "tests green"; `requires-python` | matrix over **3.11, 3.12, 3.13, 3.14**, `fail-fast: false` so one version's break does not hide another's; checks out the dogfood target so the suite runs whole |
 | `determinism` | README's "deterministic (canonical sorted JSON, no timestamps — diffable)" | builds `./codemap` twice, `cmp`s the bytes |
 | `wheel` | that the shipped artifact installs and runs | builds both distributions, installs the wheel into a clean venv, runs it from a directory with no codemap source |
 | `interop` | the ctags and SCIP exports are readable by the real tools | installs `readtags` and `scip`, and **fails if they are missing** rather than letting the tests skip |
@@ -33,6 +33,17 @@ project the most (R1-C22-f1) went red because the *input* moved under it, not be
 non-deterministic. A cross-run or cross-commit comparison would manufacture that same false signal
 on a schedule. Freeze the input, then compare — the same discipline the tests use via
 `tests/frozen.py`, and the reason the graph carries a [provenance block](provenance.md) at all.
+
+**The dogfood target is checked out, and pinned to a commit.** Roughly a tenth of the suite analyses a
+real external package, which the tests expect as a sibling of the checkout. On a fresh runner it is
+absent, so those tests skip — and the first CI run reported a comfortable green while quietly covering
+~10% less than it appeared to. The job now clones that package and **fails if those tests skip anyway**.
+
+It is pinned to a commit rather than tracking a branch, because the assertions encode facts about that
+package's API — a signature, a deprecation. Following its HEAD would make codemap's CI fail for reasons
+that have nothing to do with codemap, which is the *moving input* that cost this project a day and
+produced [provenance.md](provenance.md). Freeze the input, then compare. The pin goes stale by design;
+bumping it is a deliberate act with a diff to read.
 
 **`interop` refuses to pass by skipping.** `tests/test_r1c2_ctags.py` and `tests/test_scip_export.py`
 skip when `readtags` / `scip` are not on `PATH`, which on a development machine is always — so they

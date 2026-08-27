@@ -34,6 +34,25 @@ jobs:
         python: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v4
+      # ~10% of the suite is dogfood against a real external package, which the tests look
+      # for as a sibling of this checkout. Without it they skip, and a green run made of
+      # skips is not a pass — the same standard the `interop` job is held to.
+      #
+      # Pinned to a commit, never a branch. The assertions encode facts about that
+      # package's API (a signature, a deprecation), so tracking its HEAD would make this
+      # job fail for reasons that have nothing to do with codemap — a *moving input*, the
+      # exact confusion that cost this project a day and produced R1-C25.
+      - name: Check out the dogfood target (pinned)
+        uses: actions/checkout@v4
+        with:
+          repository: kogriv/bquant
+          ref: 7700096f0c1f7dff845615154acb1dc81a20d241
+          path: _dogfood
+      - name: Put it where the suite looks
+        run: |
+          sibling="$(dirname "$GITHUB_WORKSPACE")/bquant"
+          mv "$GITHUB_WORKSPACE/_dogfood" "$sibling"
+          test -d "$sibling/bquant"   # source-only: it is read, never installed
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
@@ -42,7 +61,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e '.[mcp,scip]' pytest
       - name: Run the suite
-        run: pytest -q
+        run: |
+          set -o pipefail
+          pytest -q -rs | tee /tmp/pytest.txt
+      - name: Refuse to pass by skipping
+        run: |
+          if grep -q "sibling repo not present" /tmp/pytest.txt; then
+            echo "::error::the dogfood tests skipped — this run is green on ~10% less \
+              than it appears to cover"
+            exit 1
+          fi
+          echo "skipped: $(grep -c '^SKIPPED' /tmp/pytest.txt || true) (expected: the \
+            optional interop CLIs, covered by the interop job)"
 
   # Claim: README's "deterministic (canonical sorted JSON, no timestamps — diffable)".
   #
