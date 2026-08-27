@@ -6,9 +6,12 @@ the code it analyzes. One canonical, deterministic graph store → many renders:
 dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review,
 and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code-intelligence tools.
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.12, **528 tests green on Python
-3.11–3.14** ([in CI](docs/ci.md), plus ctags/SCIP interop checks against the real CLIs), warm serve surface
-with 31 ops (28 exposed as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
+[![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
+
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.12, **530 tests with no failures on
+Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
+wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
+as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
 v1 boundaries), **[BACKLOG.md](BACKLOG.md)** (roadmap), and **[research/](research/)** (tool landscape).
 
 ## Why it exists

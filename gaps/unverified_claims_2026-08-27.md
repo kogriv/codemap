@@ -170,3 +170,18 @@ Small in consequence, exact in shape: **an unchecked claim diverges from reality
 tried it**, which is this document's whole thesis arriving from the other direction. (`interop` failed
 too, on `go install` — scip's `go.mod` carries `replace` directives, so that install path refuses; the
 published binary is used instead.)
+
+The second run then caught the thing this document had accused *others* of. It reported a comfortable
+`474 passed, 55 skipped` — against `528 / 2` locally. **Fifty-three of those skips were the dogfood
+tests**: a tenth of the suite analyses a real external package that the tests expect beside the
+checkout, and a fresh runner has no such sibling. A green run made of skips, in the very milestone that
+wrote "a green run made of skips is not a pass" about someone else's job. The target is now checked out
+— pinned to a commit, because its API is what the assertions encode and following its HEAD would be a
+moving input — and the job fails if those tests skip anyway. One genuine failure surfaced alongside:
+a test that contradicted its own module's docstring by requiring a third-party binary to be installed,
+which passed on a developer machine that happened to have it and failed the first time it ran anywhere
+else.
+
+**Acceptance.** Run `33072689687`: all seven jobs green. `tests` on each of 3.11–3.14 — 527 passed,
+3 skipped (the optional external CLIs). `interop` — **19 passed, 0 skipped**: the ctags and SCIP tests
+executed for the first time in this project's history, against real `readtags` and `scip` v0.9.0.

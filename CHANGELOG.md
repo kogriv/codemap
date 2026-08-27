@@ -7,6 +7,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **CI stopped being green on a tenth less than it appeared to cover** (M20). Its second run reported
+  474 passed / 55 skipped against 528 / 2 locally: fifty-three of those skips were the dogfood tests,
+  which analyse a real external package expected beside the checkout that a fresh runner does not have.
+  A green run made of skips — in the milestone that had just written exactly that sentence about another
+  job. The target is now checked out and **pinned to a commit**, since its API is what those assertions
+  encode and following its HEAD would be a moving input; the job fails if the tests skip regardless.
+  Alongside it, `test_resolve_adapter_mode_skips_router` contradicted its own module's docstring ("no
+  external tool is needed") by requiring the `ccc` binary on `PATH` — it passed on a machine that
+  happened to have it and failed the first time it ran anywhere else. Availability is stubbed; the rule
+  under test is dispatch, not installation.
 - **The suite runs under plain `pytest`, not only `python -m pytest`** (M20). Four test modules do
   `from tests.frozen import frozen`, which needs the repo root on `sys.path` — `python -m pytest` puts
   it there, the `pytest` console script does not. So the suite passed the way CONTRIBUTING documents it
