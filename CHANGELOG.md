@@ -5,6 +5,14 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-08-27
+
+**The first published release.** `pip install codmap` — the distribution name, because `codemap` was
+taken on PyPI; the command, the import and this repository stay `codemap`. Everything below had
+accumulated unreleased since 0.0.2, and the milestone that made publishing possible (M20) was mostly
+about discovering that the things this repository claimed about itself were not checked by anything —
+starting with the supported Python range, which turned out to be wrong.
+
 ### Fixed
 
 - **CI stopped being green on a tenth less than it appeared to cover** (M20). Its second run reported

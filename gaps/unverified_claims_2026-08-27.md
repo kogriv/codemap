@@ -185,3 +185,16 @@ else.
 **Acceptance.** Run `33072689687`: all seven jobs green. `tests` on each of 3.11–3.14 — 527 passed,
 3 skipped (the optional external CLIs). `interop` — **19 passed, 0 skipped**: the ctags and SCIP tests
 executed for the first time in this project's history, against real `readtags` and `scip` v0.9.0.
+
+## 7. And then it shipped
+
+The measurement in §1 was taken to answer whether the tool could be published at all. It could not, on
+the day it was asked: the metadata was wrong, the artifact had never been installed, and the gate could
+pass on a file it had failed to read.
+
+**[`codmap` 0.0.3](https://pypi.org/project/codmap/0.0.3/), 2026-08-27** — the first published release.
+Installed from PyPI into a clean venv and run outside any source tree: 31 nodes, schema 0.12,
+`provenance.tool` = `{"name": "codemap", "version": "0.0.3"}`, no commit. Which is the small, satisfying
+end of the thread: the field that says which tool produced a graph exists because of R1-C25, survived a
+distribution rename only because the rename was checked, and now reports itself correctly from a package
+a stranger can install.

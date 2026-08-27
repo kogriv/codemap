@@ -181,11 +181,18 @@ Two tests hold the pair: one asserts the version actually resolves (a silent `No
 other asserts `DIST_NAME` still matches `pyproject.toml`'s `name`, since nothing else keeps two files in
 step.
 
-**Publishing itself is still not done here.** The packaging is now complete and verified — the wheel builds
-as `codmap-0.0.3`, installs clean, and runs from outside the source tree with correct provenance — but
-uploading is an irreversible, outward-facing act (a claimed PyPI name is permanent, a released version
-number can never be reused), and it is the owner's to trigger. No release workflow and no trusted-publisher
-config are added on speculation about how they want to do it.
+**Published, on the owner's instruction, 2026-08-27:**
+[`codmap` 0.0.3](https://pypi.org/project/codmap/0.0.3/). Built from a clean tree at the pushed commit,
+`twine check` PASSED on both artifacts, uploaded with twine. Verified the way everything else in this
+milestone was: installed from PyPI into a clean venv, run from a directory containing no codemap source —
+31 nodes, 41 edges, schema 0.12, `provenance.tool` = `{"name": "codemap", "version": "0.0.3"}` with no
+commit, which is the correct no-checkout answer. The page carries `license_expression: MIT`, five project
+URLs, twelve classifiers and `requires_python >=3.11`.
+
+**No release workflow was added.** Publishing happened by hand this once, on an explicit instruction. A
+tag-triggered workflow with a trusted publisher is the better shape for a second release — reproducible,
+and it never puts a token anywhere — but it is a decision about how the owner wants to release, not
+something to install on their behalf while shipping the first one.
 
 What *is* in scope: making the PyPI page truthful the moment there is one — license expression, project
 URLs, classifiers, keywords, author — and rewriting README's **Install** section, which today shows only

@@ -43,11 +43,7 @@ pip install 'codmap[mcp]'
 pip install 'codmap[scip]'
 ```
 
-Until the first release lands on PyPI, install straight from the repository instead:
-
-```bash
-pip install git+https://github.com/kogriv/codemap
-```
+Or straight from source: `pip install git+https://github.com/kogriv/codemap`.
 
 Working on codemap itself, from a clone:
 
