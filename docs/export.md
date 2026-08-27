@@ -47,7 +47,7 @@ for precise code intelligence. Exporting a SCIP index lets **Sourcegraph, Glean 
 drive go-to-definition, symbol search and type hierarchy over codemap's graph.
 
 ```bash
-pip install -e '.[scip]'          # adds protobuf (optional extra)
+pip install 'codmap[scip]'        # adds protobuf (optional extra); from a clone: -e '.[scip]'
 
 codemap export scip --graph graph.json -o index.scip \
     --project-root /abs/path/to/repo \

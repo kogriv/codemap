@@ -26,7 +26,16 @@ import subprocess
 from functools import lru_cache
 from pathlib import Path
 
+#: What the tool calls itself — the command, the import, the repository. This is the
+#: identity recorded in every graph, so it stays put: changing it would make every
+#: existing 0.12 graph incomparable with a new one over a packaging detail.
 TOOL_NAME = "codemap"
+
+#: What the tool is *distributed* as. Different from `TOOL_NAME` because `codemap` was
+#: already taken on PyPI. Only the version lookup uses it; if these are ever confused,
+#: `version()` raises PackageNotFoundError and the version silently vanishes from
+#: provenance — the failure this split exists to prevent (the wheel CI job asserts it).
+DIST_NAME = "codmap"
 
 #: Schema comparison outcomes (D3).
 MATCH, OLDER, NEWER, UNKNOWN = "match", "older", "newer", "unknown"
@@ -38,7 +47,7 @@ MATCH, OLDER, NEWER, UNKNOWN = "match", "older", "newer", "unknown"
 def _tool_version() -> str | None:
     from importlib.metadata import PackageNotFoundError, version
     try:
-        return version(TOOL_NAME)
+        return version(DIST_NAME)
     except (PackageNotFoundError, ImportError):
         return None
 

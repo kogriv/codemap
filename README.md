@@ -29,17 +29,24 @@ codes), **honest** (approximations are labeled, not hidden).
 
 **Python 3.11+** — the range is measured on 3.11–3.14 in CI, not assumed ([docs/ci.md](docs/ci.md)).
 
-codemap is **not on PyPI yet**: the distribution name is still being chosen, and a name is a one-way
-door. Install it straight from the repository:
+> **The distribution is `codmap`; everything else is `codemap`.** `codemap` was already taken on
+> PyPI, so you install `codmap` — and then the command, the import and this repository are all
+> spelled `codemap`, as they always were.
+
+```bash
+pip install codmap             # then: codemap build ./yourpkg
+
+# optional: MCP server (`codemap serve --mcp`)
+pip install 'codmap[mcp]'
+
+# optional: SCIP export (`codemap export scip`)
+pip install 'codmap[scip]'
+```
+
+Until the first release lands on PyPI, install straight from the repository instead:
 
 ```bash
 pip install git+https://github.com/kogriv/codemap
-
-# optional: MCP server (`codemap serve --mcp`)
-pip install 'codemap[mcp] @ git+https://github.com/kogriv/codemap'
-
-# optional: SCIP export (`codemap export scip`)
-pip install 'codemap[scip] @ git+https://github.com/kogriv/codemap'
 ```
 
 Working on codemap itself, from a clone:

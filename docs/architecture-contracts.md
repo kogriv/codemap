@@ -98,7 +98,7 @@ change.
 
 ```yaml
 # .github/workflows/arch.yml
-- run: pip install codemap-graph        # or your install
+- run: pip install codmap               # the distribution; the command is `codemap`
 - run: codemap check --build ./yourpkg --require-contract
 ```
 

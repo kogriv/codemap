@@ -6,8 +6,9 @@
 **Decisions resolved:** D1 = **`>=3.11`** (measured, not bought back with a dependency); D2 = **the two
 conditions are separated, and `check` exits 2 on a contract it could not read**; D3 = version-gated tests
 **plus** a property test that runs everywhere; D4 = **GitHub Actions only**; D5 = four jobs, each pinned to a
-claim someone can read in the repo; D6 = **0.0.3**, the series stays `0.0.x`; D7 = **publishing is out of
-scope** — the name is undecided and is not a decision this milestone gets to make.
+claim someone can read in the repo; D6 = **0.0.3**, the series stays `0.0.x`; D7 = the distribution is
+**`codmap`** while the command, import and repository stay `codemap` — and **publishing itself remains the
+owner's to trigger**.
 **Motivates:** gap [unverified_claims_2026-08-27](../../gaps/unverified_claims_2026-08-27.md).
 **Backlog:** M20 (CI + metadata), R1-C27 (the honesty fix, D2).
 **Related design:** every entry in the "confident nothing" line — [attribute_edges](attribute_edges.md),
@@ -152,14 +153,39 @@ call is explicit: no jump to `0.1.x` yet. `0.1.0` should mean "published under a
 outside can rely on" — neither is true today, and inflating the number ahead of that would be its own small
 dishonesty in a milestone about not making unchecked claims.
 
-## D7 — Publishing
+## D7 — The name, and publishing
 
-**Recommended: out of scope, deliberately.**
+**Resolved (2026-08-27): the distribution is `codmap`. Everything else stays `codemap`.**
 
-The distribution name is undecided (`codemap` is taken on PyPI), and a name is a one-way door: it becomes the
-install command, the import advice in every doc, and the URL. Everything in this milestone is a prerequisite
-for publishing and none of it presumes the answer. No release workflow, no trusted-publisher config, no tag
-trigger — those get written when there is a name to write them for.
+`codemap` is taken on PyPI (`codmap` verified free: 404 against the project API, versus 200 for `codemap`).
+The owner chose `codmap`, having heard the objection that a name one letter from an existing one is
+typo-prone; that is their call to make and it is made.
+
+Only the *distribution* moves. The command, the import and the repository stay `codemap`, which is the
+common resolution for a taken name and keeps every existing doc, script and muscle-memory intact. The seam a
+reader hits — `pip install codmap`, then `codemap build` — is stated in README's first install line rather
+than left to be discovered.
+
+**The rename has one non-obvious consequence, and it is a provenance one.** `provenance.py` looked up its
+own version with `importlib.metadata.version(TOOL_NAME)`. Renaming the distribution would make that raise
+`PackageNotFoundError`, which the existing handler turns into `None` — so the version would have vanished
+from every graph, silently, and two graphs built by different releases would have become indistinguishable
+again. That is exactly the gap R1-C25 was built to close, reopened by a packaging change. So the two names
+are now separate constants with separate jobs:
+
+- `TOOL_NAME = "codemap"` — the identity written into every graph. It does not move: changing it would make
+  every existing 0.12 graph incomparable with a new one over a packaging detail.
+- `DIST_NAME = "codmap"` — what `importlib.metadata` is asked about, and nothing else.
+
+Two tests hold the pair: one asserts the version actually resolves (a silent `None` is the regression), the
+other asserts `DIST_NAME` still matches `pyproject.toml`'s `name`, since nothing else keeps two files in
+step.
+
+**Publishing itself is still not done here.** The packaging is now complete and verified — the wheel builds
+as `codmap-0.0.3`, installs clean, and runs from outside the source tree with correct provenance — but
+uploading is an irreversible, outward-facing act (a claimed PyPI name is permanent, a released version
+number can never be reused), and it is the owner's to trigger. No release workflow and no trusted-publisher
+config are added on speculation about how they want to do it.
 
 What *is* in scope: making the PyPI page truthful the moment there is one — license expression, project
 URLs, classifiers, keywords, author — and rewriting README's **Install** section, which today shows only

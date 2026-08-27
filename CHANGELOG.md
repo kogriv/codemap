@@ -70,6 +70,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   is rent on a version nobody is on. Also documented: **codemap parses a target with the `ast` of the
   interpreter it runs on**, so syntax newer than that interpreter is an unreadable input — always named,
   never dropped ([docs/hard-python.md](docs/hard-python.md)).
+- **The distribution is now `codmap`; the command, the import and the repository stay `codemap`** (M20/D7).
+  `codemap` is taken on PyPI. Only the packaging name moves, so nothing you type changes: `pip install
+  codmap`, then `codemap build ./yourpkg` and `import codemap` exactly as before — stated in README's first
+  install line rather than left to be discovered. The rename had one non-obvious consequence, and it was a
+  provenance one: `provenance.py` looked up its own version with `version(TOOL_NAME)`, which after a rename
+  raises `PackageNotFoundError` — turned into `None` by the existing handler, so **the version would have
+  vanished from every graph in silence**, making two graphs built by different releases indistinguishable
+  again. That is the gap R1-C25 exists to close, reopened by a packaging change. `TOOL_NAME` (the identity
+  written into every graph, which does not move) and `DIST_NAME` (what `importlib.metadata` is asked about)
+  are now separate, with tests holding both the resolution and the match to `pyproject.toml`.
 - **Package metadata is no longer nearly empty** (M20). The wheel now carries a `License-Expression: MIT`
   (machine-readably it declared *no licence at all*, despite shipping an MIT `LICENSE`), project URLs,
   classifiers, keywords and an author. README's **Install** section showed only `pip install -e .` — an

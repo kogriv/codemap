@@ -107,6 +107,37 @@ def test_commit_is_absent_not_invented_outside_a_checkout(tmp_path):
     assert _commit_of(tmp_path) is None
 
 
+def test_the_tool_name_and_the_distribution_name_are_not_the_same_string():
+    """`codemap` was taken on PyPI, so the distribution is `codmap` (M20/D7).
+
+    Two names, two jobs: TOOL_NAME is the identity written into every graph — moving it
+    would make every existing 0.12 graph incomparable over a packaging detail — while
+    DIST_NAME is what `importlib.metadata` is asked about. Confuse them and `version()`
+    raises `PackageNotFoundError`, the version quietly disappears from provenance, and
+    two graphs built by different releases become indistinguishable again: precisely the
+    gap R1-C25 exists to close, reopened by a rename.
+    """
+    from codemap.provenance import DIST_NAME, TOOL_NAME
+    assert TOOL_NAME == "codemap" and DIST_NAME == "codmap"
+
+    ident = tool_identity()
+    assert ident["name"] == TOOL_NAME
+    # Installed one way or another in every environment that runs this suite, so the
+    # lookup must actually resolve — a silent None here is the regression.
+    assert ident.get("version"), (
+        f"no version for distribution {DIST_NAME!r} — is pyproject's `name` still in "
+        f"step with provenance.DIST_NAME?")
+
+
+def test_the_distribution_name_matches_pyproject():
+    """The two live in different files; nothing but this test keeps them in step."""
+    import re
+    from codemap.provenance import DIST_NAME
+    text = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text("utf-8")
+    declared = re.search(r'^name\s*=\s*"([^"]+)"', text, re.M).group(1)
+    assert declared == DIST_NAME
+
+
 def test_version_alone_would_not_have_separated_the_evidence_pair():
     """Every graph in the R1-C20…R1-C22 series was built by version 0.0.2. If a commit
     is available it must be *in* the identity, or the block cannot do its one job."""

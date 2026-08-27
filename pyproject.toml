@@ -3,7 +3,12 @@ requires = ["setuptools>=77"]   # PEP 639: `license` as an SPDX expression
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codemap"
+# The distribution is `codmap`; the command, the import and the repository stay `codemap`
+# (that name was already taken on PyPI). `codemap/provenance.py` keeps the two apart —
+# TOOL_NAME is the identity written into every graph, DIST_NAME is what is looked up for a
+# version. README says this plainly, since `pip install codmap` / `import codemap` is a
+# seam a reader will otherwise hit by surprise.
+name = "codmap"
 version = "0.0.3"
 description = "Static analyzer that turns a package's source into a queryable code graph."
 readme = "README.md"
@@ -14,7 +19,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "kogriv" }]
+authors = [{ name = "kogriv", email = "kogriv@gmail.com" }]
 keywords = [
     "static-analysis", "code-graph", "call-graph", "dependency-graph",
     "code-intelligence", "ast", "griffe", "mcp", "rag", "scip",
