@@ -6,10 +6,14 @@ and honest about its approximations.
 ## Development setup
 
 ```bash
-uv venv && uv pip install -e .
+uv venv && uv pip install -e '.[mcp,scip]'
 uv pip install pytest
-.venv/bin/python -m pytest -q          # full suite (deep tests take ~1 min)
+.venv/bin/python -m pytest -q          # full suite (~2-3 min; deep tests dominate)
 ```
+
+Python **3.11+**. CI runs the suite on 3.11–3.14 plus a determinism check, a wheel smoke test
+and the ctags/SCIP interop tests — see [docs/ci.md](docs/ci.md) for what each job defends and,
+just as importantly, what it does not catch.
 
 ## Principles (please preserve them)
 

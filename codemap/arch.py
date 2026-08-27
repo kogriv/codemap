@@ -33,16 +33,25 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from codemap.tomlio import read_toml
+
 
 @dataclass(frozen=True)
 class ArchitectureContract:
-    """Parsed ``[architecture]`` rules. Empty contract = nothing to enforce."""
+    """Parsed ``[architecture]`` rules. Empty contract = nothing to enforce.
+
+    ``error`` carries the reason ``codemap.toml`` could not be read, if it could not be
+    (R1-C27). It is *not* folded into ``is_empty()``: "there are no rules" and "there may
+    be rules and I could not read them" are different answers, and a caller that treats
+    them the same is the bug this field exists to prevent. Ask ``error`` first.
+    """
 
     layers: tuple[str, ...] = ()
     independent: tuple[tuple[str, ...], ...] = ()
     forbidden: tuple[tuple[str, str], ...] = ()
     no_cycles: bool = False
     exhaustive: bool = False
+    error: str | None = None
 
     def is_empty(self) -> bool:
         return not (self.layers or self.independent or self.forbidden
@@ -62,17 +71,13 @@ class Violation:
 def load_contract(root: str | Path = ".") -> ArchitectureContract:
     """Read ``[architecture]`` from ``codemap.toml`` under ``root`` (empty if absent).
 
-    Mirrors the integration gate's tolerance: a missing or malformed file yields an
-    empty contract rather than raising — a broken toml must not wedge ``check``.
+    Tolerant by design — a broken toml must not wedge ``check``, so nothing raises. But a
+    file that will not parse is reported through ``error`` rather than being returned as an
+    absent contract: a typo used to turn a failing gate green (R1-C27).
     """
-    path = Path(root) / "codemap.toml"
-    if not path.is_file():
-        return ArchitectureContract()
-    try:
-        import tomllib
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError, ModuleNotFoundError):
-        return ArchitectureContract()
+    data, error = read_toml(Path(root) / "codemap.toml")
+    if error:
+        return ArchitectureContract(error=error)
     return parse_contract(data.get("architecture", {}))
 
 

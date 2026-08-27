@@ -58,16 +58,21 @@ def test_empty_contract_is_noop():
 
 
 def test_load_contract_absent_and_present(tmp_path):
-    assert load_contract(tmp_path).is_empty()
+    absent = load_contract(tmp_path)
+    assert absent.is_empty() and absent.error is None   # absent is an answer, not a failure
     (tmp_path / "codemap.toml").write_text(
         '[architecture]\nlayers = ["ui", "core"]\nno_cycles = true\n', encoding="utf-8")
     c = load_contract(tmp_path)
-    assert c.layers == ("ui", "core") and c.no_cycles
+    assert c.layers == ("ui", "core") and c.no_cycles and c.error is None
 
 
-def test_malformed_toml_is_empty(tmp_path):
+def test_malformed_toml_is_empty_but_says_so(tmp_path):
+    """R1-C27: still tolerant (no raise, no rules) — but no longer silent."""
     (tmp_path / "codemap.toml").write_text("[architecture\nlayers = broken", encoding="utf-8")
-    assert load_contract(tmp_path).is_empty()
+    c = load_contract(tmp_path)
+    assert c.is_empty()                     # unchanged: nothing to enforce
+    assert c.error and "codemap.toml" in c.error
+    assert "not valid TOML" in c.error
 
 
 # -- rules ------------------------------------------------------------------

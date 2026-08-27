@@ -17,13 +17,22 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from codemap.tomlio import read_toml
+
 
 @dataclass
 class IntegrationConfig:
-    """Resolved ``[integrations]`` config — which tools are opted in / acknowledged."""
+    """Resolved ``[integrations]`` config — which tools are opted in / acknowledged.
+
+    ``error`` carries the reason ``codemap.toml`` could not be read, if it could not be
+    (R1-C27). Nothing is enabled either way — the opt-in invariant is not weakened by a
+    read failure — but a user who wrote an opt-in list and got a typo deserves to hear
+    that, rather than watch the integration quietly stay off.
+    """
 
     enabled: frozenset[str] = frozenset()
     acknowledged: frozenset[str] = frozenset()
+    error: str | None = None
 
     def is_enabled(self, name: str) -> bool:
         return name in self.enabled
@@ -35,17 +44,13 @@ class IntegrationConfig:
 def load_config(root: str | Path = ".") -> IntegrationConfig:
     """Read ``[integrations]`` from ``codemap.toml`` under ``root`` (empty if absent).
 
-    Uses the stdlib ``tomllib`` (3.11+). A malformed file yields an empty config
-    rather than raising — a bad opt-in list must never break a plain build.
+    A malformed file yields an empty config rather than raising — a bad opt-in list must
+    never break a plain build — but the reason travels back in ``error`` instead of being
+    indistinguishable from "no config" (R1-C27).
     """
-    path = Path(root) / "codemap.toml"
-    if not path.is_file():
-        return IntegrationConfig()
-    try:
-        import tomllib
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError, ModuleNotFoundError):
-        return IntegrationConfig()
+    data, error = read_toml(Path(root) / "codemap.toml")
+    if error:
+        return IntegrationConfig(error=error)
     section = data.get("integrations", {})
     return IntegrationConfig(
         enabled=frozenset(section.get("enabled", []) or []),

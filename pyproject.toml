@@ -1,13 +1,38 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]   # PEP 639: `license` as an SPDX expression
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "codemap"
-version = "0.0.2"
+version = "0.0.3"
 description = "Static analyzer that turns a package's source into a queryable code graph."
 readme = "README.md"
-requires-python = ">=3.10"
+# M20/D1: measured, not assumed. Each release of the declared range runs the full suite in
+# CI (.github/workflows/ci.yml). 3.10 is excluded on purpose: `tomllib` is stdlib only from
+# 3.11, and buying it back with a `tomli` dependency would spend one of exactly three
+# runtime dependencies on an interpreter whose upstream support ends in October 2026.
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "kogriv" }]
+keywords = [
+    "static-analysis", "code-graph", "call-graph", "dependency-graph",
+    "code-intelligence", "ast", "griffe", "mcp", "rag", "scip",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+]
 dependencies = [
     "griffe>=2.0",     # structure: API surface, imports, inherits, exports (fast tier)
     "networkx>=3.0",   # query backend (graph algorithms)
@@ -17,6 +42,13 @@ dependencies = [
 [project.optional-dependencies]
 mcp = ["mcp>=2.0"]     # `codemap serve --mcp`: expose ops as MCP tools (optional)
 scip = ["protobuf>=5.26"]  # `codemap export scip`: SCIP index for interop (optional, R1-C1)
+
+[project.urls]
+Homepage = "https://github.com/kogriv/codemap"
+Source = "https://github.com/kogriv/codemap"
+Issues = "https://github.com/kogriv/codemap/issues"
+Changelog = "https://github.com/kogriv/codemap/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/kogriv/codemap/tree/main/docs"
 
 [project.scripts]
 codemap = "codemap.cli:main"

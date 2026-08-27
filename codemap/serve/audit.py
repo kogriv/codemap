@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from codemap.diagnostics import render_lines
 from codemap.query import Query
+from codemap.tomlio import read_toml
 
 
 def render_dependencies(query: Query) -> str:
@@ -36,27 +37,26 @@ def render_dependencies(query: Query) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def load_dead_code_whitelist(root: str | None) -> tuple[str, ...]:
+def load_dead_code_whitelist(root: str | None) -> tuple[tuple[str, ...], str | None]:
     """Read ``[dead_code].whitelist`` (exact ids / globs) from codemap.toml under ``root``.
 
-    Empty on absent/malformed file — a bad whitelist must never break a report.
+    Returns ``(whitelist, error)``. Empty on an absent file — and *also* empty on a file
+    that would not parse, because a bad whitelist must never break a report — but the two
+    are no longer the same answer (R1-C27): the reason comes back so the report can say
+    that nothing was suppressed because nothing could be read.
     """
     from pathlib import Path
     if not root:
-        return ()
-    path = Path(root) / "codemap.toml"
-    if not path.is_file():
-        return ()
-    try:
-        import tomllib
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError, ModuleNotFoundError):
-        return ()
-    return tuple(data.get("dead_code", {}).get("whitelist", []) or [])
+        return (), None
+    data, error = read_toml(Path(root) / "codemap.toml")
+    if error:
+        return (), error
+    return tuple(data.get("dead_code", {}).get("whitelist", []) or []), None
 
 
 def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
-                     min_confidence: str | None = None) -> str:
+                     min_confidence: str | None = None,
+                     whitelist_error: str | None = None) -> str:
     by_root = query.orphan_modules_by_root()
     core_orphans = by_root.get("core", [])
     consumer = {r: v for r, v in by_root.items() if r != "core"}
@@ -68,6 +68,12 @@ def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
         "**Candidates, not proof.**_"
     )
     lines.append("")
+    # R1-C27: an unreadable codemap.toml suppresses nothing, and a list below that is
+    # longer than the user expects is otherwise indistinguishable from a whitelist that
+    # did not match. Say it before the findings, like every other blind spot here.
+    if whitelist_error:
+        lines.append(f"> ⚠️ **Whitelist not read — nothing is suppressed.** {whitelist_error}")
+        lines.append("")
     # R1-C21: name what the graph cannot support before listing conclusions drawn from
     # it; each check supplies its own consequence, or none (issue #8).
     lines.extend(render_lines(query.graph))

@@ -7,6 +7,21 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **A typo in `codemap.toml` no longer paints the CI gate green** (R1-C27). Three loaders — the
+  architecture contract, the integration gate, the dead-code whitelist — collapsed `OSError`,
+  `ValueError` and `ModuleNotFoundError` into one silent empty result, which every caller then
+  rendered as *the user configured nothing*. `tomllib.TOMLDecodeError` subclasses `ValueError`, so
+  **deleting a single `]`** from a contract that reported 14 layer violations turned `codemap check`
+  into "_No `[architecture]` contract found — nothing to enforce_", **exit 0**. As a CI gate, that is
+  a green build on a gate that never ran. The tolerance is unchanged — nothing raises, a bad file
+  still breaks no build — but the three conditions are now distinct (`codemap/tomlio.py`), the reason
+  reaches every surface that renders a conclusion, and `check` **exits 2** on a contract it could not
+  read. Exit 2 rather than a new code on purpose: the status answers *may the pipeline proceed?*, and
+  a third code would sort an unreadable contract into the success branch of every `if rc == 2` that
+  already exists. The JSON surface carried the same lie (`"ok": true` with zero violations) and is
+  fixed in the same place. Found not by dogfooding but by measuring release-readiness; seventh
+  application of "`unknown` is never rendered as `none`", and the first aimed at codemap's own
+  configuration rather than at a target's source. No schema change.
 - **Flat module layouts no longer defeat the build** (R1-C21; issues
   [#4](https://github.com/kogriv/codemap/issues/4), [#5](https://github.com/kogriv/codemap/issues/5)) —
   found within twenty minutes of pointing codemap at a second real target. A directory of sibling modules
@@ -27,8 +42,39 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   reaching `pkg/config.py` and no edge is invented (the gate reads evidence — a namespace root, or existing
   `flat` edges — not the presence of `__init__.py`). bquant's full repo-scoped graph is byte-identical.
 
+### Changed
+
+- **`requires-python` is now `>=3.11`, and it is measured** (M20). It said `>=3.10` and had never been
+  checked, because there had never been a second interpreter. Running the suite across the full declared
+  range found 3.10 failing **13** tests and 3.11 failing **4**, against 512 passing on 3.12/3.13/3.14. Nine
+  of 3.10's thirteen were the `tomllib` defect above; the other four (and all of 3.11's) were a fixture
+  written in 3.12 syntax — where two of them were failing *because* the tool was right, naming the
+  unparseable file with a reason. 3.10 is not bought back with a `tomli` dependency: codemap has exactly
+  three runtime dependencies, and spending one on an interpreter whose upstream support ends in October 2026
+  is rent on a version nobody is on. Also documented: **codemap parses a target with the `ast` of the
+  interpreter it runs on**, so syntax newer than that interpreter is an unreadable input — always named,
+  never dropped ([docs/hard-python.md](docs/hard-python.md)).
+- **Package metadata is no longer nearly empty** (M20). The wheel now carries a `License-Expression: MIT`
+  (machine-readably it declared *no licence at all*, despite shipping an MIT `LICENSE`), project URLs,
+  classifiers, keywords and an author. README's **Install** section showed only `pip install -e .` — an
+  instruction to clone — and now tells a reader who has not cloned anything how to install, including the
+  plain fact that codemap is not on PyPI yet.
+
 ### Added
 
+- **CI** (M20) — [`.github/workflows/ci.yml`](.github/workflows/ci.yml), under one rule: *a claim in the
+  repository is either checked here or removed*. Four jobs, each defending a sentence a user can read:
+  `tests` (matrix 3.11–3.14) holds the test count and the supported range; `determinism` holds README's
+  headline property by building the same tree twice and comparing bytes; `wheel` holds that the shipped
+  artifact installs and runs, from a directory containing no codemap source — a path never once executed
+  before, including the no-checkout branch of `provenance.tool` (R1-C25), which turned out to be correct;
+  `interop` installs `readtags` and the `scip` CLI and **fails if they are absent**, because those two tests
+  had skipped in every run this project has ever made and a green run made of skips is not a pass.
+  Deliberately scoped: `determinism` runs the **fast tier only** — R1-C9 measured that the deep tier is not
+  byte-stable, and asserting otherwise would be exactly the unchecked claim this work exists to end — and
+  compares two builds within one job rather than across runs, since the determinism failure that taught this
+  project the most was a *moving input*. What CI does not catch is written down too: see
+  [docs/ci.md](docs/ci.md).
 - **`codemap tests <symbol>` — which tests exercise a symbol** (R1-C24, axis A10), as runnable pytest node
   ids, ending in a `pytest …` line you can paste. Plus `--covers` for the inverse, serve ops `tests`/`covers`
   (29 → 31 ops, 26 → 28 MCP tools), and `Query.tests_for` / `Query.covers`. Needs a repo-scoped graph

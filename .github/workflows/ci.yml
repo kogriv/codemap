@@ -1,0 +1,152 @@
+# CI (M20). Each job holds one claim that is written down somewhere a user reads.
+#
+# The rule this milestone adopted: a claim in the repository is either checked here or
+# removed. Nothing runs "because it is good practice" — every job below names the sentence
+# it defends, so a job that stops making sense is a job to delete rather than to maintain.
+#
+# What this deliberately does NOT claim to catch: the failures that actually taught this
+# project the most were a moving input, a wrong `sys.path` in a before/after measurement,
+# and a stale baseline. Each needed a person to notice something looked wrong. CI covers a
+# different class — the regression, the second interpreter, the artifact nobody installed.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Claim: README's "512 tests green", and `requires-python` in pyproject.toml.
+  # The range is measured here, not assumed — that assumption is what M20 found to be false
+  # (3.10 failed 13 tests, 3.11 failed 4, while the metadata said `>=3.10`).
+  tests:
+    name: tests (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[mcp,scip]' pytest
+      - name: Run the suite
+        run: pytest -q
+
+  # Claim: README's "deterministic (canonical sorted JSON, no timestamps — diffable)".
+  #
+  # Scope is deliberate: the same input, twice, on one machine, on the **fast** tier. It is
+  # not compared across runners or across commits — the R1-C22-f1 episode was a *moving
+  # input*, and a cross-run comparison would manufacture exactly that false signal again.
+  # And it is not run with `--deep`: R1-C9 measured that the jedi tier is *not* byte-stable
+  # (two full deep builds of the same tree differ by a couple of edges), so asserting deep
+  # determinism here would be this milestone committing the sin it exists to fix.
+  determinism:
+    name: determinism (fast tier, byte-identical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Build the same tree twice
+        run: |
+          codemap build ./codemap -o /tmp/g1.json
+          codemap build ./codemap -o /tmp/g2.json
+      - name: Compare bytes
+        run: |
+          if ! cmp -s /tmp/g1.json /tmp/g2.json; then
+            echo "::error::two builds of the same input differ — determinism is broken"
+            diff <(python -m json.tool /tmp/g1.json) \
+                 <(python -m json.tool /tmp/g2.json) | head -40
+            exit 1
+          fi
+          echo "byte-identical, including the provenance block ($(wc -c < /tmp/g1.json) bytes)"
+
+  # Claim: that the thing users would install actually works. Until M20 measured it, codemap
+  # had only ever been run from its own source tree via `pip install -e .`; the wheel had
+  # never been installed, and the no-checkout branch of `provenance.tool` (R1-C25) had never
+  # executed even once. Both are exercised here, away from the source.
+  wheel:
+    name: wheel installs and runs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build both distributions
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Install the wheel into a clean environment
+        run: |
+          python -m venv /tmp/venv
+          /tmp/venv/bin/pip install dist/*.whl
+      - name: Run it from outside the source tree
+        run: |
+          mkdir -p /tmp/run && cp -r tests/fixtures/refpkg /tmp/run/refpkg
+          cd /tmp/run
+          /tmp/venv/bin/codemap build ./refpkg -o /tmp/run/g.json
+          /tmp/venv/bin/python - <<'PY'
+          import json, sys
+          g = json.load(open("/tmp/run/g.json"))
+          assert g["nodes"], "the installed package built an empty graph"
+          tool = g["provenance"]["tool"]
+          assert tool["name"] == "codemap" and tool.get("version")
+          # R1-C25: outside a git checkout there is no revision to report, and the honest
+          # answer is to omit the key — never the string "unknown".
+          assert "commit" not in tool and "dirty" not in tool, tool
+          print(f"ok: schema {g['codemap_schema']}, {len(g['nodes'])} nodes, tool {tool}")
+          PY
+
+  # Claim: the ctags and SCIP exports are readable by the real tools they name. Both tests
+  # skip when the binaries are absent — which, on the only machine that has ever run this
+  # suite, is always. They have therefore never executed. The binaries are installed here
+  # and their presence is asserted, so a skip cannot quietly pass for a pass.
+  interop:
+    name: interop (readtags + scip)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+      - name: Install the external CLIs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y universal-ctags
+          go install github.com/sourcegraph/scip/cmd/scip@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Refuse to pass by skipping
+        run: |
+          for bin in readtags scip; do
+            command -v "$bin" >/dev/null || { echo "::error::$bin not installed — \
+              the interop tests would skip, which is not the same as passing"; exit 1; }
+          done
+          readtags --version | head -1
+          scip --version
+      - name: Install codemap
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[scip]' pytest
+      - name: Run the interop tests
+        run: pytest -q tests/test_r1c2_ctags.py tests/test_scip_export.py -rs

@@ -72,6 +72,25 @@ a clean bill of health. Now:
 [`provenance.inputs.skipped`](provenance.md), so a consumer holding only `graph.json` is
 told too.
 
+### Syntax newer than the interpreter you run on
+
+**codemap parses a target with the `ast` of the Python it is running on.** It never imports
+your code, but it does have to *parse* it — so a module written in syntax your interpreter
+does not know is, to codemap, a file it cannot read. It lands in the same place as a
+genuine syntax error: named, with `reason: "syntax"`, in `provenance.inputs.skipped`, and
+counted in the `[warning]` line above.
+
+Concretely: codemap running on 3.11 cannot read a target that uses PEP 695 generics
+(`class Box[T]:`, `def identity[T](x: T) -> T:`), because that syntax arrived in 3.12.
+Nothing is silently lost — but the graph is a graph of the modules that parsed.
+
+**Run codemap on a Python at least as new as the code you point it at.** Since the tool
+itself needs 3.11+, this only bites on targets using very recent syntax; when it does, the
+skipped list says exactly which files and why.
+
+*(The project's own suite asserts this property on every interpreter it supports — a
+3.12-syntax fixture is either extracted or named, never dropped. See [ci.md](ci.md).)*
+
 ### The counts not adding up
 
 A conservation check compares modules against input files in both directions:

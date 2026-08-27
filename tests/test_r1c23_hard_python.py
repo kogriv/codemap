@@ -113,8 +113,13 @@ def _with_broken_files(pkg: Path) -> Path:
 
 def test_unreadable_files_are_reported_with_a_reason(copy):
     skipped = extract(_with_broken_files(copy)).provenance["inputs"]["skipped"]
-    assert {(s["path"], s["reason"]) for s in skipped} == {
-        ("hardpkg/broken.py", "syntax"), ("hardpkg/latin1.py", "encoding")}
+    expected = {("hardpkg/broken.py", "syntax"), ("hardpkg/latin1.py", "encoding")}
+    if sys.version_info < (3, 12):
+        # M20/D3: the fixture's PEP 695 module is 3.12 syntax, so on an older interpreter
+        # it is genuinely unparseable — and being named here, with a reason, is exactly
+        # the behaviour under test rather than an inconvenience to skip past.
+        expected.add(("hardpkg/pep695.py", "syntax"))
+    assert {(s["path"], s["reason"]) for s in skipped} == expected
 
 
 def test_unreadable_files_raise_a_diagnostic(copy):
@@ -123,6 +128,11 @@ def test_unreadable_files_raise_a_diagnostic(copy):
     assert UNREAD_INPUTS in _codes(extract(_with_broken_files(copy)))
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 12),
+    reason="the fixture's PEP 695 module needs a 3.12 parser, so this tree is honestly "
+           "not clean here — the property is asserted instead by "
+           "test_pep695_is_either_extracted_or_named_never_dropped")
 def test_a_clean_tree_says_nothing(g):
     assert not _codes(g)
 
@@ -231,12 +241,35 @@ def test_a_dynamically_built_class_is_an_attribute_not_an_invented_class(g):
 
 @pytest.mark.parametrize("nid", [
     "hardpkg.meta.Meta", "hardpkg.meta.Impl",        # metaclass + __init_subclass__
-    "hardpkg.pep695.Box", "hardpkg.pep695.identity",  # PEP 695 generics
     "hardpkg.modern.parse", "hardpkg.modern.fetch",   # match / async
     "hardpkg.wrapped.traced_target",                  # functools.wraps
 ])
 def test_hard_constructs_still_extract(g, nid):
     assert nid in g.nodes
+
+
+# -- M20/D3: the interpreter you run on is part of what you can read -------------
+
+def test_pep695_is_either_extracted_or_named_never_dropped(g):
+    """codemap parses a target with the `ast` of the Python it is running on.
+
+    So the fixture's PEP 695 module (3.12 syntax) is *data* on 3.12+ and an *unreadable
+    input* below that — both honest. The failure this pins is the third possibility:
+    vanishing without a word, which is what every other case in this file is about.
+
+    Measured while establishing the supported range (M20.1): on 3.11 this file is the sole
+    reason the suite's "clean tree" assertions fail, and they fail because R1-C23 is
+    working — the tree is genuinely not clean.
+    """
+    ids = {"hardpkg.pep695.Box", "hardpkg.pep695.identity"}
+    # `skipped` is omitted entirely when nothing was skipped — absence is the clean case.
+    skipped = {s["path"] for s in g.provenance["inputs"].get("skipped", [])}
+    if sys.version_info >= (3, 12):
+        assert ids <= set(g.nodes)
+        assert "hardpkg/pep695.py" not in skipped
+    else:
+        assert not (ids & set(g.nodes))
+        assert "hardpkg/pep695.py" in skipped
 
 
 def test_no_false_dead_code_on_the_probe(g):

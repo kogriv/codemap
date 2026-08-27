@@ -2,6 +2,10 @@
 __pycache__/
 *.egg-info/
 *.pyc
+.pytest_cache/
+# build artifacts — `python -m build` / `uv build`, as the wheel CI job runs (M20)
+build/
+dist/
 # generated graph artifacts (v1: generated on-demand, not committed — DESIGN §10.9)
 graph.json
 *.graph.json

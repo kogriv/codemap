@@ -6,9 +6,9 @@ the code it analyzes. One canonical, deterministic graph store → many renders:
 dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review,
 and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code-intelligence tools.
 
-**Status:** 🟢 M0–M19.A implemented + research track (R1/R2) — schema 0.12, **512 tests green** (+ a SCIP-CLI
-check that runs when the `scip` binary is present), warm serve surface with 31 ops (28 exposed as MCP tools),
-and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.12, **528 tests green on Python
+3.11–3.14** ([in CI](docs/ci.md), plus ctags/SCIP interop checks against the real CLIs), warm serve surface
+with 31 ops (28 exposed as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
 v1 boundaries), **[BACKLOG.md](BACKLOG.md)** (roadmap), and **[research/](research/)** (tool landscape).
 
 ## Why it exists
@@ -24,18 +24,25 @@ codes), **honest** (approximations are labeled, not hidden).
 
 ## Install
 
-```bash
-# with uv (recommended)
-uv venv && uv pip install -e .
+**Python 3.11+** — the range is measured on 3.11–3.14 in CI, not assumed ([docs/ci.md](docs/ci.md)).
 
-# or plain pip
-pip install -e .
+codemap is **not on PyPI yet**: the distribution name is still being chosen, and a name is a one-way
+door. Install it straight from the repository:
+
+```bash
+pip install git+https://github.com/kogriv/codemap
 
 # optional: MCP server (`codemap serve --mcp`)
-pip install -e '.[mcp]'
+pip install 'codemap[mcp] @ git+https://github.com/kogriv/codemap'
 
 # optional: SCIP export (`codemap export scip`)
-pip install -e '.[scip]'
+pip install 'codemap[scip] @ git+https://github.com/kogriv/codemap'
+```
+
+Working on codemap itself, from a clone:
+
+```bash
+uv venv && uv pip install -e '.[mcp,scip]'    # or: pip install -e '.[mcp,scip]'
 ```
 
 Dependencies: `griffe` (structure), `networkx` (query backend), `jedi` (deep call resolution).

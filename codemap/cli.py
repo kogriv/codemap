@@ -302,9 +302,11 @@ def _cmd_report(args) -> int:
     if args.kind == "dead-code":
         from codemap.serve.audit import load_dead_code_whitelist
         root = getattr(args, "source_root", None) or os.getcwd()
+        whitelist, wl_error = load_dead_code_whitelist(root)
         print(render_dead_code(Query(graph),
-                               whitelist=load_dead_code_whitelist(root),
-                               min_confidence=args.min_confidence), end="")
+                               whitelist=whitelist,
+                               min_confidence=args.min_confidence,
+                               whitelist_error=wl_error), end="")
         return 0
     renderer = _REPORTS[args.kind]
     payload = renderer(graph) if args.kind == "api-surface" else renderer(Query(graph))
@@ -393,6 +395,12 @@ def _cmd_route(args) -> int:
     cfg = load_config(args.root)
     integ = resolve(args.capability, config=cfg, root=args.root)
     if integ is None:
+        # R1-C27: telling a user to enable a tool in codemap.toml is bad advice when they
+        # already did and the file has a typo — name the read failure instead.
+        if cfg.error:
+            raise SystemExit(
+                f"error: no tool provides {args.capability!r}, and nothing could be "
+                f"enabled: {cfg.error}")
         raise SystemExit(
             f"error: no enabled + installed tool provides {args.capability!r}. "
             f"Enable one in codemap.toml [integrations].enabled and install it.")
@@ -457,12 +465,22 @@ def _cmd_check(args) -> int:
     The CI gate: reads codemap.toml [architecture] under --root, evaluates every
     rule against the graph, prints the report, and exits non-zero if the contract
     is broken (2 = violations) so a pipeline can fail on it. An empty/absent
-    contract is a no-op success unless --require-contract is set.
+    contract is a no-op success unless --require-contract is set. A contract that
+    could not be *read* is also 2 (R1-C27) — see below.
     """
     from codemap.arch import check_contract, load_contract
     from codemap.serve.check import render_check
     q = Query(_graph_from(args))
     contract = load_contract(args.root)
+    # R1-C27: check `error` before anything else. A malformed codemap.toml used to be
+    # indistinguishable from an absent one, so removing a single `]` turned a gate that
+    # reported 14 violations into exit 0. Exit 2 — the same code as a violation, not a new
+    # one: the status answers "may the pipeline proceed?" (no, either way), and a new code
+    # would sort an unreadable contract into the success branch of every `if rc == 2` that
+    # already exists in someone's pipeline.
+    if contract.error:
+        print(render_check(q, contract, []), end="")
+        return 2
     if contract.is_empty() and args.require_contract:
         print(render_check(q, contract, []), end="")
         raise SystemExit("error: no [architecture] contract found (--require-contract)")

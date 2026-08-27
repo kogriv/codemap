@@ -146,6 +146,7 @@ def test_resolution_is_deterministic_by_name():
 def test_load_config_absent(tmp_path):
     cfg = load_config(tmp_path)
     assert cfg.enabled == frozenset() and cfg.acknowledged == frozenset()
+    assert cfg.error is None                # absent is an answer, not a failure
 
 
 def test_load_config_reads_toml(tmp_path):
@@ -158,9 +159,12 @@ def test_load_config_reads_toml(tmp_path):
     assert cfg.is_acknowledged("gitnexus")
 
 
-def test_load_config_malformed_is_empty(tmp_path):
+def test_load_config_malformed_is_empty_but_says_so(tmp_path):
+    """R1-C27: the opt-in invariant holds (nothing enabled) and the reason is not lost."""
     (tmp_path / "codemap.toml").write_text("not = valid = toml =", encoding="utf-8")
-    assert load_config(tmp_path).enabled == frozenset()
+    cfg = load_config(tmp_path)
+    assert cfg.enabled == frozenset()       # unchanged: a bad file enables nothing
+    assert cfg.error and "not valid TOML" in cfg.error
 
 
 # -- output contracts --------------------------------------------------------

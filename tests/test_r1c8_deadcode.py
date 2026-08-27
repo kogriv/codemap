@@ -116,6 +116,6 @@ def test_render_respects_min_confidence(graded):
 def test_whitelist_loader(tmp_path):
     (tmp_path / "codemap.toml").write_text(
         '[dead_code]\nwhitelist = ["a.b._x", "pkg.*._debug"]\n', encoding="utf-8")
-    assert load_dead_code_whitelist(str(tmp_path)) == ("a.b._x", "pkg.*._debug")
-    assert load_dead_code_whitelist(str(tmp_path / "nope")) == ()   # absent → empty
-    assert load_dead_code_whitelist(None) == ()
+    assert load_dead_code_whitelist(str(tmp_path)) == (("a.b._x", "pkg.*._debug"), None)
+    assert load_dead_code_whitelist(str(tmp_path / "nope")) == ((), None)  # absent → empty
+    assert load_dead_code_whitelist(None) == ((), None)
