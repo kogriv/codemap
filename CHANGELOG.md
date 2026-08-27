@@ -7,6 +7,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **The suite runs under plain `pytest`, not only `python -m pytest`** (M20). Four test modules do
+  `from tests.frozen import frozen`, which needs the repo root on `sys.path` — `python -m pytest` puts
+  it there, the `pytest` console script does not. So the suite passed the way CONTRIBUTING documents it
+  and failed the way most people type it, with four collection errors. `pythonpath = ["."]` in
+  `[tool.pytest.ini_options]` makes both work. Found by CI on its first run, which is roughly the whole
+  argument for having it: an unchecked claim diverges from reality exactly where nobody tried it.
 - **A typo in `codemap.toml` no longer paints the CI gate green** (R1-C27). Three loaders — the
   architecture contract, the integration gate, the dead-code whitelist — collapsed `OSError`,
   `ValueError` and `ModuleNotFoundError` into one silent empty result, which every caller then

@@ -63,3 +63,8 @@ exclude = ["tests*"]
 # (tmworld, R1-C24) deliberately contains a file pytest would otherwise collect, because
 # the test-mapping rule keys on that same collection convention.
 norecursedirs = ["tests/fixtures"]
+# Four test modules do `from tests.frozen import frozen`, which needs the repo root on
+# sys.path. `python -m pytest` puts it there and plain `pytest` does not — so the suite
+# passed the way CONTRIBUTING documents it and failed the way most people type it. CI
+# found that on its first run (M20); stating it here makes both invocations work.
+pythonpath = ["."]

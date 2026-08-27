@@ -158,3 +158,15 @@ Closed the same day.
   installed so the two interop tests finally execute.
 - **Metadata completed (M20):** license expression, URLs, classifiers, keywords, author; README's install
   section rewritten for a reader who has not cloned anything.
+
+**And CI earned its place on the first run**, by failing — on something nobody was looking for. All four
+`tests` jobs died in collection: `ModuleNotFoundError: No module named 'tests'`. Four modules do
+`from tests.frozen import frozen`, which needs the repo root on `sys.path`; `python -m pytest` puts it
+there and the plain `pytest` console script does not. The suite passed the way CONTRIBUTING documents it
+and failed the way most people type it — reproducible locally in one line once the machine had told me
+where to look. Fixed with `pythonpath = ["."]`.
+
+Small in consequence, exact in shape: **an unchecked claim diverges from reality precisely where nobody
+tried it**, which is this document's whole thesis arriving from the other direction. (`interop` failed
+too, on `go install` — scip's `go.mod` carries `replace` directives, so that install path refuses; the
+published binary is used instead.)

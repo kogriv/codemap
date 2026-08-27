@@ -127,23 +127,33 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "stable"
       - name: Install the external CLIs
+        env:
+          # Pinned, not "latest": the interop claim is verified against a stated version,
+          # and a silently moving target would make a future red run ambiguous.
+          SCIP_VERSION: v0.9.0
         run: |
           sudo apt-get update
           sudo apt-get install -y universal-ctags
-          go install github.com/sourcegraph/scip/cmd/scip@latest
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          # Not `go install`: scip's go.mod carries replace directives, which that path
+          # refuses outright. The published binary is the supported way in. Extract the
+          # whole archive and locate the binary rather than assuming its position in it.
+          mkdir -p "$HOME/.local/bin"
+          tmp="$(mktemp -d)"
+          curl -fsSL "https://github.com/sourcegraph/scip/releases/download/${SCIP_VERSION}/scip-linux-amd64.tar.gz" \
+            | tar -xz -C "$tmp"
+          find "$tmp" -type f -name scip -exec install -m 0755 {} "$HOME/.local/bin/scip" \;
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Refuse to pass by skipping
         run: |
           for bin in readtags scip; do
             command -v "$bin" >/dev/null || { echo "::error::$bin not installed — \
               the interop tests would skip, which is not the same as passing"; exit 1; }
           done
-          readtags --version | head -1
-          scip --version
+          # Presence is the assertion; the banner is a courtesy, so it must not decide
+          # the job (these two CLIs disagree about how to spell `--version`).
+          readtags --version 2>&1 | head -1 || true
+          scip --version 2>&1 | head -1 || true
       - name: Install codemap
         run: |
           python -m pip install --upgrade pip
