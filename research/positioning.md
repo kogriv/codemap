@@ -587,6 +587,18 @@ to block its own CLI in *both* arms and re-published lower numbers.
 "Volunteering the axis where you lose" has been on our differentiator list. It is not a differentiator.
 Someone with 68 000 stars does it too, and did it before we noticed.
 
+### The thesis this crystallised
+
+Four hands-on cards in, the same two columns are empty for every peer, and the reason is structural
+rather than incidental. The field is built for **point questions** — name a symbol, walk outward a
+few steps, hand the agent a slice of source. Whole-graph questions have no seed symbol and no slice
+to return: a cycle is invisible from inside every file that participates in it, and "which module is
+most expensive to change" is a property of 634 edges, not of any node.
+
+Written out in full, with the limits, as user-facing doc
+**[docs/whole-graph-questions.md](../docs/whole-graph-questions.md)** — the long form of this
+build-story's argument, and the piece the README now leads with.
+
 ### The lesson (reusable)
 
 **A comparison that only ever flatters you is not a measurement.** This разбор took speed, license, and

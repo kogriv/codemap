@@ -25,6 +25,45 @@ Design principles: **source-only** (static `ast`/`griffe`, never imports the tar
 (canonical sorted JSON, no timestamps — diffable), **CLI-AI-first** (JSON by default, stable exit
 codes), **honest** (approximations are labeled, not hidden).
 
+## Point questions and whole-graph questions
+
+Most code-intelligence tools answer **point questions** — you name a symbol and they walk outward a
+few steps. *Where is this defined? Who calls it? What breaks if I change it?* The answer's cost
+scales with the neighbourhood, not the repository, which is why an index or a vector store can serve
+it. The field is good at this, and several tools are faster at it than codemap.
+
+**Whole-graph questions** have no starting symbol, because the property being asked about belongs to
+the graph and to no node in it:
+
+> Is there a dependency cycle anywhere? · Which module is most expensive to change? · Does the code
+> still respect the layering I intended? · Where has behaviour concentrated into one class?
+
+A cycle is invisible from inside every file that participates in it — each one looks perfectly
+reasonable alone. You cannot seed the question, and there is no partial answer.
+`codemap report architecture` computes all of them in one pass; on the dogfood target (89 modules,
+**634 import edges**) that is:
+
+```
+layers         core 9 · data 12 · indicators 16 · analysis 42 · visualization 7 · cli 1
+               analysis → core 38 edges · indicators → core 24 · data → core 13
+violation    ⚠ analysis ↔ indicators        — one backward edge out of 634; blocks extraction
+cycle          pipeline → cache → pipeline  — the classic Python import-order landmine
+coupling       core.logging_config  Ca 94   — a breaking change here reaches 94 modules
+concentration  ZoneVisualizer 35 methods, worst function CC 66 / MI 12.5
+```
+
+Then [`codemap check`](docs/architecture-contracts.md) turns the shape you *want* into a CI gate, so
+description and intent cannot drift apart.
+
+Four rival tools have now been measured hands-on on the same benchmark scope — three of them on
+byte-identical input verified by content hash, the fourth (graphlens) on a near-identical staging that
+predates the harness — including the field's most-adopted tool at 68k stars. **All four answer the
+point questions. None answers these** — nor the related "how does each caller actually *pass* its
+arguments" (`call_contract`) — because a slice of source is the wrong shape for the answer.
+
+**→ [docs/whole-graph-questions.md](docs/whole-graph-questions.md)** — the full argument, every number
+above reproduced from one run, and the honest limits.
+
 ## Install
 
 **Python 3.11+** — the range is measured on 3.11–3.14 in CI, not assumed ([docs/ci.md](docs/ci.md)).
@@ -127,6 +166,12 @@ The [research track](research/) measures this against the field hands-on, on a s
 [positioning doc](research/positioning.md) is the publication layer — the narrative and the numbers behind the
 claims above; [comparison.md](research/comparison.md) is the coverage matrix that backs them.
 
+Where the comparison actually lands, after four hands-on cards: peers are **faster**, cover **more
+languages**, and several are **easier to install**. What none of them answers is the whole-graph
+class — architecture, layers, cycles, coupling — and per-call argument contracts. That is the
+substance behind "complements rather than competes", written out in
+**[docs/whole-graph-questions.md](docs/whole-graph-questions.md)**.
+
 Honesty is part of the bet: the call graph is a **measured lower bound**, not a guess. [docs/accuracy.md](docs/accuracy.md)
 reports it — 100% precision / 100% decidable-recall on a hand-labeled suite, an openly-stated ~60% recall
 against *all* true edges (the price of Python's dynamism), and a grep-vs-graph proof that the graph is ~2×
@@ -144,6 +189,9 @@ the live graph, findings, and the milestone that closed them.
 ## Documentation
 
 - **[DESIGN.md](DESIGN.md)** — product design, the query catalog, v1 boundaries.
+- **[docs/whole-graph-questions.md](docs/whole-graph-questions.md)** — **start here for what codemap is
+  *for*.** Point questions vs whole-graph questions, why the field answers only the first class, the
+  five questions codemap answers with a real run behind each, and the honest limits.
 - **[docs/export.md](docs/export.md)** — export recipes: RAG, mermaid, Obsidian vault, SCIP + ctags interop.
 - **[docs/accuracy.md](docs/accuracy.md)** — measured call-graph accuracy, the honest static ceiling, and
   the grep-vs-graph value proof (both harnesses guarded in CI).
