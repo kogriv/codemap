@@ -14,7 +14,9 @@ it).
 **Design:** [docs/design/graph_provenance.md](../docs/design/graph_provenance.md).
 **Backlog:** R1-C25.
 **Unblocks:** blog post **P4** (determinism), held back since 2026-08-02 for want of a real episode — §2 is
-that episode. (P6's "provenance" is a different sense — multi-root *role* provenance; it is R1-C24's
+that episode. (The still-unwritten **role-provenance** post is a different sense of the word —
+multi-root *role* provenance, referred to by name rather than by number because its number shifts
+every time a post with a real episode publishes ahead of it; it is R1-C24's
 neighbourhood, not this one's.)
 **Status:** ✅ **closed same day** (2026-08-25, schema **0.11 → 0.12**) — the block ships. The §2 experiment
 inverts: the `4858899` graph now renders under *"graph declares schema 0.11, this codemap writes 0.12 — the

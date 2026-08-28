@@ -597,7 +597,8 @@ most expensive to change" is a property of 634 edges, not of any node.
 
 Written out in full, with the limits, as user-facing doc
 **[docs/whole-graph-questions.md](../docs/whole-graph-questions.md)** — the long form of this
-build-story's argument, and the piece the README now leads with.
+build-story's argument, and the piece the README now leads with. Published as blog post
+**[06 — two empty columns](blog/06-two-empty-columns.md)** ([RU](blog/06-two-empty-columns.ru.md)).
 
 ### The lesson (reusable)
 

@@ -19,11 +19,12 @@ One rule threads all of them: **measurements, not verdict.**
 | 3 | **The competitor that does *less* — and that's why I take it.** — the emptiest coverage row was the most useful find. Not for its features; for its license. | [EN](03-the-one-that-does-less.md) | [RU](03-the-one-that-does-less.ru.md) |
 | 4 | **My determinism test went red. The tool was fine.** — the input was moving under it, and nothing in the artifact could tell that from a real bug. | [EN](04-the-determinism-test-that-was-right.md) | [RU](04-the-determinism-test-that-was-right.ru.md) |
 | 5 | **A month of dogfooding. Then one more repository found seven bugs in two days.** — eleven pre-registered axes, all asked of one tree. What was missing was not an angle but a shape. | [EN](05-the-second-repository.md) | [RU](05-the-second-repository.ru.md) |
+| 6 | **I measured the 68,000-star competitor. It was faster than mine. That wasn't the finding.** — four rivals, and the same two columns empty in all of them. Point questions have a seed symbol; whole-graph questions don't. | [EN](06-two-empty-columns.md) | [RU](06-two-empty-columns.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
-readers can start at 0. Posts 4 and 5 are the ones where the method is turned on the author — 4 on a
-claim of his, 5 on the limits of how he was testing it.
+readers can start at 0. Posts 4, 5 and 6 are the ones where the method is turned on the author — 4 on a
+claim of his, 5 on the limits of how he was testing it, 6 on three differentiators he had to give up.
 
 ---
 
@@ -74,13 +75,16 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P3 — cocoindex-code | ✅ EN + RU | [cocoindex-code card](../tools/cocoindex-code.md) |
 | P4 — the determinism story | ✅ EN + RU | [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md) §2, §6; [positioning](../positioning.md) build-story #4 |
 | P5 — the second repository | ✅ EN + RU | issues #4–#10 (all closed); [positioning](../positioning.md) build-story #5 |
-| P6 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
-| P7 — next tool (#4) / methods post | 🔲 later | lands when the next R2 разбор does |
+| P6 — two empty columns | ✅ EN + RU | [CodeGraph card](../tools/codegraph.md), [comparison](../comparison.md) matrix, [docs/whole-graph-questions.md](../../docs/whole-graph-questions.md); [positioning](../positioning.md) build-story #6 |
+| P7 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
+| P8 — next tool / methods post | 🔲 later | lands when the next R2 разбор does |
 
 A post's number is its filename slot, assigned **on publication** — a planned post takes the next
-free number when it actually lands, not when it is sketched.
+free number when it actually lands, not when it is sketched. Which is why the role-provenance story
+has now been P5, P6 and P7 without a word of it being written: waiting costs it a number each time a
+post that *did* have an episode goes out first. That is the rule working, not failing.
 
-**P6 is the only writing left, and it is deliberately not forced.** It needs an episode that
+**P7 is the only writing left, and it is deliberately not forced.** It needs an episode that
 actually *happened* — a provenance split that changed a real decision. Inventing one would break
 the single rule the series rests on. Capture it opportunistically while dogfooding, into `gaps/`,
 then promote to [positioning.md](../positioning.md) §Future stories, then write the post.
@@ -95,12 +99,13 @@ Written up in [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-
 **R1-C25, shipped 2026-08-25** (schema 0.12), so the post ends with the repair rather than the
 complaint — including the finding the repair made *askable*: `--incremental` had the same blind
 spot one level down. P5 was not planned at all: it came from pointing the tool at a second
-repository, which produced seven issues in forty-eight hours. Neither post was writable from a
-sketch, which is the argument for not forcing P6.
+repository, which produced seven issues in forty-eight hours. Neither was P6, which came from
+measuring the field's most-adopted tool and losing three differentiators in the process. Three
+published posts, none of them writable from its sketch — which is the argument for not forcing P7.
 
 Sketch for the one that remains:
 
-- **P6 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
+- **P7 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
   *"12 non-test references — 2 in core, 7 in docs — and 53 in tests."* Beats: multi-root
   provenance → dead-code without the dominant false-positive source → impact tagged by role
   → why an agent needs "what breaks in *core*" → the honest limit (one-hop by default).

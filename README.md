@@ -243,8 +243,10 @@ tools. Published here in the repo; every post exists in English and Russian.
 | 2 | **The one that does more — and why that's fine.** — a 1.7 GB hybrid rival that proved the thesis instead of threatening it. | [EN](research/blog/02-the-one-that-does-more.md) · [RU](research/blog/02-the-one-that-does-more.ru.md) |
 | 3 | **The competitor that does *less* — and that's why I take it.** — the emptiest coverage row was the most useful find. For its license, not its features. | [EN](research/blog/03-the-one-that-does-less.md) · [RU](research/blog/03-the-one-that-does-less.ru.md) |
 | 4 | **My determinism test went red. The tool was fine.** — the input was moving under it, and the artifact could not say so. How the graph learned to name what built it. | [EN](research/blog/04-the-determinism-test-that-was-right.md) · [RU](research/blog/04-the-determinism-test-that-was-right.ru.md) |
+| 5 | **A month of dogfooding. Then one more repository found seven bugs in two days.** — eleven pre-registered axes, all asked of one tree. What was missing was not an angle but a shape. | [EN](research/blog/05-the-second-repository.md) · [RU](research/blog/05-the-second-repository.ru.md) |
+| 6 | **I measured the 68,000-star competitor. It was faster than mine. That wasn't the finding.** — four rivals, and the same two columns empty in all of them. | [EN](research/blog/06-two-empty-columns.md) · [RU](research/blog/06-two-empty-columns.ru.md) |
 
-New here? Read **1 → 0 → 2 → 3 → 4**. Every number in every post reproduces from a
+New here? Read **1 → 0 → 2 → 3 → 4 → 5 → 6**. Every number in every post reproduces from a
 [tool card](research/tools/) or the [comparison hub](research/comparison.md) — measurements,
 not verdict.
 
