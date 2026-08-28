@@ -5,6 +5,50 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+
+- **A result limit was partiality nobody declared** (R1-C28). `search "zone"` returned **50 matches of
+  1 259** under an envelope that read, in full, `{"ok": true}` — in the one op whose whole job is to tell
+  an agent what exists. Found by measuring a competitor and then asking the same question of ourselves:
+  its `callers` defaults to `--limit 20` and says nothing either, which made a 79-entry answer read as a
+  20-entry one of a different shape and nearly published a false finding
+  ([#1639](https://github.com/colbymchenry/codegraph/issues/1639) upstream; the near-miss is written up in
+  [`gaps/limit_truncation_2026-08-28.md`](gaps/limit_truncation_2026-08-28.md)). Every op that accepts a
+  limit now carries `limit {applied, returned, total, truncated}` in its envelope — **always**, including
+  `truncated: false`, because an only-on-truncation field forces a machine consumer to distinguish
+  "nothing was cut" from "this build does not report cuts", and it cannot. `search` counts the full match
+  set before slicing, so `total` is the real total rather than the page size. `total: null` is a legitimate
+  answer and never an omission: `semantic`'s limit is applied inside the external adapter, so a full page
+  comes back with the pre-limit total honestly unobserved. Orthogonal to `epistemic` — an answer can be
+  resolution-partial *and* limit-truncated, and collapsing the two would lose which one bit. Ops bounded by
+  something that is not a slice of a computed list (`pack`'s token budget, `impact`/`flows` depth) are
+  exempt **in writing**, with reasons, and a guard test reads the ops' own source so a new op cannot learn
+  a limit without declaring it. The MCP transport's separate `shown`/`total` dialect is folded into the
+  same block. Surfaces: `search`, `semantic`, `tests`, `covers`, MCP `impact`/`call_contract`, plus a CLI
+  footer on truncation. No schema change. See [`docs/accuracy.md`](docs/accuracy.md) §(c).
+
+### Added
+
+- **The graph keeps itself current while you work** (M3.2 — the fourth and last brick). `codemap watch
+  ./pkg -o graph.json` rebuilds incrementally once the tree settles; `codemap serve --graph graph.json
+  --watch` reloads the warm session when the artifact moves. Measured save-to-answerable at the defaults:
+  **8.1–8.7 s** on a real 90-file package, of which **4.3 s** is the rebuild itself — on anything real the
+  rebuild dominates, not the polling; on a toy tree it is ~4–5 s, almost all debounce (1.11 s at
+  `--interval 0.3 --debounce 0.3`). Deliberately two commands rather than one: extraction
+  inside the resident server would compete with the queries it exists to answer, and a crashing rebuild
+  would take the server down with it — so either half also runs alone, and `serve --watch` follows any
+  external rebuild, including one typed by hand. What counts as a change is `scope_id`, the same
+  content-hash manifest a build records in its sidecar, so the watcher and the build cannot drift apart and
+  `touch` is not a rebuild. Polling, not inotify — native events would mean a dependency; the price is named
+  and measured rather than hidden (median **50 ms** per poll for a 292-file, 4.7 MB tree, ~5% of a core at
+  the 1 s default). A watcher started over a graph that already lags the tree catches up immediately, and an
+  unreadable sidecar counts as stale, because "I cannot tell" must not resolve to "it is fine". A syntax
+  error rebuilds like anything else — the module's symbols drop out and the diagnostic says *missing, not
+  absent*; withholding the rebuild would serve a symbol table for source that no longer exists. A reload
+  that catches a half-written file is retried rather than recorded as done, so the server never quietly
+  answers from the old graph while believing it is current. See
+  [`docs/incremental.md`](docs/incremental.md).
+
 ## [0.0.3] - 2026-08-27
 
 **The first published release.** `pip install codmap` — the distribution name, because `codemap` was

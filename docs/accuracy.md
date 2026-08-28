@@ -141,6 +141,50 @@ python research/bench/grep_vs_graph.py --build ./codemap --repo .    # dogfood o
 
 ---
 
+## (c) A limit is partiality too — and it is declared
+
+The two sections above are about how well calls **resolve**. A second, independent thing can make an
+answer a lower bound: a **result limit**. It is not an accuracy problem at all — the graph knew the
+whole answer — which is exactly why it slipped past the machinery built for accuracy.
+
+Found by measuring someone else's tool and then asking the same question of our own
+([R2 / CodeGraph](../research/tools/codegraph.md); post
+[*Two empty columns*](../research/blog/06-two-empty-columns.md)). `search "zone"` on a 5 113-node graph
+returned **50 of 1 259 matches** under an envelope that read, in full, `{"ok": true}` — in the one op
+whose entire job is to tell a cold agent what exists.
+
+The rule now:
+
+> **Whenever an op accepts a limit, the envelope carries a `limit` block — always, including when
+> nothing was cut.**
+
+```json
+{"ok": true,
+ "result": ["…"],
+ "limit": {"applied": 50, "returned": 50, "total": 1259, "truncated": true}}
+```
+
+- **Always**, not only on truncation: an absent field forces a machine consumer to distinguish
+  *"nothing was cut"* from *"this build does not report cuts"*, and it cannot.
+- `total: null` is a legitimate answer and is **never** an omission. `semantic` is the honest case —
+  the retrieval adapter applies the limit itself, so when it hands back a full page the pre-limit total
+  was never observed. The block says so (`total: null`, `truncated: null`, plus a `note`), and a caller
+  that sees it can widen the limit instead of trusting a number nobody counted.
+- **Orthogonal to `epistemic`.** An answer can be resolution-partial *and* limit-truncated; the two
+  say different things, and collapsing them loses which one bit.
+- Ops bounded by something that is *not* a slice of a computed list — `pack`'s token budget, `impact`'s
+  and `flows`' depth — are exempt **in writing** (`_UNLIMITED_BY_DESIGN`), with the reason, so the guard
+  test can tell a deliberate exemption from a forgotten one.
+
+Surfaces: `search`, `semantic`, `tests`, `covers`, and the MCP transport caps on `impact` /
+`call_contract`. The CLI prints a one-line footer on truncation only — a person re-reads the command
+they just typed; a machine consumer cannot. Enforced by
+[`tests/test_r1c28_limit_envelope.py`](../tests/test_r1c28_limit_envelope.py), whose last test reads the
+ops' own source and fails when a new op learns a limit without declaring it. Gap:
+[`gaps/limit_truncation_2026-08-28.md`](../gaps/limit_truncation_2026-08-28.md).
+
+---
+
 ## What this means for trust
 
 - Believe a **present** edge: precision is 100% on the labeled suite (both tiers) — codemap does not invent
@@ -151,6 +195,8 @@ python research/bench/grep_vs_graph.py --build ./codemap --repo .    # dogfood o
   `epistemic: partial`.
 - Use the graph where it wins — **impact / blast-radius / signature-change** — and don't bother reaching for
   it to *locate* a well-named symbol; `grep` is fine there.
+- Read the **`limit` block** before concluding a list is complete. `epistemic: partial` says the resolution
+  was a lower bound; `limit.truncated` says the delivery was. An answer can be either, both, or neither.
 
 _Harnesses: [`research/bench/callgraph_accuracy.py`](../research/bench/callgraph_accuracy.py),
 [`research/bench/grep_vs_graph.py`](../research/bench/grep_vs_graph.py). Both are guarded in CI

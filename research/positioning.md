@@ -617,6 +617,11 @@ the property build-story #4 was about.
 - **Take:** the watcher loop (M3.2 reranked up — the cost is no longer unknown, it is 121 ms), the
   inline signature on symbol lookup, and the two-arm benchmark contamination control, which is not
   optional for any with/without-agent measurement we ever publish.
+  **Taken, same day:** the loop shipped as `codemap watch` + `serve --watch`, and the resulting number
+  is worse than theirs by an order of magnitude — **8.1–8.7 s** save→answer against their 121 ms sync,
+  because our rebuild is 4.3 s and theirs is a Rust kernel. Publishing that is the point: the borrowed
+  idea was the loop, not the speed, and pretending otherwise would undo the credibility this whole
+  разбор was built on.
 - **Keep:** the honest-nothing rule — now with an eighth application that we found in someone else's
   tool first, and the discipline of running the probe back at ourselves before writing the card.
 - **Verdict:** learn-only (strong). Nothing to depend on; the first peer that beats us outright on an

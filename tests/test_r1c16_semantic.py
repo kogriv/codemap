@@ -151,9 +151,13 @@ def test_semantic_unresolved_hit_kept_honestly(core_q):
 
 
 def test_semantic_no_adapter_degrades(core_q):
-    # nothing enabled → clean empty result, never an error
+    # nothing enabled → clean empty result, never an error. R1-C28: the op still took a
+    # limit, so it still declares one — `resolver: None` explains the emptiness, and the
+    # block says the emptiness was not a truncation.
     out = semantic_search(core_q, "x", config=IntegrationConfig())
-    assert out == {"resolver": None, "disclaimer": None, "hits": []}
+    assert out == {"resolver": None, "disclaimer": None, "hits": [],
+                   "limit": {"applied": 10, "returned": 0,
+                             "total": 0, "truncated": False}}
 
 
 # -- real cocoindex adapter: argv + parse (transport monkeypatched) ----------
@@ -196,10 +200,14 @@ def test_serve_semantic_op(core_q, monkeypatch):
         "resolver": "fake", "disclaimer": None,
         "hits": [{"symbol": "core.engine.Engine.run", "score": 0.9,
                   "file": "core/engine.py", "lines": [run.lineno, run.endlineno],
-                  "resolution": "symbol"}]})
+                  "resolution": "symbol"}],
+        # R1-C28: part of semantic_search's contract now — the stub carries it too,
+        # deliberately, because the session lifts it into the envelope.
+        "limit": {"applied": 10, "returned": 1, "total": 1, "truncated": False}})
     sess = Session(core_q.graph)
     env = sess.handle({"op": "semantic", "args": {"query": "run engine"}})
     assert env["ok"] and env["result"]["hits"][0]["symbol"] == "core.engine.Engine.run"
+    assert env["limit"]["truncated"] is False and "limit" not in env["result"]
 
 
 def test_mcp_lists_semantic_search():

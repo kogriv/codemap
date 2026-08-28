@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from codemap.serve.limits import limit_block
+
 if TYPE_CHECKING:
     from codemap.serve.session import Session
 
@@ -29,39 +31,55 @@ _INSTRUCTIONS = (
     "answers which tests exercise a symbol (and `covers` the inverse) on a repo-scoped "
     "graph. Relational "
     "tools accept a short name or re-export id; when a name is ambiguous the response "
-    "carries a `resolved.ambiguous` flag — check it before trusting the answer."
+    "carries a `resolved.ambiguous` flag — check it before trusting the answer. "
+    "Any tool that takes a `limit` always returns a `limit` block "
+    "`{applied, returned, total, truncated}` — read it before concluding a list is "
+    "complete; `total: null` means the total was not observable, not that it is zero."
 )
 
 
 def _compact_impact(env: dict, limit: int) -> dict:
     """Shrink an impact envelope for MCP (F22): drop the duplicate markdown and cap
-    each entry's flat ref list at ``limit`` — the ``by_root`` counts stay complete."""
+    each entry's flat ref list at ``limit`` — the ``by_root`` counts stay complete.
+
+    R1-C28: the per-entry counts are now emitted on **every** entry, and the envelope
+    carries the summed block. The cut is done here, in the transport, so the serve op
+    itself has nothing to declare — which is precisely why this layer must.
+    """
     if not env.get("ok"):
         return env
     env = dict(env)
     result = dict(env.get("result") or {})
     result.pop("markdown", None)  # structured refs already carry everything
-    entries = []
+    entries, shown_total, refs_total = [], 0, 0
     for e in result.get("impact", []):
-        e = dict(e)
         refs = e.get("refs", [])
-        if len(refs) > limit:
-            e = {**e, "refs": refs[:limit],
-                 "refs_shown": limit, "refs_total": len(refs)}
-        entries.append(e)
+        shown = min(limit, len(refs))
+        entries.append({**e, "refs": refs[:limit],
+                        "refs_shown": shown, "refs_total": len(refs)})
+        shown_total += shown
+        refs_total += len(refs)
     result["impact"] = entries
     env["result"] = result
+    env["limit"] = limit_block(limit, shown_total, refs_total,
+                               note="applied per impact entry, not across the answer; "
+                                    "the by_root counts are complete regardless")
     return env
 
 
 def _cap_list(env: dict, limit: int) -> dict:
-    """Cap a list-valued result at ``limit`` (F22), noting the total when truncated."""
+    """Cap a list-valued result at ``limit`` (F22), declaring the cut either way (R1-C28).
+
+    Was only-on-truncation with its own ``shown``/``total`` vocabulary; both are now the
+    shared ``limit`` block, so a client reads one shape across every limited surface.
+    """
     if not env.get("ok"):
         return env
     res = env.get("result")
-    if isinstance(res, list) and len(res) > limit:
-        env = {**env, "result": res[:limit], "shown": limit, "total": len(res)}
-    return env
+    if not isinstance(res, list):
+        return env
+    return {**env, "result": res[:limit],
+            "limit": limit_block(limit, min(limit, len(res)), len(res))}
 
 
 def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
@@ -96,7 +114,9 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
     @server.tool()
     def search(term: str, kind: str | None = None, limit: int = 50) -> dict:
         """Find symbols whose id contains `term` (case-insensitive). The discovery
-        entry point for a cold agent. Optional `kind`: module|class|function|column."""
+        entry point for a cold agent. Optional `kind`: module|class|function|column.
+        The `limit` block reports the true match total — a default page is often a
+        small fraction of it, so check `truncated` before concluding a name is rare."""
         return op("search", {"term": term, "kind": kind, "limit": limit})
 
     @server.tool()
@@ -142,7 +162,8 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         """Blast radius of changing `symbol`: inbound references up to `depth`, counted
         by provenance root (core/tests/docs/…). Compact by default (F22): omits the
         duplicate markdown and caps the flat ref list at `limit` (by_root counts stay
-        complete). Pass full=true for the entire payload including markdown."""
+        complete, and every entry carries refs_shown/refs_total). Pass full=true for
+        the entire payload including markdown."""
         env = op("impact", {"symbol": symbol, "depth": depth})
         return env if full else _compact_impact(env, limit)
 
@@ -150,7 +171,8 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
     def call_contract(symbol: str, limit: int = 30, full: bool = False) -> dict:
         """Per-caller argument contract of calls into `symbol` (call-sites, posargs,
         kwargs, splat) — for reasoning about a signature change. Capped at `limit`
-        entries by default (F22); pass full=true for all of them."""
+        entries by default (F22), with the `limit` block giving the true total; pass
+        full=true for all of them."""
         env = op("call_contract", {"symbol": symbol})
         return env if full else _cap_list(env, limit)
 
@@ -253,7 +275,9 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         """Concept search → codemap symbols. Routes the natural-language `query` to an
         opt-in semantic-search adapter (cocoindex), then resolves each fuzzy hit to the
         exact codemap symbol at its location — fuzzy retrieval, exact structure. Returns
-        {resolver, hits:[{symbol, score, file, lines}]}; empty if no adapter is enabled."""
+        {resolver, hits:[{symbol, score, file, lines}]}; empty if no adapter is enabled.
+        The adapter applies the limit itself, so a full page comes back with
+        `limit.total: null` — unknown, not zero."""
         return op("semantic", {"query": query, "limit": limit})
 
     @server.tool()

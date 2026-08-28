@@ -2,7 +2,13 @@
 
 **Found:** 2026-08-28, during the R2 разбор of [CodeGraph](../research/tools/codegraph.md).
 **Backlog:** R1-C28. **Design:** decided inline below (§4) — small enough not to need its own doc.
-**Status:** 🔴 open.
+**Status:** ✅ closed 2026-08-28 — `codemap/serve/limits.py`, 21 tests in
+`tests/test_r1c28_limit_envelope.py`, documented in [`docs/accuracy.md`](../docs/accuracy.md) §(c).
+Three things the fix decided that §4 had not: `semantic` reports `total: null` honestly (the adapter
+applies the limit upstream, so the pre-limit total is *not observable* — and it is counted on the raw
+hits, since dedup is not truncation); the MCP transport's own `shown`/`total` dialect was folded into
+the same block; and `tests`/`covers` emit it too, though they already told the truth in their body —
+one vocabulary beats a per-op dialect. The upstream half is [#1639](https://github.com/colbymchenry/codegraph/issues/1639), still open.
 
 ## 1. How it was found — in someone else's tool first
 

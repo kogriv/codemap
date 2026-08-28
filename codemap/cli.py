@@ -17,7 +17,11 @@
     codemap review [diff|-] (--graph g.json | --build <path>) [--format markdown|json]
         unified diff (or stdin) → risk-sorted change-set review (M15/F17)
     codemap serve  (--graph g.json | --build <path>) [--source-root DIR] [--mcp]
-        warm resident process: line-delimited JSON stdio, or MCP with --mcp (M17)
+                   [--watch [--interval S] [--debounce S]]
+        warm resident process: line-delimited JSON stdio, or MCP with --mcp (M17);
+        --watch follows the graph file and reloads itself when it is rebuilt (M3.2)
+    codemap watch  <path> -o graph.json [--interval S] [--debounce S] [--deep] …
+        source tree → incremental rebuild loop, so the artifact stays current (M3.2)
     codemap refresh <graph.json>
         rebuild a graph from the recipe recorded beside it at build time (M18)
     codemap route  <capability> <question> [--root DIR]
@@ -32,9 +36,11 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import json
 import sys
+import time
 from pathlib import Path
 
 from codemap import store
@@ -148,6 +154,106 @@ def _incremental_build(args):
     if old_graph.target != Path(args.path).resolve().name:
         return extract(args.path, deep=args.deep), {"mode": "full", "affected": []}
     return update_graph(old_graph, args.path, old_scope, new_scope, deep=args.deep)
+
+
+def _watch_build_argv(args) -> list[str]:
+    """The build recipe this watch replays — recorded in the sidecar, not the watch argv.
+
+    M18 writes ``argv`` beside the graph so ``codemap refresh`` can rebuild it. If a watch
+    recorded its *own* argv there, `refresh` would start a watcher instead of rebuilding —
+    a loop that never returns. So the sidecar gets the equivalent single build.
+    """
+    argv = ["build", args.path, "-o", args.out, "--incremental"]
+    if args.deep:
+        argv.append("--deep")
+    for c in args.consumer or ():
+        argv += ["--consumer", c]
+    for d in args.docs or ():
+        argv += ["--docs", d]
+    if args.mode != "thin":
+        argv += ["--mode", args.mode]
+    return argv
+
+
+def _watch_start_is_stale(out: str, scope_id: str) -> bool:
+    """Does the graph at ``out`` predate the tree we are about to watch? (M3.2)
+
+    Missing graph, missing/unreadable sidecar, or a different recorded ``scope_id`` all
+    mean *rebuild now*. An unreadable sidecar is treated as stale on purpose: "I cannot
+    tell" must not resolve to "it is fine".
+    """
+    from codemap.freshness import read_meta
+    if not Path(out).exists():
+        return True
+    meta = read_meta(out) or {}
+    return (meta.get("scope") or {}).get("scope_id") != scope_id
+
+
+def _cmd_watch(args) -> int:
+    """Watch the source tree and keep ``-o`` current by incremental rebuild (M3.2).
+
+    The three bricks were already in place — `build --incremental` (R1-C9), honest
+    freshness + `reload` (issue #3), the scope manifest as the definition of "changed"
+    (M19.A). This is the loop that joins them, and it decides nothing itself: the rebuild
+    fires when `scope_id` moves and the tree has been quiet for `--debounce`.
+
+    Pair it with `codemap serve --watch` for the full source→answer loop; run it alone to
+    keep a graph current for CI or for cold `codemap query` calls.
+    """
+    import argparse as _argparse
+    from codemap.watch import DebouncedPoller, scope_probe
+
+    consumers = tuple(args.consumer or ())
+    docs = tuple(args.docs or ())
+    build_args = _argparse.Namespace(
+        path=args.path, out=args.out, deep=args.deep, consumer=args.consumer,
+        docs=args.docs, mode=args.mode, incremental=True,
+        _argv=_watch_build_argv(args))
+
+    reported: set[str] = set()
+
+    def rebuild(scope_id: str) -> bool:
+        started = time.monotonic()
+        try:
+            # `build` prints the output path on stdout; in a loop that is repeated noise,
+            # and it would pollute a pipeline this watcher is composed into. Everything
+            # this command says goes to stderr — stdout stays empty on purpose.
+            with contextlib.redirect_stdout(sys.stderr):
+                _cmd_build(build_args)
+        except Exception as exc:
+            # A failed rebuild leaves the previous graph in place, and says so. Silence
+            # here would be the same defect this project keeps fixing: a stale answer
+            # that looks current. Returning False keeps this tree version pending, so a
+            # transient failure is retried instead of being mistaken for success — but
+            # the message is printed once per version, or a broken tree would spam.
+            if scope_id not in reported:
+                reported.add(scope_id)
+                print(f"[watch] rebuild FAILED ({type(exc).__name__}: {exc}) — "
+                      f"{args.out} still holds the previous graph; retrying while the "
+                      f"tree stays like this", file=sys.stderr)
+            return False
+        print(f"[watch] {args.out} rebuilt in {time.monotonic() - started:.1f}s "
+              f"({scope_id[:14]}…)", file=sys.stderr)
+        return True
+
+    probe = scope_probe(args.path, consumers=consumers, docs=docs)
+    current = probe()
+    if _watch_start_is_stale(args.out, current):
+        # Starting a watcher over an artifact that is already behind the tree, and then
+        # waiting for the *next* edit, is silent staleness with a progress message. The
+        # sidecar records the scope_id the graph was built from (M19.A), so "already
+        # behind" is a comparison, not a guess.
+        rebuild(current)
+    poller = DebouncedPoller(probe, rebuild, interval=args.interval,
+                             debounce=args.debounce)
+    print(f"[watch] {args.path} → {args.out} "
+          f"(poll {args.interval}s, debounce {args.debounce}s; Ctrl-C to stop)",
+          file=sys.stderr)
+    try:
+        poller.run(cycles=args.cycles)
+    except KeyboardInterrupt:
+        print("\n[watch] stopped", file=sys.stderr)
+    return 0
 
 
 def _cmd_scope(args) -> int:
@@ -421,6 +527,7 @@ def _cmd_semantic(args) -> int:
     where file paths resolve); it defaults to cwd. The core needs no adapter — with
     none enabled+installed this prints an actionable hint, never crashes.
     """
+    from codemap.serve.limits import limit_footer
     from codemap.serve.semantic import semantic_search
     q = Query(_graph_from(args))
     result = semantic_search(q, args.query, root=args.root, limit=args.limit)
@@ -443,6 +550,9 @@ def _cmd_semantic(args) -> int:
         sym = h["symbol"] or f"(unresolved) {h['file']}"
         lines = h["lines"]
         print(f"  {h['score']:.3f}  {sym}  [{h['file']}:{lines[0]}-{lines[1]}]")
+    footer = limit_footer(result.get("limit"))  # R1-C28: say when a page is only a page
+    if footer:
+        print(f"\n{footer}")
     return 0
 
 
@@ -523,12 +633,57 @@ def _cmd_serve(args) -> int:
     from codemap.serve.session import Session
     session = Session(_graph_from(args), source_root=args.source_root,
                       graph_path=getattr(args, "graph", None))
+    if getattr(args, "watch", False):
+        _start_reload_watcher(session, args)
     if getattr(args, "mcp", False):
         from codemap.serve.mcp_server import build_mcp_server
         build_mcp_server(session).run("stdio")
         return 0
     from codemap.serve.server import serve_stdio
     return serve_stdio(session)
+
+
+def _start_reload_watcher(session, args) -> bool:
+    """Follow the graph file on a daemon thread and `reload` when it is rebuilt (M3.2).
+
+    The artifact half of the auto-loop. Nothing is rebuilt here: extraction inside the
+    resident process would compete with the queries it exists to answer, and a rebuild
+    that crashed would take the server down with it. This thread only notices that the
+    file moved and calls the existing `reload` op — so a server started by hand follows
+    `codemap watch`, a CI rebuild, or a `codemap build` you typed yourself, identically.
+
+    Logs to **stderr** only: stdout is the protocol.
+    """
+    import threading
+    from codemap.watch import DebouncedPoller, mtime_probe
+
+    if not getattr(args, "graph", None):
+        print("[watch] --watch needs --graph <file>; a --build server has no artifact "
+              "to follow — restart it to refresh", file=sys.stderr)
+        return False
+
+    def reload(_token) -> bool:
+        env = session.handle({"op": "reload"})
+        r = env.get("result", {})
+        if r.get("reloaded"):
+            print(f"[watch] reloaded {args.graph}: {r['before']['nodes']} → "
+                  f"{r['after']['nodes']} node(s), "
+                  f"{'changed' if r['changed'] else 'identical'}", file=sys.stderr)
+            return True
+        # Most likely a half-written file caught mid-rebuild. Returning False keeps the
+        # new mtime pending, so the next tick tries again rather than leaving the server
+        # answering from the old graph while believing it is current.
+        print(f"[watch] reload failed, will retry: "
+              f"{r.get('reason', env.get('error'))}", file=sys.stderr)
+        return False
+
+    poller = DebouncedPoller(mtime_probe(args.graph), reload,
+                             interval=args.interval, debounce=args.debounce)
+    threading.Thread(target=poller.run, kwargs={"cycles": None},
+                     name="codemap-watch", daemon=True).start()
+    print(f"[watch] following {args.graph} (poll {args.interval}s, "
+          f"debounce {args.debounce}s)", file=sys.stderr)
+    return True
 
 
 def _emit(text: str, out: str | None) -> None:
@@ -545,6 +700,22 @@ def _write_vault(files: dict[str, str], out_dir: str) -> None:
         path = base / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
+
+
+def _add_poll_options(p, *, debounce: float, debounce_help: str) -> None:
+    """Shared knobs for both halves of the watch loop (M3.2).
+
+    Polling, not native file events — that would be a dependency. On the source side the
+    cost is one `resolve_scope` per interval (every in-scope file read and hashed): ~50 ms
+    for a 292-file, 4.7 MB tree, so ~5% of a core at the default. Raise `--interval` on a
+    large tree. On the artifact side a poll is a single `stat`.
+
+    The two halves want *different* debounces, which is why it is a parameter: a source
+    tree is edited in bursts, an artifact is written once.
+    """
+    p.add_argument("--interval", type=float, default=1.0,
+                   help="Seconds between polls (default: 1.0).")
+    p.add_argument("--debounce", type=float, default=debounce, help=debounce_help)
 
 
 def _add_source(p) -> None:
@@ -651,7 +822,40 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--mcp", action="store_true",
                    help="Serve over the Model Context Protocol instead of JSON "
                         "(needs the optional 'mcp' extra: pip install 'codemap[mcp]').")
+    s.add_argument("--watch", action="store_true",
+                   help="Follow --graph on disk and `reload` when it is rebuilt (M3.2), "
+                        "so answers stop coming from the startup snapshot. Pair with "
+                        "`codemap watch` for the full source→answer loop.")
+    _add_poll_options(
+        s, debounce=0.5,
+        debounce_help="Seconds of quiet before reloading (default: 0.5). Short on "
+                      "purpose: an artifact is written once, so this only guards against "
+                      "catching it mid-write — and a failed read is retried, not "
+                      "mistaken for success.")
     s.set_defaults(func=_cmd_serve)
+
+    w = sub.add_parser("watch", help="Watch the source tree and keep a graph current "
+                                     "by incremental rebuild (M3.2).")
+    w.add_argument("path", help="Path to the package directory (as for `build`).")
+    w.add_argument("-o", "--out", required=True,
+                   help="Graph to keep current (built first if it does not exist).")
+    w.add_argument("--deep", action="store_true",
+                   help="Deep call resolution via jedi. Incremental rebuild is what "
+                        "makes this affordable in a loop (R1-C9).")
+    w.add_argument("--consumer", action="append", metavar="PATH",
+                   help="Repo-scope consumer root (tests/, examples/…). Repeatable. "
+                        "Note: repo-scoped builds are full, not incremental.")
+    w.add_argument("--docs", action="append", metavar="PATH", help="Docs root. Repeatable.")
+    w.add_argument("--mode", choices=["thin", "full"], default="thin",
+                   help="Consumer granularity (as for `build`).")
+    w.add_argument("--cycles", type=int, default=None,
+                   help="Stop after N polls instead of running forever (CI / testing).")
+    _add_poll_options(
+        w, debounce=2.0,
+        debounce_help="Seconds of quiet before rebuilding (default: 2.0), so a save "
+                      "storm, a `git checkout` or a formatter sweep is one rebuild "
+                      "rather than three hundred.")
+    w.set_defaults(func=_cmd_watch)
 
     rf = sub.add_parser("refresh", help="Rebuild a graph from the recipe recorded at build time.")
     rf.add_argument("graph", help="Path to the graph.json to rebuild (needs its .meta.json sidecar).")

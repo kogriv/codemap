@@ -229,12 +229,17 @@ class Query:
         return {"input": name_or_id, "id": chosen, "ambiguous": ambiguous,
                 "alternatives": sorted(c for c in cands if c != chosen)}
 
-    def search(self, term: str, *, kind: str | None = None, limit: int = 50) -> list[dict]:
+    def search(self, term: str, *, kind: str | None = None,
+               limit: int | None = 50) -> list[dict]:
         """Substring search over node ids — the discovery entry point (F9).
 
         Case-insensitive match on the id (so both short name and module path hit).
         Optional ``kind`` filter. Returns ``{id, kind, file, lineno}`` for a cold
         agent that does not yet know exact names.
+
+        ``limit=None`` returns everything. R1-C28: the serve layer asks for the full
+        list so it can report the *true* total alongside the slice — a limit is a
+        lower bound on the answer, and a lower bound has to be countable to be honest.
         """
         t = term.lower()
         out = [

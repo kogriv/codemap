@@ -101,7 +101,10 @@ def test_cap_list_truncates_with_total():
            "resolved": {"ambiguous": False}}
     out = _cap_list(env, limit=15)
     assert len(out["result"]) == 15
-    assert out["total"] == 40
+    # R1-C28: was `shown`/`total`, emitted only on truncation — now the shared `limit`
+    # block, emitted always, so one vocabulary covers every limited surface.
+    assert out["limit"] == {"applied": 15, "returned": 15,
+                            "total": 40, "truncated": True}
     assert out["resolved"] == {"ambiguous": False}     # envelope extras preserved
 
 

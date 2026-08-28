@@ -61,7 +61,7 @@ Source-only: yes, it never builds or runs the target. Deterministic: see below �
 | provenance by root role | ✅ declared roots | ✖ heuristic, and it misfires (see T3) |
 | docs as first-class refs | ✅ | ✖ `.md` not indexed at all |
 | MCP | ✅ 28 tools | ✅ **1** tool by default (7 more opt-in) |
-| incremental sync | ✅ `build --incremental` | ✅ **+ file watcher** (codemap has none) |
+| incremental sync | ✅ `build --incremental` **+ watcher since M3.2** (this разбор is why) | ✅ + file watcher |
 | languages | Python | 20 (Rust kernel) |
 | license | MIT | MIT |
 
@@ -198,9 +198,15 @@ because it is the property R1-C25 exists to protect: *a stable output is worthle
 
 Appending one function to `bquant/core/config.py` and running `codegraph sync`:
 **121 ms, 1 file modified, 52 nodes**, and the new symbol was immediately queryable (0.66 s wall).
-codemap's `build --incremental` is ~5 s on the deep tier. The tiers are not comparable — jedi type
-inference is the difference — but the *operational* shape is: CodeGraph ships the watcher loop codemap
-has deferred, with a 2-second debounce, and it works.
+codemap's `build --incremental` is ~5 s on the deep tier and **4.3 s on the fast tier** for a comparable
+90-file package (9 modules recomputed; cold 6.8 s). The tiers are not comparable — jedi type inference is
+the difference, and so is a Rust kernel — but the *operational* shape was: CodeGraph ships the watcher loop
+codemap had deferred, with a 2-second debounce, and it works.
+
+**Consequence, recorded 2026-08-28:** codemap built its own (M3.2 — `codemap watch` + `serve --watch`).
+Measured end to end, save → answerable: **8.1–8.7 s** at the defaults on that same 90-file package. Against
+121 ms that is not a good number, and it is the right one to publish: the debounce is deliberate, the polling
+costs 50 ms, and everything else is our rebuild. The gap is real and it is in the rebuild, not in the loop.
 
 ## Quality (on the covered part)
 

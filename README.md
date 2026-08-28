@@ -8,7 +8,7 @@ and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.12, **530 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.12, **568 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -127,11 +127,15 @@ codemap semantic "detect swing pivots" --build ./pkg --root pkg
 # token-budgeted context pack — most relevant graph slice under N tokens (ranked; --seed to focus)
 codemap pack --graph graph.json --budget 2000 --seed analyze_zones
 
-# warm resident process — JSON requests over stdin/stdout (29 ops)
+# warm resident process — JSON requests over stdin/stdout (31 ops)
 codemap serve --graph graph.json --source-root .
 
 # …or expose the same surface as MCP tools for an AI-agent host (needs [mcp] extra)
 codemap serve --graph graph.json --source-root . --mcp
+
+# keep it current while you work: source → incremental rebuild → the warm server reloads
+codemap watch ./pkg -o graph.json &
+codemap serve --graph graph.json --watch
 ```
 
 ## What it answers
@@ -208,7 +212,9 @@ the live graph, findings, and the milestone that closed them.
 - **[docs/attribute-edges.md](docs/attribute-edges.md)** — `accesses` edges: who reads/writes a class field,
   honest field-level `impact` (`accessors`; `unknown` vs `none`).
 - **[docs/incremental.md](docs/incremental.md)** — `codemap build --incremental`: recompute only changed
-  modules (~12× faster on `--deep`), byte-identical on the fast tier.
+  modules (~12× faster on `--deep`), byte-identical on the fast tier; plus the automatic
+  `codemap watch` + `serve --watch` loop (save → answerable in ~8 s on a real package at the defaults,
+  of which 4.3 s is the rebuild).
 - **[docs/test-mapping.md](docs/test-mapping.md)** — `codemap tests <symbol>`: which tests exercise a
   symbol, as runnable pytest node ids, with the measured distance cutoff and an `unknown` that never
   pretends to be "untested".

@@ -96,7 +96,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 | GitNexus | hybrid semantic+structural: BM25+embeddings+RRF search, Leiden clusters + 294 process-flows, transitive risk-rated impact, per-answer `epistemic`/`confidence`, 14 langs, MCP+HTTP+web, 1-cmd editor setup | **non-commercial license**; 1.7 GB install + 123 MB binary non-diffable index (28× input); T2 is import-fan-in not call-sites; no T4 (call contracts) & partial T5 (no coupling/god-objects); **git-required** for incremental/change-detection | learn (strong, adjacent niche) | R1-C13, R1-C14, R1-C15 |
 | PyCG | academic reference for Python call-graph accuracy; hand-labeled micro/macro benchmark corpus (the ~99%P/~70%R ceiling citation) | **does not run on Python 3.12** (import-hook surgery collides with stdlib; fails on a 3-line file); batch CLI, not a service; unmaintained (0.0.8, 2021) | learn (methodology only — spike-negative as a live oracle) | R1-C13 |
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
-| CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync + a debounced watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 (no argument contract, no layers/cycles); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker; a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
+| CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync + a debounced watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 (no argument contract, no layers/cycles); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639); the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
 
 ## Where codemap is not closed
 
@@ -124,10 +124,14 @@ backlog candidate. Populated as cards complete.
 - **Transitive, depth-bucketed, risk-rated impact** — GitNexus's `impact` returns a depth histogram
   (`byDepth`) + a coarse `risk` band over a transitive closure; codemap's `impact` is one-hop by design. An
   opt-in transitive mode with a depth histogram is a natural extension. ([GitNexus card](tools/gitnexus.md))
-- **A debounced file watcher** — CodeGraph closes the loop codemap left open: native OS file events →
-  2 s debounce → incremental re-index, measured at **121 ms** for one modified file. codemap has all three
-  prerequisite bricks (`build --incremental`, `reload`, honest `freshness`) and only the glue is missing.
-  This is the second sighting after graphlens, and the first with a number. ([CodeGraph card](tools/codegraph.md))
+- ~~**A debounced file watcher**~~ — **closed 2026-08-28 (M3.2)**, and this разбор is why: CodeGraph shipped
+  the loop codemap had deferred (native OS file events → 2 s debounce → incremental re-index, **121 ms** for
+  one modified file), which turned "we are waiting for a live scenario" into "we are waiting because we never
+  priced it". codemap now ships `codemap watch` + `serve --watch`. The honest comparison is **not** favourable
+  and is worth stating: their 121 ms is a Rust-kernel re-index; our end-to-end save→answer is **8.1–8.7 s** on
+  a real 90-file package at the defaults, of which **4.3 s** is the fast-tier rebuild. Polling, not native
+  events (a dependency we declined), measured at 50 ms per poll. The loop exists; the rebuild floor is the next
+  thing to move, if anyone needs it moved. ([CodeGraph card](tools/codegraph.md))
 - **Signature on the symbol-lookup answer** — CodeGraph returns a `signature` inline on every `query` hit;
   codemap makes you ask `call_contract` separately. Free ergonomics. ([CodeGraph card](tools/codegraph.md))
 - **A contamination-proof two-arm benchmark harness** — CodeGraph blocks its own CLI in *both* arms

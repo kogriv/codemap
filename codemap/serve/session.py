@@ -20,6 +20,7 @@ from codemap.serve.api_surface import render_api_surface
 from codemap.serve.architecture import build_architecture, render_architecture
 from codemap.serve.audit import render_behavior, render_dead_code, render_dependencies
 from codemap.serve.impact import render_impact
+from codemap.serve.limits import limit_block
 from codemap.serve.mermaid import render_mermaid
 from codemap.serve.rag import build_chunks
 from codemap.serve.review import build_review, render_review
@@ -45,6 +46,24 @@ _EPISTEMIC_PARTIAL = {
     "epistemic": "partial",
     "reason": "leans on static call resolution (partial for Python) — a lower "
               "bound; pair with grep/tests before acting.",
+}
+
+# R1-C28: ops that cut a computed answer down to a limit. Orthogonal to _PARTIAL_OPS
+# — that one is about how well calls *resolve*; this one is about how much of the
+# resolved answer survived. An answer can be both, and the two say different things.
+# Each of these sets ``self._limit`` (see `limits.limit_block`); `handle` lifts it into
+# the envelope, always — including when nothing was cut.
+_LIMITED_OPS = frozenset({"search", "semantic", "tests", "covers"})
+
+# Ops bounded by something that is *not* a cut of a computed list. Written down rather
+# than left implicit so the guard test can tell "exempt, deliberately" from "forgotten"
+# — the rule outlives this fix only if something enforces it.
+_UNLIMITED_BY_DESIGN = {
+    "pack": "budget is a token budget the caller sets on purpose, and the result is "
+            "explicitly a *pack* — self-describing by construction",
+    "impact": "depth bounds the walk, it does not slice a computed list; the reach is "
+              "already echoed back as by_distance / max_distance",
+    "flows": "depth likewise bounds the walk, and the answer carries its own depth",
 }
 
 
@@ -133,6 +152,9 @@ class Session:
         # graph actually being served, not the file on disk (which may have been
         # rebuilt out from under a long-lived server). None for an in-memory graph.
         self._served_mtime = self._current_mtime()
+        # R1-C28: the limit block of the op currently being handled (set by the op,
+        # lifted into the envelope by `handle`) — same one-shot channel as _resolution.
+        self._limit: dict | None = None
 
     def _current_mtime(self) -> float | None:
         import os
@@ -162,6 +184,10 @@ class Session:
         was **ambiguous** (M14/F14 — arbitrary pick among equals) or rewrote the
         input (F13 — re-export → canonical), the envelope carries a ``resolved``
         block so a caller never acts on a silently-wrong symbol.
+
+        When the op accepts a limit, the envelope carries a ``limit`` block (R1-C28)
+        **whether or not anything was cut** — see ``serve/limits.py`` for why the
+        only-on-truncation variant is not honest enough.
         """
         op = request.get("op")
         args = request.get("args") or {}
@@ -170,6 +196,7 @@ class Session:
             return {"ok": False, "error": f"unknown op: {op!r}",
                     "ops": sorted(_OPS)}
         self._resolution = None
+        self._limit = None
         try:
             env = {"ok": True, "result": fn(self, args)}
         except Exception as exc:  # a bad arg must not kill the resident process
@@ -179,6 +206,8 @@ class Session:
             env["resolved"] = r
         if op in _PARTIAL_OPS:  # R1-C13: machine-readable "this is a lower bound"
             env["epistemic"] = _EPISTEMIC_PARTIAL
+        if self._limit is not None:  # R1-C28: how much of the answer survived the cut
+            env["limit"] = self._limit
         return env
 
     # -- ops (each takes an args dict) ---------------------------------------
@@ -263,8 +292,14 @@ class Session:
         return self.query.canonical_info(args["name"])
 
     def _op_search(self, args) -> list:
-        return self.query.search(args["term"], kind=args.get("kind"),
-                                 limit=int(args.get("limit", 50)))
+        # R1-C28: count the whole match set, then slice — this op is the *discovery*
+        # entry point (F9), the one an agent uses precisely because it does not yet
+        # know what exists, so a silent 50-of-1259 is the worst place to be quiet.
+        # The full list is already materialised inside `search`; counting is free.
+        limit = int(args.get("limit", 50))
+        hits = self.query.search(args["term"], kind=args.get("kind"), limit=None)
+        self._limit = limit_block(limit, min(limit, len(hits)), len(hits))
+        return hits[:limit]
 
     def _op_families(self, args) -> list:
         return self.query.families()
@@ -287,15 +322,22 @@ class Session:
 
     def _op_tests(self, args) -> dict:
         """R1-C24: which tests exercise a symbol, nearest band first, honestly labelled."""
-        return self.query.tests_for(
-            self._canon(args["symbol"]),
-            depth=int(args.get("depth", 3)), cap=int(args.get("cap", 25)))
+        cap = int(args.get("cap", 25))
+        res = self.query.tests_for(
+            self._canon(args["symbol"]), depth=int(args.get("depth", 3)), cap=cap)
+        # These two already say it in their own body (`total_at_distance` + a caveat
+        # line). The envelope block is added anyway: a machine consumer should read one
+        # vocabulary across every limited op, not learn a per-op dialect.
+        self._limit = limit_block(cap, len(res["tests"]), res["total_at_distance"])
+        return res
 
     def _op_covers(self, args) -> dict:
         """The inverse — what a test actually reaches (same index, read forward)."""
-        return self.query.covers(
-            self._canon(args["test"]),
-            depth=int(args.get("depth", 3)), cap=int(args.get("cap", 25)))
+        cap = int(args.get("cap", 25))
+        res = self.query.covers(
+            self._canon(args["test"]), depth=int(args.get("depth", 3)), cap=cap)
+        self._limit = limit_block(cap, len(res["symbols"]), res["total"])
+        return res
 
     def _op_callers(self, args) -> list:
         return self.query.callers(self._canon(args["symbol"]))
@@ -381,8 +423,13 @@ class Session:
         """
         from codemap.serve.semantic import semantic_search
         root = args.get("root") or self.source_root or "."
-        return semantic_search(self.query, args["query"], root=root,
-                               limit=int(args.get("limit", 10)))
+        res = semantic_search(self.query, args["query"], root=root,
+                              limit=int(args.get("limit", 10)))
+        # R1-C28: here the cut happens *upstream*, inside the adapter, so the pre-limit
+        # total is genuinely unobservable when it returns a full page — `total: null` is
+        # the true answer, and it is stated rather than omitted.
+        self._limit = res.pop("limit")
+        return res
 
     def _op_pack(self, args) -> dict:
         """R1-C6: token-budgeted context pack — most relevant graph slice under N tokens."""
