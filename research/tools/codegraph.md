@@ -37,7 +37,11 @@ A pre-built symbol graph aimed squarely at agent consumption. The Rust kernel pa
 extracting nodes (function/method/class/variable/import/file) and edges (calls, imports, extends,
 implements); a resolution pass then links references to definitions and adds framework-specific and
 dynamic-dispatch hops. Everything lands in `.codegraph/codegraph.db` (SQLite, WAL, FTS5). A file
-watcher with a 2-second debounce keeps it incrementally in sync.
+watcher keeps it incrementally in sync — nominally a 2-second debounce, in practice **adaptive**: a lone
+save fires after a 300 ms quiet window, bursts coalesce on the full 2 s.
+
+There is a **third interface** beyond CLI and MCP — an importable library — and it carries queries the
+other two do not expose. The first pass of this card missed it; see the library section.
 
 The product thesis is unusual and worth stating plainly, because it is the opposite of codemap's:
 **one big tool beats a menu of small ones.** The MCP surface exposes a *single* tool by default,
@@ -56,7 +60,7 @@ Source-only: yes, it never builds or runs the target. Deterministic: see below �
 | callers/callees (T2) | ✅ | ✅ symbol-level |
 | impact / blast-radius (T3) | ✅ | ✅ (more nodes, untagged) |
 | signature-change surface (T4) | ✅ | ✖ blast radius, not an argument contract |
-| architecture / layers (T5) | ✅ | ✖ no layers / cycles / violations |
+| architecture / layers (T5) | ✅ | ✖ on CLI/MCP. **Library-only** `findCircularDependencies()` exists — 136 cycles vs codemap's 1 on the same tree (see below); no layers, no violations |
 | determinism | ✅ answer **and** artifact | ◐ answers stable except one timestamp field; artifact binary |
 | provenance by root role | ✅ declared roots | ✖ heuristic, and it misfires (see T3) |
 | docs as first-class refs | ✅ | ✖ `.md` not indexed at all |
@@ -84,7 +88,7 @@ which is what a compiled kernel without type inference buys.
 | T2 callers (`MACDZoneAnalyzer`) | ✅ (1 disputed) | 1 call | 0.33 s | ✅ byte-identical A/B | **58 symbol-level callers** vs codemap's 57. codemap's 57 are a **complete subset** — they agree on every one. The extra is `tests/unit/test_macd_analyzer.py::test_convenience_functions`, which does `assert isinstance(analyzer, MACDZoneAnalyzer)` — a *reference*, never a call. See "the disputed one" below. |
 | T3 impact (`MACDZoneAnalyzer`) | ✅ | 14.8 KB, 1 call | 0.36 s | ✅ byte-identical A/B | 89 affected / 146 edges at depth 2, flat `{name, kind, filePath, startLine}`. codemap: 69 refs, each tagged `type` (calls 60 / references 9), `root` (core 3 · docs 7 · examples 1 · scripts 2 · tests 56), `distance` (1: 66, 2: 3), plus `risk: high`. More reach, less structure. |
 | T4 sig-change (`analyze_zones`) | ✖ | 26.5 KB, 1 call | 0.41 s | not measured | `explore` returns blast radius + verbatim line-numbered source — genuinely useful, and *adjacent*, but it never says how each call site passes its arguments. codemap's `call_contract` returns per-caller `posargs` / `kwargs` / `splat` / `callsites` (e.g. `examples.02a_universal_zones.main` → 9 call sites, 1 positional). Different question. |
-| T5 architecture | ✖ | — | 0.29 s | — | No layers, cycles or violations anywhere in the CLI. `files` prints the file tree. codemap's `report architecture`: 89 core modules, 634 import edges, 8 layers, 13 inter-layer dependency counts, and a layer-violation section. |
+| T5 architecture | ✖ (CLI) · ◐ (library) | — | 0.29 s · 76 ms | — | No layers, cycles or violations anywhere in the CLI or the MCP tools; `files` prints the file tree. The **importable library** does expose `findCircularDependencies()` — it returns **136 cycles where codemap returns 1**, on false call edges (see the library section). Still no layers, no violations, no coupling report. codemap's `report architecture`: 89 core modules, 634 import edges, 8 layers, 13 inter-layer dependency counts, layer violations. |
 
 ### The disputed one (T2)
 
@@ -168,6 +172,88 @@ philosophical difference about honest partial answers; it is that pattern not be
 [#1512](https://github.com/colbymchenry/codegraph/issues/1512) is a different defect in the same
 function (same-named definitions merged, no `--file`).
 
+### The library surface — the third interface, and nobody is using it
+
+**Added 2026-08-28, on a second pass.** The first разбор measured the CLI and reasoned about the MCP
+surface. The card's own Identity section says *"CLI + MCP + an importable library"* — and the library was
+never opened. It should have been, because it changes an answer.
+
+`main` is `npm-sdk.js` → the exported `CodeGraph` class, and it carries three methods that appear nowhere
+on the CLI and nowhere in the MCP tool list:
+
+```ts
+findCircularDependencies(): string[][]   // src/graph/queries.ts:226 — DFS over file dependencies
+findDeadCode(kinds?): Node[]             // src/index.ts:1818
+getNodeMetrics(nodeId)                   // incoming/outgoing edge counts, per node
+```
+
+Grepped across their source: **none of the three is called anywhere else** — not by a CLI command, not by
+an MCP tool. They are a public API their own product does not surface.
+
+That matters for one of codemap's own claims. "No cycles anywhere" was true of the **CLI**, and the
+coverage row above said it without that qualifier. On the library surface CodeGraph **does** answer *"is
+there an import cycle?"* — the archetypal whole-graph question. So the claim had to be narrowed, and
+this is what narrowing it looks like when the number is then measured:
+
+| on the same staging | cycles reported | time |
+|---|---|---|
+| codemap `report architecture` | **1** — `zones.cache → zones.pipeline → zones.cache` | in-pass |
+| CodeGraph `findCircularDependencies()` | **136** | 76 ms |
+
+The 136 are not 136 findings. `getFileDependencies` — by its own source comment — deliberately does not
+follow import edges; it walks *"the resolved calls/references/instantiates/extends edges"*. That graph
+binds unqualified method calls **by name**, with no type inference, so it manufactures dependencies that
+the imports contradict. Read straight out of their DB, the six `calls` edges that make
+`core/config.py ⇄ core/cache.py` look like a cycle:
+
+```python
+# bquant/core/config.py:315   → resolved to MemoryCache::get in bquant/core/cache.py
+mapped_timeframe = TIMEFRAME_MAPPING[data_source].get(timeframe, timeframe)
+# bquant/core/config.py:615   → same
+config = get_analysis_params('zone_features').get('swing_strategy', {})
+```
+
+Both are `dict.get`. **Six of six sampled edges into that method are false**, and `config.py` imports
+nothing from `cache.py` at all — the reverse import (`cache.py:20 from .config import get_cache_config`)
+is real and one-way. One of the reported "cycles" even runs through a research notebook
+(`core/cache.py → research/notebooks/02_ind_factory.py`, from `method:stats` → `variable:values`).
+
+The exposure is structural rather than incidental — the call-edge targets cluster exactly on the
+polymorphic band that [`docs/accuracy.md`](../../docs/accuracy.md) §(b) measures grep against:
+
+```
+log 1654 · info 691 · warning 222 · step 164 · get 164 · debug 156 · error 155 · calculate 114
+```
+
+codemap asked the same question of the same symbol returns **0 callers** on the fast tier — it does not
+resolve `.get` at all, and stamps the answer `epistemic: partial`. That is the trade in one line, now
+measured from both sides: **CodeGraph over-reports and says nothing; codemap under-reports and says so.**
+Neither is free, and the 9× speed is partly *bought* with this.
+
+`findDeadCode()` returns **1 207** unreferenced symbols on the same staging as one flat list; codemap's
+`report dead-code` bands its candidates by confidence with a whitelist and a printed blind-spot notice.
+Their precision was **not** measured — only the shape is recorded here.
+
+**Reportable? Not as anything new — and checking that is the whole discipline.** Searching their tracker
+before writing a word:
+
+- [#1566](https://github.com/colbymchenry/codegraph/issues/1566) (open, 0 comments) is *this exact
+  defect*, filed for TypeScript: *"built-in `Map.get/set/has` calls resolve to unrelated project
+  methods … An unresolved external/built-in call would be safer than a confident wrong project edge."*
+  That is codemap's own honest-partial argument, made by someone else, in their tracker, first. Our
+  finding is the **Python instance** of it — `dict.get`, same shape — not a new defect.
+- [#888](https://github.com/colbymchenry/codegraph/issues/888),
+  [#889](https://github.com/colbymchenry/codegraph/issues/889) and
+  [#1012](https://github.com/colbymchenry/codegraph/issues/1012) (all open) ask for circular-dependency
+  detection on the CLI/MCP. So the library-only surface is known to their community too — we were late
+  to it, not first.
+
+What is in neither thread is the join between them: the cycle finder those three issues want shipped is
+computed from the edges #1566 is about, so exposing it before fixing them ships **136 cycles where there
+is 1**. That is worth one comment on #1566 and nothing more — no new issue. Same rubric as `updatedAt`
+below, applied in the other direction: report what fails the author's own standard, and *only* what is
+not already on his list.
+
 ### Determinism — split the way GitNexus's was
 
 Two clean-room stagings, materialized from the same manifest, indexed independently:
@@ -194,28 +280,47 @@ is the sharpest available illustration of what the two determinism contracts act
 because it is the property R1-C25 exists to protect: *a stable output is worthless if you cannot tell
 "the code changed" from "the clock did".*
 
-### Incremental sync — the M3.2 feed
+### Incremental sync and the watcher — the M3.2 feed, measured end to end
 
-Appending one function to `bquant/core/config.py` and running `codegraph sync`:
+Appending one function to `bquant/core/config.py` and running `codegraph sync` by hand:
 **121 ms, 1 file modified, 52 nodes**, and the new symbol was immediately queryable (0.66 s wall).
-codemap's `build --incremental` is ~5 s on the deep tier and **4.3 s on the fast tier** for a comparable
-90-file package (9 modules recomputed; cold 6.8 s). The tiers are not comparable — jedi type inference is
-the difference, and so is a Rust kernel — but the *operational* shape was: CodeGraph ships the watcher loop
-codemap had deferred, with a 2-second debounce, and it works.
 
-**Consequence, recorded 2026-08-28:** codemap built its own (M3.2 — `codemap watch` + `serve --watch`).
-Measured end to end, save → answerable: **8.1–8.7 s** at the defaults on that same 90-file package. Against
-121 ms that is not a good number, and it is the right one to publish: the debounce is deliberate, the polling
-costs 50 ms, and everything else is our rebuild. The gap is real and it is in the rebuild, not in the loop.
+**The watcher itself was then run** (second pass, 2026-08-28 — the first разбор listed it under *not
+checked* and this card compared against the manual number anyway, which was wrong in both directions).
+Driving `cg.watch()` in a resident process and polling until the new symbol answers, three runs:
+
+| | save → answerable |
+|---|---|
+| CodeGraph, watcher running | **327 / 337 / 424 ms** |
+| codemap `watch` + `serve --watch`, defaults | **8.1–8.7 s** (of which 4.3 s is the rebuild) |
+
+So the honest ratio is **~20–25×**, not the ~70× that comparing our end-to-end against their *manual sync*
+implied. Their number is lower than the 2-second debounce would suggest because of a design worth
+stealing: **the debounce is adaptive** — `QUICK_SYNC_MAX_PENDING = 2`, `QUICK_SYNC_QUIET_MS = 300`, so a
+lone save fires after 300 ms while a burst still coalesces on the full 2 s window
+(`src/sync/watcher.ts`). Their implementation is `fs.watch` with no third-party dependency, watching each
+directory individually on Linux (where recursive `fs.watch` is unsupported) and degrading with an
+actionable message when inotify watch counts are exhausted.
+
+**Consequence, recorded the same day:** codemap built its own loop (M3.2 — `codemap watch` +
+`serve --watch`) precisely because this разбор priced it. The gap that remains is not the loop, it is the
+**rebuild floor**: their sync is ~120 ms against our 4.3 s fast-tier incremental. The flat 2 s debounce is
+the cheap half of the difference and is now a backlog candidate (adaptive debounce, M3.2-f1).
 
 ## Quality (on the covered part)
 
-- **accuracy** — high on T1–T3. Its caller set is a strict superset of codemap's, and the one extra is a
-  definitional disagreement, not noise. No false paths were found in the T2/T3 sets checked by hand.
+- **accuracy** — high on T1–T3 *for well-named symbols*. Its caller set for `MACDZoneAnalyzer` is a strict
+  superset of codemap's and the one extra is a definitional disagreement, not noise; no false paths were
+  found in the T2/T3 sets checked by hand. But that symbol is a unique class name, where no collision was
+  possible. On **polymorphic names** the resolver binds by name with no type inference and produces
+  demonstrably false call edges (`dict.get` → `MemoryCache::get`, 6 of 6 sampled) — measured on the second
+  pass, see the library section. The accuracy verdict is therefore: high where the name is unique, and
+  unmeasured-to-poor where it is not, with nothing in the answer distinguishing the two cases.
 - **determinism** — ◐. Structure reproduces exactly; the artifact does not; one answer field is a clock.
 - **cost** — one call per question, 7–27 KB per answer. `explore` is dense on purpose; the project
   documents (see below) that this *raises* resident context even as it lowers tokens processed.
-- **speed** — the strongest axis. 1.4 s cold index, ~0.3 s queries, 121 ms incremental sync.
+- **speed** — the strongest axis. 1.4 s cold index, ~0.3 s queries, 121 ms incremental sync, and
+  **327–424 ms** save→answerable with its watcher running (measured, second pass).
 - **setup friction** — low: one npm command, no build, no service, no API key. 283 MB is heavy for a CLI
   but light against GitNexus's 1.7 GB.
 - **language coverage** — 20 via the Rust kernel, vs codemap's one.
@@ -236,6 +341,10 @@ costs 50 ms, and everything else is our rebuild. The gap is real and it is in th
      via a sanitized `PATH` plus a `PreToolUse` hook, because they measured the control arm reaching the
      tool through Bash in **26 of 28 runs**. Any future codemap benchmark that compares "agent with" to
      "agent without" must do this or it is measuring nothing.
+  4. **Adaptive debounce** (second pass). `QUICK_SYNC_MAX_PENDING = 2` / `QUICK_SYNC_QUIET_MS = 300`: a
+     lone save syncs after 300 ms, a burst still coalesces on the full 2 s. codemap shipped a flat 2 s,
+     which costs ~1.7 s on the common case for no benefit. Cheap, and it is most of why their measured
+     save→answerable is 0.33 s rather than the 2 s their headline debounce implies. Backlog: **M3.2-f1**.
 
 - **What we'd do differently, and why.**
   1. **Never emit a truncated list without saying so.** `--limit 20` with no `truncated` marker turns a
@@ -281,8 +390,16 @@ costs 50 ms, and everything else is our rebuild. The gap is real and it is in th
     piece of work, and it is the natural next step if the claim ever needs independent standing.
   - The claim that all 20 Rust-kernel languages produce **byte-for-byte identical graphs** to the
     reference engine. Only Python was measured, on one repository.
-  - The file watcher itself. `sync` was invoked manually; the debounce/auto-trigger loop was not
-    observed running.
+  - ~~The file watcher itself.~~ **Checked on the second pass** — `cg.watch()` driven in a resident
+    process, save→answerable measured at 327–424 ms across three runs.
+  - The MCP `codegraph_explore` path end to end, and therefore whether the library-only queries above are
+    reachable by an agent at all (they are not listed as tools; nothing in their source calls them).
+  - The **precision** of `findDeadCode()` (1 207 symbols) — only its shape was recorded. The cycle
+    finder's false edges were sampled (6 of 6 into one method), not exhaustively classified.
+  - Whether the false-edge rate materially changes T2/T3 for *polymorphic* names. `MACDZoneAnalyzer` is a
+    unique class name, so this разбор's headline correctness numbers do not probe it. Doing that properly
+    means a labelled call-site suite on their output, which is `research/bench/callgraph_accuracy.py`'s
+    job and was not run against a second tool.
   - Anything outside Python, and any repo other than bquant at one commit.
   - Whether the author agrees. The truncation defect is filed as
     [#1639](https://github.com/colbymchenry/codegraph/issues/1639) (400 issues scanned first, no
@@ -320,10 +437,17 @@ Backlog effect:
 - **R1-C6 (relevance ranking)** — a second sighting of scored symbol lookup (after HippoRAG's PPR).
   CodeGraph ranked the `UniversalZoneAnalyzer` method above the flagship `pipeline.analyze_zones`, which
   is a reminder that a score is only as good as what it optimises for.
-- **R1-C14 (positioning)** — sharpened. Against this tool the honest differentiators narrow to:
-  **byte-diffable artifact**, **declared-root provenance** (calls vs references, core vs docs vs tests),
-  **argument-level call contracts**, **architecture contracts**, and **docs as first-class references**.
-  Speed, license, and multi-language are no longer available as differentiators.
+- **R1-C14 (positioning)** — sharpened, then corrected on the second pass. Against this tool the honest
+  differentiators narrow to: **byte-diffable artifact**, **declared-root provenance** (calls vs references,
+  core vs docs vs tests), **argument-level call contracts**, **architecture contracts**, and **docs as
+  first-class references**. Speed, license, and multi-language are no longer available as differentiators.
+  **"Nobody else answers whole-graph questions" is not available either, as stated** — their library does
+  answer the cycle question. What survives measurement is narrower and stronger: nobody else answers them
+  *on a surface a caller can reach*, and the one implementation that exists is wrong by two orders of
+  magnitude on our target because it inherits name-resolved call edges. Claim the accuracy, not the absence.
+- **M3.2-f1 (new, XS) — adaptive debounce.** A flat 2 s window taxes the common case (one file saved) for
+  a burst that rarely happens. Their split (≤2 pending → 300 ms quiet; more → full window) is the whole
+  fix, and it is the difference between our 8.5 s and something near 6.5 s without touching the rebuild.
 - **P6 (blog)** — the role-provenance post now has a concrete illustration: a widely-adopted peer that
   labels `examples/` as `tests`, beside codemap's `by_root` split. Still not the "provenance changed a
   real decision" episode the post is waiting for, so **P6 stays blocked** — but this is the strongest
@@ -331,5 +455,7 @@ Backlog effect:
 
 ---
 
-*Measured 2026-08-28 · CodeGraph 1.6.0 · bquant@cb89a24 ·
+*Measured 2026-08-28 (first pass: CLI; **second pass same day**: the importable library, the watcher
+end to end, and the resolver's behaviour on polymorphic names — the first pass had measured two of three
+interfaces and compared our end-to-end loop against their manual sync) · CodeGraph 1.6.0 · bquant@cb89a24 ·
 `scope_id sha256:300e0a01…5e47d2` · every command and number above reproduces from a clean staging.*

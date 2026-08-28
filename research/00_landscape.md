@@ -139,6 +139,6 @@ these are logged in [../BACKLOG.md](../BACKLOG.md) under **R1**, ordered by valu
 8. **Dead-code confidence + whitelist UX** — graded certainty (vulture parity) on top of provenance-aware
    dead-code.
 9. **Incremental / Merkle-style graph updates** — content-hash the tree, recompute changed subgraphs
-   (feeds the deferred M3.2 watcher).
+   (fed the M3.2 watcher, shipped 2026-08-28).
 10. **rope-backed safe edits** — optional mutation layer (rename across a computed blast radius); keep
     read-only as the default stance.

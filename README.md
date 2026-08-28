@@ -57,9 +57,17 @@ description and intent cannot drift apart.
 
 Four rival tools have now been measured hands-on on the same benchmark scope — three of them on
 byte-identical input verified by content hash, the fourth (graphlens) on a near-identical staging that
-predates the harness — including the field's most-adopted tool at 68k stars. **All four answer the
-point questions. None answers these** — nor the related "how does each caller actually *pass* its
-arguments" (`call_contract`) — because a slice of source is the wrong shape for the answer.
+predates the harness — including the field's most-adopted tool at 68k stars. **All four answer the point
+questions. None answers these on a surface a caller can reach** — nor the related "how does each caller
+actually *pass* its arguments" (`call_contract`) — because a slice of source is the wrong shape for the
+answer.
+
+That sentence used to end at "None answers these", and a second pass over the 68k-star tool made it
+narrower: its *importable library* does carry a cycle finder, reachable from neither its CLI nor its MCP
+tools and called nowhere in its own source. Measured on the same tree, it reports **136 cycles where
+codemap reports 1** — it walks resolved call edges rather than imports, and those edges bind method names
+without type inference, so a `dict.get` becomes a call into an unrelated class. A whole-graph answer
+computed from a point-question graph inherits every false edge in it.
 
 **→ [docs/whole-graph-questions.md](docs/whole-graph-questions.md)** — the full argument, every number
 above reproduced from one run, and the honest limits.

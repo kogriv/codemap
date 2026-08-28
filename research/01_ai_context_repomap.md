@@ -129,7 +129,7 @@ call-contract, architecture) that grep and embeddings can't cheaply answer. Its 
    codemap answers point queries. A "render the relevant slice under N tokens" mode would make it a
    first-class context provider. → **backlog candidate.**
 3. **Incremental / Merkle-style updates** — Cursor's content-hash sync, for fast recompute on change.
-   Aligns with the deferred M3.2 watcher.
+   Aligned with the M3.2 watcher, shipped 2026-08-28.
 
 **Strategic positioning:** codemap should be **the precise structural leg feeding index-free agents via
 MCP** (integrate with Claude Code, complement Repomix packing) rather than competing head-on with

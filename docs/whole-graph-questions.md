@@ -256,15 +256,28 @@ cards: [research/comparison.md](../research/comparison.md).
 | | symbol lookup | callers | impact | **argument contract** | **layers / cycles** |
 |---|---|---|---|---|---|
 | **codemap** | ✅ | ✅ | ✅ | **✅** | **✅** |
-| [CodeGraph](../research/tools/codegraph.md) (68k ★) | ✅ | ✅ | ✅ | ✖ | ✖ |
+| [CodeGraph](../research/tools/codegraph.md) (68k ★) | ✅ | ✅ | ✅ | ✖ | ✖ CLI/MCP · ◐ library-only cycles, **136 vs 1**¹ |
 | [GitNexus](../research/tools/gitnexus.md) | ✅ | ◐ | ✅ | ✖ | ◐ cycles + clusters, no layers/coupling |
 | [graphlens](../research/tools/graphlens.md) | ✅ | ✅ | ✅ | ✖ | ✖ |
 | [cocoindex-code](../research/tools/cocoindex-code.md) | ◐ | — | — | — | — |
 
-Two of the five columns are unfilled by every peer, including the most-adopted tool in the field.
-That is not a claim about quality — several of these tools beat codemap outright on speed, language
-coverage and setup. It is a claim about **shape**: they were built to answer point questions, and
-they answer them well.
+¹ **The footnote is the interesting part, and it corrected this document.** The first разбор of
+CodeGraph measured its CLI and its MCP surface and recorded ✖. A second pass opened its third interface —
+the importable library — and found `findCircularDependencies()`, unreachable from either surface and
+called nowhere in the project's own source. So the flat claim *"none of them answers this"* was too
+strong and has been narrowed here. What the measurement then showed is the more useful fact: on the same
+staging it reports **136 cycles where codemap reports 1**, because it walks resolved *call* edges rather
+than imports, and those edges bind unqualified method names without type inference — `dict.get` resolves
+to a `MemoryCache::get` in another file, and six of six sampled edges into that method are false. The
+[card](../research/tools/codegraph.md) shows the source lines.
+
+So the accurate statement is narrower and holds up better under checking: two of the five columns are
+unfilled by every peer **on any surface a caller can actually reach**, and the single implementation that
+exists at all is wrong by two orders of magnitude on this target. That is not a claim about quality in
+general — several of these tools beat codemap outright on speed, language coverage and setup, and one of
+them is ~25× faster at keeping its index current. It is a claim about **shape**: they were built to answer
+point questions, they answer them well, and a whole-graph answer computed from a point-question graph
+inherits every false edge in it.
 
 ---
 

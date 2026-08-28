@@ -34,7 +34,8 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   --watch` reloads the warm session when the artifact moves. Measured save-to-answerable at the defaults:
   **8.1–8.7 s** on a real 90-file package, of which **4.3 s** is the rebuild itself — on anything real the
   rebuild dominates, not the polling; on a toy tree it is ~4–5 s, almost all debounce (1.11 s at
-  `--interval 0.3 --debounce 0.3`). Deliberately two commands rather than one: extraction
+  `--interval 0.3 --debounce 0.3`). For scale, the peer that prompted this ships the same loop at
+  **0.33 s** save→answerable, measured the same way. Deliberately two commands rather than one: extraction
   inside the resident server would compete with the queries it exists to answer, and a crashing rebuild
   would take the server down with it — so either half also runs alone, and `serve --watch` follows any
   external rebuild, including one typed by hand. What counts as a change is `scope_id`, the same

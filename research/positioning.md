@@ -618,10 +618,13 @@ the property build-story #4 was about.
   inline signature on symbol lookup, and the two-arm benchmark contamination control, which is not
   optional for any with/without-agent measurement we ever publish.
   **Taken, same day:** the loop shipped as `codemap watch` + `serve --watch`, and the resulting number
-  is worse than theirs by an order of magnitude — **8.1–8.7 s** save→answer against their 121 ms sync,
-  because our rebuild is 4.3 s and theirs is a Rust kernel. Publishing that is the point: the borrowed
-  idea was the loop, not the speed, and pretending otherwise would undo the credibility this whole
-  разбор was built on.
+  is worse than theirs — **8.1–8.7 s** save→answer against **0.33 s**, because our rebuild is 4.3 s and
+  theirs is a Rust kernel. That second number is itself a correction: the first version of this paragraph
+  compared our end-to-end against their *manual* 121 ms sync, which flattered them by 3× and was measured
+  against something the card had explicitly listed as not checked. Running their watcher properly makes
+  the gap ~20–25× instead of ~70×, and hands us the cheap half of it — their debounce is adaptive, ours
+  is flat (M3.2-f1). Publishing all of that is the point: the borrowed idea was the loop, not the speed,
+  and a comparison that flatters *either* side undoes the credibility this разбор was built on.
 - **Keep:** the honest-nothing rule — now with an eighth application that we found in someone else's
   tool first, and the discipline of running the probe back at ourselves before writing the card.
 - **Verdict:** learn-only (strong). Nothing to depend on; the first peer that beats us outright on an

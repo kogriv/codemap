@@ -94,7 +94,7 @@ empty for every tool but mine:
 | | symbol lookup | callers | impact | **argument contract** | **layers / cycles** |
 |---|---|---|---|---|---|
 | codemap | ✅ | ✅ | ✅ | **✅** | **✅** |
-| CodeGraph (68k ★) | ✅ | ✅ | ✅ | ✖ | ✖ |
+| CodeGraph (68k ★) | ✅ | ✅ | ✅ | ✖ | ✖\* |
 | GitNexus | ✅ | ◐ | ✅ | ✖ | ◐ |
 | graphlens | ✅ | ✅ | ✅ | ✖ | ✖ |
 | cocoindex-code | ◐ | — | — | — | — |
@@ -102,6 +102,29 @@ empty for every tool but mine:
 Four independent teams, different languages, different architectures, wildly different scales of
 adoption — and the same two gaps. When that happens it is almost never four oversights. It is a
 property of the problem.
+
+**\* And that asterisk is the fourth time this post was written wrong.** I filled that cell from the
+CLI and the MCP tool list. A tool has as many surfaces as it ships, and this one ships three: there is
+an importable library, and the library has `findCircularDependencies()` — reachable from neither of the
+other two, and called nowhere in the project's own source. I had measured two thirds of a tool and
+written ✖ as though I had measured all of it.
+
+So I ran it. On the same tree it reports **136 cycles. Mine reports 1.** The difference is not tuning.
+It walks resolved *call* edges instead of imports, and those edges bind method names without type
+inference, so this line —
+
+```python
+mapped_timeframe = TIMEFRAME_MAPPING[data_source].get(timeframe, timeframe)
+```
+
+— becomes a call into `MemoryCache::get` in a different file, and two files that import in one direction
+appear to import in both. Six of six sampled edges into that method are false. One of the 136 "cycles"
+runs through a research notebook.
+
+I could have left the ✖ and nobody would have checked. The narrower claim is the one that survives:
+**nobody answers these on a surface a caller can reach**, and the single implementation that exists at
+all inherits every false edge of the point-question graph it was computed from. That is a better
+sentence than the one I had, and I only got it by opening the third door.
 
 ## Point questions and whole-graph questions
 
