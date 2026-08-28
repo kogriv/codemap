@@ -522,6 +522,96 @@ fires at build time, in `stats`, and in three reports.
 
 ---
 
+## Build-story #6 — "The 68 000-star tool measured fair, and then found a bug in ours"
+
+Facts: [CodeGraph card](tools/codegraph.md). Measured 2026-08-28 on the R2 scope
+(`scope_id sha256:300e0a01…5e47d2`, bquant@cb89a24).
+
+### The setup
+
+Every tool measured before this one was a peer of comparable weight — graphlens in alpha, GitNexus,
+cocoindex-code. CodeGraph is not that. Seven months old, **68 420 stars, 4 362 forks**, MIT, a Rust
+kernel with tree-sitter compiled in, twenty languages, one npm command, no service. It is what a person
+reaches for *instead of* codemap. Measuring it was going to be uncomfortable in one of two directions.
+
+### It measured fair
+
+On the same 280 files: **1.4 seconds** to index, against codemap's 12.3 s fast tier and 95.8 s deep —
+roughly 9× and 68×. Queries in ~0.3 s. Incremental sync in **121 ms**, behind a debounced file watcher
+that codemap has deferred for a month. T1 found both definitions of `analyze_zones` at the exact lines
+codemap reports, with the signature inline. T2 returned 58 symbol-level callers, and **codemap's 57 are
+a complete subset of them** — no disagreement, anywhere, on a symbol we have been probing for months.
+
+The one extra was `assert isinstance(analyzer, MACDZoneAnalyzer)` — a reference counted as a call, and
+its own `--help` says "call". That is the same *function-passed-as-a-value* mechanism that made our
+`dead-code` `high` band wrong 39% of the time (build-story #5). Not a gotcha; a thing one tool has had
+to learn and the other has not needed to yet.
+
+### The half-hour of being wrong, again
+
+The first T2 run returned exactly **20** callers, every one a *file* at line 1. That reads as a clean,
+publishable finding: CodeGraph models callers as file-import fan-in, not call sites.
+
+`--limit` defaults to 20. The file-kind rows sort first. The default had cut the answer **exactly along
+the line that misrepresents the model** — and nothing in the payload said so: no total, no `truncated`
+flag. At `--limit 500` it is 79 entries, symbol-level, and the picture inverts.
+
+Second time in this track that a default nearly produced a false verdict about someone else's tool. The
+first was graphlens's bundled `ty` being off `PATH` (build-story #1). The rule that caught both is
+embarrassingly cheap: **when a number looks round, check whether it is a limit.**
+
+### Then we asked our own tool the same question
+
+`search "zone"`, default limit: **50 hits.** True count: **1259.** Envelope: `{"ok": true}`. No total,
+no marker, no echo of the limit — in the op whose docstring calls it *"the discovery entry point for a
+cold agent that does not yet know exact names."* The one operation whose entire job is to say what
+exists answers with 4% of it and looks complete.
+
+`_PARTIAL_OPS` does not catch it, and could not: it marks partiality of *resolution*. A limit is a
+second, independent source of lower-boundness. `callers` is marked and has no limit; `search` has a
+limit and is marked by nothing.
+
+Eighth application of the honest-nothing rule — the first found by measuring a competitor and then
+turning the same probe inward. Logged as R1-C28, gap `gaps/limit_truncation_2026-08-28.md`.
+
+### What the author knows that we didn't
+
+Not technique. Practice.
+
+The README publishes the axis on which the product **loses**: CodeGraph leaves ~80% more retrieval
+context resident at end of session (67k vs 18k tokens on VS Code), stated directly under the headline
+win, with the mechanism explained. And it **retracts its own earlier published benchmark figures** —
+after discovering the control arm reached the tool through Bash in 26 of 28 runs, it rebuilt the harness
+to block its own CLI in *both* arms and re-published lower numbers.
+
+"Volunteering the axis where you lose" has been on our differentiator list. It is not a differentiator.
+Someone with 68 000 stars does it too, and did it before we noticed.
+
+### The lesson (reusable)
+
+**A comparison that only ever flatters you is not a measurement.** This разбор took speed, license, and
+multi-language off our list of differentiators, and took "unusually honest about its own claims" off it
+as well. What is left is narrower and provable: a byte-diffable artifact, declared-root provenance
+(calls vs references; core vs docs vs tests — CodeGraph labels `examples/` as "tests"), argument-level
+call contracts, architecture contracts, docs as first-class references, and no clock anywhere in an
+answer.
+
+That last one is not rhetorical. CodeGraph's `query` carries a wall-clock `updatedAt` on every node, so
+two builds of identical source return different bytes. One field, probably a one-line fix — and exactly
+the property build-story #4 was about.
+
+### What we take, what we keep
+- **Take:** the watcher loop (M3.2 reranked up — the cost is no longer unknown, it is 121 ms), the
+  inline signature on symbol lookup, and the two-arm benchmark contamination control, which is not
+  optional for any with/without-agent measurement we ever publish.
+- **Keep:** the honest-nothing rule — now with an eighth application that we found in someone else's
+  tool first, and the discipline of running the probe back at ourselves before writing the card.
+- **Verdict:** learn-only (strong). Nothing to depend on; the first peer that beats us outright on an
+  axis we care about while matching us on correctness where we overlap, and the first whose
+  documentation practice is a model rather than a foil.
+
+---
+
 ## Article-ready sound bites (each backed by a card)
 
 - "We almost published that a competitor's impact analysis was broken. It was our `PATH`. The hour we spent
@@ -562,13 +652,24 @@ fires at build time, in `stats`, and in three reports.
   layout; they reproduced on our own package, where they had been sitting under our own dogfood for a
   month. One of them was wrong 39% of the time, and no single target exhibited more than two of its three
   mechanisms." → build-story #5
+- "The first T2 run said the 68 000-star tool had a file-level model of callers. It did not — `--limit`
+  defaults to 20 and the file rows sort first, so the default cut the answer exactly along the line that
+  misrepresents the model. When a number looks round, check whether it is a limit." → build-story #6
+- "We asked our own tool the same question. `search \"zone\"` returns 50 hits. The true count is 1259, and
+  the envelope is `{\"ok\": true}` — in the operation whose whole job is to tell a cold agent what exists.
+  A limit is partiality too, and we were marking only the other kind." → build-story #6
+- "Publishing the axis where you lose was on our differentiator list. It isn't a differentiator: the
+  most-adopted tool in the field states that it leaves 80% more context resident than a file-reading
+  agent, and retracted its own benchmark after finding the control arm contaminated in 26 runs of 28."
+  → build-story #6
 
 ---
 
 ## Future stories (skeletons — fill on разбор)
 
-- **#4 …** next tool from R2.2 (CodeGraph / OntoIndex / Sentrux / …). Same shape: setup → the surprising
-  measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code done.)
+- **#7 …** next tool from R2.2 (OntoIndex / rag_for_git / …). Same shape: setup → the surprising
+  measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code,
+  #6 CodeGraph done.)
 - **The determinism story.** Why a diffable graph matters in a PR — needs a concrete "graph diff caught X"
   episode from dogfooding (`gaps/`).
 - **The provenance story.** dead-code without false positives; impact that knows tests from core. Has the

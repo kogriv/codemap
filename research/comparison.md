@@ -20,7 +20,7 @@ get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py)
 |---|---|---|---|---|---|---|---|---|---|---|
 | **codemap** | — | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Py | MIT |
 | graphlens | [card](tools/graphlens.md) | ✅ | ✅¹ | ✅¹ | ✖ | ✖ | ✖ | ✅ | Py/TS/Go/Rust/PHP | MIT |
-| CodeGraph (colbymchenry) | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | MIT |
+| **CodeGraph** (colbymchenry) | [card](tools/codegraph.md) | ✅ | ✅⁴ | ✅⁴ | ✖ | ✖ | ◐⁴ | ✅ (1 tool) | 20 (Rust kernel) | MIT |
 | **GitNexus** | [card](tools/gitnexus.md) | ✅ | ◐² | ✅² | ✖ | ◐² | ◐² | ✅ | 14 (tree-sitter) | PolyForm NC |
 | OntoIndex | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | ? |
 | Sentrux | ? | — | — | ? | ? | ✅ | ✅ | ✅ | 52 | ? |
@@ -68,6 +68,23 @@ local, no DB, no API key** (280 files → 6403 chunks; **incremental re-index �
 216 s, same box, same scope). **Apache-2.0** makes it the first license-clean semantic-search tool codemap
 can *wrap* (vs GitNexus's NC). See the [card](tools/cocoindex-code.md).
 
+⁴ CodeGraph (1.6.0, npm), hands-on on the R2 scope (materialized staging, `scope_id` verified). The
+**most-adopted tool measured so far** — 68 420 ★ — and on the questions it answers it is fast and right.
+**Index:** 207 of the 280 scope files (`.md` are not in its model) → 5 113 nodes / 15 247 edges in **1.4 s**,
+15.5 MB SQLite — **~9× faster than codemap's fast tier, ~68× than deep**. **T1** ✅ both real definitions
+at codemap's exact lines, plus fuzzy neighbours and an inline `signature`; ambiguity is a ranked list but is
+**never flagged as ambiguity**. **T2** ✅ **symbol-level**: 58 callers, and codemap's 57 are a *complete
+subset* — the one extra is `assert isinstance(analyzer, MACDZoneAnalyzer)`, a **reference counted as a
+call** (its own `--help` says "call"). **T3** ✅ 89 affected at depth 2, but a **flat, untagged** list —
+codemap's 69 refs each carry `type` (calls 60 / references 9), `root` (core 3 · docs 7 · examples 1 ·
+scripts 2 · tests 56), `distance` and an aggregate `risk`. **T4/T5** ✖ — no argument-level contract, no
+layers/cycles. **Determinism** ◐: structure reproduces exactly across clean-room A/B (same counts, same DB
+byte-size), the artifact does not (different md5), and `query` carries a wall-clock `updatedAt` per node, so
+**one answer changes when nothing about the code did**. **Trap:** `--limit` defaults to **20**, the
+file-kind rows sort first, and there is **no `truncated` flag** — the default answer reads as a file-import
+model when the real one is symbol-level. Also ships the **debounced file watcher** codemap deferred
+(**121 ms** incremental sync). See the [card](tools/codegraph.md).
+
 ## Quality summary
 
 Filled per axis (accuracy · determinism · cost · speed · setup · languages · license · interface ·
@@ -79,6 +96,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 | GitNexus | hybrid semantic+structural: BM25+embeddings+RRF search, Leiden clusters + 294 process-flows, transitive risk-rated impact, per-answer `epistemic`/`confidence`, 14 langs, MCP+HTTP+web, 1-cmd editor setup | **non-commercial license**; 1.7 GB install + 123 MB binary non-diffable index (28× input); T2 is import-fan-in not call-sites; no T4 (call contracts) & partial T5 (no coupling/god-objects); **git-required** for incremental/change-detection | learn (strong, adjacent niche) | R1-C13, R1-C14, R1-C15 |
 | PyCG | academic reference for Python call-graph accuracy; hand-labeled micro/macro benchmark corpus (the ~99%P/~70%R ceiling citation) | **does not run on Python 3.12** (import-hook surgery collides with stdlib; fails on a 3-line file); batch CLI, not a service; unmaintained (0.0.8, 2021) | learn (methodology only — spike-negative as a live oracle) | R1-C13 |
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
+| CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync + a debounced watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 (no argument contract, no layers/cycles); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker; a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
 
 ## Where codemap is not closed
 
@@ -106,6 +124,16 @@ backlog candidate. Populated as cards complete.
 - **Transitive, depth-bucketed, risk-rated impact** — GitNexus's `impact` returns a depth histogram
   (`byDepth`) + a coarse `risk` band over a transitive closure; codemap's `impact` is one-hop by design. An
   opt-in transitive mode with a depth histogram is a natural extension. ([GitNexus card](tools/gitnexus.md))
+- **A debounced file watcher** — CodeGraph closes the loop codemap left open: native OS file events →
+  2 s debounce → incremental re-index, measured at **121 ms** for one modified file. codemap has all three
+  prerequisite bricks (`build --incremental`, `reload`, honest `freshness`) and only the glue is missing.
+  This is the second sighting after graphlens, and the first with a number. ([CodeGraph card](tools/codegraph.md))
+- **Signature on the symbol-lookup answer** — CodeGraph returns a `signature` inline on every `query` hit;
+  codemap makes you ask `call_contract` separately. Free ergonomics. ([CodeGraph card](tools/codegraph.md))
+- **A contamination-proof two-arm benchmark harness** — CodeGraph blocks its own CLI in *both* arms
+  (sanitized `PATH` + a `PreToolUse` hook) because it measured the control arm reaching the tool through
+  Bash in **26 of 28 runs**. codemap has no with/without-agent benchmark; if it ever builds one, this
+  control is not optional. ([CodeGraph card](tools/codegraph.md))
 
 ## Notes for codemap's own positioning (differentiators, measured)
 
@@ -122,4 +150,14 @@ backlog candidate. Populated as cards complete.
   provision; graphlens's core impact silently degrades to tree-sitter if `ty` isn't on PATH (exactly the trap
   we hit). "Works out of the box, offline, deterministically" is a positioning line. (→ R1-C14)
 - **T4/T5 coverage** — codemap has call-contract (signature-change surface) and architecture/layers ops;
-  graphlens has no tool for either (3-verb surface). (→ R1-C14)
+  graphlens has no tool for either (3-verb surface). **Nor does CodeGraph**, the most-adopted tool measured.
+  Across four hands-on cards, T4 and T5 remain **unmatched by any peer**. (→ R1-C14)
+- **Which differentiators CodeGraph took off the table** (2026-08-28) — an honest subtraction, since the
+  list above was written against smaller peers. **Speed is gone**: CodeGraph indexes the same 280 files
+  ~9× faster than codemap's fast tier and ~68× faster than deep. **License is gone**: MIT vs MIT.
+  **Multi-language is gone**: 20 vs 1. **"Honest about its own claims" is gone as a *unique* stance** — its
+  README publishes the axis on which the product loses (≈80% more resident context) and retracts its own
+  earlier benchmark numbers. What survives is narrower and sharper: **byte-diffable artifact**,
+  **declared-root provenance** (calls vs references; core vs docs vs tests, where CodeGraph labels
+  `examples/` as "tests"), **argument-level call contracts**, **architecture contracts**, **docs as
+  first-class references**, and **no clock anywhere in an answer**. (→ R1-C14)
