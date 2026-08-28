@@ -3,7 +3,10 @@
 **Found:** 2026-08-28, reported from a second real target as
 [issue #11](https://github.com/kogriv/codemap/issues/11) — hours after the same day's
 [R1-C28](limit_truncation_2026-08-28.md) shipped the *"always declare what was cut"* rule.
-**Backlog:** R1-C29. **Status:** 🔴 open.
+**Backlog:** R1-C29. **Status:** ✅ **closed the same day** — all three levels shipped
+(`codemap/extract/griffe_extractor.py`, `codemap/query.py`, the three renderers,
+`tests/test_r1c29_lazy_imports.py`). §3–§4 carry the corrected measurements; the issue stays open
+until the reporter confirms on their own tree.
 
 ## 1. What was reported
 
@@ -58,19 +61,27 @@ module-level-only, and every consumer of that map inherits the gap in silence.
 ## 3. And it is not their codebase — it is ours too, on the flagship target
 
 The report is from a flat-layout project. The obvious question is whether the benchmark target this
-whole research track measures on is affected. Measured, by AST over `bquant` (88 modules):
+whole research track measures on is affected. Measured on `bquant` (88 modules):
 
 | | |
 |---|---:|
-| intra-package import edges, all | 266 |
+| intra-package import edges | 277 |
 | of them **function-local** | **35 (13%)** |
-| cycles codemap reports | **1** |
-| cycles present counting all imports | **9** |
+| cycles codemap reported | **1** |
+| cycles present counting all imports | **41** |
 
-So the number this project has been publishing — *"codemap finds the one cycle"* — is a **lower
-bound at 11% recall**, and nothing in the answer said so. That claim had been repeated in the README,
-in [`docs/whole-graph-questions.md`](../docs/whole-graph-questions.md), and in a blog post, in each
-case as evidence of precision.
+So the number this project has been publishing — *"codemap finds the one cycle"* — was a **lower bound
+at 2.4% recall**, and nothing in the answer said so. That claim had been repeated in the README, in
+[`docs/whole-graph-questions.md`](../docs/whole-graph-questions.md), and in a blog post, in each case as
+evidence of precision.
+
+**The first version of this section said 9, not 41 — and that was our own arithmetic being wrong in the
+same direction twice.** The ad-hoc AST scan written to check the tool anchored a relative import inside a
+package `__init__.py` at the *parent* package instead of the package itself, so `from .candlestick import
+…` in `bquant/analysis/__init__.py` resolved to `bquant.candlestick` and vanished. A scan written in
+fifteen minutes to audit a tool was less careful than the tool, and it under-counted the very thing it
+was auditing. Corrected, the independent scan and the fixed extractor agree **exactly**: 41 elementary
+cycles, same 41 sets, 1 of them eager — which is now an acceptance test rather than a footnote.
 
 ## 4. What this does to the CodeGraph comparison — the honest version
 
@@ -78,10 +89,11 @@ The same day, this project measured a peer's library-only cycle finder at **136 
 reports 1**, and published that as a precision win. Computing both sides against the all-imports truth
 set instead:
 
-| | reported | of the 9 true ones found | precision | recall |
+| | reported | of the 41 true ones found | precision | recall |
 |---|---:|---:|---:|---:|
-| codemap | 1 | 1 | **100%** | **11%** |
-| CodeGraph (library API) | 136 | 6 | **4%** | **67%** |
+| codemap, before this fix | 1 | 1 | **100%** | **2.4%** |
+| CodeGraph (library API) | 136 | 13 | **10%** | **32%** |
+| codemap, after this fix | 41 | 41 | **100%** | **100%** |
 
 Neither tool answers this question well. They over-report from name-resolved call edges and say
 nothing; **we under-report from an unread class of import and phrase the result as a property.**
@@ -90,40 +102,58 @@ confident "acyclic" costs them the question.
 
 The comparison is not wrong in a way that flatters us by accident, either — the peer's approach walks
 call edges, and the call tier *does* see function-local imports (§2). That is precisely why it finds
-6 of 9 where we find 1. The mechanism we criticised is the mechanism that gave it recall.
+13 of 41 where we found 1. The mechanism we criticised is the mechanism that gave it recall.
 
 ## 5. Decision
 
 Three levels, and the first two ship together because they are the same commitment as R1-C28 —
 *an answer must say what it could not see*.
 
-1. **Count and declare, always.** The AST walk already visits function-local import nodes to decide
-   not to use them; counting them is free. `architecture` (and `check`, and `report dependencies`,
-   and anything reading `imports`) carries `import_map: {module_level: N, function_local_skipped: M}`
-   **whether or not M is zero** — the same rule, and for the same reason, as the `limit` block.
-2. **Never phrase an unverified property as verified.** `_none — import graph is acyclic._` becomes
-   `_no cycles found in the resolved import graph — M function-local import(s) were not resolved._`
-   The same edit applies to `livingdocs.py:154` ("Import graph is acyclic.") and to any other
-   affirmative phrasing over a partial map. This is the ninth application of *`unknown` is never
-   rendered as `none`*, and the first where the confident answer is a **safety property** rather than
-   an empty list.
-3. **Then actually resolve them.** Feed function-local `import` / `from X import ...` into the import
-   map the way they already feed the call tier, tagged so a consumer can tell a lazy import from a
-   module-level one (they are not the same fact: one runs at import time, one does not). Bigger, and
-   worth doing *after* 1–2 land, because the declaration protects every future consumer while a fix
-   protects one release.
+1. **Count and declare, always.** ✅ `import_map: {module_level: N, function_local: M}` on
+   `architecture` and `report dependencies`, **whether or not M is zero** — the same rule, and for the
+   same reason, as the `limit` block. (Shipped as `function_local` rather than `function_local_skipped`:
+   level 3 landed with it, so they are no longer skipped.)
+2. **Never phrase an unverified property as verified.** ✅ `_none — import graph is acyclic._` is now
+   `_none found in the eager import graph._` plus the counts, in all three renderers that carried the
+   sentence (`architecture.py`, `audit.py`, `livingdocs.py` — one sentence copied three times, which is
+   why the guard test greps the shipped source for the word rather than asserting on three outputs).
+   Ninth application of *`unknown` is never rendered as `none`*, and the first where the confident
+   answer was a **safety property** rather than an empty list.
+3. **Then actually resolve them.** ✅ Collected by codemap's own AST pass (griffe carries neither) and
+   tagged on the edge as `extras.scope = "function"`. Two decisions the level-3 work forced, neither of
+   which was obvious from the report:
+
+   - **A cycle now has two kinds, and they are reported separately.** `import_cycles()` stays the
+     *eager* graph, because "import cycle" means "breaks at import time" and a lazy import is the
+     accepted fix for exactly that — folding them together would report someone's remedy as their bug.
+     The rest surface as **"dependency cycles closed only by a function-local import"**: not an
+     import-time failure, and still real coupling, because neither module can be extracted without the
+     other. On bquant that is 1 and 40.
+   - **A class-body import is eager, not lazy.** It runs at class-definition time, i.e. at import time.
+     griffe records it no more than the function-local kind (measured, not assumed), so it is collected
+     too — as `scope="module"`, where it can close a genuine import cycle.
+
+   Everything except cycles — coupling, layers, dependents, orphans — uses the **complete** map. A
+   dependency is a dependency; only the import-order question cares where it was written.
 
 Rejected: dropping the affirmative sentence and saying nothing. Silence is what produced this.
 
 ## 6. Acceptance
 
-- The three-file reproducer yields an `imports` edge for `user_lazy` (level 3), and before that, a
-  non-zero `function_local_skipped` count in `architecture` (levels 1–2).
-- `report architecture` on a graph with unresolved local imports never contains the word "acyclic".
-- The block is emitted with `function_local_skipped: 0` on a codebase that has none.
-- A guard test that fails if a renderer states an import-graph property without consulting the block.
-- README / `whole-graph-questions.md` / the CodeGraph card / post 6 carry the corrected numbers
-  (§3–§4), because they currently publish the uncorrected ones.
+All met (`tests/test_r1c29_lazy_imports.py`, 12 tests):
+
+- ✅ The reporter's three-file case yields an `imports` edge for `user_lazy`, carrying
+  `scope: "function"`, and an ordinary import is not mislabelled as one.
+- ✅ No renderer contains the word "acyclic" in a *printed* string — enforced by parsing codemap's own
+  source and ignoring docstrings, because the defect was one sentence copied into three files and the
+  next copy would not be caught by asserting on today's three.
+- ✅ `import_map` is emitted with `function_local: 0` on a tree that has none.
+- ✅ The lazy cycle is reported as a lazy cycle and **not** as an import cycle; an eager cycle still is
+  one, and is not double-counted as lazy.
+- ✅ **Whole-set agreement:** on bquant the fixed tool's 41 cycles are the *same 41 sets* an independent
+  AST scan finds — set equality, not just an equal count.
+- ✅ README / `whole-graph-questions.md` / the CodeGraph card / comparison / post 6 carry the corrected
+  numbers.
 
 ## 7. What this does not cover
 

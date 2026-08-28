@@ -105,9 +105,15 @@ explosion without knowing what a symlink is.
 
 ## Known gaps
 
-- A function-local `from .x import a_fn` is not resolved (the import map is built from
-  module-level imports only). It is deliberately not treated as *shadowing* either — see
-  [dead-code.md](dead-code.md).
+- A function-local `from .x import a_fn` **is** in the import map since R1-C29 (issue #11),
+  carried on the edge as `extras.scope = "function"`, so it counts for coupling, layers,
+  dependents and orphan detection. It is still not resolved for *call/reference* purposes
+  on the fast tier, and it is deliberately not treated as *shadowing* — see
+  [dead-code.md](dead-code.md). It is also excluded from **import cycles** on purpose: a
+  lazy import does not run at import time, so a cycle closed only by one cannot break on
+  import. Those appear separately, as "dependency cycles closed only by a function-local
+  import". A class-body import is treated as eager, because it runs at class-definition
+  time; griffe records neither, so both are collected by codemap's own AST pass.
 - `type X = int | str` (PEP 695 alias) produces no node.
 - The names a star import binds are not expanded.
 - Dynamic dispatch remains dynamic: `getattr`, `importlib`, and registry lookups by a

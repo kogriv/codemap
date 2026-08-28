@@ -272,13 +272,20 @@ to a `MemoryCache::get` in another file, and six of six sampled edges into that 
 [card](../research/tools/codegraph.md) shows the source lines.
 
 **And then the same probe came back at us, within the day.** Scored against every intra-package import
-rather than against codemap's own output, there are **9** cycles on that tree, not 1: codemap's import
-map is module-level only, so a `from x import y` inside a function is invisible to it — and that is
-exactly the import a developer writes *to break a cycle*. Precision 100%, recall **11%**, against the
-peer's 4% and 67%. Their much-criticised mechanism is what bought them the recall, because the call tier
-does see those imports. Both numbers are now in the [gap doc](../gaps/import_map_module_level_2026-08-28.md);
-the fix (declare the skipped imports always, stop calling a partial map "acyclic", then resolve them) is
-R1-C29, from [issue #11](https://github.com/kogriv/codemap/issues/11).
+rather than against codemap's own output, there are **41** cycles on that tree, not 1: codemap's import
+map was module-level only, so a `from x import y` inside a function was invisible to it — and that is
+exactly the import a developer writes *to break a cycle*. Precision 100%, recall **2.4%**, against the
+peer's 10% and 32%. Their much-criticised mechanism is what bought them the recall, because the call tier
+does see those imports.
+
+Fixed the same day ([R1-C29](../gaps/import_map_module_level_2026-08-28.md), from
+[issue #11](https://github.com/kogriv/codemap/issues/11)): function-local imports are in the map, tagged;
+import cycles stay the *eager* ones, because a lazy import is how that failure is prevented and reporting
+it as a cycle would call someone's fix a bug; the cycles that close only through a lazy import get their
+own section. The tool's 41 are now set-identical to an independent AST scan's 41. Two things stayed
+learned rather than fixed: the affirmative sentence *"import graph is acyclic"* is gone from all three
+renderers that carried it, and **a tool cannot be the judge of its own recall** — the truth set has to
+come from outside it.
 
 So the accurate statement is narrower and holds up better under checking: two of the five columns are
 unfilled by every peer **on any surface a caller can actually reach**, and the single implementation that

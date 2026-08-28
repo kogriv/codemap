@@ -117,6 +117,6 @@ Sketch for the one that remains:
 - [ ] Rival framed as peer/collaborator; no takedown tone.
 - [ ] Positioning line near the top; the standing invitation at the foot ("measured your
       tool and I got it wrong? open an issue").
-- [ ] Current facts (schema 0.12 / 568 tests / 31 ops — 28 MCP tools), not a stale snapshot.
+- [ ] Current facts (schema 0.12 / 580 tests / 31 ops — 28 MCP tools), not a stale snapshot.
 - [ ] Code snippets runnable or faithfully quoted (`file:line` where quoted from source).
 - [ ] Both language files updated together; cross-links and the index table above updated.

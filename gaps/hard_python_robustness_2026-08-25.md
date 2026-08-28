@@ -113,7 +113,12 @@ it), but it is an invented node, and inventing is worse than omitting.
 - PEP 695 `type Alias = int | str` produces no node — type aliases are not in the node vocabulary.
 - A function-local `from .circ_a import a_fn` followed by `return a_fn` produces no reference; the import map
   is built from module-level imports only (R1-C22-f1 deliberately does not treat local imports as shadowing,
-  but it does not resolve them either).
+  but it does not resolve them either). **Closed 2026-08-28 for the import map** by R1-C29
+  ([issue #11](https://github.com/kogriv/codemap/issues/11), gap
+  [import_map_module_level](import_map_module_level_2026-08-28.md)) — and the way it was closed is the lesson
+  this note was one line short of: an omission recorded about the *extractor* had never been traced to the
+  *consumers*, who turned it into `_none — import graph is acyclic._`. Recording a gap is not the same as
+  knowing where it surfaces.
 
 ## 4. Why it matters
 

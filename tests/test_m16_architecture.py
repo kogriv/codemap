@@ -75,7 +75,11 @@ def test_hotspots_shape_and_pervasive_flag(q):
 
 def test_build_architecture_has_all_sections(q):
     a = build_architecture(q)
-    assert set(a) == {"target", "cycles", "layers", "coupling", "hotspots"}
+    # R1-C29 added two: `lazy_cycles` (dependency cycles closed only by a function-local
+    # import — real coupling, not an import-time failure) and `import_map` (how many
+    # imports of each scope the map was built from, always, zero included).
+    assert set(a) == {"target", "cycles", "lazy_cycles", "import_map",
+                      "layers", "coupling", "hotspots"}
     assert a["target"] == "dispatchpkg"
 
 

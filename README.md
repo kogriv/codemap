@@ -8,7 +8,7 @@ and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.12, **568 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.12, **580 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -40,17 +40,23 @@ the graph and to no node in it:
 
 A cycle is invisible from inside every file that participates in it — each one looks perfectly
 reasonable alone. You cannot seed the question, and there is no partial answer.
-`codemap report architecture` computes all of them in one pass; on the dogfood target (89 modules,
-**634 import edges**) that is:
+`codemap report architecture` computes all of them in one pass; on the dogfood target (88 modules,
+**715 import edges**) that is:
 
 ```
 layers         core 9 · data 12 · indicators 16 · analysis 42 · visualization 7 · cli 1
-               analysis → core 38 edges · indicators → core 24 · data → core 13
-violation    ⚠ analysis ↔ indicators        — one backward edge out of 634; blocks extraction
+               analysis → core 38 edges · indicators → core 22 · data → core 13
+violation    ⚠ analysis ↔ core             — one backward edge, written inside a function
 cycle          pipeline → cache → pipeline  — the classic Python import-order landmine
-coupling       core.logging_config  Ca 94   — a breaking change here reaches 94 modules
+lazy cycles    40 more, closed only by a function-local import — not import-time failures,
+               still mutual coupling: neither module can be extracted without the other
+coupling       core.logging_config  Ca 96   — a breaking change here reaches 96 modules
 concentration  ZoneVisualizer 35 methods, worst function CC 66 / MI 12.5
 ```
+
+That single layer violation is worth its line: it is reached only through an import written *inside a
+function*, so until [R1-C29](gaps/import_map_module_level_2026-08-28.md) codemap could not see it and
+reported the architecture as clean. A gate you can walk around by making the import lazy is not a gate.
 
 Then [`codemap check`](docs/architecture-contracts.md) turns the shape you *want* into a CI gate, so
 description and intent cannot drift apart.
@@ -68,19 +74,20 @@ tools and called nowhere in its own source. Measured on the same tree it reports
 reports **1**. Scoring both against the truth set — every intra-package import, function-local ones
 included — is less flattering than that sounds:
 
-| | reported | of the 9 real ones | precision | recall |
+| | reported | of the 41 real ones | precision | recall |
 |---|---:|---:|---:|---:|
-| codemap | 1 | 1 | 100% | **11%** |
-| the peer's library API | 136 | 6 | 4% | 67% |
+| codemap, that morning | 1 | 1 | 100% | **2.4%** |
+| the peer's library API | 136 | 13 | 10% | 32% |
+| codemap, after R1-C29 | 41 | 41 | 100% | 100% |
 
-Neither tool answers this well yet. Theirs over-reports because it walks name-resolved call edges — a
-`dict.get` becomes a call into an unrelated class. **Ours under-reports because its import map is
-module-level only**, and until [#11](https://github.com/kogriv/codemap/issues/11) it phrased that as
-*"import graph is acyclic"* — a property claim over a partial map, which is the worse of the two errors
-even though it is the smaller one. Being fixed:
-[R1-C29](gaps/import_map_module_level_2026-08-28.md). The honest lesson stands and is now sharper: a
-whole-graph answer inherits every flaw of the graph it is computed from, including the edges that graph
-never read.
+Theirs over-reports because it walks name-resolved call edges — a `dict.get` becomes a call into an
+unrelated class. **Ours under-reported because its import map was module-level only**, and it phrased
+that as *"import graph is acyclic"* — a property claim over a partial map, which is the worse of the two
+errors even though it was the smaller one. Both halves of that came from
+[#11](https://github.com/kogriv/codemap/issues/11), filed off a different target and fixed the same day
+([R1-C29](gaps/import_map_module_level_2026-08-28.md)). The lesson is sharper than the win: a
+whole-graph answer inherits every flaw of the graph it is computed from, **including the edges that
+graph never read** — and the tool cannot be the judge of its own recall.
 
 **→ [docs/whole-graph-questions.md](docs/whole-graph-questions.md)** — the full argument, every number
 above reproduced from one run, and the honest limits.

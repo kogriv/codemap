@@ -17,13 +17,23 @@ def render_dependencies(query: Query) -> str:
     lines.extend(render_lines(query.graph))
 
     cycles = query.import_cycles()
+    lazy = query.lazy_import_cycles()
+    im = query.import_map()
     lines.append(f"## Import cycles: {len(cycles)}")
     lines.append("")
     if cycles:
         for cyc in sorted(cycles, key=lambda c: (len(c), c)):
             lines.append(f"- {' → '.join(cyc)} → {cyc[0]}")
     else:
-        lines.append("_none — import graph is acyclic._")
+        # R1-C29: "none found" is what was measured; "acyclic" is a property, and the
+        # map that would have to be complete to support it demonstrably is not.
+        lines.append("_none found in the eager import graph._")
+    lines.append("")
+    lines.append(f"_Read {im['module_level']} module-level and {im['function_local']} "
+                 f"function-local import(s); only the former run at import time. "
+                 + (f"{len(lazy)} further cycle(s) close through a lazy import — real "
+                    f"coupling, not an import-time failure._" if lazy
+                    else "No cycle closes through a lazy import._"))
     lines.append("")
 
     lines.append("## Most-depended-on modules (top 15)")

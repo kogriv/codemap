@@ -7,6 +7,27 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **A function-local import was invisible, and the report called that "acyclic"** (R1-C29,
+  [#11](https://github.com/kogriv/codemap/issues/11)). The import map was built from module-level
+  imports only — a limitation recorded about the *extractor* and never traced to the *consumers*, who
+  turned it into `_none — import graph is acyclic._`, a property claim over a partial map. The blind
+  spot was anti-correlated with the question: a function-local import is precisely what a developer
+  writes to break a cycle, so the edges the map could not see were the ones most likely to close one.
+  On the benchmark target the report said **1 cycle where there were 41**. Function-local imports are
+  now collected by codemap's own AST pass (griffe records neither them nor class-body imports) and
+  carried on the edge as `extras.scope`. **A cycle now has two kinds**: `import_cycles` stays the eager
+  graph, because "import cycle" means "breaks at import time" and calling a lazy import a cycle would
+  report the remedy as the bug; the ones that close only through a lazy import are reported separately
+  as coupling you cannot extract your way out of. Class-body imports count as **eager** — they run at
+  class-definition time. Everything except cycles — coupling, layers, dependents, orphans — now uses the
+  complete map. **Behaviour change worth knowing:** layer violations therefore see lazy imports too, and
+  on the dogfood target that immediately surfaced one the report had never shown, reached only through
+  an import written inside a function. A gate you can walk around by making the import lazy is not a
+  gate. `_none — import graph is acyclic._` is gone from all three renderers that had inherited the
+  sentence, enforced by a test that parses codemap's own source rather than asserting on three outputs.
+  The tool's 41 cycles are set-identical to an independently computed AST truth set — the acceptance
+  criterion, because a matching count is not a matching answer.
+
 - **A result limit was partiality nobody declared** (R1-C28). `search "zone"` returned **50 matches of
   1 259** under an envelope that read, in full, `{"ok": true}` — in the one op whose whole job is to tell
   an agent what exists. Found by measuring a competitor and then asking the same question of ourselves:

@@ -16,10 +16,21 @@ from codemap.query import Query
 
 
 def build_architecture(query: Query) -> dict:
-    """Structured whole-system overview (cycles + layers + coupling + hotspots)."""
+    """Structured whole-system overview (cycles + layers + coupling + hotspots).
+
+    R1-C29: ``cycles`` are the **import-time** ones and ``lazy_cycles`` the dependency
+    cycles closed only by a function-local import. Splitting them is the point — a lazy
+    import is how a developer *fixes* an import cycle, so folding the two together would
+    report someone's fix as their bug, while dropping the second (what this tool did
+    until issue #11) hides that the modules are still inseparable. ``import_map`` is
+    emitted always, zero included, so a reader can tell "no lazy imports" from "this
+    build did not look".
+    """
     return {
         "target": query.graph.target,
         "cycles": query.import_cycles(),
+        "lazy_cycles": query.lazy_import_cycles(),
+        "import_map": query.import_map(),
         "layers": query.layers(),
         "coupling": query.coupling(),
         "hotspots": query.hotspots(),
@@ -58,12 +69,33 @@ def render_architecture(query: Query) -> str:
     out.append("")
 
     # -- cycles -------------------------------------------------------------
+    # R1-C29: never state acyclicity as a property. The map is only as complete as the
+    # imports it read, and the reader cannot see which those were unless we say so.
+    im = a["import_map"]
     out.append(f"## Import cycles: {len(a['cycles'])}")
     out.append("")
     out.extend([f"- {' → '.join(c)} → {c[0]}" for c in
                 sorted(a["cycles"], key=lambda c: (len(c), c))]
-               or ["_none — import graph is acyclic._"])
+               or ["_none found in the eager import graph._"])
     out.append("")
+    out.append(f"_Read {im['module_level']} module-level and {im['function_local']} "
+               f"function-local import(s). Only module-level imports run at import time, "
+               f"so only they can break on import._")
+    out.append("")
+    if a["lazy_cycles"]:
+        out.append(f"### Dependency cycles closed only by a function-local import: "
+                   f"{len(a['lazy_cycles'])}")
+        out.append("")
+        out.append("_These do **not** break at import time — the lazy import is what "
+                   "prevents that, and is usually deliberate. They are listed because "
+                   "the modules are still mutually dependent: neither can be extracted "
+                   "without the other._")
+        out.append("")
+        out.extend(f"- {' → '.join(c)} → {c[0]}" for c in
+                   sorted(a["lazy_cycles"], key=lambda c: (len(c), c))[:20])
+        if len(a["lazy_cycles"]) > 20:
+            out.append(f"- _… {len(a['lazy_cycles']) - 20} more_")
+        out.append("")
 
     # -- coupling -----------------------------------------------------------
     out.append("## Coupling (top by afferent Ca)")

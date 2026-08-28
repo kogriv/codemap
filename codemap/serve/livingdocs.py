@@ -143,6 +143,7 @@ def render_docs(query: Query) -> str:
 
     # -- architecture caveats (the honest health section) -------------------
     cycles = query.import_cycles()
+    lazy = query.lazy_import_cycles()
     lay = query.layers()
     gods = query.hotspots()["god_classes"]
     out.append("## Architecture notes")
@@ -151,7 +152,12 @@ def render_docs(query: Query) -> str:
         out.append(f"- **{len(cycles)} import cycle(s)** — e.g. "
                    + "; ".join(" → ".join(c) for c in sorted(cycles, key=len)[:3]))
     else:
-        out.append("- Import graph is acyclic.")
+        # R1-C29: no cycle *found*, over the imports that run at import time — not a
+        # proof of acyclicity, which this map cannot support.
+        out.append("- No import cycle found in the eager import graph.")
+    if lazy:
+        out.append(f"- **{len(lazy)} dependency cycle(s) closed only by a function-local "
+                   f"import** — deliberate, and still mutual coupling.")
     if lay["violations"]:
         out.append("- **Layer violations (mutual dependency):** "
                    + ", ".join(f"{a} ↔ {b}" for a, b in lay["violations"]))

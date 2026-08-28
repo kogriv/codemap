@@ -160,7 +160,13 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
                 edges=tuple(sorted(bad)),
             ))
 
-    # -- no_cycles: import graph must be acyclic --------------------------------
+    # -- no_cycles: no cycle among imports that run at import time ---------------
+    # R1-C29: deliberately the eager graph. `no_cycles` is a gate against the import-order
+    # failure, and a function-local import is the accepted fix for it — failing a build
+    # because someone applied that fix would punish the remedy. The lazy cycles are
+    # reported (architecture / dependencies) rather than gated, and whether a contract
+    # should be able to opt into gating them is left open in
+    # gaps/import_map_module_level_2026-08-28.md §7 rather than decided here by accident.
     if contract.no_cycles:
         cycles = query.import_cycles()
         if cycles:

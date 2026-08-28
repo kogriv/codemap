@@ -131,10 +131,10 @@ scored that comparison against *my own answer*, which is the one mistake this wh
 supposed to prevent. Scored against every intra-package import instead — including the ones written
 inside a function — that tree has **9** cycles, not 1:
 
-| | reported | of the 9 real | precision | recall |
+| | reported | of the 41 real | precision | recall |
 |---|---:|---:|---:|---:|
-| mine | 1 | 1 | 100% | **11%** |
-| theirs | 136 | 6 | 4% | 67% |
+| mine | 1 | 1 | 100% | **2.4%** |
+| theirs | 136 | 13 | 10% | 32% |
 
 My import map is module-level only. A `from x import y` inside a function is invisible to it — and that
 is exactly the import a developer writes **to break a cycle**, so the blind spot is anti-correlated with
@@ -144,9 +144,25 @@ edges on the reporter's target.
 
 So the tally on the question I built the whole positioning argument around is: they over-report and say
 nothing; I under-report and call it a guarantee. Their much-criticised mechanism — walking call edges —
-is *why* they found six where I found one, because the call tier does see those imports. Mine is the
-smaller error and the worse sentence. Both are being fixed; only one of them was published as a
-strength.
+is *why* they found thirteen where I found one, because the call tier does see those imports. Mine is the
+smaller error and the worse sentence.
+
+**A sixth correction, and this one is the most embarrassing, so it goes in too.** The truth set above
+first said *nine*. I had written a fifteen-minute AST scan to audit my own tool, and it anchored relative
+imports inside a package `__init__.py` at the wrong package — so `from .candlestick import …` resolved
+to a module that does not exist and simply vanished. The script I wrote to check the tool was less
+careful than the tool. Corrected, the number is 41, and the fixed extractor and the fixed scan agree on
+the same 41 *sets* — which is now an acceptance test, because agreeing on a count is not agreeing.
+
+Fixed by the end of the day. Function-local imports are in the map, tagged. Import cycles stay the
+*eager* ones — a lazy import is how you prevent that failure, and calling it a cycle would report the
+remedy as the bug — while the cycles that close only through one get their own section: not import-time
+failures, still coupling you cannot extract your way out of. And the sentence *"import graph is
+acyclic"* is gone from all three renderers that had inherited it.
+
+The lesson I would keep from the whole episode is not about cycles. **A tool cannot be the judge of its
+own recall.** Precision it can demonstrate; recall requires something outside it, and I had been
+publishing a recall claim with no outside.
 
 ## Point questions and whole-graph questions
 

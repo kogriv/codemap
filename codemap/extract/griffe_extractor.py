@@ -44,7 +44,9 @@ class _Walk:
     """What one structural walk accumulates besides nodes and edges."""
 
     aliases: list = field(default_factory=list)   # (parent_module, name, target, public)
-    imports: list = field(default_factory=list)   # (module_id, target_symbol_path)
+    #: (module_id, target_symbol_path, scope) — scope is "module" or, since R1-C29,
+    #: "function" for an import written inside a function body.
+    imports: list = field(default_factory=list)
     #: canonical real path → the module id that claimed it (R1-C23/D1, symlink cycles)
     claimed: dict = field(default_factory=dict)
     #: module ids skipped because their file was already read under another name
@@ -218,17 +220,96 @@ def _star_import_targets(module) -> list[str]:
     return targets
 
 
+def _nested_import_targets(module) -> list[tuple[str, str]]:
+    """``(target, scope)`` for imports griffe's module-level map does not carry (R1-C29).
+
+    griffe records the imports written in the module body — including those under
+    ``try:`` or ``if:``, which are still module-body statements. Two shapes escape it,
+    and they are *not* the same fact:
+
+    - **inside a function** → ``scope="function"``. It does not run at import time. This
+      is the one issue #11 is about: left out entirely, and it is the very construct a
+      developer uses to break an import cycle, so the missing edges were the ones most
+      likely to close one.
+    - **inside a class body** → ``scope="module"``. It runs at class-definition time,
+      i.e. at import time, so it is an ordinary eager dependency and *can* close a real
+      import cycle. griffe does not record it either (measured, not assumed).
+
+    Same hook and cost discipline as :func:`_star_import_targets`: the source is already
+    in griffe's cache, and only a file whose text contains ``import`` is parsed. A
+    relative target is anchored the way the module's own package resolves it.
+    """
+    try:
+        src = module.source
+    except Exception:                        # no source (namespace dir, synthetic)
+        return []
+    if "import" not in src:
+        return []
+    try:
+        tree = ast.parse(src)
+    except (SyntaxError, ValueError):
+        return []                            # unreadable: D2's report owns this file
+    modpath = module.canonical_path
+    f = module_file(module)
+    is_pkg = f is not None and f.name == "__init__.py"
+    base = modpath.split(".") if is_pkg else modpath.split(".")[:-1]
+
+    # Scope each nested import node once. A function inside a class is a function (it
+    # does not run at import time), so the function pass is applied after and wins.
+    scope_of: dict[int, str] = {}
+    for holder in ast.walk(tree):
+        if isinstance(holder, ast.ClassDef):
+            for node in ast.walk(holder):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    scope_of[id(node)] = "module"
+    for holder in ast.walk(tree):
+        if isinstance(holder, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            for node in ast.walk(holder):
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    scope_of[id(node)] = "function"
+
+    out: list[tuple[str, str]] = []
+    for node in ast.walk(tree):
+        scope = scope_of.get(id(node))
+        if scope is None:
+            continue
+        if isinstance(node, ast.Import):
+            out.extend((a.name, scope) for a in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                anchor = base[:len(base) - (node.level - 1)]
+                target = ".".join(anchor + ([node.module] if node.module else []))
+            else:
+                target = node.module or ""
+            if not target:
+                continue
+            # `from pkg.mod import name` → keep the member paths, so the resolver walks
+            # down to the containing module exactly as it does for the module-level map;
+            # the bare target covers `from pkg import *` and the module itself.
+            out.append((target, scope))
+            out.extend((f"{target}.{a.name}", scope)
+                       for a in node.names if a.name != "*")
+    return out
+
+
 def _collect(graph, obj, root, target_pkg, walk) -> None:
     if obj.kind.value == "module":
         _claim(obj, walk)  # the root claims its own path before any member is walked
         _add_node(graph, obj, root)
         for name, tgt in (obj.imports or {}).items():
-            walk.imports.append((obj.canonical_path, tgt))
+            walk.imports.append((obj.canonical_path, tgt, "module"))
         # R1-C23/D3: griffe expands `from .m import *` into member aliases but records
         # no import, so the dependency itself was invisible — a star-import is the least
         # explicit dependency in the language and the one most worth surfacing.
         for tgt in _star_import_targets(obj):
-            walk.imports.append((obj.canonical_path, tgt))
+            walk.imports.append((obj.canonical_path, tgt, "module"))
+        # R1-C29 / issue #11: an import written *inside a function* is a real dependency
+        # that griffe's module-level map does not carry. Leaving it out was not a neutral
+        # omission — a function-local import is the standard way to break an import
+        # cycle, so the edges we could not see were exactly the ones most likely to close
+        # one. The blind spot was anti-correlated with the question.
+        for tgt, scope in _nested_import_targets(obj):
+            walk.imports.append((obj.canonical_path, tgt, scope))
     for name, member in obj.members.items():
         if member.is_alias:
             # capture ALL re-exports (public flag kept) — a symbol can be importable
@@ -319,13 +400,19 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
         )
 
     seen: set[tuple[str, str]] = set()
-    unresolved: list[tuple[str, str]] = []
+    unresolved: list[tuple[str, str, str]] = []
+
+    # R1-C29: module-level entries first, so a pair imported both ways is recorded as
+    # the eager import it is. `scope` only ever *weakens* to "function" for a pair that
+    # has no module-level import at all — the edge says how the dependency is reached at
+    # its earliest, never how it happens to appear last in the walk.
+    ordered = sorted(imports, key=lambda t: t[2] == "function")
 
     # pass A — package-qualified targets. Exact, and run first so that a pair reachable
     # both ways is recorded as exact rather than inferred.
-    for src_module, target_path in imports:
+    for src_module, target_path, scope in ordered:
         if not (target_path == target_pkg or target_path.startswith(target_pkg + ".")):
-            unresolved.append((src_module, target_path))  # external, or flat (pass B)
+            unresolved.append((src_module, target_path, scope))  # external, or flat (B)
             continue
         tgt_module = _containing_module(target_path, module_ids)
         if tgt_module is None or tgt_module == src_module:
@@ -334,7 +421,8 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
         if key in seen:
             continue
         seen.add(key)
-        graph.add_edge(Edge("imports", src_module, tgt_module))
+        extras = {"scope": "function"} if scope == "function" else {}
+        graph.add_edge(Edge("imports", src_module, tgt_module, extras=extras))
 
     # pass B — flat layout (R1-C21): sibling modules importing each other by bare name
     # (`from alpha import X`), which works at runtime because the directory itself is on
@@ -342,7 +430,7 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
     # `pandas.DataFrame`. Retry it against the importer's own package — and label it, since
     # this is an inference about sys.path, not something the source states.
     known_modules = set(module_ids)
-    for src_module, target_path in unresolved:
+    for src_module, target_path, scope in unresolved:
         tgt_module = _flat_sibling(src_module, target_path, known_modules)
         if tgt_module is None or tgt_module == src_module:
             continue
@@ -350,9 +438,10 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
         if key in seen:
             continue
         seen.add(key)
-        graph.add_edge(
-            Edge("imports", src_module, tgt_module, extras={"resolution": "flat"})
-        )
+        extras = {"resolution": "flat"}
+        if scope == "function":
+            extras["scope"] = "function"
+        graph.add_edge(Edge("imports", src_module, tgt_module, extras=extras))
 
 
 def _flat_sibling(src_module: str, target_path: str, known_modules: set[str]) -> str | None:

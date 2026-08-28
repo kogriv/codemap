@@ -110,13 +110,28 @@ def _pagerank(g: "nx.DiGraph", personalization: dict[str, float] | None,
 class Query:
     def __init__(self, graph: Graph) -> None:
         self.graph = graph
+        # R1-C29 (issue #11): two import graphs, because two different questions.
+        # `_imports` is every import edge — a dependency is a dependency, whether it is
+        # written at module level or inside a function, and coupling / layers / orphans
+        # all want the complete picture. `_imports_eager` drops the function-local ones,
+        # because *import-cycle* means "breaks at import time", and a lazy import is the
+        # standard fix for exactly that. Reporting one number for both questions is what
+        # made an incomplete map read as a safety property.
         self._imports = nx.DiGraph()
+        self._imports_eager = nx.DiGraph()
+        self._import_scopes = {"module": 0, "function": 0}
         for n in graph.nodes.values():
             if n.kind == "module":
                 self._imports.add_node(n.id)
+                self._imports_eager.add_node(n.id)
         for e in graph.edges:
             if e.type == "imports":
                 self._imports.add_edge(e.source, e.target)
+                if e.extras.get("scope") == "function":
+                    self._import_scopes["function"] += 1
+                else:
+                    self._imports_eager.add_edge(e.source, e.target)
+                    self._import_scopes["module"] += 1
         # export edges: name -> [target definition paths]
         self._exports: dict[str, list[str]] = {}
         for e in graph.edges:
@@ -833,7 +848,37 @@ class Query:
     # -- graph-wide ----------------------------------------------------------
 
     def import_cycles(self) -> list[list[str]]:
-        return [c for c in nx.simple_cycles(self._imports)]
+        """Cycles that exist in the **eager** import graph — the import-order landmines.
+
+        R1-C29: deliberately *not* computed over every import edge. A function-local
+        import does not run at import time, so a cycle closed only by one does not break
+        on import — it is what a developer writes to stop it breaking. Counting it here
+        would report someone's fix as their bug. Those cycles are still real coupling
+        and are returned by :meth:`lazy_import_cycles`.
+        """
+        return [c for c in nx.simple_cycles(self._imports_eager)]
+
+    def lazy_import_cycles(self) -> list[list[str]]:
+        """Dependency cycles that close **only** through a function-local import.
+
+        Not an import-time failure, and not nothing: the modules still cannot be
+        separated, and the lazy import is the evidence someone already hit this. Before
+        R1-C29 these were invisible — on the target this project benchmarks on, eight of
+        the nine cycles present were of this kind and the report said "1".
+        """
+        eager = {frozenset(c) for c in nx.simple_cycles(self._imports_eager)}
+        return [c for c in nx.simple_cycles(self._imports) if frozenset(c) not in eager]
+
+    def import_map(self) -> dict:
+        """How much of the import graph each scope contributed (R1-C29).
+
+        Emitted by every consumer of the import graph, **always**, including when
+        ``function_local`` is zero — the same rule as the ``limit`` block (R1-C28): a
+        reader must never have to distinguish "no lazy imports here" from "this build
+        did not look for them".
+        """
+        return {"module_level": self._import_scopes["module"],
+                "function_local": self._import_scopes["function"]}
 
     def orphan_modules(self, root: str | None = None) -> list[str]:
         """Modules with no incoming imports (dead-code candidates — heuristic).
