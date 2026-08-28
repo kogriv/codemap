@@ -813,6 +813,12 @@ Python-focus** — если задача его нарушает, это отм�
       **Приёмка:** `search` с превышением даёт `truncated:true` и истинный `total`, без — `truncated:false`
       и `total == returned`. **Схему не трогает.** **Гэп:** `gaps/limit_truncation_2026-08-28.md`.
       **Смежное:** R1-C13 (машиночитаемая нижняя граница), карточка `research/tools/codegraph.md`.
+      **Второй апстрим-контакт по тому же разбору** (2026-08-28): в их трекере нашлась #1566 — ровно наш
+      дефект резолвера (`Map.get` → чужой метод) для TypeScript, с их собственной формулировкой
+      «unresolved лучше, чем уверенно неверное ребро». Новый issue не заводился; отправлен
+      [комментарий](https://github.com/colbymchenry/codegraph/issues/1566#issuecomment-5451387031) с
+      питоновским repro и со стыком, которого не было ни в одном треде: цикл-детектор, который просят
+      вывести наружу в #888/#889/#1012, считается по этим же рёбрам. Ответа пока нет.
       **Сделано** (`codemap/serve/limits.py` + `tests/test_r1c28_limit_envelope.py`, 21 тест):
       блок `limit {applied, returned, total, truncated}` в конверте **всегда**, когда op принимает лимит —
       `search`, `semantic`, `tests`, `covers`, плюс MCP-кэпы `impact`/`call_contract`. `search` теперь

@@ -250,9 +250,22 @@ before writing a word:
 
 What is in neither thread is the join between them: the cycle finder those three issues want shipped is
 computed from the edges #1566 is about, so exposing it before fixing them ships **136 cycles where there
-is 1**. That is worth one comment on #1566 and nothing more — no new issue. Same rubric as `updatedAt`
+is 1**. That was worth one comment on #1566 and nothing more — no new issue. Same rubric as `updatedAt`
 below, applied in the other direction: report what fails the author's own standard, and *only* what is
 not already on his list.
+
+**Posted 2026-08-28** as [a comment on #1566](https://github.com/colbymchenry/codegraph/issues/1566#issuecomment-5451387031),
+with two minimal Python repros. The second one is the contribution: **two files, fifteen lines, a one-way
+import**, and `findCircularDependencies()` reports a cycle —
+
+```
+settings.py deps: [ 'cache.py' ]      # from DEFAULTS.get() resolving to LRUCache.get
+cache.py    deps: [ 'settings.py' ]   # the real import
+findCircularDependencies: [["cache.py","settings.py"]]
+```
+
+— which is the whole argument for fixing the edges before exposing the feature, in fifteen lines instead
+of a 207-file table. **No response yet**; this card claims no verdict on the author's behalf.
 
 ### Determinism — split the way GitNexus's was
 
