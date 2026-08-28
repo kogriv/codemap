@@ -73,35 +73,34 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P2 — GitNexus | ✅ EN + RU | [GitNexus card](../tools/gitnexus.md) |
 | P3 — cocoindex-code | ✅ EN + RU | [cocoindex-code card](../tools/cocoindex-code.md) |
 | P4 — the determinism story | ✅ EN + RU | [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md) §2, §6; [positioning](../positioning.md) build-story #4 |
-| P5 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
-| P6 — next tool (#4) / methods post | 🔲 later | lands when the next R2 разбор does |
+| P5 — the second repository | ✅ EN + RU | issues #4–#10 (all closed); [positioning](../positioning.md) build-story #5 |
+| P6 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
+| P7 — next tool (#4) / methods post | 🔲 later | lands when the next R2 разбор does |
 
-**P4 and P5 are the only writing left, and they are deliberately not forced.** Both need an
-episode that actually *happened* — a graph diff that caught a real regression in review; a
-provenance split that changed a real decision. Inventing one would break the single rule the
-series rests on. Capture them opportunistically while dogfooding, into `gaps/`, then promote
-to [positioning.md](../positioning.md) §Future stories, then write the post.
+A post's number is its filename slot, assigned **on publication** — a planned post takes the next
+free number when it actually lands, not when it is sketched.
 
-**P4 is written (2026-08-25).** Its episode landed on its own (2026-08-24), and it is better
-than the one that was being waited for. Not "a graph diff caught a regression" but the sharper inverse: a determinism
-*test* went red, and the cause was the input moving under it, not the tool. Nothing in the
-artifact could tell those two apart — the same source tree, built by two codemap versions four
-commits apart, yields 30 vs 38 edges and 12 vs 7 `high` dead-code verdicts, and **both files
-declare `codemap_schema: "0.11"`**. That reframes the post: the interesting half of determinism
-is not that the output is stable, it is that a stable output is worthless if you cannot say what
-went in. Written up in [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md);
-the fix is **R1-C25, shipped 2026-08-25** (schema 0.12), so the post ends with the repair
-rather than the complaint — including the finding the repair made *askable*: `--incremental`
-had the same blind spot one level down.
+**P6 is the only writing left, and it is deliberately not forced.** It needs an episode that
+actually *happened* — a provenance split that changed a real decision. Inventing one would break
+the single rule the series rests on. Capture it opportunistically while dogfooding, into `gaps/`,
+then promote to [positioning.md](../positioning.md) §Future stories, then write the post.
 
-Sketches (so the shape is ready when the episode lands):
+**Both published posts departed from their sketch, and that is worth recording** — it is the
+series' own method turned on its plan. P4 was going to be "a graph diff caught a regression"; the
+episode that landed (2026-08-24) was the sharper inverse — a determinism *test* went red, and the
+cause was the input moving under it, not the tool. Nothing in the artifact could tell those two
+apart: the same source tree, built by two codemap versions four commits apart, yields 30 vs 38
+edges and 12 vs 7 `high` dead-code verdicts, and **both files declare `codemap_schema: "0.11"`**.
+Written up in [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md); the fix is
+**R1-C25, shipped 2026-08-25** (schema 0.12), so the post ends with the repair rather than the
+complaint — including the finding the repair made *askable*: `--incremental` had the same blind
+spot one level down. P5 was not planned at all: it came from pointing the tool at a second
+repository, which produced seven issues in forty-eight hours. Neither post was writable from a
+sketch, which is the argument for not forcing P6.
 
-- **P4 — "A code graph you can `git diff`."** Every other graph tool hands you a binary
-  index (31 MB SQLite, 123 MB LadybugDB); codemap hands you canonical JSON you can read in a
-  PR. Beats: timestamp-free canonical JSON → "deterministic" decomposed (answer vs artifact,
-  recalling the GitNexus split) → **the episode** → sorted/insertion-independent
-  serialization → the honest cost (Python-only; jedi's deep-tier variance).
-- **P5 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
+Sketch for the one that remains:
+
+- **P6 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
   *"12 non-test references — 2 in core, 7 in docs — and 53 in tests."* Beats: multi-root
   provenance → dead-code without the dominant false-positive source → impact tagged by role
   → why an agent needs "what breaks in *core*" → the honest limit (one-hop by default).
@@ -113,6 +112,6 @@ Sketches (so the shape is ready when the episode lands):
 - [ ] Rival framed as peer/collaborator; no takedown tone.
 - [ ] Positioning line near the top; the standing invitation at the foot ("measured your
       tool and I got it wrong? open an issue").
-- [ ] Current facts (schema 0.12 / 503 tests / 31 ops — 28 MCP tools), not a stale snapshot.
+- [ ] Current facts (schema 0.12 / 530 tests / 31 ops — 28 MCP tools), not a stale snapshot.
 - [ ] Code snippets runnable or faithfully quoted (`file:line` where quoted from source).
 - [ ] Both language files updated together; cross-links and the index table above updated.
