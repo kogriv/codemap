@@ -198,3 +198,32 @@ contract, so nothing to gate. Both facts stand — a gate you can walk around by
 not a gate, *and* their three lazy imports exist precisely to avoid an import-time break, so gating them
 would punish the fix. Whoever writes a contract has to reconcile those two; the default must not decide
 it for them.
+
+## 9. What it cost, and the regression that nearly shipped with it
+
+griffe discards its own AST, so seeing these imports means parsing each module a second
+time. The first implementation did that for every module containing the word `import`
+(nearly all of them) **and** walked every function's subtree separately, which is
+quadratic in nesting. Measured on a 90-module package: the cold fast build went from
+**~7.8 s to ~10.4 s**, a ~30% regression I had not measured before writing the docs.
+
+Two fixes, both cheap:
+
+- one pre-order descent carrying the current scope, instead of a walk per function;
+- a **tight gate before the parse**: `^[ \t]+(?:from|import)\s` — an *indented* import.
+  A module-level import is never indented, so the ordinary file (imports at the top and
+  nowhere else) is never re-parsed. Same discipline as the existing `import *` gate, and
+  the same guarantee: the gate only decides whether to look, so the answer stays exact.
+
+After both, on the structural pass measured in-process, 7 runs each:
+
+| | median | min | max |
+|---|---:|---:|---:|
+| before R1-C29 | 2.02 s | 1.65 | 2.22 |
+| after, with the gate | **2.35 s** | 2.08 | 3.53 |
+
+**+0.33 s, ~16% of the structural pass** — the honest price of the feature. Whole-build
+timings on this machine vary by ±30% run to run, so they are not a usable instrument at
+this resolution; that is why the number above is the isolated pass and not the wall clock
+of `codemap build`. Stating the noisier number would have been easier and would have meant
+nothing.

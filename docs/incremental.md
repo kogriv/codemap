@@ -99,6 +99,18 @@ debounce):
 | a real 90-file package, fast tier | **8.1–8.7 s** | 4.3 s (9 modules recomputed; cold build 6.8 s) |
 | a 2-file toy | ~4–5 s (1.11 s at `--interval 0.3 --debounce 0.3`) | ~0.05 s |
 
+Since **M3.2-f1** the rebuild debounce is **adaptive**: a change of at most two files — one save, or a
+module and its test — settles on `--quick-debounce` (0.3 s) instead of the full `--debounce` (2 s), while a
+burst still coalesces on the full window. The size comes from `diff_scopes`, the same comparison the build
+uses, so there is no second notion of "how much changed"; when the size cannot be computed the **full**
+window applies, because the fast path is taken only when the change is known to be small. Taken from the
+peer measured in [research/tools/codegraph.md](../research/tools/codegraph.md), which is why its
+save→answerable was 0.33 s rather than the 2 s its headline debounce implies.
+
+_The table above predates that, and is not re-stated here: on this machine whole-build timings vary by
+±30% run to run, which is wider than the change. What is verified is the deterministic part — with a
+one-file change the loop acts on the tick after it notices, instead of waiting three (`tests/test_m32_watch.py`)._
+
 Two different things dominate, and it is worth knowing which is which. On a toy it is all
 **debounce**, and that is deliberate: an editor that saves on every keystroke, a `git
 checkout` touching three hundred files, or a formatter sweeping a directory should be **one**

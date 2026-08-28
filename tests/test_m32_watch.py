@@ -303,6 +303,91 @@ def test_serve_watch_reloads_the_session_when_the_artifact_moves(tmp_path):
     assert [h["id"] for h in hits] == ["pkg.b"]
 
 
+# -- M3.2-f1: the window adapts to how big the change is --------------------
+
+def _sized_poller(tokens, sizes, acts, **kw):
+    """A poller whose pending change has a known size (one entry per token)."""
+    seq, size_of = list(tokens), dict(sizes)
+
+    def probe():
+        return seq.pop(0) if len(seq) > 1 else seq[0]
+
+    c = Clock()
+    kw.setdefault("interval", 1.0)
+    kw.setdefault("debounce", 4.0)
+    kw.setdefault("quick_debounce", 1.0)
+    return DebouncedPoller(probe, acts.append, clock=c, sleep=c.sleep,
+                           size=lambda base, pend: size_of.get(pend), **kw), c
+
+
+def test_a_one_file_change_settles_on_the_quick_window():
+    """The common case — one save — should not pay for the burst that rarely happens."""
+    acts: list = []
+    p, c = _sized_poller(["A", "B"], {"B": 1}, acts)
+    assert p.tick() == "settling"          # B seen at t=1, window = quick (1.0s)
+    assert p.tick() == "acted"             # t=2, one second of quiet is enough
+    assert acts == ["B"] and c.t == 2.0
+
+
+def test_a_burst_still_waits_the_full_window():
+    """Pending is noticed at t=1, so a 4 s window closes on the fifth tick, not the fourth."""
+    acts: list = []
+    p, _ = _sized_poller(["A", "B"], {"B": 40}, acts)
+    assert [p.tick() for _ in range(5)] == ["settling"] * 4 + ["acted"]
+
+
+def test_the_boundary_is_two_files_because_a_module_and_its_test_are_one_save():
+    for n, expected_ticks in ((2, 2), (3, 5)):
+        acts: list = []
+        p, _ = _sized_poller(["A", "B"], {"B": n}, acts)
+        ticks = 0
+        while not acts:
+            p.tick()
+            ticks += 1
+        assert ticks == expected_ticks, f"{n} file(s) took {ticks} tick(s)"
+
+
+def test_an_unknown_size_gets_the_full_window():
+    """The fast path is taken only when the change is *known* to be small — a size the
+    probe cannot compute (baseline predating this process) must not shorten the wait."""
+    acts: list = []
+    p, _ = _sized_poller(["A", "B"], {}, acts)     # size() returns None
+    assert [p.tick() for _ in range(5)] == ["settling"] * 4 + ["acted"]
+
+
+def test_a_sizing_error_never_breaks_the_loop():
+    c = Clock()
+    acts: list = []
+    seq = ["A", "B"]
+    p = DebouncedPoller(lambda: seq.pop(0) if len(seq) > 1 else seq[0], acts.append,
+                        clock=c, sleep=c.sleep, interval=1.0, debounce=2.0,
+                        quick_debounce=0.5,
+                        size=lambda a, b: (_ for _ in ()).throw(OSError("gone")))
+    while not acts:
+        p.tick()
+    assert acts == ["B"], "a failed size computation must fall back, not raise"
+
+
+def test_scope_probe_sizes_a_change_in_files(tmp_path):
+    """Sizing is the build's own comparison (`diff_scopes`), not a second notion."""
+    from codemap.watch import scope_probe
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "a.py").write_text("x = 1\n")
+    (pkg / "b.py").write_text("y = 1\n")
+    probe = scope_probe(str(pkg))
+    first = probe()
+    (pkg / "a.py").write_text("x = 2\n")
+    second = probe()
+    assert probe.size(first, second) == 1
+    (pkg / "b.py").write_text("y = 2\n")
+    (pkg / "c.py").write_text("z = 1\n")
+    third = probe()
+    assert probe.size(second, third) == 2
+    assert probe.size("sha256:unknown", third) is None, "an unseen baseline is not zero"
+
+
 @pytest.mark.parametrize("cmd", ["watch", "serve"])
 def test_both_halves_expose_the_poll_knobs(cmd):
     """The cost of polling is real, so it must be tunable on both sides."""

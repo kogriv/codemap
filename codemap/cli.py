@@ -21,7 +21,8 @@
         warm resident process: line-delimited JSON stdio, or MCP with --mcp (M17);
         --watch follows the graph file and reloads itself when it is rebuilt (M3.2)
     codemap watch  <path> -o graph.json [--interval S] [--debounce S] [--deep] …
-        source tree → incremental rebuild loop, so the artifact stays current (M3.2)
+        source tree → incremental rebuild loop, so the artifact stays current (M3.2);
+        the debounce is adaptive — one save settles fast, a burst still coalesces
     codemap refresh <graph.json>
         rebuild a graph from the recipe recorded beside it at build time (M18)
     codemap route  <capability> <question> [--root DIR]
@@ -245,10 +246,11 @@ def _cmd_watch(args) -> int:
         # behind" is a comparison, not a guess.
         rebuild(current)
     poller = DebouncedPoller(probe, rebuild, interval=args.interval,
-                             debounce=args.debounce)
-    print(f"[watch] {args.path} → {args.out} "
-          f"(poll {args.interval}s, debounce {args.debounce}s; Ctrl-C to stop)",
-          file=sys.stderr)
+                             debounce=args.debounce,
+                             quick_debounce=args.quick_debounce, size=probe.size)
+    print(f"[watch] {args.path} → {args.out} (poll {args.interval}s, debounce "
+          f"{args.quick_debounce}s for ≤{DebouncedPoller.QUICK_MAX} file(s), "
+          f"{args.debounce}s for a burst; Ctrl-C to stop)", file=sys.stderr)
     try:
         poller.run(cycles=args.cycles)
     except KeyboardInterrupt:
@@ -716,6 +718,10 @@ def _add_poll_options(p, *, debounce: float, debounce_help: str) -> None:
     p.add_argument("--interval", type=float, default=1.0,
                    help="Seconds between polls (default: 1.0).")
     p.add_argument("--debounce", type=float, default=debounce, help=debounce_help)
+    p.add_argument("--quick-debounce", type=float, default=0.3,
+                   help="Shorter quiet window for a change of at most two files — one "
+                        "save, or a module and its test (default: 0.3). A flat window "
+                        "taxes the common case for the burst that rarely happens.")
 
 
 def _add_source(p) -> None:

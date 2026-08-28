@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import ast
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -37,6 +38,15 @@ _NODE_KINDS = {"module", "class", "function", "attribute"}
 
 #: Why an input file produced no module (R1-C23 / design D2).
 SKIP_ENCODING, SKIP_SYNTAX, SKIP_IO, SKIP_UNREAD = "encoding", "syntax", "io", "unread"
+
+#: Gate before re-parsing a module for the imports griffe does not record: an *indented*
+#: import (nested in a function or class body) or a star import. A module-level import is
+#: never indented, so the common file — imports at the top and nowhere else — is skipped
+#: without a parse. griffe discards its own AST, so the alternative is a second parse of
+#: every module, measured at ~25% of the fast tier on a 90-module package. A false
+#: positive (the text inside a string literal) costs one parse that finds nothing; the
+#: answer stays exact, because the gate only decides whether to look.
+_NESTED_IMPORT_HINT = re.compile(r"^[ \t]+(?:from|import)\s|import\s+\*", re.MULTILINE)
 
 
 @dataclass
@@ -179,22 +189,36 @@ def _input_report(graph, pkg_dir: Path, root: Path, walk) -> dict:
     return report
 
 
-def _star_import_targets(module) -> list[str]:
-    """Modules pulled in by ``from X import *`` (R1-C23 / design D3).
+def _source_import_targets(module) -> list[tuple[str, str]]:
+    """``(target, scope)`` for the imports griffe's module-level map does not carry.
 
-    Fed into the same ``imports`` list griffe fills, so the target resolves — and gets
-    the flat-layout retry — through exactly one code path.
+    Two families, one traversal, one parse — griffe records neither, and both used to be
+    invisible to the import graph:
 
-    Cost is why this is a substring gate before a parse: ``module.source`` is already in
-    griffe's cache, and scanning every module of the dogfood target for ``import *`` takes
-    0.065s and yields zero candidates. Only a file that contains the text is parsed, so
-    the answer is exact rather than a regex guess about what is inside a string literal.
+    - **`from X import *`** at module level (R1-C23 / design D3). griffe expands it into
+      member aliases but records no import, so the dependency itself vanished — the least
+      explicit dependency in the language and the one most worth surfacing. Scope
+      ``"module"``: it runs at import time.
+    - **imports written inside a function** (R1-C29 / issue #11) → scope ``"function"``.
+      They do not run at import time. This is the construct a developer uses to break an
+      import cycle, so the edges that were missing were exactly the ones most likely to
+      close one — the blind spot was anti-correlated with the question.
+    - **imports written in a class body** → scope ``"module"``. They run at
+      class-definition time, i.e. at import time, so they are ordinary eager dependencies
+      and *can* close a real import cycle. griffe does not record them either (measured).
+
+    Cost discipline, and it is not theoretical: the first version of this walked every
+    function's subtree separately, which is quadratic in nesting and cost the dogfood
+    target **4 seconds of a 7-second build**. One pre-order descent that carries the
+    current scope is linear, and the substring gate keeps a file without the word
+    ``import`` from being parsed at all. ``module.source`` is already in griffe's cache;
+    the parse is the expense, so it happens once per module for both families.
     """
     try:
         src = module.source
     except Exception:                       # no source (namespace dir, synthetic)
         return []
-    if "import *" not in src:
+    if not _NESTED_IMPORT_HINT.search(src):
         return []
     try:
         tree = ast.parse(src)
@@ -204,91 +228,46 @@ def _star_import_targets(module) -> list[str]:
     f = module_file(module)
     is_pkg = f is not None and f.name == "__init__.py"
     base = modpath.split(".") if is_pkg else modpath.split(".")[:-1]
-    targets = []
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.ImportFrom):
-            continue
-        if not any(a.name == "*" for a in node.names):
-            continue
+
+    def resolve(node: ast.ImportFrom) -> str:
         if node.level:
             anchor = base[:len(base) - (node.level - 1)]
-            target = ".".join(anchor + ([node.module] if node.module else []))
-        else:
-            target = node.module or ""
-        if target:
-            targets.append(target)
-    return targets
-
-
-def _nested_import_targets(module) -> list[tuple[str, str]]:
-    """``(target, scope)`` for imports griffe's module-level map does not carry (R1-C29).
-
-    griffe records the imports written in the module body — including those under
-    ``try:`` or ``if:``, which are still module-body statements. Two shapes escape it,
-    and they are *not* the same fact:
-
-    - **inside a function** → ``scope="function"``. It does not run at import time. This
-      is the one issue #11 is about: left out entirely, and it is the very construct a
-      developer uses to break an import cycle, so the missing edges were the ones most
-      likely to close one.
-    - **inside a class body** → ``scope="module"``. It runs at class-definition time,
-      i.e. at import time, so it is an ordinary eager dependency and *can* close a real
-      import cycle. griffe does not record it either (measured, not assumed).
-
-    Same hook and cost discipline as :func:`_star_import_targets`: the source is already
-    in griffe's cache, and only a file whose text contains ``import`` is parsed. A
-    relative target is anchored the way the module's own package resolves it.
-    """
-    try:
-        src = module.source
-    except Exception:                        # no source (namespace dir, synthetic)
-        return []
-    if "import" not in src:
-        return []
-    try:
-        tree = ast.parse(src)
-    except (SyntaxError, ValueError):
-        return []                            # unreadable: D2's report owns this file
-    modpath = module.canonical_path
-    f = module_file(module)
-    is_pkg = f is not None and f.name == "__init__.py"
-    base = modpath.split(".") if is_pkg else modpath.split(".")[:-1]
-
-    # Scope each nested import node once. A function inside a class is a function (it
-    # does not run at import time), so the function pass is applied after and wins.
-    scope_of: dict[int, str] = {}
-    for holder in ast.walk(tree):
-        if isinstance(holder, ast.ClassDef):
-            for node in ast.walk(holder):
-                if isinstance(node, (ast.Import, ast.ImportFrom)):
-                    scope_of[id(node)] = "module"
-    for holder in ast.walk(tree):
-        if isinstance(holder, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            for node in ast.walk(holder):
-                if isinstance(node, (ast.Import, ast.ImportFrom)):
-                    scope_of[id(node)] = "function"
+            return ".".join(anchor + ([node.module] if node.module else []))
+        return node.module or ""
 
     out: list[tuple[str, str]] = []
-    for node in ast.walk(tree):
-        scope = scope_of.get(id(node))
-        if scope is None:
-            continue
-        if isinstance(node, ast.Import):
-            out.extend((a.name, scope) for a in node.names)
-        elif isinstance(node, ast.ImportFrom):
-            if node.level:
-                anchor = base[:len(base) - (node.level - 1)]
-                target = ".".join(anchor + ([node.module] if node.module else []))
+
+    def visit(node, scope: str | None) -> None:
+        """``scope`` is None at module level (griffe has those), else module|function."""
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                visit(child, "function")
+            elif isinstance(child, ast.ClassDef):
+                # A class body runs at import time — unless we are already inside a
+                # function, in which case the whole thing does not.
+                visit(child, "function" if scope == "function" else "module")
+            elif isinstance(child, ast.Import):
+                if scope is not None:
+                    out.extend((a.name, scope) for a in child.names)
+            elif isinstance(child, ast.ImportFrom):
+                target = resolve(child)
+                if not target:
+                    continue
+                star = any(a.name == "*" for a in child.names)
+                if scope is None:
+                    if star:                 # the D3 case: griffe records nothing
+                        out.append((target, "module"))
+                    continue
+                # `from pkg.mod import name` → keep the member paths so the resolver walks
+                # down to the containing module exactly as it does for the module-level
+                # map; the bare target covers a star import and the module itself.
+                out.append((target, scope))
+                out.extend((f"{target}.{a.name}", scope)
+                           for a in child.names if a.name != "*")
             else:
-                target = node.module or ""
-            if not target:
-                continue
-            # `from pkg.mod import name` → keep the member paths, so the resolver walks
-            # down to the containing module exactly as it does for the module-level map;
-            # the bare target covers `from pkg import *` and the module itself.
-            out.append((target, scope))
-            out.extend((f"{target}.{a.name}", scope)
-                       for a in node.names if a.name != "*")
+                visit(child, scope)
+
+    visit(tree, None)
     return out
 
 
@@ -298,17 +277,9 @@ def _collect(graph, obj, root, target_pkg, walk) -> None:
         _add_node(graph, obj, root)
         for name, tgt in (obj.imports or {}).items():
             walk.imports.append((obj.canonical_path, tgt, "module"))
-        # R1-C23/D3: griffe expands `from .m import *` into member aliases but records
-        # no import, so the dependency itself was invisible — a star-import is the least
-        # explicit dependency in the language and the one most worth surfacing.
-        for tgt in _star_import_targets(obj):
-            walk.imports.append((obj.canonical_path, tgt, "module"))
-        # R1-C29 / issue #11: an import written *inside a function* is a real dependency
-        # that griffe's module-level map does not carry. Leaving it out was not a neutral
-        # omission — a function-local import is the standard way to break an import
-        # cycle, so the edges we could not see were exactly the ones most likely to close
-        # one. The blind spot was anti-correlated with the question.
-        for tgt, scope in _nested_import_targets(obj):
+        # R1-C23/D3 (star imports) + R1-C29 (function-local and class-body imports):
+        # everything griffe's module-level map does not carry, in one parse.
+        for tgt, scope in _source_import_targets(obj):
             walk.imports.append((obj.canonical_path, tgt, scope))
     for name, member in obj.members.items():
         if member.is_alias:

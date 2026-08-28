@@ -26,7 +26,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   gate. `_none — import graph is acyclic._` is gone from all three renderers that had inherited the
   sentence, enforced by a test that parses codemap's own source rather than asserting on three outputs.
   The tool's 41 cycles are set-identical to an independently computed AST truth set — the acceptance
-  criterion, because a matching count is not a matching answer.
+  criterion, because a matching count is not a matching answer. **Cost:** griffe discards its own AST, so
+  this means a second parse per module; the first implementation parsed nearly every file and walked each
+  function's subtree separately, which cost ~30% of the fast build before it was caught. With one
+  pre-order descent and a gate on *indented* imports (a module-level import is never indented), the
+  measured price is **+0.33 s on the structural pass** — 2.02 → 2.35 s median of 7 runs on a 90-module
+  package.
 
 - **A result limit was partiality nobody declared** (R1-C28). `search "zone"` returned **50 matches of
   1 259** under an envelope that read, in full, `{"ok": true}` — in the one op whose whole job is to tell
@@ -50,6 +55,15 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Added
 
+- **The rebuild debounce adapts to how big the change is** (M3.2-f1). A flat 2 s window taxed the common
+  case — one file saved — for the burst that rarely happens. A change of at most two files (one save, or a
+  module and its test) now settles on 0.3 s; a `git checkout` still coalesces on the full window. The size
+  comes from `diff_scopes`, the build's own comparison, so there is no second notion of "how much changed",
+  and an unknown size gets the **full** window: the fast path is taken only when the change is *known* to be
+  small. Taken from the peer measured in `research/tools/codegraph.md`, which is why its save→answerable was
+  0.33 s rather than the 2 s its headline debounce implies. No end-to-end number is claimed here — on the
+  machine available, whole-build timings vary by ±30% run to run, wider than the effect; what is pinned is
+  the deterministic behaviour, in `tests/test_m32_watch.py`.
 - **The graph keeps itself current while you work** (M3.2 — the fourth and last brick). `codemap watch
   ./pkg -o graph.json` rebuilds incrementally once the tree settles; `codemap serve --graph graph.json
   --watch` reloads the warm session when the artifact moves. Measured save-to-answerable at the defaults:

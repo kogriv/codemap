@@ -66,17 +66,45 @@ class DebouncedPoller:
     The clock and sleep are injected so the state machine can be tested without waiting.
     """
 
+    #: A change no larger than this many units is treated as "one save" and gets the
+    #: quick window. Two, not one, because saving a module and its test together is the
+    #: same human action — the pattern the peer this was taken from also settled on.
+    QUICK_MAX = 2
+
     def __init__(self, probe: Callable[[], Any], act: Callable[[Any], Any], *,
                  interval: float = 1.0, debounce: float = 2.0,
+                 quick_debounce: float | None = None,
+                 size: Callable[[Any, Any], int | None] | None = None,
                  clock: Callable[[], float] = time.monotonic,
                  sleep: Callable[[float], None] = time.sleep) -> None:
         self.probe, self.act = probe, act
         self.interval, self.debounce = interval, debounce
+        # M3.2-f1: adaptive debounce, measured off CodeGraph (research/tools/codegraph.md).
+        # A flat window taxes the common case — one file saved — for the burst that rarely
+        # happens. `size(baseline, pending)` says how many units changed; a small change
+        # settles on `quick_debounce`, a big one still coalesces on the full window. Size
+        # unknown (None, or no `size` given) means the full window: the fast path is only
+        # taken when the change is *known* to be small.
+        self.quick_debounce = quick_debounce
+        self.size = size
         self.clock, self.sleep = clock, sleep
         self.baseline = probe()
         self._pending: Any = None
         self._pending_since: float = 0.0
+        self._pending_window: float = debounce
         self.acted = 0
+
+    def _window_for(self, token: Any) -> float:
+        """The debounce this pending change earns — computed once, when it is first seen."""
+        if self.quick_debounce is None or self.size is None:
+            return self.debounce
+        try:
+            n = self.size(self.baseline, token)
+        except Exception:
+            return self.debounce            # sizing must never break the loop
+        if n is None or n > self.QUICK_MAX:
+            return self.debounce
+        return self.quick_debounce
 
     def tick(self) -> str:
         """One poll. ``quiet`` | ``settling`` | ``acted`` | ``act-failed`` | ``probe-failed``.
@@ -101,8 +129,9 @@ class DebouncedPoller:
             return "quiet"
         if token != self._pending:
             self._pending, self._pending_since = token, self.clock()
+            self._pending_window = self._window_for(token)
             return "settling"
-        if self.clock() - self._pending_since < self.debounce:
+        if self.clock() - self._pending_since < self._pending_window:
             return "settling"
         outcome = self.act(token)
         self._pending = None
@@ -121,14 +150,45 @@ class DebouncedPoller:
         return self.acted
 
 
-def scope_probe(path: str, *, consumers: tuple = (), docs: tuple = ()) -> Callable[[], str]:
-    """A probe that returns the scope_id of the tree — the build's own notion of input."""
-    from codemap.scope import resolve_scope
+class ScopeProbe:
+    """The tree's ``scope_id``, plus how many files changed between two of them.
 
-    def probe() -> str:
-        return resolve_scope(path, consumers=consumers, docs=docs)["scope_id"]
+    The id alone is enough to notice a change; the **count** is what lets the poller tell
+    one save from a `git checkout` and pick its debounce accordingly (M3.2-f1). Both come
+    from the same `resolve_scope` call, so sizing costs nothing extra — the manifests are
+    already in hand, and `diff_scopes` is the build's own comparison, not a second one.
 
-    return probe
+    Only the last two manifests are kept: the poller ever asks about the baseline and the
+    change currently settling.
+    """
+
+    def __init__(self, path: str, *, consumers: tuple = (), docs: tuple = ()) -> None:
+        self.path, self.consumers, self.docs = path, consumers, docs
+        self._manifests: dict[str, dict] = {}
+
+    def __call__(self) -> str:
+        from codemap.scope import resolve_scope
+        scope = resolve_scope(self.path, consumers=self.consumers, docs=self.docs)
+        sid = scope["scope_id"]
+        self._manifests[sid] = scope
+        if len(self._manifests) > 3:        # baseline + pending + the one just read
+            for k in list(self._manifests)[:-3]:
+                del self._manifests[k]
+        return sid
+
+    def size(self, baseline: str, pending: str) -> int | None:
+        """Files added + removed + changed between two scope_ids, or None if not known."""
+        from codemap.scope import diff_scopes
+        a, b = self._manifests.get(baseline), self._manifests.get(pending)
+        if a is None or b is None:
+            return None                      # the baseline predates this process
+        d = diff_scopes(a, b)
+        return len(d["added"]) + len(d["removed"]) + len(d["changed"])
+
+
+def scope_probe(path: str, *, consumers: tuple = (), docs: tuple = ()) -> ScopeProbe:
+    """A probe over the tree's scope_id — the build's own notion of what an input is."""
+    return ScopeProbe(path, consumers=consumers, docs=docs)
 
 
 def mtime_probe(graph_path: str) -> Callable[[], float | None]:
