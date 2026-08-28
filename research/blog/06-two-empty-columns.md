@@ -160,9 +160,21 @@ remedy as the bug — while the cycles that close only through one get their own
 failures, still coupling you cannot extract your way out of. And the sentence *"import graph is
 acyclic"* is gone from all three renderers that had inherited it.
 
+Then the person who filed the bug rebuilt on the fix and reported back: 29 of 29 previously-missing
+dependencies now present, and **three** lazy cycles where their issue had claimed two. The third was
+real. Their scan had collected DFS back-edges instead of enumerating simple cycles, so a three-node
+cycle disappeared once its nodes were coloured.
+
+So in one day, two people independently wrote a script to audit a tool, and **both scripts were less
+careful than the tool** — in opposite directions. Mine mis-anchored relative imports and turned 41 into
+9. Theirs collected back-edges and turned 3 into 2. Neither mistake is exotic; both are the kind you make
+in the fifteen minutes you have allotted to *checking*, as opposed to the weeks you spent *building*.
+
 The lesson I would keep from the whole episode is not about cycles. **A tool cannot be the judge of its
-own recall.** Precision it can demonstrate; recall requires something outside it, and I had been
-publishing a recall claim with no outside.
+own recall** — precision it can demonstrate, recall needs something from outside, and I had been
+publishing a recall claim with no outside. But the sharper half is the one that cost us both a
+correction: **the check is only worth what the check's own verification is worth**, and the cheap check
+that agrees with your prior is the one nobody ever verifies.
 
 ## Point questions and whole-graph questions
 

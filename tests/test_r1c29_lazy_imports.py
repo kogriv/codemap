@@ -116,6 +116,38 @@ def test_an_eager_cycle_is_still_an_import_cycle(tmp_path):
     assert q.lazy_import_cycles() == [], "an eager cycle is not also a lazy one"
 
 
+def test_a_longer_cycle_whose_lazy_edge_closes_it_is_enumerated(tmp_path):
+    """Three modules, the lazy import at the far end — the shape both audit scripts lost.
+
+    The reporter of #11 verified the fix on their tree and found codemap reporting **three**
+    cycles where their issue had claimed two. Their scan collected DFS back-edges instead
+    of enumerating simple cycles, so a 3-node cycle was swallowed once its nodes were
+    coloured; ours mis-anchored relative imports. Two independent scripts written to audit
+    a tool, both less careful than the tool, on the same day. This test pins the property
+    that made codemap right here: every elementary cycle, not one representative per
+    strongly-connected blob.
+    """
+    pkg = _pkg(tmp_path, {
+        "a.py": "from pkg.b import beta\n\n\ndef alpha():\n    return 1\n",
+        "b.py": "from pkg.c import gamma\n\n\ndef beta():\n    return gamma()\n",
+        "c.py": "def gamma():\n    from pkg.a import alpha\n    return alpha()\n",
+        # a second, shorter cycle sharing a node — both must be reported, not one.
+        "d.py": "from pkg.a import alpha\n\n\ndef delta():\n    return alpha()\n",
+        "e.py": ("from pkg.d import delta\n\n\ndef eps():\n"
+                 "    return delta()\n"),
+    })
+    (tmp_path / "pkg" / "a.py").write_text(
+        "from pkg.b import beta\n\n\ndef alpha():\n"
+        "    from pkg.e import eps\n    return eps()\n")
+    q = Query(extract(str(pkg)))
+    assert q.import_cycles() == [], "every cycle here is closed by a lazy import"
+    found = {frozenset(c) for c in q.lazy_import_cycles()}
+    assert frozenset({"pkg.a", "pkg.b", "pkg.c"}) in found
+    assert frozenset({"pkg.a", "pkg.d", "pkg.e"}) in found, (
+        "a second cycle sharing a node was swallowed — this is back-edge collection, "
+        "not simple-cycle enumeration")
+
+
 def test_import_map_is_emitted_even_when_nothing_is_lazy(tmp_path):
     """The R1-C28 rule, applied to a second kind of partiality: a reader must never have
     to tell "no lazy imports here" from "this build did not look for them"."""

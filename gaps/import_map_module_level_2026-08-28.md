@@ -3,10 +3,9 @@
 **Found:** 2026-08-28, reported from a second real target as
 [issue #11](https://github.com/kogriv/codemap/issues/11) — hours after the same day's
 [R1-C28](limit_truncation_2026-08-28.md) shipped the *"always declare what was cut"* rule.
-**Backlog:** R1-C29. **Status:** ✅ **closed the same day** — all three levels shipped
-(`codemap/extract/griffe_extractor.py`, `codemap/query.py`, the three renderers,
-`tests/test_r1c29_lazy_imports.py`). §3–§4 carry the corrected measurements; the issue stays open
-until the reporter confirms on their own tree.
+**Backlog:** R1-C29. **Status:** ✅ **closed the same day**, and **verified by the reporter on their own
+tree** (§8) — all three levels shipped (`codemap/extract/griffe_extractor.py`, `codemap/query.py`, the
+three renderers, `tests/test_r1c29_lazy_imports.py`). §3–§4 carry the corrected measurements.
 
 ## 1. What was reported
 
@@ -165,3 +164,37 @@ All met (`tests/test_r1c29_lazy_imports.py`, 12 tests):
 - The reporter's second finding (that `impact` is *more* precise than grep because it excludes
   docstring/comment/string mentions) needs no action; it is recorded because a confirmation is
   evidence too.
+
+## 8. Verified on the reporting tree — and it found a cycle the report had missed
+
+The reporter rebuilt at `beef4c9` on their own target (flat layout, 47 core modules) and confirmed:
+
+| | before | after |
+|---|---:|---:|
+| intra-core `imports` edges | 84 | **113** |
+| of them tagged `scope: "function"` | — | **29** |
+| pairs linked *only* by a function-local import, and missing | **29 of 29** | **0 of 29** |
+
+29 is exactly the count their own AST measurement had produced, so the two agree on the input, not just
+on the shape.
+
+**And codemap reported three lazy cycles where the issue had claimed two.** The third is real, verified
+line by line: two module-level hops and one function-local hop closing it. Their scan had collected DFS
+back-edges rather than enumerating simple cycles, so a 3-node cycle vanished once its nodes were
+coloured. Re-run with a proper enumeration: exactly 3, the same 3 sets — set equality again, on a second
+tree, independently.
+
+**That is the second audit script in one day that was less careful than the tool it audited**, in
+opposite directions: ours mis-anchored relative imports inside a package `__init__` and under-counted
+41 down to 9; theirs collected back-edges and under-counted 3 down to 2. Neither error was in a graph
+algorithm anyone would call hard. The lesson is not "write better scripts" — it is that **a check is only
+worth what its own verification is worth**, and the cheap check that agrees with your prior is the one
+that never gets verified. The regression test now pins the property that made codemap right here
+(enumerate every elementary cycle, not one representative per strongly-connected blob), using their
+3-node shape plus a second cycle sharing a node.
+
+Their confirmation also settled §7's open question in the only honest way: they have no `[architecture]`
+contract, so nothing to gate. Both facts stand — a gate you can walk around by making an import lazy is
+not a gate, *and* their three lazy imports exist precisely to avoid an import-time break, so gating them
+would punish the fix. Whoever writes a contract has to reconcile those two; the default must not decide
+it for them.
