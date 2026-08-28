@@ -104,25 +104,32 @@ the whole point is that the caller cannot see a cliff it is not told about.
 - `pack`'s token budget (deliberate, and its result is self-describing).
 - `impact --depth` — a depth bound is a *scope* choice, already echoed in the answer as `by_distance` /
   `max_distance`. Worth re-reading once this lands, but not obviously the same defect.
-- Whether CodeGraph's own missing marker is known to its author. 400 upstream issues were scanned and
-  no duplicate found; the adjacent
+- Whether CodeGraph's author agrees. 400 upstream issues were scanned, no duplicate found (the adjacent
   [#1512](https://github.com/colbymchenry/codegraph/issues/1512) is a different defect in the same
-  function. **Not yet filed** — it should be, per this track's rule that tool authors are
-  collaborators.
+  function), and the report is filed as
+  [#1639](https://github.com/colbymchenry/codegraph/issues/1639). **No response yet.**
 
 ## 7. What was checked before deciding to report it — and what was dropped
 
 Both halves of this were re-verified before anything went upstream, because the first reading of the
 external half was wrong and a second wrong reading would be worse.
 
-**Kept.** Root cause read in the source (`src/bin/codegraph.ts`, MIT, `6a056ec`): `options.limit || '20'`
-at :1957, `allCallers.slice(0, limit)` at :1991 with `allCallers.length` in scope and discarded, the
-envelope at :1994, and — decisively — `Callers of "${symbol}" (${limited.length})` at :1998, which
-prints the truncated count *as* the total. Reproduced on five symbols; on two of them the default
-returns zero symbol-level callers, because `getCallers` returns `imports`/`calls`/`references`/
-`instantiates` in one list and the file rows occupy the first 21 positions. Same shape in `callees`;
-`query` cuts 909 to 10. And the project's own flagship `explore` already marks elisions with
-`+N more` — so this fails on its author's standard, not on an imported one.
+**Kept, and filed as [#1639](https://github.com/colbymchenry/codegraph/issues/1639).** Root cause read
+in the source (`src/bin/codegraph.ts`, MIT, `6a056ec`): `options.limit || '20'` at :1957,
+`allCallers.slice(0, limit)` at :1991 with `allCallers.length` in scope and discarded, the envelope at
+:1994, and — decisively — `Callers of "${symbol}" (${limited.length})` at :1998, which prints the
+truncated count *as* the total. Reproduced on five symbols of a real package; on two of them the
+default returns zero symbol-level callers. Same shape in `callees`; `query` cuts 909 to 10 into a bare
+array. And the project's own flagship `explore` already marks elisions with `+N more` — so this fails
+on its author's standard, not on an imported one.
+
+**And building the minimal repro for that issue corrected us again.** In a 26-file synthetic project
+the survivors of the cut are all `function`, not `file`. So "the file rows sort first" was never a
+property of the tool — it is edge-insertion order, and bquant merely happened to order that way. The
+mechanism claim gets weaker and the defect gets stronger: what a truncated answer drops is **arbitrary
+with respect to kind**, so a consumer cannot tell a complete answer from a slice of one. The filed
+issue says that, and explicitly does not ask for any particular ordering. Third time in this track that
+writing the repro changed the finding.
 
 **Dropped.** The neighbouring observation — that `query` carries a wall-clock `updatedAt` per node, so
 two builds of identical source differ — is factually confirmed (set from `Date.now()` at index time;

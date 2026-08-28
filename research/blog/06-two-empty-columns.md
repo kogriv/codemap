@@ -203,12 +203,19 @@ engine's — and that claim holds. Run-to-run reproducibility of an answer is *m
 Reporting it would be marking someone's homework against a rubric they never signed, and dressing a
 difference in values up as a defect is the cheapest way to make a comparison dishonest.
 
-The truncation, on the other hand, does go upstream, because it fails on its author's own terms rather
-than mine. I read the source before saying so: the true total sits in scope at the line that throws it
-away, and the human-readable output prints the *truncated* count as if it were the total —
-`Callers of "X" (20)` when there are 79. More to the point, the flagship tool, the single one its MCP
-server exposes by default, already marks its own elisions inline with `+5 more`, `+27 more`. The
-honest-partial pattern is already in the codebase. It just isn't on this path.
+The truncation, on the other hand, went upstream —
+[#1639](https://github.com/colbymchenry/codegraph/issues/1639) — because it fails on its author's own
+terms rather than mine. I read the source before saying so: the true total sits in scope at the line
+that throws it away, and the human-readable output prints the *truncated* count as if it were the
+total — `Callers of "X" (20)` when there are 79. More to the point, the flagship tool, the single one
+its MCP server exposes by default, already marks its own elisions inline with `+5 more`, `+27 more`.
+The honest-partial pattern is already in the codebase. It just isn't on this path.
+
+Writing the minimal repro for that issue corrected me a third time. In a 26-file synthetic project the
+rows that survive the cut are all functions, not files — so "the file rows sort first" was never a
+property of the tool. It is edge-insertion order, and my target merely happened to order that way. The
+mechanism I thought I had found got weaker; the defect got stronger. What a truncated answer drops is
+**arbitrary**, which is exactly why the answer has to say it was truncated.
 
 ## Who each tool is for
 

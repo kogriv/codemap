@@ -154,6 +154,13 @@ sufficiently-referenced symbol a default-limit query returns *nothing but files*
 `callees` (`:2069`); `query` truncates 909 hits to 10 and returns a bare array, with no envelope a
 total could even live in.
 
+**Filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639)** (2026-08-28), with
+a 26-file minimal repro alongside the real-repository table. Building that minimal repro corrected one
+of our own claims: there the survivors of the cut are all `function`, not `file` — so "file rows sort
+first" is not a property of the tool, it is edge-insertion order, and what a default answer loses is
+**arbitrary with respect to kind**. That is a weaker mechanism claim and a stronger defect: a consumer
+cannot tell a complete answer from a slice of one.
+
 **And the project already does this right on its main surface.** `codegraph_explore` — the one tool the
 MCP server exposes by default — marks its own elisions inline (`+5 more`, `+27 more`). So this is not a
 philosophical difference about honest partial answers; it is that pattern not being applied on the
@@ -271,13 +278,14 @@ has deferred, with a 2-second debounce, and it works.
   - The file watcher itself. `sync` was invoked manually; the debounce/auto-trigger loop was not
     observed running.
   - Anything outside Python, and any repo other than bquant at one commit.
-  - Whether the truncation defect is known to the author. 400 upstream issues were scanned and no
-    duplicate found, but **it has not been filed yet** — it should be, per this track's standing rule
-    that authors are collaborators. The `updatedAt` observation is deliberately *not* being filed; see
-    the determinism section for why.
-  - Whether the file-first ordering inside `getCallers` is stable across CodeGraph versions. It was
-    stable across this build's clean-room A/B and across five symbols, which is enough to report the
-    defect, but the *ordering* is an implementation detail that may shift.
+  - Whether the author agrees. The truncation defect is filed as
+    [#1639](https://github.com/colbymchenry/codegraph/issues/1639) (400 issues scanned first, no
+    duplicate); **no response yet**, and this card will not claim a verdict on his behalf. The
+    `updatedAt` observation is deliberately *not* filed; see the determinism section for why.
+  - Why `allCallers` is ordered as it is. It is stable within a build, but the kind-grouping differs
+    between targets (files first on bquant, functions first on the minimal repro), so the ordering is
+    edge-insertion order rather than any rule we have identified. The issue does not ask for a
+    particular order — only that the cut be visible.
 
 ## Verdict & backlog effect
 
