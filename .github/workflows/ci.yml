@@ -42,11 +42,20 @@ jobs:
       # package's API (a signature, a deprecation), so tracking its HEAD would make this
       # job fail for reasons that have nothing to do with codemap — a *moving input*, the
       # exact confusion that cost this project a day and produced R1-C25.
+      #
+      # Bumping it is therefore a deliberate act, done only after the suite has been run
+      # locally against the new tree. 2026-08-28: 7700096 -> 274ab46, nine commits later,
+      # three of them breaking (`min_duration` semantics, the public-namesake split that
+      # renamed ValidationResult/get_data_info and deleted `bquant.ml`, and zone features
+      # renamed by role). Verified green before the bump: 530 passed, and the only two
+      # skips were `readtags`/`scip` missing from a local PATH — zero dogfood skips, so
+      # every bquant-dependent test really did run against this tree. 274ab46 is the 0.0.7
+      # release tree (tag v0.0.7 plus one changelog file); that exact tree is what was measured.
       - name: Check out the dogfood target (pinned)
         uses: actions/checkout@v4
         with:
           repository: kogriv/bquant
-          ref: 7700096f0c1f7dff845615154acb1dc81a20d241
+          ref: 274ab46c4b3e9fb17f56057dcec56a6154493d37
           path: _dogfood
       - name: Put it where the suite looks
         run: |
