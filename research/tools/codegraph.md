@@ -60,7 +60,7 @@ Source-only: yes, it never builds or runs the target. Deterministic: see below �
 | callers/callees (T2) | ✅ | ✅ symbol-level |
 | impact / blast-radius (T3) | ✅ | ✅ (more nodes, untagged) |
 | signature-change surface (T4) | ✅ | ✖ blast radius, not an argument contract |
-| architecture / layers (T5) | ✅ | ✖ on CLI/MCP. **Library-only** `findCircularDependencies()` exists — 136 cycles vs codemap's 1 on the same tree (see below); no layers, no violations |
+| architecture / layers (T5) | ✅ (recall 11% — R1-C29) | ✖ on CLI/MCP. **Library-only** `findCircularDependencies()` — 136 reported, 6 of 9 real: precision 4%, recall 67% (see below); no layers, no violations |
 | determinism | ✅ answer **and** artifact | ◐ answers stable except one timestamp field; artifact binary |
 | provenance by root role | ✅ declared roots | ✖ heuristic, and it misfires (see T3) |
 | docs as first-class refs | ✅ | ✖ `.md` not indexed at all |
@@ -88,7 +88,7 @@ which is what a compiled kernel without type inference buys.
 | T2 callers (`MACDZoneAnalyzer`) | ✅ (1 disputed) | 1 call | 0.33 s | ✅ byte-identical A/B | **58 symbol-level callers** vs codemap's 57. codemap's 57 are a **complete subset** — they agree on every one. The extra is `tests/unit/test_macd_analyzer.py::test_convenience_functions`, which does `assert isinstance(analyzer, MACDZoneAnalyzer)` — a *reference*, never a call. See "the disputed one" below. |
 | T3 impact (`MACDZoneAnalyzer`) | ✅ | 14.8 KB, 1 call | 0.36 s | ✅ byte-identical A/B | 89 affected / 146 edges at depth 2, flat `{name, kind, filePath, startLine}`. codemap: 69 refs, each tagged `type` (calls 60 / references 9), `root` (core 3 · docs 7 · examples 1 · scripts 2 · tests 56), `distance` (1: 66, 2: 3), plus `risk: high`. More reach, less structure. |
 | T4 sig-change (`analyze_zones`) | ✖ | 26.5 KB, 1 call | 0.41 s | not measured | `explore` returns blast radius + verbatim line-numbered source — genuinely useful, and *adjacent*, but it never says how each call site passes its arguments. codemap's `call_contract` returns per-caller `posargs` / `kwargs` / `splat` / `callsites` (e.g. `examples.02a_universal_zones.main` → 9 call sites, 1 positional). Different question. |
-| T5 architecture | ✖ (CLI) · ◐ (library) | — | 0.29 s · 76 ms | — | No layers, cycles or violations anywhere in the CLI or the MCP tools; `files` prints the file tree. The **importable library** does expose `findCircularDependencies()` — it returns **136 cycles where codemap returns 1**, on false call edges (see the library section). Still no layers, no violations, no coupling report. codemap's `report architecture`: 89 core modules, 634 import edges, 8 layers, 13 inter-layer dependency counts, layer violations. |
+| T5 architecture | ✖ (CLI) · ◐ (library) | — | 0.29 s · 76 ms | — | No layers, cycles or violations anywhere in the CLI or the MCP tools; `files` prints the file tree. The **importable library** does expose `findCircularDependencies()` — **136 reported where 9 are real**, on false call edges; its recall (67%) nonetheless beats codemap's (11%), whose import map is module-level only (see the library section). Still no layers, no violations, no coupling report. codemap's `report architecture`: 89 core modules, 634 import edges, 8 layers, 13 inter-layer dependency counts, layer violations. |
 
 ### The disputed one (T2)
 
@@ -199,6 +199,26 @@ this is what narrowing it looks like when the number is then measured:
 |---|---|---|
 | codemap `report architecture` | **1** — `zones.cache → zones.pipeline → zones.cache` | in-pass |
 | CodeGraph `findCircularDependencies()` | **136** | 76 ms |
+
+**That table was scored the wrong way, and the correction arrived the same day** — from
+[issue #11](https://github.com/kogriv/codemap/issues/11), filed off a different target. Taking codemap's
+answer as the reference is exactly the mistake this track exists to avoid. Scored instead against every
+intra-package import, function-local ones included (AST walk, 88 modules, 266 edges of which **35 are
+function-local**), there are **9** cycles on this tree:
+
+| | reported | of the 9 true ones | precision | recall |
+|---|---:|---:|---:|---:|
+| codemap | 1 | 1 | **100%** | **11%** |
+| CodeGraph (library API) | 136 | 6 | **4%** | **67%** |
+
+codemap's import map is module-level only, so a `from x import y` written inside a function is invisible
+to it — and that is precisely the import a developer writes *to break a cycle*. CodeGraph's much-criticised
+mechanism is what bought it the recall: walking call edges means the call tier's understanding of
+function-local imports comes along for free. **The over-reporting is still theirs and the framing problem
+is still ours** — until #11, `report architecture` printed `_none — import graph is acyclic._` over a
+partial map. Both are being fixed on our side as R1-C29
+([gap](../../gaps/import_map_module_level_2026-08-28.md)); the point for this card is that the
+"136 vs 1" line, read as a precision win, was flattering us by construction.
 
 The 136 are not 136 findings. `getFileDependencies` — by its own source comment — deliberately does not
 follow import edges; it walks *"the resolved calls/references/instantiates/extends edges"*. That graph

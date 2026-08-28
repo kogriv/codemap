@@ -271,6 +271,15 @@ than imports, and those edges bind unqualified method names without type inferen
 to a `MemoryCache::get` in another file, and six of six sampled edges into that method are false. The
 [card](../research/tools/codegraph.md) shows the source lines.
 
+**And then the same probe came back at us, within the day.** Scored against every intra-package import
+rather than against codemap's own output, there are **9** cycles on that tree, not 1: codemap's import
+map is module-level only, so a `from x import y` inside a function is invisible to it — and that is
+exactly the import a developer writes *to break a cycle*. Precision 100%, recall **11%**, against the
+peer's 4% and 67%. Their much-criticised mechanism is what bought them the recall, because the call tier
+does see those imports. Both numbers are now in the [gap doc](../gaps/import_map_module_level_2026-08-28.md);
+the fix (declare the skipped imports always, stop calling a partial map "acyclic", then resolve them) is
+R1-C29, from [issue #11](https://github.com/kogriv/codemap/issues/11).
+
 So the accurate statement is narrower and holds up better under checking: two of the five columns are
 unfilled by every peer **on any surface a caller can actually reach**, and the single implementation that
 exists at all is wrong by two orders of magnitude on this target. That is not a claim about quality in

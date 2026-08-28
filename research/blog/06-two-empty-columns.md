@@ -126,6 +126,28 @@ I could have left the ✖ and nobody would have checked. The narrower claim is t
 all inherits every false edge of the point-question graph it was computed from. That is a better
 sentence than the one I had, and I only got it by opening the third door.
 
+**And then, hours later, a bug report from a different project made it the fifth correction.** I had
+scored that comparison against *my own answer*, which is the one mistake this whole research track is
+supposed to prevent. Scored against every intra-package import instead — including the ones written
+inside a function — that tree has **9** cycles, not 1:
+
+| | reported | of the 9 real | precision | recall |
+|---|---:|---:|---:|---:|
+| mine | 1 | 1 | 100% | **11%** |
+| theirs | 136 | 6 | 4% | 67% |
+
+My import map is module-level only. A `from x import y` inside a function is invisible to it — and that
+is exactly the import a developer writes **to break a cycle**, so the blind spot is anti-correlated with
+the question. Worse than the recall: with an empty cycle list my report printed *"import graph is
+acyclic"*. Not "none found" — **acyclic**, a property, over a map that had not read a quarter of the
+edges on the reporter's target.
+
+So the tally on the question I built the whole positioning argument around is: they over-report and say
+nothing; I under-report and call it a guarantee. Their much-criticised mechanism — walking call edges —
+is *why* they found six where I found one, because the call tier does see those imports. Mine is the
+smaller error and the worse sentence. Both are being fixed; only one of them was published as a
+strength.
+
 ## Point questions and whole-graph questions
 
 Ask a code-intelligence tool something, and it falls into one of two classes.

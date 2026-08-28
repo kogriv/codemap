@@ -64,10 +64,23 @@ answer.
 
 That sentence used to end at "None answers these", and a second pass over the 68k-star tool made it
 narrower: its *importable library* does carry a cycle finder, reachable from neither its CLI nor its MCP
-tools and called nowhere in its own source. Measured on the same tree, it reports **136 cycles where
-codemap reports 1** — it walks resolved call edges rather than imports, and those edges bind method names
-without type inference, so a `dict.get` becomes a call into an unrelated class. A whole-graph answer
-computed from a point-question graph inherits every false edge in it.
+tools and called nowhere in its own source. Measured on the same tree it reports **136 cycles**; codemap
+reports **1**. Scoring both against the truth set — every intra-package import, function-local ones
+included — is less flattering than that sounds:
+
+| | reported | of the 9 real ones | precision | recall |
+|---|---:|---:|---:|---:|
+| codemap | 1 | 1 | 100% | **11%** |
+| the peer's library API | 136 | 6 | 4% | 67% |
+
+Neither tool answers this well yet. Theirs over-reports because it walks name-resolved call edges — a
+`dict.get` becomes a call into an unrelated class. **Ours under-reports because its import map is
+module-level only**, and until [#11](https://github.com/kogriv/codemap/issues/11) it phrased that as
+*"import graph is acyclic"* — a property claim over a partial map, which is the worse of the two errors
+even though it is the smaller one. Being fixed:
+[R1-C29](gaps/import_map_module_level_2026-08-28.md). The honest lesson stands and is now sharper: a
+whole-graph answer inherits every flaw of the graph it is computed from, including the edges that graph
+never read.
 
 **→ [docs/whole-graph-questions.md](docs/whole-graph-questions.md)** — the full argument, every number
 above reproduced from one run, and the honest limits.
