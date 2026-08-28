@@ -252,6 +252,44 @@ resolve `.get` at all, and stamps the answer `epistemic: partial`. That is the t
 measured from both sides: **CodeGraph over-reports and says nothing; codemap under-reports and says so.**
 Neither is free, and the 9× speed is partly *bought* with this.
 
+### The same question, asked of both — function-local imports
+
+**Added 2026-08-28**, after [issue #11](https://github.com/kogriv/codemap/issues/11) found the same class
+of blind spot in codemap: a `from x import y` written **inside a function**. It is the construct a
+developer uses to break an import cycle, so a tool that cannot see it is blind exactly where the question
+is asked. Four fixtures, both tools, same trees:
+
+| fixture | truth | CodeGraph | codemap after R1-C29 |
+|---|---|---|---|
+| lazy import, symbol **called** | dependency, no import-time cycle | dep ✅ · **reports a circular dependency** | dep ✅ · `lazy_import_cycles`, not an import cycle |
+| lazy import, symbol **returned** not called | dependency | **dep ✖ — invisible** | dep ✅ |
+| both imports module-level | import-time cycle | ✅ | ✅ |
+| import in a **class body** | eager dependency | ✅ | ✅ (eager — it runs at class-definition time) |
+
+Two findings, and they cut in opposite directions.
+
+**Their coverage of lazy imports is incidental, not designed.** `getFileDependencies` walks resolved
+*call* edges, so a lazy import is seen only when the symbol it binds is then **called**. Bind it and
+return it, pass it as a value, use it as a default argument — and the dependency is gone. codemap now
+reads the import statement itself, so the shape of the use does not matter. This is the same root as the
+136-vs-41 over-reporting: deriving a dependency graph from a call graph inherits the call resolver's
+misses as well as its inventions.
+
+**They do not distinguish eager from lazy at all**, so a cycle broken by a lazy import is reported as a
+circular dependency, indistinguishably from one that actually breaks on import. Under the name
+`findCircularDependencies` that is defensible — the modules *are* mutually dependent — but nothing in the
+answer says which of the two questions it answered, and they are answered differently. For the project
+that filed #11, which uses function-local imports deliberately to keep the module graph acyclic, the
+tool would report their fix as their problem. codemap's split (`cycles` = breaks at import time,
+`lazy_cycles` = coupling that does not) exists because of that.
+
+**And one thing they get right by not having it.** codemap's worst error here was a *sentence* — `_none —
+import graph is acyclic._`, a property claim over a partial map. CodeGraph cannot make that mistake: the
+API returns an array and there is no renderer, no prose, no summary line. A tool with no human-facing
+report has no opportunity to overstate one. That is not a virtue to copy — the report is the product for
+codemap's audience — but it is worth naming, because the defect was in the presentation layer, not the
+data, and presentation layers are where this project keeps finding them.
+
 `findDeadCode()` returns **1 207** unreferenced symbols on the same staging as one flat list; codemap's
 `report dead-code` bands its candidates by confidence with a whitelist and a printed blind-spot notice.
 Their precision was **not** measured — only the shape is recorded here.
