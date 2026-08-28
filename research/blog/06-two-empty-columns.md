@@ -192,11 +192,23 @@ declared root (calls versus references; core versus docs versus tests), argument
 architecture contracts you can fail CI on, docs as first-class references — and no clock anywhere in
 an answer.
 
-That last one isn't rhetorical. Its symbol lookup carries a wall-clock timestamp on every node, so two
-builds of byte-identical source return different bytes. One field, almost certainly a one-line fix —
-and precisely the property [the last post](04-the-determinism-test-that-was-right.md) was about. That
-observation and the missing truncation marker both go to its author as issues; they are the kind of
-thing you send someone, not the kind you publish a verdict about.
+That last one isn't rhetorical. Its symbol lookup carries a wall-clock timestamp on every node — set
+from `Date.now()` at index time, never read back for any logic — so two builds of byte-identical source
+return different bytes. It is precisely the property
+[the last post](04-the-determinism-test-that-was-right.md) was about.
+
+And I am **not** filing it as a bug, which is worth explaining, because the temptation was real.
+CodeGraph makes exactly one byte-for-byte claim — that its Rust kernel's graphs match its reference
+engine's — and that claim holds. Run-to-run reproducibility of an answer is *my* commitment, not its.
+Reporting it would be marking someone's homework against a rubric they never signed, and dressing a
+difference in values up as a defect is the cheapest way to make a comparison dishonest.
+
+The truncation, on the other hand, does go upstream, because it fails on its author's own terms rather
+than mine. I read the source before saying so: the true total sits in scope at the line that throws it
+away, and the human-readable output prints the *truncated* count as if it were the total —
+`Callers of "X" (20)` when there are 79. More to the point, the flagship tool, the single one its MCP
+server exposes by default, already marks its own elisions inline with `+5 more`, `+27 more`. The
+honest-partial pattern is already in the codebase. It just isn't on this path.
 
 ## Who each tool is for
 

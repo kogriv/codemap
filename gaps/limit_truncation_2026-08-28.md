@@ -104,6 +104,31 @@ the whole point is that the caller cannot see a cliff it is not told about.
 - `pack`'s token budget (deliberate, and its result is self-describing).
 - `impact --depth` — a depth bound is a *scope* choice, already echoed in the answer as `by_distance` /
   `max_distance`. Worth re-reading once this lands, but not obviously the same defect.
-- Whether CodeGraph's own missing marker is known to its author. **Not yet reported upstream** — it
-  should be, along with the `updatedAt`-in-the-answer observation, per this track's rule that tool
-  authors are collaborators.
+- Whether CodeGraph's own missing marker is known to its author. 400 upstream issues were scanned and
+  no duplicate found; the adjacent
+  [#1512](https://github.com/colbymchenry/codegraph/issues/1512) is a different defect in the same
+  function. **Not yet filed** — it should be, per this track's rule that tool authors are
+  collaborators.
+
+## 7. What was checked before deciding to report it — and what was dropped
+
+Both halves of this were re-verified before anything went upstream, because the first reading of the
+external half was wrong and a second wrong reading would be worse.
+
+**Kept.** Root cause read in the source (`src/bin/codegraph.ts`, MIT, `6a056ec`): `options.limit || '20'`
+at :1957, `allCallers.slice(0, limit)` at :1991 with `allCallers.length` in scope and discarded, the
+envelope at :1994, and — decisively — `Callers of "${symbol}" (${limited.length})` at :1998, which
+prints the truncated count *as* the total. Reproduced on five symbols; on two of them the default
+returns zero symbol-level callers, because `getCallers` returns `imports`/`calls`/`references`/
+`instantiates` in one list and the file rows occupy the first 21 positions. Same shape in `callees`;
+`query` cuts 909 to 10. And the project's own flagship `explore` already marks elisions with
+`+N more` — so this fails on its author's standard, not on an imported one.
+
+**Dropped.** The neighbouring observation — that `query` carries a wall-clock `updatedAt` per node, so
+two builds of identical source differ — is factually confirmed (set from `Date.now()` at index time;
+never read in any `WHERE`/`ORDER BY`; not file mtime, since the stagings were `copy2`-ed and their
+mtimes match). It is **not being filed.** CodeGraph claims byte-for-byte parity only between its Rust
+kernel and its reference engine, and that claim holds; run-to-run answer reproducibility is codemap's
+commitment, not theirs. Reporting it would be scoring another project against a rubric it never signed.
+The distinction is the point: *a finding is reportable when it fails the author's standard, and merely
+describable when it fails only ours.*

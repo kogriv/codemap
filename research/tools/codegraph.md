@@ -120,6 +120,47 @@ and the second time in this research track that a default nearly produced a fals
 else's tool (the first was graphlens's `ty` binary being off `PATH`). The rule that caught both is the
 same: when a number looks round, check whether it is a limit.
 
+**Verified to the source before reporting** (`src/bin/codegraph.ts`, MIT, tag at `6a056ec`):
+
+```ts
+const limit = parseInt(options.limit || '20', 10);              // :1957
+...
+const limited = allCallers.slice(0, limit);                     // :1991
+if (options.json) {
+  console.log(JSON.stringify({ symbol, callers: limited }, …)); // :1994 — no total
+} else {
+  console.log(chalk.bold(`\nCallers of "${symbol}" (${limited.length}):\n`)); // :1998
+}
+```
+
+Two things this settles. `allCallers.length` — the true total — is **in scope at the truncation site
+and discarded**, so the fix costs nothing. And the human-readable header prints `limited.length`, i.e.
+it renders `Callers of "MACDZoneAnalyzer" (20)` when there are 79: **not a missing marker but an
+affirmatively wrong count.**
+
+Scope of the defect, measured rather than assumed:
+
+| symbol | default answer | full answer | symbol-level callers hidden |
+|---|---|---|---|
+| `MACDZoneAnalyzer` | 20 (0 symbols) | 79 (58 symbols) | **all 58** |
+| `ZoneInfo` | 20 (0 symbols) | 62 (33 symbols) | **all 33** |
+| `ZoneFeaturesAnalyzer` | 20 (11 symbols) | 51 (42 symbols) | 31 |
+| `analyze_zones` | 20 (20 symbols) | 72 (49 symbols) | 29 |
+| `get_logger` | 20 (20 symbols) | 104 (40 symbols) | 20 |
+
+`getCallers` returns `imports`, `calls`, `references` and `instantiates` edges in one undifferentiated
+list, and the file-kind rows (from `imports`) occupy the **first 21 positions**, so on a
+sufficiently-referenced symbol a default-limit query returns *nothing but files*. Same code shape in
+`callees` (`:2069`); `query` truncates 909 hits to 10 and returns a bare array, with no envelope a
+total could even live in.
+
+**And the project already does this right on its main surface.** `codegraph_explore` — the one tool the
+MCP server exposes by default — marks its own elisions inline (`+5 more`, `+27 more`). So this is not a
+philosophical difference about honest partial answers; it is that pattern not being applied on the
+`callers`/`callees`/`query` path. Checked against 400 upstream issues: no duplicate. The adjacent
+[#1512](https://github.com/colbymchenry/codegraph/issues/1512) is a different defect in the same
+function (same-named definitions merged, no `--file`).
+
 ### Determinism — split the way GitNexus's was
 
 Two clean-room stagings, materialized from the same manifest, indexed independently:
@@ -131,10 +172,20 @@ Two clean-room stagings, materialized from the same manifest, indexed independen
   and the entire difference is one field, `updatedAt`, a wall-clock index timestamp carried on every
   node (`1787897858897` vs `1787898304266`). Strip it and the two answers are equal.
 
-So an answer changes when nothing about the code changed. That is small and probably a one-line fix, but
-it is precisely the property codemap's canonical JSON forbids by construction, and precisely the
-confusion that cost this project a day and produced R1-C25: *a stable output is worthless if you cannot
-tell "the code changed" from "the clock did".*
+Confirmed to the source rather than inferred: `updatedAt` is set from `Date.now()` at index time
+(e.g. `src/resolution/frameworks/go.ts:87`), persisted as `updated_at`, read back into the node
+(`src/db/queries.ts:180`) — and **never used in a `WHERE`, `ORDER BY` or comparison anywhere in the
+codebase**. It is not load-bearing for incremental sync; it simply rides out into `query` results. And
+it is not file mtime: the two stagings were copied with `copy2`, so their source mtimes are identical,
+while the field moved by the 7.4 minutes between the two index runs.
+
+**This is a contract difference, not a defect, and it is not being reported upstream.** CodeGraph makes
+exactly one byte-for-byte claim — that the Rust kernel's graphs match the reference engine's — and it
+holds. Run-to-run reproducibility of an answer is *codemap's* commitment, not theirs; filing it as a bug
+would be marking someone's homework against a rubric they never signed. It is recorded here because it
+is the sharpest available illustration of what the two determinism contracts actually differ on, and
+because it is the property R1-C25 exists to protect: *a stable output is worthless if you cannot tell
+"the code changed" from "the clock did".*
 
 ### Incremental sync — the M3.2 feed
 
@@ -220,9 +271,13 @@ has deferred, with a 2-second debounce, and it works.
   - The file watcher itself. `sync` was invoked manually; the debounce/auto-trigger loop was not
     observed running.
   - Anything outside Python, and any repo other than bquant at one commit.
-  - Whether `updatedAt` and the missing truncation flag are known to the author. **Neither has been
-    reported upstream yet** — both should be, per this track's standing rule that authors are
-    collaborators.
+  - Whether the truncation defect is known to the author. 400 upstream issues were scanned and no
+    duplicate found, but **it has not been filed yet** — it should be, per this track's standing rule
+    that authors are collaborators. The `updatedAt` observation is deliberately *not* being filed; see
+    the determinism section for why.
+  - Whether the file-first ordering inside `getCallers` is stable across CodeGraph versions. It was
+    stable across this build's clean-room A/B and across five symbols, which is enough to report the
+    defect, but the *ordering* is an implementation detail that may shift.
 
 ## Verdict & backlog effect
 
