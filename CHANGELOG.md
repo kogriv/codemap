@@ -7,6 +7,22 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **A passing `check` did not say it had judged only the eager import graph** (R1-C30-f2, from the
+  second target's run of the gate). `codemap check` printed `✅ Contract satisfied. Rules enforced:
+  no_cycles` on a tree where `report architecture`, from the same graph, listed **48 dependency cycles
+  closed only by a function-local import**. The gate's scope was deliberate (R1-C29: a lazy import is how
+  an import cycle is broken, so failing a build for it would report the remedy as the bug) — the silence
+  was not. It is the same property-claim-over-a-partial-view that R1-C29 had removed from the report one
+  day earlier, reappearing in the gate, where it is not a sentence but an unqualified ✅ the reader
+  completes into "acyclic". The reporter's summary: *it did not fail on an unexpected violation; it failed
+  to fail where violations exist.* Now: the gate still judges the eager graph, a passing run **always**
+  states what it did not judge and how much of it there is (including zero — the R1-C28 rule that a field
+  present only when there is something to say cannot be distinguished from a build that never says it),
+  the structured payload carries the same under `scope`, and **`no_lazy_cycles = true`** lets a contract
+  owner take the opposite position — *a gate you walk around by making the import lazy is not a gate* —
+  instead of having one chosen for them. This closes the question §7 of the R1-C29 gap doc deliberately
+  left open; what §7 got wrong was assuming the reachable defect was the gating, when it was the silence.
+
 - **A call to a re-exported name resolved to nothing on the fast tier** (R1-C30-f1,
   [#13](https://github.com/kogriv/codemap/issues/13)). Reported against R1-C30 the day it shipped, as the
   one case that survived it on the reporting tree: `import registry as _r` inside a function, six calls

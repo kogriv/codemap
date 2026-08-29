@@ -413,3 +413,43 @@ The reporter's own split of the 50 edges deep still finds and fast does not, on 
 **48 are method calls on an instance** — the declared tier limit, not a defect — 1 is a
 module-level attribute, and 1 was this. Worth recording that they filed the one that was
 ours and explicitly did not file the 48 that were documented.
+
+---
+
+## 12. §7 resolved, by the gate being run on a real tree (R1-C30-f2)
+
+§7 left one question open on purpose: *should a contract be able to gate the cycles that
+close only through a lazy import?* The second real target answered it within a day, not by
+arguing the question but by running `codemap check` on a tree with 48 of them:
+
+```
+# Architecture check — `shared`
+✅ **Contract satisfied.** Rules enforced: no_cycles.
+```
+
+…while `report architecture`, **on the same graph**, printed `Import cycles: 0 / none found
+in the eager import graph` followed by `Dependency cycles closed only by a function-local
+import: 48`. Their summary is the finding: *"`check` did not fail on an unexpected
+violation. It failed to not fail where violations exist — and that is worse."*
+
+Note what this is. R1-C29 removed the sentence `_none — import graph is acyclic._` from
+three renderers because it stated a property the map could not support. One day later the
+same claim was found alive in the **gate** — not as a sentence this time, but as an
+unqualified ✅ that the reader completes into "acyclic". The presentation layer keeps being
+where this project finds these, and a gate is a presentation layer with an exit code.
+
+**Decision.** Three parts, and the middle one is the actual fix:
+
+1. **The gate stays eager.** A lazy import is how the import-order failure is prevented;
+   failing a build for applying the remedy would report the fix as the bug. Unchanged.
+2. **The disclosure is mandatory.** A passing `no_cycles` now states what it judged and
+   what it did not, with the count — and states it at zero too, on the R1-C28 rule that a
+   field appearing only when there is something to say cannot be told from a build that
+   never reports it. Structured consumers get the same under `scope`.
+3. **`no_lazy_cycles = true`** lets the contract owner take the other position — *a gate
+   you walk around by making the import lazy is not a gate* — instead of having one picked
+   for them. With it on, nothing is unjudged and the disclaimer disappears.
+
+What §7 got right was refusing to pick a default without a live case; what it got wrong was
+treating "do not gate" as the whole answer, when the reachable defect was never the gating
+— it was the **silence**.

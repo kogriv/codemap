@@ -26,8 +26,12 @@ forbidden = [
   { from = "core", to = "analysis" },
 ]
 
-# The import graph must be acyclic.
+# The import graph must be acyclic *at import time* — the eager graph (see below).
 no_cycles = true
+
+# Also gate the coupling a lazy import hides: cycles closed only by an import written
+# inside a function. Off by default, and the reason is worth reading below.
+no_lazy_cycles = false
 
 # Every core module's layer must appear in `layers` above — catches a new,
 # undeclared top-level package slipping in.
@@ -39,13 +43,46 @@ exhaustive = false
 | `layers` | an import points *up* the ordered stack | the offending `importer → imported` edges |
 | `independent` | two layers in a group import each other | the edges between them |
 | `forbidden` | a declared `from → to` import exists | the edges |
-| `no_cycles` | the import graph has a cycle | the cycles |
+| `no_cycles` | the **eager** import graph has a cycle | the cycles |
+| `no_lazy_cycles` | a cycle is closed only by a function-local import | those cycles |
 | `exhaustive` | a core module's layer isn't declared in `layers` | the undeclared layers |
 
 Rules that reference a layer not present in the graph are **inert** — you can write
 the contract ahead of the code. An absent or malformed `codemap.toml` yields an
 empty contract (a no-op success), so a broken file never wedges the gate; use
 `--require-contract` to make "no contract" a failure instead.
+
+## What `no_cycles` judges — and what it says it did not
+
+`no_cycles` gates the **eager** import graph: imports that actually run at import time.
+A cycle closed only by an import written *inside a function* does not fail it, because
+that import is the accepted way to break an import cycle — failing a build for applying
+the remedy would be worse than the disease.
+
+But a gate that judges a subset must not let the reader conclude more than it checked.
+A passing run therefore always states its scope:
+
+```
+✅ **Contract satisfied.** Rules enforced: no_cycles.
+
+_`no_cycles` judged **the eager import graph only** — imports that run at import time.
+**48** dependency cycle(s) closed only by a function-local import were **not** judged:
+such a cycle cannot break on import, but the coupling is real. `report architecture`
+lists them; `no_lazy_cycles = true` gates them._
+```
+
+The line is printed even when the count is zero (as `"nothing was left out"`, not as an
+absence), and the structured payload carries the same under `scope`. This came from a
+second real target running the gate on a tree with 48 such cycles and reading
+*"Contract satisfied. Rules enforced: no_cycles"* as acyclicity — the same property claim
+over a partial view that [R1-C29](../gaps/import_map_module_level_2026-08-28.md) had just
+removed from the *report*, reappearing in the *gate*. Their summary is the one to keep:
+**it did not fail on an unexpected violation; it failed to fail where violations exist.**
+
+`no_lazy_cycles = true` takes the other position — *a gate you walk around by making the
+import lazy is not a gate* — and both positions are defensible, which is exactly why this
+is a switch the contract owner sets rather than a default chosen for them. With it on,
+nothing is left unjudged and the disclaimer disappears.
 
 ## Running the gate
 
