@@ -7,6 +7,26 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **A graph had no single origin for its paths** (R1-C31,
+  [#12](https://github.com/kogriv/codemap/issues/12), schema **0.12 → 0.13**). `codemap tests` ends in a
+  ready-to-paste `pytest …` line; built with roots below the repo root it named a path that does not exist,
+  while looking exactly like one that does. The printed path was the symptom. Each root was its **own**
+  origin — core files relative to the core package's parent, consumer files relative to their own root's
+  parent — so `codemap build src/pkg --consumer tests` produced `pkg/mod.py` (relative to `src/`) beside
+  `tests/test_mod.py` (relative to the repo root): two coordinate systems in one graph, and nothing
+  anywhere saying so. Both read as repo-relative and at most one was. The packaged dogfood could not show
+  it, because there the roots sit at the repo root and the two coincide. Now every `file` is relative to
+  the nearest common ancestor of the roots' parents, and `provenance.roots` records each root relative to
+  that origin instead of by basename — a basename was *less* than design D5 allows ("repo-relative roots")
+  and dropped exactly the segment at issue. **Where that origin is** stays out of the graph, because it is
+  a machine location and the graph is the half that travels; it goes in the `*.meta.json` sidecar as
+  `roots_base`, and the **local** CLI resolves the pytest line against it — printing a rewritten path only
+  when the file is actually there, and otherwise naming the directory the untouched path belongs to rather
+  than letting the reader discover it from pytest. Served/MCP payloads keep the graph-relative id. Also
+  fixed in the same pass: a function or class under a consumer root carried `lineno` and **no `file`** (the
+  reporter counted 1093 such nodes against 61 with one), so `search` answered a consumer symbol with a line
+  number and no file. A single-package build is byte-identical to before.
+
 - **A passing `check` did not say it had judged only the eager import graph** (R1-C30-f2, from the
   second target's run of the gate). `codemap check` printed `✅ Contract satisfied. Rules enforced:
   no_cycles` on a tree where `report architecture`, from the same graph, listed **48 dependency cycles

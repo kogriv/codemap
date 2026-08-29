@@ -33,9 +33,36 @@ central. The walk goes **backwards** from the symbol over `calls` / `references`
 |---|---|
 | `distance` | how many hops back the nearest tests were found |
 | `confidence` | `high` (1–2 hops), `medium` (3), `low` (deeper, only if you ask), `unknown` (nothing found) |
-| `tests[].node_id` | a runnable pytest node id |
+| `tests[].node_id` | a pytest node id, **relative to the graph's path origin** (see below) |
 | `total_at_distance` / `truncated` | how many were found, and how many the cap hid — never silently |
 | `caveats` | what this answer is not (see below) |
+
+## The pasted line, and where it runs from
+
+`codemap tests` ends with a `pytest …` line you can paste. The ids inside the answer are
+graph-relative — the graph does not know where on disk it was built, on purpose (see
+[provenance.md](provenance.md)) — so the **CLI** resolves them against the build sidecar
+and prints paths relative to your current directory:
+
+```bash
+$ codemap tests f --graph g.json            # built with roots under research/
+  tests/test_mod.py::test_f                 # what the graph stores
+
+pytest research/tests/test_mod.py::test_f   # what runs from here
+```
+
+Two rules, both from [#12](https://github.com/kogriv/codemap/issues/12), where the printed
+line named a path that did not exist while looking exactly like one that did:
+
+- a rewrite is printed **only when the file is really there**. An unverifiable one is not
+  a convenience, it is the same defect with a different path in it;
+- when it cannot be resolved (no sidecar — the graph was moved, or built by an older
+  codemap), the path is left as the graph stores it and a caveat names the directory it is
+  relative to, rather than leaving the reader to find out from pytest.
+
+The served/MCP payload always keeps the graph-relative id: an answer may be read on a
+machine where this tree does not exist, and a path that is wrong there is worse than one
+that is honestly relative.
 
 ## Why the cutoff is 3
 

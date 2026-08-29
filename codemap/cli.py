@@ -47,6 +47,7 @@ from pathlib import Path
 from codemap import store
 from codemap.diagnostics import diagnostics
 from codemap.extract import extract, extract_repo
+from codemap.extract.roots import roots_base
 from codemap.provenance import build_provenance
 from codemap.query import Query
 from codemap.serve import (
@@ -116,8 +117,12 @@ def _cmd_build(args) -> int:
         # rebuild it, and so the graph's age is meaningful to `serve`/stats.
         # M19.A: also record the input scope manifest (scope_id + profile + git).
         from codemap.freshness import write_meta
+        base = (str(roots_base(args.path, tuple(args.consumer or ()),
+                               tuple(args.docs or ())))
+                if (args.consumer or args.docs) else None)
         write_meta(args.out, argv=getattr(args, "_argv", []),
-                   cwd=os.getcwd(), target=graph.target, scope=scope)
+                   cwd=os.getcwd(), target=graph.target, scope=scope,
+                   roots_base=base)
         if incr_info is not None:
             print(f"[incremental] {incr_info['mode']}: "
                   f"{len(incr_info['affected'])} module(s) recomputed", file=sys.stderr)
@@ -386,8 +391,48 @@ def _cmd_tests(args) -> int:
         print(f"  · {c}", file=sys.stderr)
     ids = [row["node_id"] for row in r.get("tests", []) if row.get("node_id")]
     if ids:
-        print("\npytest " + " ".join(ids))
+        local, note = _local_nodeids(ids, args)
+        print("\npytest " + " ".join(local))
+        if note:
+            print(f"  · {note}", file=sys.stderr)
     return 0 if (r.get("tests") or r.get("symbols")) else 1
+
+
+def _local_nodeids(ids: list[str], args) -> tuple[list[str], str | None]:
+    """Graph-relative pytest ids → ids that run from the current directory (R1-C31, #12).
+
+    A graph's paths are relative to the roots' common origin, which is a *location* and so
+    is deliberately absent from the artifact (design D5) — it lives in the build sidecar,
+    which never travels. That split is right, and it left this line wrong in the one place
+    it is meant to be pasted: build with roots one level down (`research/core`,
+    `research/tests`) and the printed `pytest tests/test_mod.py::test_f` names a path that
+    does not exist from where the user stands, while looking exactly like one that does.
+
+    Resolved here, in the local command, and only against a file that **is actually
+    there**: a rewrite that cannot be verified is not printed, and the caveat says which
+    directory the untouched path belongs to instead of leaving the reader to find out from
+    pytest. The op's own payload keeps the graph-relative id, which is the portable one.
+    """
+    from codemap.freshness import read_meta
+    meta = read_meta(getattr(args, "graph", None) or "") or {}
+    base = meta.get("roots_base")
+    if not base:
+        return ids, ("paths are relative to the build roots' common directory — run from "
+                     "there, or rebuild with this codemap so the sidecar records it")
+    out, resolved = [], 0
+    for nid in ids:
+        path, sep, tail = nid.partition("::")
+        full = os.path.join(base, path)
+        if os.path.exists(full):
+            out.append(os.path.relpath(full, os.getcwd()) + sep + tail)
+            resolved += 1
+        else:
+            out.append(nid)
+    if resolved != len(ids):
+        return out, (f"{len(ids) - resolved} of {len(ids)} path(s) could not be located on "
+                     f"this machine and are printed as the graph stores them — relative to "
+                     f"`{base}`")
+    return out, None
 
 
 def _cmd_report(args) -> int:

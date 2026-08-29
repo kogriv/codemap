@@ -65,7 +65,17 @@ from typing import Any
 #       ``codemap_schema`` is now *read* on load: a mismatch raises a diagnostic instead
 #       of being silently accepted (gaps/graph_provenance_2026-08-25 — the same tree
 #       built four commits apart gave 30 vs 38 edges under one declared schema).
-SCHEMA_VERSION = "0.12"
+# 0.13: R1-C31 — one path origin per graph, and consumer symbols have a file (issue #12).
+#       Every ``file`` in a repo-scoped graph is relative to the **nearest common ancestor
+#       of the roots' parents**, not to each root's own parent: with roots in different
+#       directories (`src/pkg` beside `tests/`, or both under `research/`) a single graph
+#       used to carry two coordinate systems and say so nowhere, so a printed path looked
+#       repo-relative when it was not. ``provenance.roots`` records each root relative to
+#       that origin rather than by basename — still no absolute path (D5); the origin
+#       itself is a machine location and stays in the ``*.meta.json`` sidecar as
+#       ``roots_base``. Function/class nodes under a consumer root now carry ``file``
+#       (they had ``lineno`` alone, so `search` answered a line number with no file).
+SCHEMA_VERSION = "0.13"
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship

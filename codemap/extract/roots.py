@@ -28,6 +28,7 @@ exact dotted mention (piggybacking the doc-parity convention).
 from __future__ import annotations
 
 import ast
+import os
 import re
 from pathlib import Path
 
@@ -37,6 +38,37 @@ from codemap.provenance import canonicalize
 from codemap.model import Edge, Graph, Node
 
 _CONSUMER_SKIP_DIRS = {"__pycache__", ".venv", ".git", "node_modules"}
+
+
+def roots_base(core: str | Path, consumers=(), docs=()) -> Path:
+    """The one directory every path in a repo-scoped graph is relative to (R1-C31).
+
+    Each root used to be its own origin: core files were written relative to the core
+    package's parent and consumer files relative to their own root's parent. When the
+    roots sit side by side those coincide and nothing shows; when they do not — `src/pkg`
+    beside `tests/`, or roots one level down in `research/` — a single graph carried two
+    coordinate systems and said so nowhere. Both `pkg/mod.py` and `tests/test_mod.py`
+    read as repo-relative, and at most one of them was.
+
+    So: one origin, the nearest common ancestor of every root's parent, and every `file`
+    in the graph relative to it. A single-package build is unaffected (one root, and its
+    parent is the origin as before). The directory itself is **not** stored in the graph
+    — that is a machine location (design D5); it goes in the sidecar, which is the file
+    that stays home.
+    """
+    parents = [Path(core).resolve().parent]
+    parents += [Path(p).resolve().parent for p in (*consumers, *docs)]
+    return Path(os.path.commonpath([str(p) for p in parents]))
+
+
+def _reroot_files(graph, offset: str) -> None:
+    """Prefix every node's ``file`` with ``offset`` (the core pass wrote them relative to
+    the core's own parent, which may be below the common origin)."""
+    if offset in ("", "."):
+        return
+    for node in graph.nodes.values():
+        if node.file:
+            node.file = f"{offset}/{node.file}"
 
 
 def extract_repo(
@@ -62,21 +94,35 @@ def extract_repo(
     for node in graph.nodes.values():
         node.extras.setdefault("root", "core")
 
+    # R1-C31: one origin for every path in this graph (see `roots_base`).
+    base = roots_base(core, consumers, docs)
+    _reroot_files(graph, _rel_to(Path(core).resolve().parent, base))
+
     index = _CoreIndex(graph, core_pkg)
     for path in consumers:
-        _scan_consumer_root(graph, Path(path).resolve(), index, mode)
+        _scan_consumer_root(graph, Path(path).resolve(), index, mode, base)
     for path in docs:
-        _scan_doc_root(graph, Path(path).resolve(), index)
+        _scan_doc_root(graph, Path(path).resolve(), index, base)
     # R1-C25: the roots are part of what this graph *is* — a core-only graph and a
     # repo-scoped one answer `impact` differently, and `diff` must not silently compare
-    # the two. Names only, never locations (design D5).
+    # the two. Relative to the graph's own origin, never an absolute location (design D5);
+    # a basename was less than that and lost the segment between origin and root (#12).
     graph.provenance = canonicalize({**graph.provenance, "roots": {
-        "core": Path(core).name,
-        "consumers": sorted(Path(p).name for p in consumers),
-        "docs": sorted(Path(p).name for p in docs),
+        "core": _rel_to(Path(core).resolve(), base),
+        "consumers": sorted(_rel_to(Path(p).resolve(), base) for p in consumers),
+        "docs": sorted(_rel_to(Path(p).resolve(), base) for p in docs),
         "mode": mode,
     }})
     return graph
+
+
+def _rel_to(path: Path, base: Path) -> str:
+    """``path`` relative to ``base``, as a posix string ("" when they are the same)."""
+    try:
+        rel = path.relative_to(base)
+    except ValueError:                      # not below base — cannot happen for a root
+        return path.name
+    return rel.as_posix() if rel.parts else ""
 
 
 # -- core resolver: dotted reference (incl. re-exports) -> canonical node id ---
@@ -164,11 +210,13 @@ class _CoreIndex:
 
 # -- consumer roots (.py) ----------------------------------------------------
 
-def _scan_consumer_root(graph: Graph, root_dir: Path, index: _CoreIndex, mode: str) -> None:
+def _scan_consumer_root(graph: Graph, root_dir: Path, index: _CoreIndex, mode: str,
+                        origin: Path | None = None) -> None:
     if not root_dir.is_dir():
         return
     label = root_dir.name
     base = root_dir.parent
+    origin = origin or base
     for py in sorted(root_dir.rglob("*.py")):
         if any(part in _CONSUMER_SKIP_DIRS for part in py.parts):
             continue
@@ -176,7 +224,7 @@ def _scan_consumer_root(graph: Graph, root_dir: Path, index: _CoreIndex, mode: s
             tree = ast.parse(py.read_text(encoding="utf-8"))
         except (OSError, SyntaxError):
             continue
-        _scan_consumer_module(graph, py, base, label, tree, index, mode)
+        _scan_consumer_module(graph, py, base, label, tree, index, mode, origin)
 
 
 def _module_id(py: Path, base: Path) -> str:
@@ -187,9 +235,11 @@ def _module_id(py: Path, base: Path) -> str:
     return ".".join(parts)
 
 
-def _scan_consumer_module(graph, py, base, label, tree, index, mode) -> None:
+def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None) -> None:
+    # the id is the import path (relative to the root's parent); the file is a location
+    # (relative to the graph's one origin). They differ whenever a root sits deeper.
     mod_id = _module_id(py, base)
-    rel = str(py.resolve().relative_to(base))
+    rel = py.resolve().relative_to(origin or base).as_posix()
     graph.add_node(Node(id=mod_id, kind="module", file=rel, extras={"root": label}))
 
     symbol_map, module_aliases, flat_targets = _consumer_imports(tree, index)
@@ -206,7 +256,7 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode) -> None:
             graph.add_edge(Edge("imports", mod_id, cm, extras=extras))
 
     if mode == "full":
-        _materialize_defs(graph, tree, mod_id, label)
+        _materialize_defs(graph, tree, mod_id, label, rel)
 
     # use edges: (source_id, target_id) -> {called?, arg shapes at call-sites}.
     uses: dict[tuple[str, str], dict] = {}
@@ -314,11 +364,14 @@ def _is_module(graph, node_id) -> bool:
 
 # -- full mode: materialize consumer defs -----------------------------------
 
-def _materialize_defs(graph, tree, mod_id, label) -> None:
+def _materialize_defs(graph, tree, mod_id, label, file: str | None = None) -> None:
+    # R1-C31 (#12): with no `file`, a consumer symbol answered `search` as a line number
+    # and nothing else — `{"file": null, "lineno": 278}` — while every core symbol carried
+    # both. The module node had the path all along; the def nodes simply were not given it.
     for fnode, class_stack in _defs(tree):
         node_id = ".".join([mod_id, *class_stack, fnode.name])
         kind = "class" if isinstance(fnode, ast.ClassDef) else "function"
-        graph.add_node(Node(id=node_id, kind=kind, lineno=fnode.lineno,
+        graph.add_node(Node(id=node_id, kind=kind, file=file, lineno=fnode.lineno,
                             extras={"root": label}))
         parent = ".".join([mod_id, *class_stack]) if class_stack else mod_id
         graph.add_edge(Edge("contains", parent, node_id))
@@ -382,10 +435,11 @@ def _doc_patterns(core_pkg: str):
     return from_import, dotted
 
 
-def _scan_doc_root(graph: Graph, root_dir: Path, index: _CoreIndex) -> None:
+def _scan_doc_root(graph: Graph, root_dir: Path, index: _CoreIndex,
+                   origin: Path | None = None) -> None:
     if not root_dir.is_dir():
         return
-    base = root_dir.parent
+    base = origin or root_dir.parent
     patterns = _doc_patterns(index.core_pkg)
     for md in sorted(root_dir.rglob("*.md")):
         try:

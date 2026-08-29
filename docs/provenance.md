@@ -6,7 +6,7 @@ tree, and a claim without its qualifiers cannot be checked.
 
 ```json
 {
-  "codemap_schema": "0.12",
+  "codemap_schema": "0.13",
   "target": "bquant",
   "provenance": {
     "scope_id": "sha256:a14c14e0…",
@@ -30,7 +30,32 @@ tree, and a claim without its qualifiers cannot be checked.
 | `inputs.python_files` | how many `.py` files the walk found — the input half of the conservation check below |
 | `inputs.skipped` | files that produced **no module**, each with a reason (`syntax` / `encoding` / `io` / `unread`). Absent when there are none |
 | `inputs.aliased_modules` | modules skipped because their real file was already read under another name (a directory symlink). Absent when there are none |
-| `roots` | present on a repo-scoped build (`--consumer` / `--docs`): core, consumers, docs, mode — names only |
+| `roots` | present on a repo-scoped build (`--consumer` / `--docs`): core, consumers, docs, mode — each **relative to the graph's path origin**, never absolute (see below) |
+
+## One origin for every path (schema 0.13)
+
+Every `file` in a graph is relative to a single directory: the nearest common ancestor of
+the roots' parents. Before 0.13 each root was its own origin — core files relative to the
+core package's parent, consumer files relative to their own root's parent — which coincide
+when the roots sit side by side and diverge silently when they do not
+([#12](https://github.com/kogriv/codemap/issues/12)):
+
+```
+codemap build src/pkg --mode full --consumer tests
+   0.12:  pkg/mod.py          ← relative to src/
+          tests/test_mod.py   ← relative to the repo root
+   0.13:  src/pkg/mod.py      ← both relative to the repo root
+          tests/test_mod.py
+```
+
+Both read as repo-relative; at most one of them was, and the artifact said nothing. A
+single-package build is unchanged, which is why the packaged dogfood never showed it.
+
+**Where that directory *is* stays out of the graph**, because it is a machine location and
+the graph is the half that travels. It goes in the sidecar as `roots_base`, so a *local*
+command can turn a graph path into one that runs from where you are standing — which is
+what makes the `pytest …` line `codemap tests` prints paste-able. See
+[test-mapping.md](test-mapping.md).
 
 ## Two rules the block obeys
 
@@ -51,7 +76,7 @@ deliberate: **identity travels with the graph, the rebuild recipe stays home.**
 |---|---|
 | tool name / version / commit | `argv` — the exact invocation |
 | `tier` | `built_at` — wall clock |
-| `scope_id`, `roots` (names) | `cwd` — absolute, machine-local |
+| `scope_id`, `roots` (relative) | `cwd`, `roots_base` — absolute, machine-local |
 | `source` commit + dirty | the per-file hash list (a rebuild input) |
 
 `scope_id` is in both on purpose: in the graph it is *identity*, in the sidecar it is

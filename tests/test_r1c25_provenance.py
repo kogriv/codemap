@@ -179,10 +179,24 @@ def test_a_fresh_build_says_nothing_about_schema(g):
     assert schema_diagnostic(g) is None
 
 
-@pytest.mark.parametrize("declared,status", [("0.11", "older"), ("0.13", "newer")])
+def _older_schema() -> str:
+    major, minor = SCHEMA_VERSION.split(".")
+    return f"{major}.{int(minor) - 1}"
+
+
+def _newer_schema() -> str:
+    major, minor = SCHEMA_VERSION.split(".")
+    return f"{major}.{int(minor) + 1}"
+
+
+@pytest.mark.parametrize("declared,status",
+                         [(_older_schema(), "older"), (_newer_schema(), "newer")])
 def test_loading_a_mismatched_graph_warns(declared, status):
     """The evidence pair: an 0.11 graph read by this tool used to be consumed in
-    silence, and answered with today's confidence over yesterday's blindness."""
+    silence, and answered with today's confidence over yesterday's blindness.
+
+    Both versions are computed from ``SCHEMA_VERSION`` rather than written down: pinning
+    the "newer" one made this test go quietly green the day the tool reached it."""
     d = schema_diagnostic(Graph.from_dict(
         {"codemap_schema": declared, "target": "t", "nodes": [], "edges": []}))
     assert d["code"] == SCHEMA_MISMATCH and d["severity"] == "warning"

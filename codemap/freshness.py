@@ -26,15 +26,22 @@ def meta_path(graph_path: str) -> str:
 
 
 def write_meta(graph_path: str, *, argv: list[str], cwd: str, target: str,
-               scope: dict | None = None) -> None:
+               scope: dict | None = None, roots_base: str | None = None) -> None:
     """Record the build recipe beside a freshly-written graph (best-effort).
 
     ``scope`` (M19.A) is the input manifest — ``{scope_id, profile, git, files}`` —
     so a graph's exact input is provable/diffable. Provenance, not structure: it lives
     in the sidecar, never in the timestamp-free ``graph.json``.
+
+    ``roots_base`` (R1-C31) is the directory the graph's ``file`` paths are relative to.
+    It is an absolute, machine-local path, which is precisely why it lives here and not in
+    the graph (design D5/D6: identity travels, location stays home). With it a local
+    command can turn a graph path into one that runs from where the user is standing.
     """
     meta = {"built_at": round(time.time()), "argv": list(argv),
             "cwd": cwd, "target": target}
+    if roots_base:
+        meta["roots_base"] = roots_base
     if scope is not None:
         meta["scope"] = scope
     try:
