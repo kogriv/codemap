@@ -189,6 +189,23 @@ milestone was: installed from PyPI into a clean venv, run from a directory conta
 commit, which is the correct no-checkout answer. The page carries `license_expression: MIT`, five project
 URLs, twelve classifiers and `requires_python >=3.11`.
 
+**0.0.4 published 2026-08-29:** [`codmap` 0.0.4](https://pypi.org/project/codmap/0.0.4/), schema **0.13**.
+Same procedure, from a clean tree at the pushed commit `45de657`; `twine check` PASSED on both artifacts.
+Verified from PyPI in a clean venv, in a directory containing no codemap source: schema 0.13,
+`provenance.tool` = `{"name": "codemap", "version": "0.0.4"}` with no commit — the correct no-checkout
+answer — plus the two behaviours the release exists for, checked on a built graph rather than assumed: a
+call through a function-local import to a **re-exported** name resolved on the fast tier (R1-C30/f1), and a
+consumer symbol carrying a `file` (R1-C31).
+
+**And the release found one of its own.** `codemap/__init__.py` declared `__version__ = "0.0.2"` while
+0.0.3 was on PyPI — a literal that had drifted a release behind, stamping the wrong version into every SCIP
+index and ctags file. Graphs were unaffected, and the reason is the interesting part: `provenance` asks
+`importlib.metadata` (D2 above) instead of reading the literal, so the one place the number *had* to be
+right never consulted the copy that was wrong. The literal now reads the same source, and two tests hold
+it: the two agree, and the installed metadata matches `pyproject.toml`. A version in two files is the same
+shape as a scope in two files (M19) or a debounce with its own notion of change (M3.2-f1) — one source, or
+it drifts.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
