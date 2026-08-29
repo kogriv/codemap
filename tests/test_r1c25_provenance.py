@@ -129,6 +129,29 @@ def test_the_tool_name_and_the_distribution_name_are_not_the_same_string():
         f"step with provenance.DIST_NAME?")
 
 
+def test_the_package_version_is_not_a_second_copy_of_the_number():
+    """`codemap.__version__` was a literal, and it drifted: it said 0.0.2 while `codmap`
+    0.0.3 was on PyPI, so every SCIP index and ctags file stamped a version the package
+    had not been for a release. Graphs were right the whole time, because provenance asked
+    `importlib.metadata` instead of reading the literal — so the fix was to give the
+    literal the same source, not to remember to bump it."""
+    import codemap
+    from codemap.provenance import tool_version
+    assert codemap.__version__ == tool_version()
+
+
+def test_the_declared_version_matches_pyproject():
+    """The installed metadata and the file that declares it, in step — the check that
+    would have caught the drift above at the release before it shipped."""
+    import re
+    import codemap
+    text = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text("utf-8")
+    declared = re.search(r'^version\s*=\s*"([^"]+)"', text, re.M).group(1)
+    assert codemap.__version__ == declared, (
+        "the installed distribution and pyproject disagree — reinstall the editable "
+        "package, or the version stamped into exports is a release behind")
+
+
 def test_the_distribution_name_matches_pyproject():
     """The two live in different files; nothing but this test keeps them in step."""
     import re

@@ -44,12 +44,18 @@ MATCH, OLDER, NEWER, UNKNOWN = "match", "older", "newer", "unknown"
 # -- tool identity (D2) -------------------------------------------------------
 
 @lru_cache(maxsize=1)
-def _tool_version() -> str | None:
+def tool_version() -> str | None:
+    """The installed distribution's version, or None when it is not installed.
+
+    The single source: `codemap.__version__` reads it too, having drifted a release
+    behind while it was a literal.
+    """
     from importlib.metadata import PackageNotFoundError, version
     try:
         return version(DIST_NAME)
     except (PackageNotFoundError, ImportError):
         return None
+
 
 
 @lru_cache(maxsize=8)
@@ -98,7 +104,7 @@ def tool_identity() -> dict:
     """
     root = Path(__file__).resolve().parent.parent
     ident: dict = {"name": TOOL_NAME}
-    version, commit, dirty = _tool_version(), _tool_commit(), _is_dirty(root)
+    version, commit, dirty = tool_version(), _tool_commit(), _is_dirty(root)
     if version:
         ident["version"] = version
     if commit:

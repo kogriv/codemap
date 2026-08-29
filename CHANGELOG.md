@@ -5,7 +5,27 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-08-29
+
+**Two days of a second real user, and a schema bump.** Everything below is `Fixed`, and all but one item
+came from someone else's tree: a lab running codemap on a **flat, 47-module** layout filed four issues in
+two days, each of which turned out to be wider than reported. Schema **0.12 → 0.13**: a repo-scoped graph
+now has one origin for its paths, so rebuild those (a single-package graph is byte-identical and needs
+nothing).
+
+The theme, stated once because it repeated: **three of the six defects were in presentation, not in
+computation** — a gate that judged a subset and printed an unqualified ✅, a `pytest` line naming a path
+that does not exist, and `--format json` answering with the whole graph. The graph was right all three
+times. An answer shaped exactly like the right one is what stops a reader from checking it, which is the
+same discipline as `unknown ≠ none`, applied to form instead of content.
+
 ### Fixed
+
+- **`codemap.__version__` was a second copy of the version, and it had drifted** — it read `0.0.2` while
+  `codmap` 0.0.3 was on PyPI, so every SCIP index and ctags file stamped a version the package had not been
+  for a release. Graphs were unaffected: `provenance` asks `importlib.metadata` rather than reading the
+  literal, which is exactly why the literal was free to rot. It now reads the same source, and two tests
+  hold it there — one that the two agree, one that the installed metadata matches `pyproject.toml`.
 
 - **`report --format json` printed the graph instead of the report** (R1-C32,
   [#14](https://github.com/kogriv/codemap/issues/14)). The format branch sat above the dispatch on the
