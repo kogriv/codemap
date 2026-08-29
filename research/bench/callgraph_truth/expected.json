@@ -149,5 +149,23 @@
       ]
     ],
     "note": "a call inside a closure is attributed to the innermost enclosing definition node (R1-C22 D3, issue #7): outer->helper is emitted on both tiers, carrying extras.via='nested' because the call's *existence* is certain while its source node is an approximation of location. Before R1-C22 the whole closure body was dropped and this edge did not exist — the label recorded that limitation as if it were the right answer, even though this case's own docstring already called outer->helper the resolvable edge. Still not modelled: outer->inner and inner->helper, since `inner` is not a definition node (materializing closure nodes remains future work)."
+  },
+  "c11_local_import": {
+    "difficulty": "decidable",
+    "expected": [
+      [
+        "go",
+        "leaf.helper",
+        "fast"
+      ],
+      [
+        "module_level",
+        "leaf.other",
+        "fast"
+      ]
+    ],
+    "ceiling": [],
+    "limitation": [],
+    "note": "R1-C30: a call through a function-local import. Resolved on both tiers since the fast resolver reads a per-function import map; before it, deep resolved it and fast did not, which read as a deep-only capability and was really a missing map. `elsewhere -> leaf.helper` is deliberately NOT listed anywhere: it is not a true relationship at all (the name is unbound there), so emitting it would count against precision — which is the point of the case, since the cheap way to raise recall here is to merge the local import into the module map and resolve it for every sibling function."
   }
 }

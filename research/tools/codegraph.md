@@ -283,6 +283,16 @@ that filed #11, which uses function-local imports deliberately to keep the modul
 tool would report their fix as their problem. codemap's split (`cycles` = breaks at import time,
 `lazy_cycles` = coupling that does not) exists because of that.
 
+**Update, next day (R1-C30).** Answering the same question of our own *call* tier found the mirror of
+their defect, in the opposite direction. Their dependency graph is derived from call edges, so a lazy
+import is seen only when the symbol is called; codemap's call edges were derived from a **module-level**
+name map, so a call *through* a lazy import was seen only on the deep tier — jedi resolved it, the default
+fast tier did not. Neither tool had one mechanism answering both questions; both had one mechanism whose
+blind spot the other question inherited. The fix keeps the two separate — the import map reads import
+statements, the call map reads a per-function name scope — because merging them is exactly what produces
+their `dict.get` → unrelated-class edges. Fast now matches deep on that construct: +84 `calls` edges over
+two dogfood targets, all 84 confirmed against an independent deep build.
+
 **And one thing they get right by not having it.** codemap's worst error here was a *sentence* — `_none —
 import graph is acyclic._`, a property claim over a partial map. CodeGraph cannot make that mistake: the
 API returns an array and there is no renderer, no prose, no summary line. A tool with no human-facing

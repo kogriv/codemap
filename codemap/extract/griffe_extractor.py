@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import ast
 import os
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -29,7 +28,7 @@ from codemap.extract.attrflow import add_attrflow
 from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import add_dispatch, add_family_links
-from codemap.extract.gsource import module_file, module_identity
+from codemap.extract.gsource import NESTED_IMPORT_HINT, module_file, module_identity
 from codemap.provenance import build_provenance
 from codemap.model import Edge, Graph, Node
 
@@ -39,14 +38,6 @@ _NODE_KINDS = {"module", "class", "function", "attribute"}
 #: Why an input file produced no module (R1-C23 / design D2).
 SKIP_ENCODING, SKIP_SYNTAX, SKIP_IO, SKIP_UNREAD = "encoding", "syntax", "io", "unread"
 
-#: Gate before re-parsing a module for the imports griffe does not record: an *indented*
-#: import (nested in a function or class body) or a star import. A module-level import is
-#: never indented, so the common file — imports at the top and nowhere else — is skipped
-#: without a parse. griffe discards its own AST, so the alternative is a second parse of
-#: every module, measured at ~25% of the fast tier on a 90-module package. A false
-#: positive (the text inside a string literal) costs one parse that finds nothing; the
-#: answer stays exact, because the gate only decides whether to look.
-_NESTED_IMPORT_HINT = re.compile(r"^[ \t]+(?:from|import)\s|import\s+\*", re.MULTILINE)
 
 
 @dataclass
@@ -218,7 +209,7 @@ def _source_import_targets(module) -> list[tuple[str, str]]:
         src = module.source
     except Exception:                       # no source (namespace dir, synthetic)
         return []
-    if not _NESTED_IMPORT_HINT.search(src):
+    if not NESTED_IMPORT_HINT.search(src):
         return []
     try:
         tree = ast.parse(src)

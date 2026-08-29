@@ -32,6 +32,15 @@ two real packages, codemap's own included). All three are modelled now:
 | **type annotation** | `def render(...) -> Report:` | `references`, `extras.resolution="annotation"` |
 | **module-level call** | `_register_all_indicators()` at import time | `calls`, sourced from the **module** node |
 | **call inside a closure** | a call in a nested `def` or a dynamically-built class body | `calls` from the innermost enclosing definition, `extras.via="nested"` |
+| **used through a function-local import** | `def go(): from .leaf import helper; return helper(x)` | `calls` / `references`, `extras.resolution="imported"` (R1-C30) |
+
+The last one is the youngest, and it is the form most likely to hide a live symbol: a lazy
+import is what a developer writes when the dependency is awkward, which usually means it is
+load-bearing. Before R1-C30 the fast tier could not see it, so such a symbol could be graded
+dead while being called on every run. Measured when it landed, the honest version: on both
+dogfood trees the **banded lists did not change** — but three symbols went from zero inbound
+edges to one, among them codemap's own `DebouncedPoller`, which the whole `codemap watch`
+loop is built on and which its own graph showed as used by nothing.
 
 Two of those are missing **call** edges, so this was never only a dead-code question:
 `impact`, `callers` and `flows` were reading a call graph with import-time work and

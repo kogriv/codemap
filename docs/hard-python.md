@@ -107,8 +107,9 @@ explosion without knowing what a symlink is.
 
 - A function-local `from .x import a_fn` **is** in the import map since R1-C29 (issue #11),
   carried on the edge as `extras.scope = "function"`, so it counts for coupling, layers,
-  dependents and orphan detection. It is still not resolved for *call/reference* purposes
-  on the fast tier, and it is deliberately not treated as *shadowing* — see
+  dependents and orphan detection. Since R1-C30 it also resolves *calls and references* on
+  both tiers — the name map is built per function, so an import in one function resolves
+  nothing in its neighbours. It is deliberately not treated as *shadowing* — see
   [dead-code.md](dead-code.md). It is also excluded from **import cycles** on purpose: a
   lazy import does not run at import time, so a cycle closed only by one cannot break on
   import. Those appear separately, as "dependency cycles closed only by a function-local

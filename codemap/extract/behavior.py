@@ -27,7 +27,8 @@ import ast
 import math
 from pathlib import Path
 
-from codemap.extract.gsource import module_file, module_imports
+from codemap.extract.gsource import (NESTED_IMPORT_HINT, module_file, module_imports,
+                                     qualify_target)
 from codemap.model import Edge
 
 _BUILTINS = set(vars(__import__("builtins")))
@@ -65,31 +66,38 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
         except (OSError, SyntaxError):
             continue
         imports = module_imports(mod, modpath, known_modules)  # R1-C21: flat-aware
+        # R1-C30: names a function imports in its own body, gated on the same indented-
+        # import rule the structural pass uses — an ordinary module costs no extra walk.
+        local_imports = (_local_import_maps(tree, modpath, fp.name == "__init__.py",
+                                            known_modules)
+                         if NESTED_IMPORT_HINT.search(source) else {})
         modmembers = set(mod.members.keys())
         script = _jedi_script(source, fp, project) if deep else None
         nested: dict[tuple[str, str], dict] = {}
         for fnode, class_stack, scope in _named_functions_scoped(tree):
             node_id = _node_id(modpath, class_stack, fnode.name)
+            local = local_imports.get(id(fnode))
+            fn_imports = {**imports, **local} if local else imports
             if node_id not in graph.nodes:
                 # R1-C22 D3: a closure / dynamically-built class body is not a definition
                 # node, but the calls inside it are real. Attribute them to the innermost
                 # definition that *does* exist instead of discarding them.
                 owner = _nearest_owner(graph, modpath, scope)
                 if owner is not None:
-                    _collect_nested_calls(graph, owner, fnode, modpath, imports,
+                    _collect_nested_calls(graph, owner, fnode, modpath, fn_imports,
                                           modmembers, script, target_pkg, nested,
                                           known_modules)
                 continue
             members = _class_members(mod, class_stack, modules) if class_stack else {}
             class_prefix = ".".join([modpath, *class_stack]) if class_stack else ""
-            def fast(call, _cp=class_prefix, _im=imports, _mm=modmembers, _me=members):
+            def fast(call, _cp=class_prefix, _im=fn_imports, _mm=modmembers, _me=members):
                 return _resolve(call, modpath, _cp, _im, _mm, _me)
             resolve = (_deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules)
                        if script else fast)
             _process_function(graph, node_id, fnode, resolve)
             # R1-C22 D1: functions/classes named as *values* here (dispatch tables,
             # `default=` callbacks) — a use the call layer cannot see.
-            _emit_name_references(graph, node_id, fnode, modpath, imports, modmembers,
+            _emit_name_references(graph, node_id, fnode, modpath, fn_imports, modmembers,
                                   decorators_of=fnode)
         # R1-C22 D2: module-level statements are a scope of their own, never walked
         # above — import-time calls and dispatch tables live here.
@@ -99,6 +107,79 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                        if script else mod_fast)
         _process_module_level(graph, modpath, tree, mod_resolve, imports, modmembers)
         _emit_nested_calls(graph, nested)
+
+
+# -- function-local imports (R1-C30) -----------------------------------------
+
+def _local_import_maps(tree, modpath: str, is_pkg: bool, known_modules) -> dict[int, dict]:
+    """``id(function node) -> {bound name: import target}`` for imports written *inside* it.
+
+    R1-C29 taught the **import map** to see a function-local import; call resolution was
+    left as it was, so `def go(): from leaf import helper; return helper(x)` produced a
+    module→module `imports` edge and still no `calls` edge on the fast tier. Deep (jedi)
+    resolved it, which made the asymmetry look like a deep-only capability question when
+    it was really a missing map — the same shape as the R1-C29 finding, one layer down.
+
+    **Per function, never merged into the module map.** A name imported inside `go` is
+    bound in `go`'s scope and nowhere else; folding these into the module-level map would
+    resolve `helper(x)` in a sibling function that never imported it — buying recall with
+    exactly the false edges we hold against the tools that walk name-matched call edges.
+    Enclosing *function* scopes are inherited, because Python's lexical scoping really does
+    make an outer function's import visible in a closure; a **class body** is not, since
+    class scope is not visible inside its methods, so imports written there are ignored
+    here (they are still eager dependencies, and the import graph records them as such).
+
+    Order within a function is not modelled: an import at the bottom of a body resolves a
+    call above it. That is the same approximation the module-level map already makes, and
+    it errs toward the resolution the reader expects.
+    """
+    base = modpath.split(".") if is_pkg else modpath.split(".")[:-1]
+
+    def target_of(node: ast.ImportFrom) -> str:
+        if node.level:
+            anchor = base[:len(base) - (node.level - 1)]
+            return ".".join(anchor + ([node.module] if node.module else []))
+        return node.module or ""
+
+    maps: dict[int, dict] = {}
+
+    def collect(stmt, into: dict) -> None:
+        if isinstance(stmt, ast.Import):
+            for a in stmt.names:
+                # `import a.b` binds `a` (griffe records the same head→head shape);
+                # `import a.b as c` binds `c` to the full path.
+                bound = a.asname or a.name.split(".")[0]
+                target = a.name if a.asname else a.name.split(".")[0]
+                into[bound] = qualify_target(target, modpath, known_modules)
+        else:
+            target = target_of(stmt)
+            if not target:
+                return
+            for a in stmt.names:
+                if a.name == "*":
+                    continue          # a local star import binds names we cannot name
+                into[a.asname or a.name] = qualify_target(f"{target}.{a.name}",
+                                                          modpath, known_modules)
+
+    def visit(node, chain: dict | None, direct: dict | None) -> None:
+        """``chain`` is what nested functions inherit; ``direct`` is where imports at this
+        level land (``None`` at module level — griffe already has those — and in a class
+        body, whose bindings no method can see)."""
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                own = dict(chain) if chain else {}
+                maps[id(child)] = own
+                visit(child, own, own)
+            elif isinstance(child, ast.ClassDef):
+                visit(child, chain, None)
+            elif isinstance(child, (ast.Import, ast.ImportFrom)):
+                if direct is not None:
+                    collect(child, direct)
+            else:
+                visit(child, chain, direct)
+
+    visit(tree, None, None)
+    return {k: v for k, v in maps.items() if v}
 
 
 # -- jedi (deep tier) --------------------------------------------------------

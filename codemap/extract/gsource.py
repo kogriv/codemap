@@ -18,7 +18,16 @@ list, so each site sailed past its own check straight into ``Path(list)``.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+#: A file worth re-parsing for imports griffe's module-level map does not carry: an
+#: **indented** import (nested in a function or a class body) or a star import. A
+#: module-level import is never indented, so the ordinary file — imports at the top and
+#: nowhere else — is skipped without a parse. Shared so the two passes that need those
+#: imports (the import graph in `griffe_extractor`, call resolution in `behavior`) gate
+#: on one rule instead of two that can drift apart.
+NESTED_IMPORT_HINT = re.compile(r"^[ \t]+(?:from|import)\s|import\s+\*", re.MULTILINE)
 
 
 def module_file(obj) -> Path | None:
@@ -72,12 +81,20 @@ def module_imports(mod, modpath: str, known_modules) -> dict[str, str]:
     ``imports`` edge, which carries ``extras.resolution="flat"``.
     """
     imports = dict(getattr(mod, "imports", None) or {})
+    return {name: qualify_target(target, modpath, known_modules)
+            for name, target in imports.items()}
+
+
+def qualify_target(target: str, modpath: str, known_modules) -> str:
+    """One import target, package-qualified if it names a flat-layout sibling (R1-C21).
+
+    The rule of :func:`module_imports` for a single entry, so the function-local import
+    map (R1-C30) reaches the same verdict as the module-level one instead of re-deriving
+    the layout inference a third time.
+    """
     if "." not in modpath:
-        return imports
+        return target
     parent, pkg = modpath.rsplit(".", 1)[0], modpath.split(".", 1)[0] + "."
-    out = {}
-    for name, target in imports.items():
-        if not target.startswith(pkg) and f"{parent}.{target.split('.', 1)[0]}" in known_modules:
-            target = f"{parent}.{target}"
-        out[name] = target
-    return out
+    if not target.startswith(pkg) and f"{parent}.{target.split('.', 1)[0]}" in known_modules:
+        return f"{parent}.{target}"
+    return target

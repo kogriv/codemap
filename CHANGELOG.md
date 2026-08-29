@@ -7,6 +7,33 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **The other half of the same blind spot: a call *through* a function-local import** (R1-C30,
+  remainder of [#11](https://github.com/kogriv/codemap/issues/11)). R1-C29 taught the import map to see
+  `def go(): from leaf import helper; return helper(x)`; call resolution still could not, so `--deep`
+  produced the `calls` edge and the **default** fast tier — the one `codemap watch` runs in a loop — did
+  not. That made the reporter's asymmetry ("the call resolves, the import does not") true of deep and
+  backwards on fast, where both halves were blind. The fast resolver now reads a **per-function** import
+  map: a name imported inside a function is bound in that function and inherited only where Python
+  inherits it (a closure sees the enclosing function's import; a class body's import is *not* visible in
+  its methods). Merging these into the module map would have been shorter and would have resolved
+  `helper(x)` in a sibling function that never imported it — the false-edge shape this project holds
+  against tools that walk name-matched call edges, so the guard is a test, not a comment. Measured
+  against a **deep build from the previous commit** as an independent reference: `calls` 962 → 986 on
+  bquant and 442 → 502 on codemap itself, **84 new edges, 84 confirmed by jedi, none lost**; the
+  deep∖fast gap narrowed 600 → 576 and 225 → 165. `references` grew too (the same map feeds the
+  used-as-a-value layer): +9 on bquant, +1 on codemap. The banded dead-code report did not move on either
+  tree — but **three symbols went from zero inbound edges to one**, and one of them is codemap's own
+  `DebouncedPoller`: `codemap query DebouncedPoller` on codemap's own graph returned no `used_by` block at
+  all, because the only thing that constructs it imports it inside `_cmd_watch`. The watcher this project
+  shipped last week looked, in this project's own graph, used by nothing. The accuracy micro-suite gained `c11_local_import`, whose second function calls
+  the same bare name without importing it, so the cheap way to win this recall registers as a precision
+  loss rather than a better score; suite recall over all true edges: fast 57.1% → **64.7%**, deep 60.0% →
+  **66.7%**, precision unchanged at 100%. **Cost:** no extra parse (the behavioral pass already holds the
+  AST) and the same indented-import gate as R1-C29, now shared between the two passes instead of written
+  twice — **3.3% of the behavioral pass** on bquant, 4.1% on codemap. Still not resolved on fast:
+  `import pkg.leaf` followed by `pkg.leaf.other()` (an attribute chain, not a name — a pre-existing limit
+  of the fast resolver at module level too) and a function-local `import *`.
+
 - **A function-local import was invisible, and the report called that "acyclic"** (R1-C29,
   [#11](https://github.com/kogriv/codemap/issues/11)). The import map was built from module-level
   imports only — a limitation recorded about the *extractor* and never traced to the *consumers*, who

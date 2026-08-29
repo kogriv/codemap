@@ -227,3 +227,104 @@ timings on this machine vary by ±30% run to run, so they are not a usable instr
 this resolution; that is why the number above is the isolated pass and not the wall clock
 of `codemap build`. Stating the noisier number would have been easier and would have meant
 nothing.
+
+---
+
+## 10. The other half: the *call* layer had the same blind spot (R1-C30)
+
+R1-C29 closed the **import map**. Call resolution was left exactly as it was, and the
+reporter's own three-file example separated the two cleanly:
+
+```python
+# user.py
+def go(x):
+    from leaf import helper
+    return helper(x)
+```
+
+| tier | `calls user.go -> leaf.helper` |
+|---|---|
+| `--deep` (jedi) | ✅ |
+| fast (default) | ✖ |
+
+That asymmetry is why the issue read as "the tool can see it, the map cannot": on deep it
+was true. On **fast** — the default tier, and the one `codemap watch` runs in a loop —
+both halves were blind, and the graph a `watch` loop keeps warm was the poorer one.
+
+### The measurement
+
+An independent AST walk over both dogfood targets, counting names bound by an import
+written inside a function and the call sites that use them:
+
+| tree | modules | functions with a local import | internal names bound | call sites through them |
+|---|---:|---:|---:|---:|
+| bquant | 88 | 58 | 46 | 45 |
+| codemap | 51 | 45 | 65 | 62 |
+
+Not a corner case on either tree, and denser on codemap itself than on the target it was
+found against — `_cmd_*` handlers import their implementation locally to keep CLI startup
+cheap, which is the same "deliberate laziness" pattern the issue was about.
+
+### The constraint, which is the whole design
+
+A name imported inside `go` is bound in `go`'s scope and nowhere else. Merging these into
+the module-level map would resolve `helper(x)` in a **sibling function that never imported
+it** — recall bought with exactly the false-edge shape this project holds against tools
+that walk name-matched call edges (`dict.get` resolving into an unrelated class, gap §4).
+So the map is per function, with two rules taken from Python's own scoping rather than from
+convenience:
+
+- an **enclosing function's** import is inherited — a closure really does see it;
+- a **class body's** import is not visible inside its methods, so it is not collected here
+  (it remains an eager dependency, and the import graph records it as one since R1-C29).
+
+Order within a body is not modelled: an import at the bottom of a function resolves a call
+above it. Same approximation the module-level map already makes.
+
+### Result, checked against an independent tier
+
+Fast tier, both targets, and every new edge verified against a **deep build from the
+previous commit** — jedi's answer, computed by code this change never touched:
+
+| tree | `calls` before | after | new | confirmed by deep | lost |
+|---|---:|---:|---:|---:|---:|
+| bquant | 962 | 986 | +24 | **24 / 24** | 0 |
+| codemap | 442 | 502 | +60 | **60 / 60** | 0 |
+
+84 of 84. The deep∖fast gap narrowed from 600 to 576 edges on bquant and from 225 to 165
+on codemap (−27%); the fast∖deep direction did not move, i.e. nothing was invented that
+jedi disagrees with. `references` edges — the same name map feeds the "used as a value"
+layer (R1-C22 D1) — grew by 9 and 1.
+
+The banded **dead-code report did not change** on either tree, and that is worth stating
+rather than implying the improvement: its bands cover private functions and orphan modules,
+and none of the ten new references landed on one. What did change is narrower and sharper —
+**three symbols went from zero inbound edges to one**: `PandasTALoader`, `TALibLoader`, and
+codemap's own `DebouncedPoller`. Before this change, `codemap query DebouncedPoller` on
+codemap's own graph returned no `used_by` block at all: the only code that constructs it
+imports it inside `_cmd_watch`, to keep CLI startup cheap. The watcher shipped the day
+before looked, in this project's own graph, used by nothing.
+
+The micro-suite gained `c11_local_import`, whose second function calls the same bare name
+*without* importing it: the cheap way to win this recall shows up there as a precision
+loss, not as a better score. Suite recall over all true edges: fast 57.1% → **64.7%**,
+deep 60.0% → **66.7%**, precision unchanged at 100% on both.
+
+### Cost
+
+No extra parse — the behavioral pass already has the module's AST — and the same
+indented-import gate as §9, now shared between the two passes instead of written twice.
+36 of 88 bquant modules and 17 of 51 codemap modules pass that gate. Measured in-process,
+the map build against the behavioral pass in the same runs: **3.3%** of it on bquant,
+**4.1%** on codemap. Absolute times are not quoted: the machine was loaded (load average
+18) while these ran, so the ratio is the honest instrument and the wall clock is not.
+
+### What this does *not* cover
+
+- `import pkg.leaf` (dotted, unaliased) followed by `pkg.leaf.other()` stays unresolved on
+  fast — the receiver is an attribute chain, not a name, which is a pre-existing limit of
+  the fast resolver at module level too, not something this change introduced. `import
+  pkg.leaf as lf` resolves.
+- `from x import *` inside a function binds names that cannot be enumerated statically; the
+  dependency is on the `imports` edge, the call stays unresolved rather than guessed.
+- A class-body import still resolves no calls anywhere, by the scoping rule above.
