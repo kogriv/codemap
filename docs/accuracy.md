@@ -13,7 +13,7 @@ Two things are measured here, both reproducible:
   `grep`. *Is the graph worth building?*
 
 > **TL;DR.** On statically-decidable calls the deep tier is sound (100% precision, 100% recall on the
-> labeled suite) and it *marks* what it cannot resolve. Overall recall against *all* true edges is ~67% on
+> labeled suite) and it *marks* what it cannot resolve. Overall recall against *all* true edges is ~68% on
 > the suite and ~26% of raw call-sites resolve to internal targets on a real package — the rest are calls
 > into third-party libraries (~46%) or genuinely undecidable dynamic dispatch (~28%). That gap is the price
 > of Python's dynamism, not a bug, and it is the same ceiling every sound static tool hits (~99% precision /
@@ -41,28 +41,32 @@ practical limit of *sound* static analysis on a dynamic language.
 
 ### The micro-suite result
 
-11 cases span the spectrum from trivially-decidable to provably-undecidable. Metrics per tier
+12 cases span the spectrum from trivially-decidable to provably-undecidable. Metrics per tier
 (`fast` = stdlib-ast resolver, `deep` = jedi type inference):
 
 | Tier | Precision | Recall (decidable) | Recall (all true) | Phantom edges |
 |---|---|---|---|---|
-| fast | 100% | 100% | 64.7% | 0 |
-| **deep** | **100%** | **100%** | **66.7%** | 0 |
+| fast | 100% | 100% | 66.7% | 0 |
+| **deep** | **100%** | **100%** | **68.4%** | 0 |
 
 Reading it:
 
 - **Precision (deep) = 100%** — every emitted edge is a real call. No invented edges.
 - **Recall on decidable edges = 100%** — the deep tier misses *none* of the statically-resolvable calls.
   This is the "no bugs" metric.
-- **Recall on all true edges = 67%** — the honest number. The missing third are edges no sound analyzer can
+- **Recall on all true edges = 68%** — the honest number. The missing third are edges no sound analyzer can
   resolve: a function passed as a parameter and called via it (higher-order), `getattr(obj, name)()`
   (dynamic dispatch), and value-flow through a string-keyed registry. The suite labels these as `ceiling`,
   so the gap is visible, not hidden.
-- **The two tiers are close on this suite, and that is recent.** `c11_local_import` — a callee imported
-  *inside* the calling function — was a deep-only edge until R1-C30: jedi resolved it, the default fast
-  resolver did not, which read as a capability difference and was really a missing map (issue #11). The
-  case also carries a sibling function that calls the same bare name without importing it, so the cheap way
-  to win the recall — merging the local import into the module map — shows up as a precision loss instead.
+- **The two tiers are close on this suite, and that is recent.** Two cases were deep-only until the day
+  they were not, and neither turned out to be about type inference. `c11_local_import` — a callee imported
+  *inside* the calling function (R1-C30, issue #11) — was a missing per-function name map.
+  `c12_reexport` — a callee reached through a module that only re-exports it, the most ordinary shape in
+  Python — was a lookup nobody performed: the target the fast tier computed (`api.helper`) is not a
+  definition, and the re-export it needed was already an edge in the graph (R1-C30-f1, issue #13). Each
+  case carries its own trap for the cheap fix: a sibling function calling the same bare name without
+  importing it, and a call to a name the re-exporting module does not carry. Buying either recall by
+  guessing shows up as a precision loss instead of a better score.
 - **Phantom edges = 0** — no `calls` edge points at a non-node on either tier. This did *not* start clean:
   the first run of this suite surfaced two soundness warts, both since fixed —
   - **fast tier, inheritance (R1-C13-f1)** — `self.<inherited_method>()` was over-approximated to a

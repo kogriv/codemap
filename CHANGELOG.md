@@ -7,6 +7,28 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **A call to a re-exported name resolved to nothing on the fast tier** (R1-C30-f1,
+  [#13](https://github.com/kogriv/codemap/issues/13)). Reported against R1-C30 the day it shipped, as the
+  one case that survived it on the reporting tree: `import registry as _r` inside a function, six calls
+  through the alias, five resolved and the sixth — the re-exported one — did not. Same alias, same
+  statement. Reproducing it made the case wider than reported: the fast tier dropped **every** call to a
+  re-exported name, in all four import forms, including `from pkg.api import run` where `api/__init__.py`
+  re-exports `run` — the most ordinary shape in Python. The mechanism is arithmetic, not inference: the
+  resolver computes `pkg.api.run`, no such definition exists (it lives in `pkg.impl`), and the soundness
+  guard correctly refuses to emit an edge pointing at a non-node. The guard was right; the **lookup was
+  missing** — and the answer was already in the graph, since the structural pass emits an `export` edge for
+  every re-export. It is now followed, transitively and with a cycle guard, and only ever along an edge
+  that exists: a name the re-exporting module does not carry stays unresolved rather than being routed to
+  a plausible neighbour. **Underneath it, a second defect** that would have kept the fix from reaching the
+  reporter at all: on a **flat** layout there were no `export` edges to follow — R1-C21 taught the
+  `imports` pass to recognise a bare sibling and the alias pass was never given the same rule, so every
+  re-export in such a tree was filed as external and vanished. Now emitted, labelled
+  `resolution: "flat"` like its `imports` counterpart. Measured against a deep build from before either
+  change: `calls` 986 → 992 on bquant and 502 → 521 on codemap, none lost; `references` +24 and +8;
+  `export` counts unchanged on both, which is the flat rule declaring itself narrow on correctly packaged
+  trees. Micro-suite gains `c12_reexport`; recall over all true edges: fast 64.7% → **66.7%**, deep 66.7% →
+  **68.4%**, precision unchanged at 100%.
+
 - **The other half of the same blind spot: a call *through* a function-local import** (R1-C30,
   remainder of [#11](https://github.com/kogriv/codemap/issues/11)). R1-C29 taught the import map to see
   `def go(): from leaf import helper; return helper(x)`; call resolution still could not, so `--deep`

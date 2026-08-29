@@ -349,17 +349,21 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
         (n.id for n in graph.nodes.values() if n.kind == "module"), key=len, reverse=True
     )
 
+    known_modules = set(module_ids)
     for parent_module, name, target_path, is_public in aliases:
+        extras = {"as": name, "public": is_public}
         if not (target_path == target_pkg or target_path.startswith(target_pkg + ".")):
-            continue  # external re-export (e.g. `import numpy as np`) — out of scope
-        graph.add_edge(
-            Edge(
-                "export",
-                parent_module,
-                target_path,
-                extras={"as": name, "public": is_public},
-            )
-        )
+            # R1-C30-f1: the same flat-layout blind spot pass B fixes for `imports`, on
+            # the re-export side. `from inner import helper` in a flat tree records the
+            # source-literal `inner.helper`, indistinguishable from `pandas.DataFrame`
+            # here — so every re-export in such a tree was filed as external and produced
+            # no edge at all. Same narrow gate as pass B: only when the head names a
+            # module sitting beside the re-exporter, and labelled as the inference it is.
+            if _flat_sibling(parent_module, target_path, known_modules) is None:
+                continue  # external re-export (e.g. `import numpy as np`) — out of scope
+            target_path = f"{parent_module.rsplit('.', 1)[0]}.{target_path}"
+            extras["resolution"] = "flat"
+        graph.add_edge(Edge("export", parent_module, target_path, extras=extras))
 
     seen: set[tuple[str, str]] = set()
     unresolved: list[tuple[str, str, str]] = []
@@ -391,7 +395,6 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
     # sys.path. griffe records the source-literal target, so pass A cannot tell it from
     # `pandas.DataFrame`. Retry it against the importer's own package — and label it, since
     # this is an inference about sys.path, not something the source states.
-    known_modules = set(module_ids)
     for src_module, target_path, scope in unresolved:
         tgt_module = _flat_sibling(src_module, target_path, known_modules)
         if tgt_module is None or tgt_module == src_module:

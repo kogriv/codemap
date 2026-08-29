@@ -328,3 +328,88 @@ the map build against the behavioral pass in the same runs: **3.3%** of it on bq
 - `from x import *` inside a function binds names that cannot be enumerated statically; the
   dependency is on the `imports` edge, the call stays unresolved rather than guessed.
 - A class-body import still resolves no calls anywhere, by the scoping rule above.
+
+---
+
+## 11. The residual — and the thing underneath it (R1-C30-f1, issue #13)
+
+R1-C30 shipped in the morning; the reporting tree measured it the same day and filed the
+one case on their tree that survived it ([#13](https://github.com/kogriv/codemap/issues/13)):
+
+```python
+# registry.py
+from inner import helper   # re-export
+
+# user.py
+def go():
+    import registry as _r
+    return _r.own() + _r.helper()
+```
+
+`_r.own()` resolved, `_r.helper()` did not — **same alias, same statement, same line**.
+Their framing is the reason it was worth code rather than a doc line: *"the failure is
+silent and asymmetric — the neighbouring call on the same line resolves, so nothing in the
+output hints that one edge is missing."*
+
+### Reproducing it made it bigger, not smaller
+
+The case is not about the alias, and not about the local import. Written out in all four
+import forms, the fast tier dropped **every** call to a re-exported name:
+
+| form | fast, before | deep |
+|---|:--:|:--:|
+| `from pkg.api import helper` (module level) | ✖ | ✅ |
+| `from pkg.api import helper` (inside a function) | ✖ | ✅ |
+| `from pkg import api` … `api.helper()` | ✖ | ✅ |
+| `import pkg.api as a` … `a.helper()` | ✖ | ✅ |
+
+The first row is the most ordinary shape in Python — a package re-exposing its API from
+`__init__.py`. The mechanism is one line of arithmetic: the resolver computes
+`pkg.api.helper`, that names no definition (the definition is `pkg.inner.helper`), and the
+soundness guard from R1-C13-f2 drops any edge pointing at a non-node. The guard was right;
+the lookup was missing. And **the answer was already in the graph** — the structural pass
+emits an `export` edge for every re-export, and the call resolver never read it.
+
+That is the third time in this thread the same shape appears: the deep tier looked more
+*capable* when it was merely reading something the fast tier had not been told to read.
+
+### Underneath: a flat tree had no re-export edges to follow
+
+The fix would not have reached the reporter at all. R1-C21 taught the `imports` pass to
+recognise a bare sibling (`from alpha import X` where `alpha` sits beside the importer);
+the **alias** pass was never given the same rule, so on a flat layout every re-export was
+filed as external and produced no edge whatsoever. Not one `export` edge in such a tree —
+which silently degraded re-export resolution, `where_defined`, and anything reading them,
+not only this fix. Same narrow gate as pass B, same `resolution: "flat"` label.
+
+### Result
+
+Both fixtures now answer identically on fast and deep. On the dogfood targets, verified
+against the same independent deep reference as §10:
+
+| tree | `calls` after R1-C30 | after f1 | new | confirmed by deep | lost |
+|---|---:|---:|---:|---:|---:|
+| bquant | 986 | 992 | +6 | 6 / 6 | 0 |
+| codemap | 502 | 521 | +19 | 16 / 19 † | 0 |
+
+† the three unconfirmed are calls to `_reexport_index` and `_follow_reexport` — functions
+this change *added*, which cannot exist in a reference graph built from the previous commit.
+Named rather than rounded away, because "3 unconfirmed" is exactly what a real false-edge
+regression would look like at first glance.
+
+`references` grew by 24 and 8 — the same resolver feeds the used-as-a-value layer.
+`export` edge counts did not move on either target (488 and 180), which is the flat rule
+declaring itself narrow: both are correctly packaged trees, so it fires zero times, exactly
+as R1-C21 measured for `imports`.
+
+Micro-suite: `c12_reexport`, whose second function calls a name the re-exporting module does
+**not** carry — so following an export edge that exists is rewarded and guessing at a nearby
+definition is punished. Suite recall over all true edges: fast 64.7% → **66.7%**, deep
+66.7% → **68.4%**, precision unchanged at 100%.
+
+### What is still missed on fast, after both
+
+The reporter's own split of the 50 edges deep still finds and fast does not, on their tree:
+**48 are method calls on an instance** — the declared tier limit, not a defect — 1 is a
+module-level attribute, and 1 was this. Worth recording that they filed the one that was
+ours and explicitly did not file the 48 that were documented.

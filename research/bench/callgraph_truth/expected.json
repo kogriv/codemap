@@ -167,5 +167,18 @@
     "ceiling": [],
     "limitation": [],
     "note": "R1-C30: a call through a function-local import. Resolved on both tiers since the fast resolver reads a per-function import map; before it, deep resolved it and fast did not, which read as a deep-only capability and was really a missing map. `elsewhere -> leaf.helper` is deliberately NOT listed anywhere: it is not a true relationship at all (the name is unbound there), so emitting it would count against precision — which is the point of the case, since the cheap way to raise recall here is to merge the local import into the module map and resolve it for every sibling function."
+  },
+  "c12_reexport": {
+    "difficulty": "decidable",
+    "expected": [
+      [
+        "run",
+        "impl.helper",
+        "fast"
+      ]
+    ],
+    "ceiling": [],
+    "limitation": [],
+    "note": "R1-C30-f1 (issue #13): the caller writes `api.helper`, which is not a definition — `api` only re-exports it. Resolved on both tiers now; before it, only deep was, by following the alias, so the fast tier dropped the edge next to sibling calls that resolved. `absent -> api.missing` is deliberately unlisted: the name exists nowhere, so any edge for it counts against precision — the follow may only walk an export edge the structural pass recorded, never guess at a nearby definition."
   }
 }

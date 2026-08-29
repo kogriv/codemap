@@ -37,6 +37,18 @@ unlabelled, so an exact edge and an inferred one remain distinguishable.
 The same inference feeds call resolution, so `beta.doubled()` → `alpha.base_width()` is a
 real `calls` edge rather than an unresolved name.
 
+**Re-exports too, since R1-C30-f1** ([#13](https://github.com/kogriv/codemap/issues/13)).
+`from alpha import base_width` in `beta.py` re-exposes the name, and until that fix the
+alias pass applied no flat rule: the target read `alpha.base_width`, indistinguishable from
+`pandas.DataFrame` at that point, so it was filed as an external re-export and produced no
+edge. A flat tree therefore had *no* `export` edges at all — which also meant a call to a
+re-exported name had nothing to follow. The edge is labelled the same way:
+
+```json
+{"type": "export", "source": "shared.beta", "target": "shared.alpha.base_width",
+ "extras": {"as": "base_width", "public": false, "resolution": "flat"}}
+```
+
 ### Directories without `__init__.py`
 
 griffe treats those as **namespace packages**, which have no single source file. codemap

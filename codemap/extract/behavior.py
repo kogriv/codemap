@@ -53,6 +53,10 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
     modules = _index_modules(griffe_root)
     known_modules = set(modules)  # R1-C21: flat-layout sibling lookup
     project = _jedi_project(search_path) if deep else None
+    # R1-C30-f1: a call to a re-exported name points at a name that is not a definition.
+    # The structural pass already recorded where each re-export really leads.
+    reexports = _reexport_index(graph)
+    nodes = graph.nodes
     for modpath in sorted(modules):
         if only is not None and modpath not in only:
             continue
@@ -86,26 +90,27 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                 if owner is not None:
                     _collect_nested_calls(graph, owner, fnode, modpath, fn_imports,
                                           modmembers, script, target_pkg, nested,
-                                          known_modules)
+                                          known_modules, reexports)
                 continue
             members = _class_members(mod, class_stack, modules) if class_stack else {}
             class_prefix = ".".join([modpath, *class_stack]) if class_stack else ""
             def fast(call, _cp=class_prefix, _im=fn_imports, _mm=modmembers, _me=members):
-                return _resolve(call, modpath, _cp, _im, _mm, _me)
+                return _resolve(call, modpath, _cp, _im, _mm, _me, reexports, nodes)
             resolve = (_deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules)
                        if script else fast)
             _process_function(graph, node_id, fnode, resolve)
             # R1-C22 D1: functions/classes named as *values* here (dispatch tables,
             # `default=` callbacks) — a use the call layer cannot see.
             _emit_name_references(graph, node_id, fnode, modpath, fn_imports, modmembers,
-                                  decorators_of=fnode)
+                                  decorators_of=fnode, reexports=reexports)
         # R1-C22 D2: module-level statements are a scope of their own, never walked
         # above — import-time calls and dispatch tables live here.
         def mod_fast(call, _im=imports, _mm=modmembers):
-            return _resolve(call, modpath, "", _im, _mm, {})
+            return _resolve(call, modpath, "", _im, _mm, {}, reexports, nodes)
         mod_resolve = (_deep_then_fast(graph, script, target_pkg, mod_fast, modpath, known_modules)
                        if script else mod_fast)
-        _process_module_level(graph, modpath, tree, mod_resolve, imports, modmembers)
+        _process_module_level(graph, modpath, tree, mod_resolve, imports, modmembers,
+                              reexports)
         _emit_nested_calls(graph, nested)
 
 
@@ -180,6 +185,54 @@ def _local_import_maps(tree, modpath: str, is_pkg: bool, known_modules) -> dict[
 
     visit(tree, None, None)
     return {k: v for k, v in maps.items() if v}
+
+
+# -- re-exports (R1-C30-f1) --------------------------------------------------
+
+def _reexport_index(graph) -> dict[tuple[str, str], str]:
+    """``(module id, exported name) -> the definition it actually names``.
+
+    Built from the `export` edges the structural pass already emits, so this adds no
+    parsing and cannot disagree with what the graph says about re-exports.
+    """
+    index: dict[tuple[str, str], str] = {}
+    for e in graph.edges:
+        if e.type == "export":
+            name = e.extras.get("as")
+            if name:
+                index[(e.source, name)] = e.target
+    return index
+
+
+def _follow_reexport(target: str, reexports, nodes) -> str:
+    """`pkg.registry.helper` -> `pkg.inner.helper` when `registry` only re-exports it.
+
+    A package that re-exports its API (`from .impl import run` in `__init__.py`) is the
+    most ordinary shape in Python, and the fast tier resolved a call to it to a *name that
+    is not a definition*: `pkg.registry.helper` is no node, so the edge was dropped by the
+    soundness guard — silently, and next to a sibling call on the same line that resolved.
+    The deep tier followed the alias and got the edge, which is what made this look like a
+    type-inference question. It is not: the re-export is already an edge in the graph.
+
+    Followed transitively (a re-export of a re-export is one too) with a visited guard,
+    and only while the current target names nothing. If no hop lands on a definition the
+    original target is returned unchanged, so an unresolvable call stays unresolved rather
+    than being pointed at a plausible neighbour.
+    """
+    if target in nodes:
+        return target
+    seen = {target}
+    cur = target
+    while "." in cur:
+        module, _, name = cur.rpartition(".")
+        nxt = reexports.get((module, name))
+        if nxt is None or nxt in seen:
+            return target
+        if nxt in nodes:
+            return nxt
+        seen.add(nxt)
+        cur = nxt
+    return target
 
 
 # -- jedi (deep tier) --------------------------------------------------------
@@ -444,7 +497,8 @@ def _arg_contract(shapes: list[tuple]) -> dict:
     return contract
 
 
-def _resolve(call, modpath, class_prefix, imports, modmembers, members):
+def _resolve(call, modpath, class_prefix, imports, modmembers, members, reexports=None,
+             nodes=frozenset()):
     """Return (target_id, resolution). Only module/self/imported become edges."""
     pkg = modpath.split(".")[0] + "."
     f = call.func
@@ -453,7 +507,7 @@ def _resolve(call, modpath, class_prefix, imports, modmembers, members):
         if name in imports:
             tgt = imports[name]
             if tgt.startswith(pkg):
-                return tgt, "imported"
+                return _follow_reexport(tgt, reexports or {}, nodes), "imported"
             return tgt, "external"
         if name in modmembers:
             return f"{modpath}.{name}", "module"
@@ -471,7 +525,7 @@ def _resolve(call, modpath, class_prefix, imports, modmembers, members):
             if recv.id in imports:
                 tgt = imports[recv.id]
                 if tgt.startswith(pkg):
-                    return f"{tgt}.{attr}", "imported"
+                    return _follow_reexport(f"{tgt}.{attr}", reexports or {}, nodes), "imported"
                 return f"{tgt}.{attr}", "external"
             if recv.id in modmembers:
                 return f"{modpath}.{recv.id}.{attr}", "module"
@@ -720,20 +774,22 @@ def _module_level_nodes(tree):
     yield from visit(tree)
 
 
-def _resolve_name(name, modpath, imports, modmembers):
+def _resolve_name(name, modpath, imports, modmembers, reexports=None, nodes=frozenset()):
     """(target_id, resolution) for a bare name used as a value — the `_resolve` rules for
     ``ast.Name`` minus the call. Only module/imported become edges."""
     pkg = modpath.split(".")[0] + "."
     if name in imports:
         tgt = imports[name]
-        return (tgt, "imported") if tgt.startswith(pkg) else (tgt, "external")
+        if tgt.startswith(pkg):
+            return _follow_reexport(tgt, reexports or {}, nodes), "imported"
+        return tgt, "external"
     if name in modmembers:
         return f"{modpath}.{name}", "module"
     return None, "unresolved"
 
 
 def _emit_name_references(graph, src_id, scope, modpath, imports, modmembers,
-                          *, decorators_of=None) -> None:
+                          *, decorators_of=None, reexports=None) -> None:
     """`references` edges for functions/classes named as values (R1-C22 D1).
 
     No new edge type: `references` is already "dispatch site → the symbol it names".
@@ -746,7 +802,8 @@ def _emit_name_references(graph, src_id, scope, modpath, imports, modmembers,
     for node, kind in _own_name_loads(scope, decorators_of=decorators_of):
         if node.id in local:
             continue
-        target, resolution = _resolve_name(node.id, modpath, imports, modmembers)
+        target, resolution = _resolve_name(node.id, modpath, imports, modmembers,
+                                           reexports, graph.nodes)
         if resolution not in ("module", "imported") or not target:
             continue
         tgt_node = graph.nodes.get(target)
@@ -760,7 +817,8 @@ def _emit_name_references(graph, src_id, scope, modpath, imports, modmembers,
                             extras={"resolution": kind, "sites": counts[(target, kind)]}))
 
 
-def _process_module_level(graph, modpath, tree, resolve, imports, modmembers) -> None:
+def _process_module_level(graph, modpath, tree, resolve, imports, modmembers,
+                          reexports=None) -> None:
     """Calls and value-references in module-level code, sourced from the module (D1/D2)."""
     by_target: dict[str, dict] = {}
     for call in (n for n in _module_level_nodes(tree) if isinstance(n, ast.Call)):
@@ -773,7 +831,8 @@ def _process_module_level(graph, modpath, tree, resolve, imports, modmembers) ->
         graph.add_edge(Edge("calls", modpath, target,
                             extras={"resolution": agg["resolution"],
                                     **_arg_contract(agg["shapes"])}))
-    _emit_name_references(graph, modpath, tree, modpath, imports, modmembers)
+    _emit_name_references(graph, modpath, tree, modpath, imports, modmembers,
+                          reexports=reexports)
 
 
 def _named_functions_scoped(tree):
@@ -815,10 +874,11 @@ def _nearest_owner(graph, modpath, scope) -> str | None:
 
 
 def _collect_nested_calls(graph, owner, fnode, modpath, imports, modmembers,
-                          script, target_pkg, out, known_modules=frozenset()) -> None:
+                          script, target_pkg, out, known_modules=frozenset(),
+                          reexports=None) -> None:
     """Resolve a non-node function's own calls and stage them under ``owner`` (D3)."""
     def fast(call):
-        return _resolve(call, modpath, "", imports, modmembers, {})
+        return _resolve(call, modpath, "", imports, modmembers, {}, reexports, graph.nodes)
     # R1-C26: the same union the named-function path uses — a closure's calls must not be
     # resolved by a weaker rule than its neighbours'.
     resolve = (_deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules)
