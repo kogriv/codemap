@@ -8,7 +8,7 @@ and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **634 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **653 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -138,6 +138,7 @@ codemap report architecture   --graph graph.json   # layers, coupling, god-objec
 codemap report dependencies   --graph graph.json
 codemap report dead-code      --graph graph.json
 codemap report impact --symbol MyClass --graph graph.json
+codemap report api-surface --graph graph.json --format json   # every kind has a json form
 
 # change-set review straight from a diff → risk-sorted dossier
 git diff | codemap review - --graph graph.json

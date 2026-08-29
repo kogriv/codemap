@@ -7,6 +7,19 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **`report --format json` printed the graph instead of the report** (R1-C32,
+  [#14](https://github.com/kogriv/codemap/issues/14)). The format branch sat above the dispatch on the
+  report kind, so the kind was never read on that path and every kind returned the whole graph —
+  byte-identical for `api-surface`, `dead-code` and `architecture` alike. Found by a consumer measuring
+  documentation coverage, who parsed the result without error and first assumed they had called it wrong:
+  no refusal, a substitution, and it passes the "did I get an answer?" check. Every report kind the CLI
+  accepts now has a structured form carrying what its markdown carries, one level deeper: `api-surface`
+  yields symbols with signature, first docstring line and file; `dependencies` keeps eager and lazy cycles
+  **apart** (R1-C29's distinction survives into the data, not only the prose); `dead-code` carries the
+  graded candidates and the whitelist error; `behavior` the call-site aggregate; `impact` and `flows`
+  return **every** definition the name matched rather than picking one. `report` over `serve`/MCP still
+  answers markdown, which is its documented contract.
+
 - **A graph had no single origin for its paths** (R1-C31,
   [#12](https://github.com/kogriv/codemap/issues/12), schema **0.12 → 0.13**). `codemap tests` ends in a
   ready-to-paste `pytest …` line; built with roots below the repo root it named a path that does not exist,

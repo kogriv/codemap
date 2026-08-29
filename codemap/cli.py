@@ -438,7 +438,11 @@ def _local_nodeids(ids: list[str], args) -> tuple[list[str], str | None]:
 def _cmd_report(args) -> int:
     graph = _graph_from(args)
     if args.format == "json":
-        print(store.dumps(graph))
+        # R1-C32 (#14): this branch used to print the whole graph — for every kind, so
+        # three different reports produced byte-identical output and `args.kind` was never
+        # read. A consumer that asked for json got a valid document that was not the one it
+        # asked for: no refusal, a substitution, which passes "did I get an answer?".
+        print(json.dumps(_report_json(graph, args), ensure_ascii=False, indent=2))
         return 0
     if args.kind == "impact":
         if not args.symbol:
@@ -465,6 +469,56 @@ def _cmd_report(args) -> int:
     payload = renderer(graph) if args.kind == "api-surface" else renderer(Query(graph))
     print(payload, end="")
     return 0
+
+
+def _report_json(graph, args) -> dict:
+    """The requested report, structured. Every kind the CLI accepts has one."""
+    if args.kind == "impact":
+        if not args.symbol:
+            raise SystemExit("error: report impact needs --symbol <name>")
+        q = Query(graph)
+        # same resolution the markdown form uses (F23: short name / full id / re-export),
+        # and the same shape: a name can legitimately name more than one definition.
+        ids = q.impact_targets(args.symbol)
+        return {"kind": "impact", "target": graph.target, "symbol": args.symbol,
+                "matched": ids,
+                "reports": [{"id": sid, **q.impact(sid, depth=args.depth)} for sid in ids]}
+    if args.kind == "communities":
+        return {"kind": "communities", "target": graph.target,
+                "communities": Query(graph).communities()}
+    if args.kind == "flows":
+        # the markdown form lists entry points when no symbol is given; same here.
+        q = Query(graph)
+        if not args.symbol:
+            return {"kind": "flows", "target": graph.target,
+                    "entry_points": q.entry_points()}
+        ids = q.impact_targets(args.symbol)
+        if not ids:
+            raise SystemExit(f"error: symbol not found: {args.symbol}")
+        return {"kind": "flows", "target": graph.target, "symbol": args.symbol,
+                "matched": ids,
+                "flows": [{"id": sid, **q.flow(sid, max_depth=args.depth)} for sid in ids]}
+    if args.kind == "dead-code":
+        from codemap.serve.audit import build_dead_code, load_dead_code_whitelist
+        root = getattr(args, "source_root", None) or os.getcwd()
+        whitelist, wl_error = load_dead_code_whitelist(root)
+        return build_dead_code(Query(graph), whitelist=whitelist,
+                               min_confidence=args.min_confidence,
+                               whitelist_error=wl_error)
+    if args.kind == "api-surface":
+        from codemap.serve.api_surface import build_api_surface
+        return build_api_surface(graph)
+    if args.kind == "dependencies":
+        from codemap.serve.audit import build_dependencies
+        return build_dependencies(Query(graph))
+    if args.kind == "behavior":
+        from codemap.serve.audit import build_behavior
+        return build_behavior(Query(graph))
+    if args.kind == "architecture":
+        from codemap.serve.architecture import build_architecture
+        return {"kind": "architecture", "target": graph.target,
+                **build_architecture(Query(graph))}
+    raise SystemExit(f"error: no json form for report kind {args.kind!r}")
 
 
 def _cmd_export(args) -> int:

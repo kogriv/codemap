@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from codemap.diagnostics import render_lines
+from codemap.diagnostics import diagnostics, render_lines
 from codemap.query import Query
 from codemap.tomlio import read_toml
 
@@ -45,6 +45,80 @@ def render_dependencies(query: Query) -> str:
             break
         lines.append(f"- `{mid}` — imported by {deg}")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def build_dependencies(query: Query) -> dict:
+    """:func:`render_dependencies`, structured (R1-C32). Same numbers, no prose."""
+    g = query.import_graph
+    ranked = sorted(g.nodes, key=lambda m: (-g.in_degree(m), m))
+    return {
+        "kind": "dependencies",
+        "target": query.graph.target,
+        "totals": {"modules": g.number_of_nodes(), "import_edges": g.number_of_edges()},
+        "import_map": query.import_map(),
+        # R1-C29: the two kinds are different answers and stay apart here too — an
+        # eager cycle breaks on import, a lazy one is coupling that does not.
+        "import_cycles": [list(c) for c in sorted(query.import_cycles(), key=lambda c: (len(c), c))],
+        "lazy_import_cycles": [list(c) for c in
+                               sorted(query.lazy_import_cycles(), key=lambda c: (len(c), c))],
+        "most_depended_on": [{"module": m, "imported_by": g.in_degree(m)}
+                             for m in ranked[:15] if g.in_degree(m)],
+        "diagnostics": diagnostics(query.graph),
+    }
+
+
+def build_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
+                    min_confidence: str | None = None,
+                    whitelist_error: str | None = None) -> dict:
+    """:func:`render_dead_code`, structured (R1-C32).
+
+    ``whitelist_error`` travels as data for the same reason it is printed above the
+    findings: a list longer than expected because nothing could be suppressed must not be
+    indistinguishable from a whitelist that matched nothing (R1-C27).
+    """
+    by_root = query.orphan_modules_by_root()
+    dead = query.dead_code(whitelist=whitelist, min_confidence=min_confidence)
+    return {
+        "kind": "dead-code",
+        "target": query.graph.target,
+        "orphan_modules": {"core": by_root.get("core", []),
+                           "consumers": {r: v for r, v in sorted(by_root.items()) if r != "core"}},
+        "candidates": dead,
+        "totals": {c: sum(1 for d in dead if d["confidence"] == c)
+                   for c in ("high", "medium", "low")},
+        "whitelist": {"patterns": list(whitelist), "error": whitelist_error},
+        "min_confidence": min_confidence,
+        "diagnostics": diagnostics(query.graph),
+    }
+
+
+def build_behavior(query: Query) -> dict:
+    """:func:`render_behavior`, structured (R1-C32)."""
+    graph = query.graph
+    funcs = [n for n in graph.nodes.values() if n.kind == "function"]
+    with_cov = [n for n in funcs if "calls" in n.extras]
+    agg = {"out": 0, "resolved": 0, "external": 0, "unresolved": 0, "dynamic": 0}
+    for n in with_cov:
+        for k, v in n.extras["calls"].items():
+            agg[k] = agg.get(k, 0) + v
+    by_res: dict[str, int] = {}
+    for e in graph.edges:
+        if e.type == "calls":
+            key = e.extras.get("resolution", "?")
+            by_res[key] = by_res.get(key, 0) + 1
+    scored = [(n, n.extras["complexity"]) for n in funcs if "complexity" in n.extras]
+    top = sorted(scored, key=lambda x: (-x[1]["cc"], x[0].id))[:10]
+    return {
+        "kind": "behavior",
+        "target": graph.target,
+        "call_sites": {**agg, "functions_with_coverage": len(with_cov)},
+        "calls_edges": {"total": sum(by_res.values()), "by_resolution": dict(sorted(by_res.items()))},
+        "complexity": {
+            "functions_scored": len(scored),
+            "mean_cc": (sum(m["cc"] for _, m in scored) / len(scored)) if scored else None,
+            "worst": [{"id": n.id, **m} for n, m in top],
+        },
+    }
 
 
 def load_dead_code_whitelist(root: str | None) -> tuple[tuple[str, ...], str | None]:
