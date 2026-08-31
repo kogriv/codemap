@@ -54,6 +54,30 @@ class _Walk:
     aliased: list = field(default_factory=list)   # (skipped_id, owner_id)
 
 
+def _assert_is_the_target(loaded, pkg_dir: Path, module_name: str) -> None:
+    """Raise unless what griffe loaded is the directory we were handed (R1-C36).
+
+    Separate from its caller so the decision can be tested on shapes that a single
+    ``search_paths`` entry cannot produce end to end. A **namespace package reports a
+    list** of directories rather than one path — the shape that once crashed the
+    extractor (issue #4) — and a package assembled from several parts is a legitimate
+    hit as long as the requested directory is one of them.
+
+    An empty ``loaded`` is not treated as a mismatch: "griffe told us nothing about the
+    file" is not "griffe told us the wrong file", and inventing a failure from silence
+    is the same error in the other direction.
+    """
+    candidates = loaded if isinstance(loaded, (list, tuple)) else ([loaded] if loaded else [])
+    dirs = {(q if q.is_dir() else q.parent).resolve() for q in map(Path, candidates)}
+    if dirs and pkg_dir not in dirs:
+        raise ValueError(
+            f"resolved `{module_name}` to {', '.join(sorted(str(d) for d in dirs))} but was "
+            f"asked for {pkg_dir}. A same-named package is shadowing the target (an "
+            "installed copy, or one in the current directory). Build from a different "
+            "working directory, or rename the target."
+        )
+
+
 def build_structural(package_path: str | Path):
     """The cheap, deterministic base: griffe load + definition nodes + structural
     edges (contains / imports / inherits / decorated_by / export). No behavioral
@@ -78,18 +102,7 @@ def build_structural(package_path: str | Path):
     # a future default), a graph must describe the directory that was asked for. A wrong
     # answer here is invisible downstream — it is well-formed, complete and about the
     # wrong tree — so it fails loudly instead.
-    loaded = getattr(root, "filepath", None)
-    # A namespace package reports a *list* of directories, not one path — the very shape
-    # that once crashed the extractor (issue #4). Handle it here rather than assume.
-    candidates = loaded if isinstance(loaded, (list, tuple)) else ([loaded] if loaded else [])
-    dirs = {(q if q.is_dir() else q.parent).resolve() for q in map(Path, candidates)}
-    if dirs and pkg_dir not in dirs:
-        raise ValueError(
-            f"resolved `{module_name}` to {', '.join(sorted(str(d) for d in dirs))} but was "
-            f"asked for {pkg_dir}. A same-named package is shadowing the target (an "
-            "installed copy, or one in the current directory). Build from a different "
-            "working directory, or rename the target."
-        )
+    _assert_is_the_target(getattr(root, "filepath", None), pkg_dir, module_name)
 
     graph = Graph(target=module_name)
     walk = _Walk()

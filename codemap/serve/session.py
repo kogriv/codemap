@@ -97,6 +97,34 @@ def _match(q: Query, n) -> dict:
     return e
 
 
+def tool_drift(running: str | None, installed: str | None) -> dict | None:
+    """Say when this process is running code the installed distribution has moved past.
+
+    R1-C38. A warm server holds two things that go stale independently: the graph and the
+    **code**. `reload` refreshes the graph, and nothing refreshes the code — a process
+    started before an upgrade keeps answering in the shape it was born with, over a graph
+    that carries everything the new shape needs. Measured, not imagined: a server started
+    before R1-C33 served a freshly rebuilt 0.13 graph and returned dossiers without the
+    `signature` the artifact contained, with nothing in the answer to say why.
+
+    `stats` already separates the graph's schema from the running tool's. This is the same
+    separation one level up, and it is only visible because the version is read from the
+    installed metadata at call time while the code was loaded at import.
+    """
+    if not running or not installed or running == installed:
+        return None
+    return {
+        "code": "tool_restart_needed",
+        "severity": "warning",
+        "running": running,
+        "installed": installed,
+        "consequence": "Answers keep the shape of the running code; `reload` refreshes the "
+                       "graph, never the code.",
+        "message": f"this server is running codemap {running} while {installed} is installed — "
+                   "restart it to serve the installed version.",
+    }
+
+
 def build_query_result(q: Query, name: str) -> dict:
     """The full symbol dossier — shared by ``codemap query`` and warm serve."""
     matches = q.find(name)
@@ -267,10 +295,20 @@ class Session:
         # edges from a layout the extractor didn't understand), rather than letting every
         # downstream conclusion silently inherit the emptiness.
         from codemap.diagnostics import diagnostics
-        diags = diagnostics(self.graph)
+        diags = list(diagnostics(self.graph))
+        # R1-C38: the graph is not the only thing that goes stale in a warm server.
+        drift = self._tool_drift()
+        if drift:
+            diags.append(drift)
         if diags:
             out["diagnostics"] = diags
         return out
+
+    @staticmethod
+    def _tool_drift() -> dict | None:
+        import codemap
+        from codemap.provenance import tool_version
+        return tool_drift(getattr(codemap, "__version__", None), tool_version())
 
     def _op_reload(self, args) -> dict:
         """Reload the on-disk artifact into the served graph, without a restart (#3).
@@ -297,10 +335,16 @@ class Session:
         self.query = Query(graph)
         self._served_mtime = self._current_mtime()
         after = {"nodes": len(graph.nodes), "edges": len(graph.edges)}
-        return {"reloaded": True, "before": before, "after": after,
-                "changed": before != after,
-                "freshness": freshness(self.graph_path,
-                                       served_mtime=self._served_mtime)}
+        out = {"reloaded": True, "before": before, "after": after,
+               "changed": before != after,
+               "freshness": freshness(self.graph_path,
+                                      served_mtime=self._served_mtime)}
+        # R1-C38: this is the op whose name promises freshness, so it is the op that owes
+        # the caller the half it cannot deliver — the code, which only a restart replaces.
+        drift = self._tool_drift()
+        if drift:
+            out["diagnostics"] = [drift]
+        return out
 
     def _op_query(self, args) -> dict:
         return build_query_result(self.query, args["name"])

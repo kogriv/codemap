@@ -40,6 +40,7 @@ import sys
 import pytest
 
 from codemap.extract import extract
+from codemap.extract.griffe_extractor import _assert_is_the_target
 
 TOY = {
     "__init__.py": '"""A package that merely shares a name with another one."""\n',
@@ -105,3 +106,42 @@ def test_two_copies_of_one_package_give_two_different_graphs(tmp_path):
     gb = {n.id for n in extract(str(b)).nodes.values()}
     assert "pkg.mod.only_in_a" in ga and "pkg.mod.only_in_a" not in gb
     assert "pkg.mod.only_in_b" in gb and "pkg.mod.only_in_b" not in ga
+
+
+# -- the guard on shapes a single search path cannot produce end to end -------
+#
+# A namespace package assembled from several directories is a legitimate resolution: the
+# requested one is *among* the parts. The end-to-end path cannot reach that case, because
+# a build passes exactly one `search_paths` entry, so nothing here would have caught a
+# guard that rejected it — which is why the decision is tested directly rather than
+# assumed from the single-directory case that does run.
+
+def test_the_guard_accepts_a_namespace_package_the_target_is_part_of(tmp_path):
+    a, b = tmp_path / "part_a" / "ns", tmp_path / "part_b" / "ns"
+    a.mkdir(parents=True)
+    b.mkdir(parents=True)
+    _assert_is_the_target([a, b], a.resolve(), "ns")   # must not raise
+    _assert_is_the_target([b, a], a.resolve(), "ns")   # order is not significance
+
+
+def test_the_guard_rejects_a_namespace_package_the_target_is_not_part_of(tmp_path):
+    a, b, asked = tmp_path / "a" / "ns", tmp_path / "b" / "ns", tmp_path / "c" / "ns"
+    for d in (a, b, asked):
+        d.mkdir(parents=True)
+    with pytest.raises(ValueError) as e:
+        _assert_is_the_target([a, b], asked.resolve(), "ns")
+    assert str(asked) in str(e.value) and str(a) in str(e.value), "name both sides"
+
+
+def test_a_single_file_path_is_compared_by_its_directory(tmp_path):
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    _assert_is_the_target(pkg / "__init__.py", pkg.resolve(), "pkg")
+
+
+def test_silence_is_not_a_mismatch(tmp_path):
+    """griffe saying nothing about the file is not griffe naming the wrong one. Inventing
+    a failure from an absent answer is the same error pointing the other way."""
+    _assert_is_the_target(None, (tmp_path / "pkg").resolve(), "pkg")
+    _assert_is_the_target([], (tmp_path / "pkg").resolve(), "pkg")

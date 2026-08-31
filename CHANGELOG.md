@@ -5,6 +5,35 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Added
+
+- **A warm server says when it is running code the installed distribution has moved past (R1-C38).**
+  `reload` refreshes the graph; nothing refreshes the code. Found while closing an unrelated debt: a server
+  started before R1-C33 served a freshly rebuilt graph — `reload` reported 4656 → 4743 nodes and the
+  schema-mismatch diagnostic cleared — and returned dossiers without the `signature` the artifact contained,
+  with nothing in the answer to say why. `stats` and `reload` now carry a `tool_restart_needed` diagnostic
+  when the version loaded at import differs from the one the installed metadata reports at call time. It is
+  R1-C25 one level up: there the graph's schema and the tool's shared a field, here the process's code and
+  the installed code.
+
+### Changed
+
+- **Every contract rule is now mutation-tested on a real tree (R1-C37).** The method is the lab's: they
+  did not believe a green `no_lazy_cycles` gate, put one lazy import back, and watched it go red. Each of
+  the six rules already had a violation test — on a hand-built three-node graph, which proves the rule's
+  arithmetic and nothing about the path that runs in production. The dogfood test runs the real tree and
+  asserts green, which is the shape of evidence that method rejects. Now: one copy of codemap's own
+  package, and per rule, green → one changed line → red naming the added edge → restore → byte-identical,
+  each under a contract holding only the rule under test. Two things fell out: `Violation.modules` on a
+  cycle carries rendered paths (`a → b → a`), not module ids, and a baseline for `exhaustive` has to name
+  all sixteen real components, not the ten `codemap.toml` declares for a reader.
+
+- **The R1-C36 target guard is tested on a namespace package assembled from several directories
+  (R1-C36-f1).** The requested directory being *one of* the parts is a legitimate resolution; a build
+  passes one `search_paths` entry, so no end-to-end test could have caught a guard that rejected it. The
+  decision now lives in `_assert_is_the_target()` and is tested directly, including that an empty answer is
+  not a mismatch — "griffe said nothing about the file" is not "griffe named the wrong file".
+
 ## [0.0.5] - 2026-08-31
 
 **A correctness release: three of its four items were found by looking, one was reported.** No schema
