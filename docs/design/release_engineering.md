@@ -197,6 +197,26 @@ answer — plus the two behaviours the release exists for, checked on a built gr
 call through a function-local import to a **re-exported** name resolved on the fast tier (R1-C30/f1), and a
 consumer symbol carrying a `file` (R1-C31).
 
+**0.0.5 published 2026-08-31:** [`codmap` 0.0.5](https://pypi.org/project/codmap/0.0.5/), schema **0.13**
+(unchanged). Same procedure, from a clean tree at the pushed commit `9523dc1`; `twine check` PASSED on both
+artifacts. A correctness release — R1-C33/34 (the declared signature, and the parameter kind it had been
+dropping), R1-C35 (a gate that did not say where it looked), R1-C36 (a build that could analyse a different
+package with the same name).
+
+Verification was chosen to match what the release fixes: a clean venv outside any checkout, and the build
+run **from a working directory containing a package with the same name as the target** — the condition
+under which 0.0.4 answers about the wrong code. On the published wheel: the graph describes the directory it
+was given and contains nothing from the shadowing one, carries no absolute paths (D5), renders
+`run(target: str, *args, verbose: bool = False, **opts) -> bool` with the markers intact, hands back
+`constructor: __init__(self, name: str, *, retries: int = 3) -> None` on the class dossier, and `check`
+names the absolute `codemap.toml` it searched and says the miss exits 0.
+
+One step is worth recording because it is a step: bumping `pyproject.toml` made
+`test_the_declared_version_matches_pyproject` fail, since an editable install caches its metadata and still
+reported 0.0.4. That is the guard added for 0.0.4 doing exactly its job — `uv pip install -e .` refreshes it.
+A release procedure that skipped the reinstall would ship a package whose own metadata disagreed with its
+source.
+
 **And the release found one of its own.** `codemap/__init__.py` declared `__version__ = "0.0.2"` while
 0.0.3 was on PyPI — a literal that had drifted a release behind, stamping the wrong version into every SCIP
 index and ctags file. Graphs were unaffected, and the reason is the interesting part: `provenance` asks
