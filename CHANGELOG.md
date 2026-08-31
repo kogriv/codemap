@@ -28,6 +28,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   cycle carries rendered paths (`a → b → a`), not module ids, and a baseline for `exhaustive` has to name
   all sixteen real components, not the ten `codemap.toml` declares for a reader.
 
+- **On a flat layout, R1-C36 merged two trees rather than substituting one (R1-C36-f2).** Told the lab this
+  case could not be reproduced without their tree; it can — a synthetic namespace layout is enough. Measured
+  against the released 0.0.4: with a same-named directory in the working directory, the graph came back as
+  the **union** of both trees, because namespace packages are additive and griffe merged the parts it found.
+  Harder to notice than the substitution: node counts go up rather than sideways, and every symbol in the
+  graph is a real symbol from a real file. Fixed by the same change; pinned by a test.
+
 - **The R1-C36 target guard is tested on a namespace package assembled from several directories
   (R1-C36-f1).** The requested directory being *one of* the parts is a legitimate resolution; a build
   passes one `search_paths` entry, so no end-to-end test could have caught a guard that rejected it. The

@@ -145,3 +145,31 @@ def test_silence_is_not_a_mismatch(tmp_path):
     a failure from an absent answer is the same error pointing the other way."""
     _assert_is_the_target(None, (tmp_path / "pkg").resolve(), "pkg")
     _assert_is_the_target([], (tmp_path / "pkg").resolve(), "pkg")
+
+
+def test_a_namespace_layout_does_not_merge_the_two_trees(tmp_path):
+    """The flat-layout case, and it fails worse than the package one.
+
+    Measured against the released 0.0.4 after the fix was already in: with a same-named
+    directory in the working directory, the graph came back as the **union** of both
+    trees — `core.registry` and `core.user` from the target *and* `core.impostor` from the
+    shadow. Namespace packages are additive, so griffe merged the parts it found instead
+    of one winning, and the result described a code base that exists nowhere.
+
+    Harder to notice than the package case, too: node counts go *up*, not sideways, and
+    every symbol in the graph is a real symbol from some real file.
+    """
+    target, shadow = tmp_path / "elsewhere" / "core", tmp_path / "workdir" / "core"
+    target.mkdir(parents=True)
+    shadow.mkdir(parents=True)
+    (target / "registry.py").write_text("def own():\n    return 1\n")
+    (target / "user.py").write_text("import registry\n\n\ndef go():\n    return registry.own()\n")
+    (shadow / "impostor.py").write_text("def impostor():\n    return 0\n")
+
+    out = tmp_path / "g.json"
+    r = subprocess.run([sys.executable, "-m", "codemap.cli", "build", str(target), "-o", str(out)],
+                       cwd=str(shadow.parent), capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    ids = {n["id"] for n in json.loads(out.read_text())["nodes"]}
+    assert {"core.registry.own", "core.user.go"} <= ids
+    assert not any("impostor" in i for i in ids), "the two trees were merged into one graph"
