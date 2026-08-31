@@ -5,6 +5,19 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-08-31
+
+**A correctness release: three of its four items were found by looking, one was reported.** No schema
+change — graphs stay 0.13 and a 0.0.4 graph is still readable — but rebuild, because two of these fixes
+change what a graph *says*.
+
+The thread running through all four: **the tool answered, the answer was well-formed, and nobody could tell
+it was wrong.** A signature that could not be called. A gate that found no contract and did not say where it
+looked. A build that analysed a package other than the one it was given. In each, the failing output is
+shaped exactly like the succeeding one — which is what stops a reader from checking it. Three of the four
+were found while doing something else, and the one deliberate hunt (verifying a new rule on a real pair of
+releases) is what surfaced the worst of them.
+
 ### Added
 
 - **The declared signature travels with the `query` dossier (R1-C33).** The question after "where is it"
