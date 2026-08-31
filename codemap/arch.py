@@ -33,7 +33,7 @@ of the code.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from codemap.tomlio import read_toml
@@ -56,6 +56,10 @@ class ArchitectureContract:
     no_lazy_cycles: bool = False
     exhaustive: bool = False
     error: str | None = None
+    # R1-C35: the file this contract was looked for in. "No contract found" is only
+    # actionable next to *where* we looked — a reader in the wrong directory cannot tell
+    # an absent contract from a mislocated one, and both exit 0.
+    path: str | None = None
 
     def is_empty(self) -> bool:
         return not (self.layers or self.independent or self.forbidden
@@ -80,10 +84,15 @@ def load_contract(root: str | Path = ".") -> ArchitectureContract:
     file that will not parse is reported through ``error`` rather than being returned as an
     absent contract: a typo used to turn a failing gate green (R1-C27).
     """
-    data, error = read_toml(Path(root) / "codemap.toml")
+    # Absolute on purpose: "not found in codemap.toml" is what the reader already
+    # assumed. The whole value of the line is *which* codemap.toml, so it answers with a
+    # path that is unambiguous from any working directory. (The graph artifact stays free
+    # of absolute paths — D5 — but this is terminal output, not the artifact.)
+    path = Path(root).resolve() / "codemap.toml"
+    data, error = read_toml(path)
     if error:
-        return ArchitectureContract(error=error)
-    return parse_contract(data.get("architecture", {}))
+        return ArchitectureContract(error=error, path=str(path))
+    return replace(parse_contract(data.get("architecture", {})), path=str(path))
 
 
 def parse_contract(section: dict) -> ArchitectureContract:

@@ -86,12 +86,28 @@ nothing is left unjudged and the disclaimer disappears.
 
 ## Running the gate
 
+The contract file is **always** `codemap.toml`, read from `--root` (default: the current
+directory). There is no `--config` flag — point `--root` at the directory that holds the
+file. On a miss, `check` prints the absolute path it looked in, because "not found in
+codemap.toml" is what you already assumed; *which* `codemap.toml` is the part you need.
+
 ```bash
 # exit 0 if the contract holds, 2 if it is broken (so CI fails on it)
 codemap check --graph graph.json
 codemap check --build ./yourpkg                 # or build fresh
-codemap check --graph graph.json --root .        # where codemap.toml lives (default: cwd)
-codemap check --graph graph.json --require-contract   # fail if no [architecture] block
+codemap check --graph graph.json --root infra/   # the dir holding codemap.toml (default: cwd)
+codemap check --graph graph.json --require-contract   # a missing contract is a failure
+```
+
+**Use `--require-contract` in CI.** A missing or empty `[architecture]` block is a
+deliberate no-op success — a project without a contract must not fail — which means the
+one run nobody reads, the green one, can be a step that enforced nothing. The flag turns
+that into a failure, and `check` says so on every miss:
+
+```
+_No `[architecture]` contract found in `/repo/codemap.toml` — nothing to enforce, and this
+exits 0. Use `--require-contract` to make a missing contract a failure, or `--root DIR` if
+the file lives elsewhere._
 ```
 
 A clean run is one quiet line; a broken run names every edge to fix:

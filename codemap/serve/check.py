@@ -56,6 +56,9 @@ def build_check(query, contract: ArchitectureContract, violations: list[Violatio
         "target": query.graph.target,
         "contract_empty": contract.is_empty(),
         "contract_error": contract.error,
+        # R1-C35: where the contract was looked for. A machine reader of `contract_empty`
+        # has the same "absent or mislocated?" question a human does.
+        "contract_path": contract.path,
         "ok": not violations and contract.error is None,
         "violations": [
             {"rule": v.rule, "summary": v.summary,
@@ -73,14 +76,21 @@ def render_check(query, contract: ArchitectureContract, violations: list[Violati
     # reported as a contract that does not exist, which is how one missing `]` turned a
     # failing gate green. Nothing was enforced either way — but only one of the two is the
     # user's decision, and the caller exits non-zero on this one.
+    where = f"`{contract.path}`" if contract.path else "`codemap.toml`"
     if contract.error:
         return (f"# Architecture check — `{target}`\n\n"
                 f"❌ **Contract not read — nothing was enforced.** {contract.error}\n\n"
-                "_Fix `codemap.toml` (or remove it) and run again. This is a failure, not "
+                f"_Fix {where} (or remove it) and run again. This is a failure, not "
                 "an absent contract: rules may exist that no rule-check ran against._\n")
     if contract.is_empty():
+        # R1-C35: name the file we looked in, and name the flag that turns this into a
+        # failure. Without the path, a run from the wrong directory is indistinguishable
+        # from a project that has no contract; without the flag, the same output is a
+        # green CI step that enforced nothing.
         return (f"# Architecture check — `{target}`\n\n"
-                "_No `[architecture]` contract found in codemap.toml — nothing to enforce._\n")
+                f"_No `[architecture]` contract found in {where} — nothing to enforce, "
+                "and this exits 0. Use `--require-contract` to make a missing contract a "
+                "failure, or `--root DIR` if the file lives elsewhere._\n")
     if not violations:
         rules = []
         if contract.layers:

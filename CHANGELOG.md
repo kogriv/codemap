@@ -22,6 +22,14 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **`check` names the file it looked in, and says that a miss exits 0 (R1-C35).** Reported by the lab as a
+  lost minute: they reached for `check --config codemap.toml`, which is not a flag, and the reply — "No
+  `[architecture]` contract found in codemap.toml" — reads the same whether the project has no contract or
+  the command ran one directory away from it. Both exit 0. The default is right (a project without a
+  contract must not fail), so what changed is the output: the absolute path it searched, the fact that this
+  is a success exit, and the names of `--require-contract` and `--root`. `contract_path` joins the JSON
+  surface. Docs now carry the discovery rule beside the first example instead of forty lines below it.
+
 - **The stored signature keeps parameter kind (R1-C34).** `*args` was rendered as a parameter named
   `args` with a default of `()`, `**kw` as `kw = {}`, and the `/` and bare `*` markers were dropped, so
   `def h(*args, **kw)` and `def h(args=(), kw={})` produced the same string and a keyword-only parameter
