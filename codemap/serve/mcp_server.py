@@ -121,9 +121,15 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 
     @server.tool()
     def query(name: str) -> dict:
-        """Full dossier for a symbol name: where defined (file:line), bases/impls for
+        """Full dossier for a symbol name: where defined (file:line) with the declared
+        `signature` (a class carries its own `constructor` instead), bases/impls for
         classes, callers/callees/columns for functions, registration recipe, column
-        dataflow. The main lookup."""
+        dataflow. The main lookup.
+
+        `signature` is how the symbol is declared; `call_contract` is how it is called
+        in fact (posargs / kwargs / splat per call site) — ask that one for the second
+        question, not for the first. A missing field means the graph has nothing there,
+        never that it was not looked up."""
         return op("query", {"name": name})
 
     @server.tool()

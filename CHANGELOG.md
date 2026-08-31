@@ -5,6 +5,21 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Added
+
+- **The declared signature travels with the `query` dossier (R1-C33).** The question after "where is it"
+  is "how is it called", and `Node.signature` was already in the graph — getting it meant a second op.
+  A function match now carries `signature`; a class carries `constructor` (its own `__init__`, under its
+  own name, never dressed up as a signature the class does not have); a symbol marked deprecated carries
+  `deprecated`. An inherited constructor is not resolved, and a field with nothing to say is absent rather
+  than `null` — "we did not look" must not be spelled the same way as "there is nothing there".
+  `signature` is how a symbol is *declared*; `call_contract` remains the answer to how it is *called in
+  fact*, per call site.
+
+  It came from auditing the "what we'd take" list of the CodeGraph разбор, where this item had been
+  recorded three days earlier and never carded — a list without status reads as done. Taking it is what
+  surfaced R1-C34 below.
+
 ### Fixed
 
 - **The stored signature keeps parameter kind (R1-C34).** `*args` was rendered as a parameter named

@@ -318,7 +318,14 @@ def _print_query_text(r) -> None:
     print("defined at:", ", ".join(r["defined_at"]) or "—")
     for m in r["matches"]:
         loc = f" — {m['file']}:{m['lines'][0]}" if m.get("file") and m["lines"][0] else ""
-        print(f"  - {m['id']} ({m['kind']}){loc}")
+        dep = " [deprecated]" if m.get("deprecated") else ""
+        print(f"  - {m['id']} ({m['kind']}){loc}{dep}")
+        # R1-C33: the declared shape, on the line below the location. A class shows its
+        # own constructor under that name — not as if the class had a signature.
+        if m.get("signature"):
+            print(f"      {m['signature']}")
+        elif m.get("constructor"):
+            print(f"      constructor: {m['constructor']}")
     for mid, dep in r.get("modules", {}).items():
         print(f"\n[{mid}]")
         print("  imports:", ", ".join(dep["dependencies"]) or "—")

@@ -67,6 +67,36 @@ _UNLIMITED_BY_DESIGN = {
 }
 
 
+def _match(q: Query, n) -> dict:
+    """One entry of the ``matches`` list: where the symbol is, and how it is declared.
+
+    R1-C33. The question after "where is it" is "how is it called", and the declared
+    signature was already on the node — asking ``call_contract`` for it was a second
+    round-trip for something the graph carried all along. Fields that would say nothing
+    are omitted rather than emitted as ``null``: a caller can tell "no signature here"
+    from "a signature we did not look up" only if the absent case is absent.
+
+    Note the two are different questions and keep different names. ``signature`` is how
+    the symbol is *declared*; ``call_contract`` answers how it is *called in fact*
+    (posargs / kwargs / splat per call site), which no node field can know.
+    """
+    e = {"id": n.id, "kind": n.kind, "file": n.file, "lines": [n.lineno, n.endlineno]}
+    if n.signature:
+        e["signature"] = n.signature
+    elif n.kind == "class":
+        # A class has no signature of its own in the model (only functions get one).
+        # Its constructor answers what a caller standing on the class actually wants,
+        # so it travels under its own name — never dressed up as the class's signature.
+        # Only the class's *own* __init__: an inherited one is not resolved here, and
+        # for that case saying nothing is the honest answer (unknown != none).
+        init = q.graph.nodes.get(f"{n.id}.__init__")
+        if init is not None and init.signature:
+            e["constructor"] = init.signature
+    if n.is_deprecated:
+        e["deprecated"] = True
+    return e
+
+
 def build_query_result(q: Query, name: str) -> dict:
     """The full symbol dossier — shared by ``codemap query`` and warm serve."""
     matches = q.find(name)
@@ -75,8 +105,7 @@ def build_query_result(q: Query, name: str) -> dict:
         "defined_at": q.where_defined(name),
         # F12: carry file:line so an agent can jump to source; the id here is the
         # canonical node (not a re-export), so it also chains into relational ops.
-        "matches": [{"id": n.id, "kind": n.kind, "file": n.file,
-                     "lines": [n.lineno, n.endlineno]} for n in matches],
+        "matches": [_match(q, n) for n in matches],
     }
     modules = [n.id for n in matches if n.kind == "module"]
     if modules:

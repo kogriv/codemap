@@ -420,11 +420,15 @@ the cheap half of the difference and is now a backlog candidate (adaptive deboun
      codemap deferred. A 121 ms *manual* `sync` makes the case that the loop is worth closing rather than
      left as "take it when a scenario appears" — their end-to-end save→answerable is 0.33 s, measured on
      the second pass; see the sync section for why the two numbers are not the same one.
-  2. **Inline `signature` on symbol lookup.** ❌ **not taken, and not carded** — recorded here on
-     2026-08-28 and then dropped on the floor; noticed 2026-08-31 while auditing this list.
-     `build_query_result` still returns `matches` as `{id, kind, file, lines}`. codemap makes you ask
-     `call_contract` separately; putting the signature on the `query` node costs nothing (`Node.signature`
-     exists and `api_surface` already reads it) and answers the next question before it is asked.
+  2. **Inline `signature` on symbol lookup.** ✅ **taken 2026-08-31 (R1-C33)** — after three days as an
+     invisible line inside this prose, which is why every item in this list now carries a status.
+     codemap made you ask `call_contract` separately; the declared signature now travels in the `query`
+     dossier (a class carries its own `constructor` instead, since a class has no signature of its own).
+     **Taking it paid for itself immediately:** the first test asserted the signature of a function with a
+     keyword-only parameter and failed — codemap's renderer had been dropping parameter *kind* since M0
+     (`*args` as `args = ()`, the `*` and `/` markers gone), on 14.3% of its own functions and 16.3% of
+     bquant's, and that loss had silently disabled three rules inside `apidiff`. **R1-C34.** The item we
+     nearly dropped as too small to card was the one that surfaced a defect in a shipped release.
   3. **The benchmark's contamination control.** ◐ **recorded as a precondition, not built** — there is no
      two-arm codemap benchmark to apply it to (`research/comparison.md` §what we'd need). Their harness blocks the `codegraph` CLI in *both* arms
      via a sanitized `PATH` plus a `PreToolUse` hook, because they measured the control arm reaching the
