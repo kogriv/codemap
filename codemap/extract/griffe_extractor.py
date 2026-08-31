@@ -68,7 +68,28 @@ def build_structural(package_path: str | Path):
 
     module_name = pkg_dir.name
     search_path = pkg_dir.parent
-    root = griffe.load(module_name, search_paths=[str(search_path)])
+    # R1-C36: `try_relative_path` (griffe's default) reinterprets the module *name* as a
+    # path relative to the current directory, and that wins over `search_paths`. Run from
+    # a repo whose root holds `pkg/`, `build /elsewhere/pkg` then silently analysed the
+    # local `pkg` — same shape of answer, different code. We always know the directory we
+    # were handed, so the name must resolve through `search_paths` and nowhere else.
+    root = griffe.load(module_name, search_paths=[str(search_path)], try_relative_path=False)
+    # Defence in depth: whatever the finder does next (a .pth file, a namespace package,
+    # a future default), a graph must describe the directory that was asked for. A wrong
+    # answer here is invisible downstream — it is well-formed, complete and about the
+    # wrong tree — so it fails loudly instead.
+    loaded = getattr(root, "filepath", None)
+    # A namespace package reports a *list* of directories, not one path — the very shape
+    # that once crashed the extractor (issue #4). Handle it here rather than assume.
+    candidates = loaded if isinstance(loaded, (list, tuple)) else ([loaded] if loaded else [])
+    dirs = {(q if q.is_dir() else q.parent).resolve() for q in map(Path, candidates)}
+    if dirs and pkg_dir not in dirs:
+        raise ValueError(
+            f"resolved `{module_name}` to {', '.join(sorted(str(d) for d in dirs))} but was "
+            f"asked for {pkg_dir}. A same-named package is shadowing the target (an "
+            "installed copy, or one in the current directory). Build from a different "
+            "working directory, or rename the target."
+        )
 
     graph = Graph(target=module_name)
     walk = _Walk()

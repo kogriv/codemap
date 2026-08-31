@@ -22,6 +22,20 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Fixed
 
+- **A build could silently analyse a different package with the same name (R1-C36).** `griffe.load` defaults
+  to `try_relative_path=True`, which reinterprets the module *name* as a path relative to the current
+  directory and wins over the `search_paths` codemap passes. Run from a repo whose root holds `pkg/`,
+  `codemap build /elsewhere/pkg` analysed the local `pkg` — exit 0, no warning, a complete graph of the
+  wrong code. It hides wherever the two coincide (your package, your repo root) and appears exactly where
+  the difference matters: a tag archive, a worktree, a copy — that is, in any two-snapshot workflow, which
+  is what `codemap diff` exists for. A release gate comparing two such graphs reports "no API changes"
+  every time. Found while verifying the new `apidiff` rule on a real pair of release tags, whose two graphs
+  came out with identical node ids and an identical edge count across nine changed files.
+
+  The name now resolves through `search_paths` only, and a resolved path outside the requested directory
+  raises instead of being used. The absolute paths that appeared in `file` were a symptom of the same
+  thing (D5: the artifact carries no absolute paths).
+
 - **`check` names the file it looked in, and says that a miss exits 0 (R1-C35).** Reported by the lab as a
   lost minute: they reached for `check --config codemap.toml`, which is not a flag, and the reply — "No
   `[architecture]` contract found in codemap.toml" — reads the same whether the project has no contract or
