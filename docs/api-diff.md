@@ -21,15 +21,24 @@ symbols participate — private churn is not an API change.
 | parameter removed | **breaking** | callers passing it break |
 | required parameter added | **breaking** | existing calls omit it |
 | parameter made required (default dropped) | **breaking** | calls relying on the default break |
+| parameter made keyword-only (`*` inserted before it) | **breaking** | every positional call breaks |
 | `*args` / `**kwargs` removed | **breaking** | calls using them break |
 | parameter type changed | warning | may narrow — needs a human's eye |
 | return type changed | warning | may narrow — needs a human's eye |
 | newly `@deprecated` | warning | signals coming removal |
+| parameter no longer keyword-only | info | widening — old calls still work |
 | optional parameter added | info | backward-compatible |
 | symbol added | info | new API |
 
 A signature `ast` cannot parse degrades to a conservative `signature-changed`
 warning — never a false "breaking".
+
+**Rebuild both snapshots with the same codemap.** Parameter *kind* only entered the
+stored signature in R1-C34: before it, `*args` was rendered as a parameter named `args`
+with a default of `()`, `**kw` as `kw={}`, and `/` and the bare `*` were dropped
+entirely. Diffing a pre-R1-C34 snapshot against a newer one therefore reports signature
+churn that is the renderer changing, not the code. The two rows about keyword-only above
+cannot fire on an old snapshot at all — nothing in it parsed as keyword-only.
 
 ## Usage
 

@@ -516,17 +516,58 @@ def _registry_binding(obj) -> dict | None:
     return None
 
 
+def _param(p, *, bare: bool = False) -> str:
+    """One parameter, PEP8-spaced: ``x=1`` bare, ``x: int = 1`` annotated.
+
+    ``bare`` is for ``*args`` / ``**kwargs``, where griffe reports a default of
+    ``()`` / ``{}``. That default is the collection the callee receives, not
+    something written in the source, and printing it invents an argument.
+    """
+    s = p.name
+    if p.annotation is not None:
+        s += f": {p.annotation}"
+    if not bare and p.default is not None:
+        s += f" = {p.default}" if p.annotation is not None else f"={p.default}"
+    return s
+
+
 def _signature(obj) -> str | None:
+    """The declared signature, as written — including parameter *kind*.
+
+    R1-C34. The first version of this dropped kind entirely: `*args` came out as a
+    parameter named `args` with a default of `()`, `**kw` as `kw={}`, and both `/`
+    and the bare `*` marker vanished. So `def h(*args, **kw)` — accepts anything —
+    and `def h(args=(), kw={})` — two optional positionals — rendered to the same
+    string, and `def f(a, b)` -> `def f(a, *, b)`, which breaks every positional
+    caller, was invisible to `apidiff` because both sides rendered `f(a, b)`.
+
+    The string is consumed by `report api-surface`, `apidiff` (which re-parses it as
+    `def <sig>: ...`), the exports, and — since R1-C33 — the `query` dossier. All
+    four were reading a signature that could not be called.
+    """
     if obj.kind.value != "function":
         return None
-    parts = []
-    for p in obj.parameters:
-        s = p.name
-        if p.annotation is not None:
-            s += f": {p.annotation}"
-        if p.default is not None:
-            s += f" = {p.default}"
-        parts.append(s)
+    params = list(obj.parameters)
+    kinds = [getattr(p.kind, "name", "positional_or_keyword") for p in params]
+    parts: list[str] = []
+    star = False  # a `*` or `*args` is already in scope, so `*` must not repeat
+    for i, (p, kind) in enumerate(zip(params, kinds)):
+        if kind != "positional_only" and i and kinds[i - 1] == "positional_only":
+            parts.append("/")
+        if kind == "var_positional":
+            parts.append("*" + _param(p, bare=True))
+            star = True
+        elif kind == "var_keyword":
+            parts.append("**" + _param(p, bare=True))
+        elif kind == "keyword_only":
+            if not star:
+                parts.append("*")
+                star = True
+            parts.append(_param(p))
+        else:
+            parts.append(_param(p))
+    if kinds and kinds[-1] == "positional_only":
+        parts.append("/")
     sig = f"{obj.name}({', '.join(parts)})"
     if obj.returns is not None:
         sig += f" -> {obj.returns}"

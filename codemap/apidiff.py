@@ -142,6 +142,21 @@ def _classify_signature(sid: str, old: Node, new: Node) -> list[Change]:
         if old_p is not None and p.required and not old_p.required:
             out.append(Change(sid, "param-made-required", BREAKING,
                               f"parameter `{name}` is now required"))
+    # R1-C34: a parameter that became keyword-only breaks every positional caller,
+    # and the reverse only widens. `_Param.keyword_only` was parsed from the start and
+    # never read — and could not have been trusted anyway: until R1-C34 the renderer
+    # dropped the `*` marker, so every stored signature parsed as if nothing were
+    # keyword-only, and `def f(a, b)` -> `def f(a, *, b)` was a no-op here.
+    for name, p in sn.params.items():
+        old_p = so.params.get(name)
+        if old_p is None:
+            continue
+        if p.keyword_only and not old_p.keyword_only:
+            out.append(Change(sid, "param-made-keyword-only", BREAKING,
+                              f"parameter `{name}` is now keyword-only"))
+        elif old_p.keyword_only and not p.keyword_only:
+            out.append(Change(sid, "param-made-positional", INFO,
+                              f"parameter `{name}` is no longer keyword-only"))
     # variadic removed (*args / **kwargs that existed).
     if so.has_vararg and not sn.has_vararg:
         out.append(Change(sid, "variadic-removed", BREAKING, "`*args` removed"))

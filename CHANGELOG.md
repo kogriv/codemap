@@ -5,6 +5,24 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+
+- **The stored signature keeps parameter kind (R1-C34).** `*args` was rendered as a parameter named
+  `args` with a default of `()`, `**kw` as `kw = {}`, and the `/` and bare `*` markers were dropped, so
+  `def h(*args, **kw)` and `def h(args=(), kw={})` produced the same string and a keyword-only parameter
+  read as positional — write the call the signature describes and Python raises `TypeError`. Measured on
+  two trees: **62 of 435** functions on codemap (14.3%), **152 of 931** on bquant (16.3%), including
+  codemap's own public `resolve_scope`, whose six keyword-only parameters were documented as positional.
+  Five consumers read that string (`report api-surface`, `export ctags`, `export vault`, living-docs and
+  the `query` dossier), and `apidiff` re-parses it — where the loss had silently disabled three of its own
+  rules, so `def f(a, b)` → `def f(a, *, b)`, breaking for every positional caller, was classified as no
+  change at all. `apidiff` now reports `param-made-keyword-only` (breaking) and the widening
+  `param-made-positional` (info).
+
+  No schema bump: the shape of the graph did not change, and neither did the meaning of the field — it was
+  simply rendered wrong. **Rebuild old graphs anyway**, and do not diff a pre-R1-C34 snapshot against a
+  newer one: the churn it reports is the renderer changing, not the code (`docs/api-diff.md`).
+
 ## [0.0.4] - 2026-08-29
 
 **Two days of a second real user, and a schema bump.** Everything below is `Fixed`, and all but one item
