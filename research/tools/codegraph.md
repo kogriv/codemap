@@ -415,16 +415,22 @@ the cheap half of the difference and is now a backlog candidate (adaptive deboun
 ## Разбор
 
 - **What we'd take.**
-  1. **The watcher loop (M3.2).** A 2-second debounce over native OS file events, feeding an incremental
-     re-index, is exactly the glue codemap deferred. A 121 ms sync makes the case that the loop is worth
-     closing rather than left as "take it when a scenario appears".
-  2. **Inline `signature` on symbol lookup.** codemap makes you ask `call_contract` separately; putting
-     the signature on the `query` node costs nothing and answers the next question before it is asked.
-  3. **The benchmark's contamination control.** Their harness blocks the `codegraph` CLI in *both* arms
+  1. **The watcher loop (M3.2).** ✅ **taken** (`codemap watch` + `serve --watch`, 2026-08-28).
+     A 2-second debounce over native OS file events, feeding an incremental re-index, is exactly the glue
+     codemap deferred. A 121 ms *manual* `sync` makes the case that the loop is worth closing rather than
+     left as "take it when a scenario appears" — their end-to-end save→answerable is 0.33 s, measured on
+     the second pass; see the sync section for why the two numbers are not the same one.
+  2. **Inline `signature` on symbol lookup.** ❌ **not taken, and not carded** — recorded here on
+     2026-08-28 and then dropped on the floor; noticed 2026-08-31 while auditing this list.
+     `build_query_result` still returns `matches` as `{id, kind, file, lines}`. codemap makes you ask
+     `call_contract` separately; putting the signature on the `query` node costs nothing (`Node.signature`
+     exists and `api_surface` already reads it) and answers the next question before it is asked.
+  3. **The benchmark's contamination control.** ◐ **recorded as a precondition, not built** — there is no
+     two-arm codemap benchmark to apply it to (`research/comparison.md` §what we'd need). Their harness blocks the `codegraph` CLI in *both* arms
      via a sanitized `PATH` plus a `PreToolUse` hook, because they measured the control arm reaching the
      tool through Bash in **26 of 28 runs**. Any future codemap benchmark that compares "agent with" to
      "agent without" must do this or it is measuring nothing.
-  4. **Adaptive debounce** (second pass). `QUICK_SYNC_MAX_PENDING = 2` / `QUICK_SYNC_QUIET_MS = 300`: a
+  4. **Adaptive debounce** (second pass). ✅ **taken** (M3.2-f1, 2026-08-28). `QUICK_SYNC_MAX_PENDING = 2` / `QUICK_SYNC_QUIET_MS = 300`: a
      lone save syncs after 300 ms, a burst still coalesces on the full 2 s. codemap shipped a flat 2 s,
      which costs ~1.7 s on the common case for no benefit. Cheap, and it is most of why their measured
      save→answerable is 0.33 s rather than the 2 s their headline debounce implies. Backlog: **M3.2-f1**.
@@ -530,7 +536,14 @@ Backlog effect:
   magnitude on our target because it inherits name-resolved call edges. Claim the accuracy, not the absence.
 - **M3.2-f1 (new, XS) — adaptive debounce.** A flat 2 s window taxes the common case (one file saved) for
   a burst that rarely happens. Their split (≤2 pending → 300 ms quiet; more → full window) is the whole
-  fix, and it is the difference between our 8.5 s and something near 6.5 s without touching the rebuild.
+  fix, and it is most of why their measured save→answerable is 0.33 s rather than the 2 s their headline
+  debounce implies.
+  **Shipped 2026-08-28, and the projected saving was retracted.** This card first read “the difference
+  between our 8.5 s and something near 6.5 s”. That number was never measured: the run-to-run spread of a
+  full rebuild on this machine is ±30%, which swamps a 1.7 s window change, so the end-to-end effect is
+  **not observable here**. What is measured is the window itself (2.0 s → 0.3 s for ≤2 changed files) and
+  tests on injected clocks. The retraction stands in BACKLOG M3.2-f1 and was stated to the reporter who
+  had been quoted the projection; it is repeated here because a research card is where the claim was made.
 - **P6 (blog)** — the role-provenance post now has a concrete illustration: a widely-adopted peer that
   labels `examples/` as `tests`, beside codemap's `by_root` split. Still not the "provenance changed a
   real decision" episode the post is waiting for, so **P6 stays blocked** — but this is the strongest
