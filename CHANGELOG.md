@@ -5,6 +5,19 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-09-01
+
+**A release about the evidence, not the behaviour.** One item changes what the tool *does*; the other three
+change what is *known* about it. No schema change — graphs stay 0.13 — and, unlike 0.0.5, nothing here
+alters what a graph says, so an existing artifact does not need rebuilding.
+
+The thread: **a check that has never been fed the thing it must reject is not a check.** Six contract rules
+had a violation test each, on hand-built three-node graphs — the arithmetic proven, the path that runs in
+production not. A target guard shipped in 0.0.5 with no direct test of the one decision it makes. A defect
+the consumer was told could not be reproduced without their tree, which a synthetic layout reproduced —
+and the reproduction was worse than the report. The one new behaviour comes from the same place: a warm
+server was answering in the shape of code it no longer ran, and nothing in the answer said so.
+
 ### Added
 
 - **A warm server says when it is running code the installed distribution has moved past (R1-C38).**
