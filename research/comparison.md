@@ -22,7 +22,7 @@ get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py)
 | graphlens | [card](tools/graphlens.md) | ✅ | ✅¹ | ✅¹ | ✖ | ✖ | ✖ | ✅ | Py/TS/Go/Rust/PHP | MIT |
 | **CodeGraph** (colbymchenry) | [card](tools/codegraph.md) | ✅ | ✅⁴ | ✅⁴ | ✖ | ✖ | ◐⁴ | ✅ (1 tool) | 20 (Rust kernel) | MIT |
 | **GitNexus** | [card](tools/gitnexus.md) | ✅ | ◐² | ✅² | ✖ | ◐² | ◐² | ✅ | 14 (tree-sitter) | PolyForm NC |
-| OntoIndex | ? | ? | ? | ? | ? | ? | ? | ✅ | multi | ? |
+| **OntoIndex** | [card](tools/ontoindex.md) | ✅⁵ | ◐⁵ | ✅⁵ | ✖ | ◐⁵ | ◐⁵ | ✅ (60+ tools) | 14 (tree-sitter) | AGPL-3.0 |
 | Sentrux | ? | — | — | ? | ? | ✅ | ✅ | ✅ | 52 | ? |
 | cocoindex-code | [card](tools/cocoindex-code.md) | ◐³ | — | — | — | — | ◐³ | ✅ | multi (tree-sitter) | Apache-2.0 |
 | rag_for_git | ? | ✅ | ✅ | ◐ | ? | ? | ✖ | ✖ | ? | OSS |
@@ -85,6 +85,34 @@ file-kind rows sort first, and there is **no `truncated` flag** — the default 
 model when the real one is symbol-level. Also ships the **debounced file watcher** codemap deferred
 (**121 ms** incremental sync). See the [card](tools/codegraph.md).
 
+⁵ OntoIndex (2.2.0), hands-on on the R2 scope (materialized staging from `git archive cb89a24`, `scope_id`
+verified; second staging for the clean-room A/B). A GitNexus descendant under **AGPL-3.0**, far past its
+ancestor in surface. **Index:** 280 files → 10 745 nodes / 20 232 edges / 254 clusters / 300 flows in
+**49.1 s**, 1.0 GB RSS, 62 MB store (codemap: 4 225 / 11 502, 11.4 s fast / 111 s deep, 5.4 MB JSON) —
+counts are not comparable, since its graph carries markdown headings, Leiden communities, process steps and
+a summary tree that codemap does not model, and misses the `column` layer codemap does. **T1** ✅ both defs,
+and **`status: "ambiguous"`** natively — the second tool measured that *flags* ambiguity instead of ranking
+it away; `startLine` is however **0-based** (121/717 where `def` sits on 122/718). **T3** ✅ the strongest
+agreement any card has produced: `impact --include-tests` at depth 1 returns **exactly codemap's 57** callers
+for `MACDZoneAnalyzer` and **exactly 78** for `get_sample_data` — set-identical, nothing on either side alone,
+from an engine sharing no code path with ours. Defaults hide the test suite (55 vs 149 impacted) and depth
+defaults to 3. **T2** ◐ **the counter-example of the series**: `context` caps `incoming.calls` at **30** while
+reporting `contextCompleteness.truncated: **false**` — 30 of 57, and 30 of 78 — and two indexes of
+byte-identical input keep **different** 30-element subsets. Under the cap it is exact (28 = 28, 6 = 6).
+**T4** ✖ structurally: nodes carry no parameters, edges no arguments (verified by Cypher over the store) —
+five cards, five tools, T4 still unanswered outside codemap. **T5** ◐ `audit` (git-required) has the right
+sections, but "Import Cycles (6)" mixes a 38-page markdown-link ring, two function call cycles and
+basename-rendered module cycles, against codemap's 1 hard + 44 lazy, each named in full and separated by
+whether it breaks at import; coupling rows are keyed by community name with duplicates and `Ca 0` throughout.
+The two graph-central `report` views print **"no hubs found (index missing, empty graph…)"** on a
+10 745-node graph — a **Cypher parse error** (`NOT n:Label` unsupported by the vendored store) demoted to a
+warning, exit 0. **Determinism** ◐: the *graph* is not reproducible (10 745/20 232/254 vs 10 747/20 227/256),
+`impact` is set-stable but order-unstable (384 positional diffs), `context` is neither. **Best-in-field
+honesty where it holds:** every edge carries the resolution *method* and a graded confidence (`same-file`
+0.95 · `import-resolved` 0.9 · `global` 0.5 · markdown-link imports 0.8), `report --help` declares its own
+lossiness and routes to the authoritative op (`isRankedDiscovery: true` in JSON), and the one file over the
+size cap is re-announced in every answer. See the [card](tools/ontoindex.md).
+
 ## Quality summary
 
 Filled per axis (accuracy · determinism · cost · speed · setup · languages · license · interface ·
@@ -94,6 +122,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 |---|---|---|---|---|
 | graphlens | working type-resolved impact (≈codemap non-test); resolves into deps; 5 languages; minimalist 3-verb MCP; smart test-de-emphasis | no arch/sig-change tools (no T4/T5); non-deterministic DB; **`ty`-on-PATH gotcha** silently degrades impact; venv-scoping trap; 12× index cost | learn (competent peer) | R1-C13, R1-C14 |
 | GitNexus | hybrid semantic+structural: BM25+embeddings+RRF search, Leiden clusters + 294 process-flows, transitive risk-rated impact, per-answer `epistemic`/`confidence`, 14 langs, MCP+HTTP+web, 1-cmd editor setup | **non-commercial license**; 1.7 GB install + 123 MB binary non-diffable index (28× input); T2 is import-fan-in not call-sites; no T4 (call contracts) & partial T5 (no coupling/god-objects); **git-required** for incremental/change-detection | learn (strong, adjacent niche) | R1-C13, R1-C14, R1-C15 |
+| OntoIndex | **per-edge resolution *reason* + graded confidence** (`same-file` 0.95 · `import-resolved` 0.9 · `global` 0.5) — the finest epistemic model measured; `impact` set-**identical** to codemap on both probes (57 = 57, 78 = 78) from an unrelated engine; native `status: "ambiguous"`; `report --help` declares its own lossiness and routes to the authoritative op; skipped input re-announced in every answer; `suggestedNextCalls` fills the next tool call for the agent; 60+ MCP tools, `audit`/`check`/`packs`/`review` surface | **AGPL-3.0** closes wrap and integrate; `context` caps callers at **30 while reporting `truncated: false`** (30 of 78) and keeps a **different** subset per build; the **graph itself is not reproducible** from identical input; `report hubs`/`surprising-connections` return "no hubs found" on a 10 745-node graph (**Cypher parse error**, exit 0); "Import Cycles" mixes doc-link rings and call cycles, rendered by basename; coupling keyed by community name with `Ca 0` throughout; no T4; 489 MB install and a documented `npm install` path that **404s** | **learn (strong)** | R1-C13, R1-C28, R1-C14 (+2 new candidates) |
 | PyCG | academic reference for Python call-graph accuracy; hand-labeled micro/macro benchmark corpus (the ~99%P/~70%R ceiling citation) | **does not run on Python 3.12** (import-hook surgery collides with stdlib; fails on a 3-line file); batch CLI, not a service; unmaintained (0.0.8, 2021) | learn (methodology only — spike-negative as a live oracle) | R1-C13 |
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
 | CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync, **0.33 s** save→answerable with its watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 on any reachable surface (no argument contract; no layers/violations at all, and the library-only cycle finder reports **136 where 41 are real**, sees a function-local import only when the symbol is *called*, and does not separate a cycle that breaks on import from one a lazy import already fixed — it walks name-resolved call edges, so `dict.get` becomes a call into an unrelated class; precision 10%, and its recall of 32% beat codemap's 2.4% until R1-C29 closed that same day); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639); the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |

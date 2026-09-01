@@ -633,6 +633,85 @@ the property build-story #4 was about.
 
 ---
 
+## Build-story #7 — "Two graphs that share no code agreed exactly, and one tool disagreed with itself"
+
+Facts: [OntoIndex card](tools/ontoindex.md). Measured 2026-09-01 on the R2 scope
+(`scope_id sha256:300e0a01…5e47d2`, bquant@cb89a24).
+
+### The agreement
+
+`MACDZoneAnalyzer` has been the probe symbol of this whole track. codemap says **57 callers** — griffe for
+structure, jedi for call resolution, months of fixes behind that number. OntoIndex is a tree-sitter parser
+over an embedded graph store, written in TypeScript, sharing not one line of code with us.
+
+`ontoindex impact MACDZoneAnalyzer --include-tests`, depth-1 CALLS edges: **57**. Not approximately —
+set-identical, nothing on either side alone. Repeated on `get_sample_data`: **78 versus 78**.
+
+That is the strongest external check either tool has had, and it is worth being precise about what it
+validates. Not that either is *complete* — both could miss the same call in the same way. But two
+independent implementations converging exactly on two answers of that size is not something a shaky graph
+produces.
+
+### The disagreement, inside one product
+
+The same tool has a second op for the same question. `context` is its "360-degree view of a symbol", and it
+returns **30** callers — with a block named `contextCompleteness` whose `truncated` field says **`false`**.
+
+30 of 57. And on `get_sample_data`, 30 of 78: forty-eight callers dropped, `truncated: false`.
+
+Below the cap it is exact — `NotebookSimulator` 28 of 28, `calculate_macd` 6 of 6 — which is precisely what
+makes it invisible. Nothing in the response shape distinguishes "all six" from "thirty of seventy-eight".
+
+Then the second index. Two stagings materialized from byte-identical input returned **different**
+30-element subsets of the same 57. So the missing callers are not even stable: diff two runs over an
+unchanged repository and callers appear and vanish.
+
+We have shipped this bug's cousin twice — `search` truncating at 20 with no marker, and a limit that never
+declared itself (R1-C28). The rule we wrote afterwards was *always declare the limit, including when nothing
+was cut.* Here is the version of that failure we had not imagined: not a missing field, but a present one,
+computed separately from the cut it describes, confidently saying no.
+
+### And the graph that reported itself empty
+
+`ontoindex report hubs` — the most-central-symbols view, on a graph of **10 745 nodes**:
+
+```
+no hubs found (index missing, empty graph, or no connected nodes)
+```
+
+Three explanations offered, none of them the real one. The real one is four lines further down, under
+`warnings`: the generated Cypher uses `NOT n:Label`, and the vendored store's parser does not support label
+negation. Exit code 0. `--json` returns `"hubs": []`. Same failure in `report surprising-connections`.
+
+Confirmed from outside in one line — `cypher "MATCH (s) WHERE NOT s:File RETURN count(s) LIMIT 10"` fails
+with the identical parser exception, while `MATCH (s) RETURN count(s)` answers 10 745.
+
+### The uncomfortable part
+
+This is the most careful tool about honesty measured in the whole track. Every call edge carries **how** it
+was resolved and how much to trust it — `same-file` 0.95, `import-resolved` 0.9, `global` 0.5, the last one
+being name-matching, the exact resolution codemap refuses to emit unflagged. Its `report --help` declares
+its own lossiness and routes the reader to the authoritative op. A file skipped for size at index time is
+re-announced in the warnings of *every subsequent answer*.
+
+And in the same binary: a completeness field that says the opposite of what happened, and a parser error
+dressed as an empty result.
+
+That is the lesson worth carrying, and it is about us, not them. Discipline is not a property a project
+*has*; it is a property each answer has to be given, one at a time, by something that checks. Three places
+had it. The fourth was written by the same people and nothing caught it — because what catches it is a test
+that asks *can this field ever be wrong*, and the absence of exactly that test is what our own release
+earlier the same week was about (R1-C38-f1).
+
+- **Take:** per-edge resolution *reason* with graded confidence (R1-C39); `earliest_broken_step` on affected
+  flows (R1-C40) — "what stops working" rather than "who references".
+- **Keep:** the `limit` block computed from the same numbers that did the cutting, never maintained beside
+  them. And the diffable, byte-stable artifact: their graph is not reproducible from identical input
+  (10 745/20 232 versus 10 747/20 227 nodes/edges), which no amount of labelling compensates for.
+- **Verdict:** learn (strong). AGPL-3.0 closes wrap and integrate regardless of merit.
+
+---
+
 ## Article-ready sound bites (each backed by a card)
 
 - "We almost published that a competitor's impact analysis was broken. It was our `PATH`. The hour we spent
@@ -686,11 +765,21 @@ the property build-story #4 was about.
 
 ---
 
+- "Two code graphs that share no line of code — tree-sitter over an embedded store, griffe plus jedi over
+  sorted JSON — returned the same 57 callers, and then the same 78. Neither is proof of completeness; both
+  stopped being one implementation's opinion." → build-story #7
+- "A field named `truncated` reported `false` while thirty of seventy-eight callers were dropped. A limit
+  that forgets to declare itself is a bug we have shipped; a completeness field maintained beside the cut
+  instead of by it is worse, because it converts an unknown into a confident no." → build-story #7
+- "The most careful tool about honesty we have measured also printed 'no hubs found — index missing, empty
+  graph' over a graph of 10 745 nodes, because its query would not parse. Discipline is not a property a
+  project has; it is one each answer has to be given by something that checks." → build-story #7
+
 ## Future stories (skeletons — fill on разбор)
 
-- **#7 …** next tool from R2.2 (OntoIndex / rag_for_git / …). Same shape: setup → the surprising
+- **#8 …** next tool from R2.2 (rag_for_git / Understand-Anything / …). Same shape: setup → the surprising
   measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code,
-  #6 CodeGraph done.)
+  #6 CodeGraph, #7 OntoIndex done.)
 - **The determinism story.** Why a diffable graph matters in a PR — needs a concrete "graph diff caught X"
   episode from dogfooding (`gaps/`).
 - **The provenance story.** dead-code without false positives; impact that knows tests from core. Has the

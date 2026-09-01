@@ -15,6 +15,21 @@ this. codemap and file-list-capable tools run **in place**; tools with unreliabl
 byte-identical staging via [`_scope/materialize.py`](_scope/materialize.py) (see
 [design §3](../../docs/design/scope.md)).
 
+**The spec's `root` points at the live dogfood checkout, which has moved past the pinned commit.**
+Materializing from it now resolves a *different* `scope_id` — the harness prints a warning and continues, so
+the failure mode is a card that is quietly not comparable. Since 2026-09-01 the working procedure is to
+extract the pinned tree first and materialize from that:
+
+```bash
+git -C ../bquant archive cb89a24 | tar -x -C /tmp/bquant_cb89a24     # read-only on the target repo
+.venv/bin/python research/tools/_scope/materialize.py \
+    research/tools/_scope/bquant.scope.json /tmp/staging --root /tmp/bquant_cb89a24
+# expect: canonical scope_id sha256:300e0a01… + "verify: staging scope_id == canonical ✓"
+```
+
+`scope_id` is content-derived, so the extracted tree round-trips to the same id as the original git-mode
+resolution. Check both lines of that output before recording the id in a card.
+
 ---
 
 ## Template

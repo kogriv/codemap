@@ -43,8 +43,8 @@ against codemap" gets answered with numbers, not adjectives.
 - **[comparison.md](comparison.md)** — the hub: coverage matrix (tools × capabilities) + quality summary + verdicts.
 - **[tools/](tools/)** — one card per tool; template + rules in [tools/README.md](tools/README.md).
   Measured hands-on so far: [graphlens](tools/graphlens.md), [GitNexus](tools/gitnexus.md),
-  [cocoindex-code](tools/cocoindex-code.md), [CodeGraph](tools/codegraph.md) — all on the shared R2 scope
-  ([tools/_scope/](tools/_scope/)).
+  [cocoindex-code](tools/cocoindex-code.md), [CodeGraph](tools/codegraph.md),
+  [OntoIndex](tools/ontoindex.md) — all on the shared R2 scope ([tools/_scope/](tools/_scope/)).
 - **[positioning.md](positioning.md)** — the *publication layer*: article-ready build-story + positioning,
   distilled from the cards (realizes R1-C14). Story Zero (codemap + roadmap) + one build-story per notable
   разбор. Facts live in the cards; this narrates them.
