@@ -217,6 +217,37 @@ reported 0.0.4. That is the guard added for 0.0.4 doing exactly its job — `uv 
 A release procedure that skipped the reinstall would ship a package whose own metadata disagreed with its
 source.
 
+**0.0.6 published 2026-09-01, and 0.0.7 two hours later:** [`codmap` 0.0.6](https://pypi.org/project/codmap/0.0.6/)
+and [`codmap` 0.0.7](https://pypi.org/project/codmap/0.0.7/), schema **0.13** (unchanged, and unlike 0.0.5
+no rebuild is needed — nothing in either release changes what a graph says). Same procedure, from a clean
+tree at the pushed commits `c8350ea` and `364fd76`, CI green on all seven jobs before each upload,
+`twine check` PASSED on all four artifacts.
+
+**The verification found a defect in the release it was verifying, for the second release running.** The
+rule that produced it is worth stating as a rule, because it has now paid twice: *verify the scenario the
+release exists for, not the fact that the package installs.* For 0.0.5 that meant building from a directory
+holding a same-named package. For 0.0.6, whose only new behaviour is a warm server noticing that the
+installed distribution has moved past it, it meant starting a server on the published wheel, upgrading the
+installation underneath the running process, and asking `stats`. Nothing came back.
+
+`Session._tool_drift` read the installed side through `tool_version()` — `lru_cache`d, and first called at
+import by `codemap/__init__.py`, the same call that sets `codemap.__version__`. Both sides were one cached
+value; `tool_restart_needed` was unreachable in every process. The suite was green because its tests either
+pass two versions in as arguments or patch `codemap.__version__` to force a disagreement the real code
+cannot produce — the arithmetic proven, the reachability never asked. 0.0.6's own headline was *a check that
+has never been fed the thing it must reject is not a check*, and this is what shipped under it.
+
+0.0.7 fixes it (R1-C38-f1): `provenance.installed_version()` reads the metadata fresh per call, while
+`tool_version()` keeps its cache because a build must stamp one version into everything it writes. Verified
+on the published 0.0.7 wheel by the same scenario end to end — server started under 0.0.7, installation
+changed to 0.0.6 underneath it, and both `stats` and `reload` returned
+`tool_restart_needed {running: 0.0.7, installed: 0.0.6}`. Also checked, as before: schema 0.13,
+`provenance.tool` = `{"name": "codemap", "version": "0.0.7"}` with no commit (the correct no-checkout
+answer), no absolute paths, and signatures rendering their `*`, `/` and `**` markers.
+
+Both tags were written after the fact, `v0.0.6` naming its own supersession. A release that is corrected
+within the day is still a release someone may have installed.
+
 **And the release found one of its own.** `codemap/__init__.py` declared `__version__ = "0.0.2"` while
 0.0.3 was on PyPI — a literal that had drifted a release behind, stamping the wrong version into every SCIP
 index and ctags file. Graphs were unaffected, and the reason is the interesting part: `provenance` asks
