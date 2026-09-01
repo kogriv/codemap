@@ -5,6 +5,24 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+
+- **The restart warning 0.0.6 shipped could never fire (R1-C38-f1).** `Session._tool_drift` read the
+  installed version through `tool_version()`, which is `lru_cache`d and first called at import by
+  `codemap/__init__.py` — the same call that sets `codemap.__version__`. Both sides of the comparison were
+  therefore the same cached value, in every process, forever: `tool_restart_needed` was unreachable code
+  wearing a passing test suite. Found on the release verification, by driving the published wheel through
+  the scenario the feature exists for — start a server, change the installation under it, ask `stats` —
+  which is the first time anything had asked *can the condition arise*, as opposed to *is the arithmetic
+  right*. The installed side is now read fresh on every call (`provenance.installed_version()`, measured:
+  an upgrade mid-process **is** visible to a fresh `importlib.metadata.version()`); `tool_version()` keeps
+  its cache, because a build must stamp one version into everything it writes. The regression test changes
+  only the installation — nothing about the process is patched — and is red on the 0.0.6 wiring.
+
+  Worth stating plainly, since 0.0.6's own headline was *a check that has never been fed the thing it must
+  reject is not a check*: the release that said that shipped one. Its two tests patched
+  `codemap.__version__` to force a disagreement the real code could not produce.
+
 ## [0.0.6] - 2026-09-01
 
 **A release about the evidence, not the behaviour.** One item changes what the tool *does*; the other three
@@ -28,6 +46,10 @@ server was answering in the shape of code it no longer ran, and nothing in the a
   when the version loaded at import differs from the one the installed metadata reports at call time. It is
   R1-C25 one level up: there the graph's schema and the tool's shared a field, here the process's code and
   the installed code.
+
+  **Correction, same day:** as shipped in 0.0.6 this diagnostic could not fire at all — both sides of the
+  comparison read the same cached value. Fixed in 0.0.7 (R1-C38-f1); on 0.0.6 the feature is absent rather
+  than wrong, and nothing else in the release is affected.
 
 ### Changed
 

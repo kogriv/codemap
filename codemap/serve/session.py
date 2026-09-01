@@ -109,7 +109,11 @@ def tool_drift(running: str | None, installed: str | None) -> dict | None:
 
     `stats` already separates the graph's schema from the running tool's. This is the same
     separation one level up, and it is only visible because the version is read from the
-    installed metadata at call time while the code was loaded at import.
+    installed metadata at call time while the code was loaded at import — which is a
+    property of *how the caller reads it*, not of this function. Shipped once without it
+    (0.0.6): `Session._tool_drift` passed the cached `tool_version()` on both sides, so the
+    two arguments were the same value by construction and this returned `None` forever.
+    See `installed_version()` and R1-C38-f1.
     """
     if not running or not installed or running == installed:
         return None
@@ -306,9 +310,13 @@ class Session:
 
     @staticmethod
     def _tool_drift() -> dict | None:
+        # The two sides must be read differently or there is nothing to compare (R1-C38-f1):
+        # `codemap.__version__` is fixed at import — that is the *running* code — while the
+        # installed distribution is re-read here, on every call. Using the cached
+        # `tool_version()` on the right made this compare a value with itself.
         import codemap
-        from codemap.provenance import tool_version
-        return tool_drift(getattr(codemap, "__version__", None), tool_version())
+        from codemap.provenance import installed_version
+        return tool_drift(getattr(codemap, "__version__", None), installed_version())
 
     def _op_reload(self, args) -> dict:
         """Reload the on-disk artifact into the served graph, without a restart (#3).

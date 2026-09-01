@@ -53,6 +53,55 @@ def test_an_unknown_version_is_not_a_drift():
     assert tool_drift(None, None) is None
 
 
+def _shadow_installed_version(tmp_path, monkeypatch, version: str) -> None:
+    """Make the *installed* distribution look like `version`, the way an upgrade would.
+
+    A `dist-info` directory earlier on `sys.path` wins, so this changes what
+    `importlib.metadata` answers without touching the imported module — exactly the
+    asymmetry a real upgrade under a running server creates.
+    """
+    d = tmp_path / "site"
+    (d / f"codmap-{version}.dist-info").mkdir(parents=True)
+    (d / f"codmap-{version}.dist-info" / "METADATA").write_text(
+        f"Metadata-Version: 2.1\nName: codmap\nVersion: {version}\n")
+    monkeypatch.syspath_prepend(str(d))
+
+
+def test_the_installed_side_is_read_fresh_or_there_is_nothing_to_compare(tmp_path, monkeypatch):
+    """R1-C38-f1 — the defect 0.0.6 shipped, and the reason no test caught it.
+
+    Every other test here hands `tool_drift` two versions, or forces a difference by
+    patching `codemap.__version__`. Both prove the arithmetic. Neither asks the question
+    the feature exists for: *can the condition arise?* It could not — `_tool_drift` read
+    the installed side through `tool_version()`, which is `lru_cache`d and first called at
+    import by `codemap/__init__.py`, so both sides were the same cached value forever.
+
+    Here nothing about the process is patched. Only the installation changes, as an
+    upgrade changes it, and the running server must notice.
+    """
+    from codemap.serve.session import Session
+
+    assert Session._tool_drift() is None            # agreement before the "upgrade"
+    _shadow_installed_version(tmp_path, monkeypatch, "9.9.9")
+
+    d = Session._tool_drift()
+    assert d is not None, "the installed version is being read from a process-lifetime cache"
+    assert d["code"] == "tool_restart_needed" and d["installed"] == "9.9.9"
+
+
+def test_the_build_side_stays_cached(tmp_path, monkeypatch):
+    """The fix must not turn provenance into a per-call filesystem read: a build stamps
+    one version into everything it writes, so `tool_version()` keeps its cache. The two
+    readers exist because they answer different questions — "what was it?" and "is it
+    still?" — and this is the assertion that keeps them apart."""
+    from codemap.provenance import installed_version, tool_version
+
+    before = tool_version()
+    _shadow_installed_version(tmp_path, monkeypatch, "9.9.9")
+    assert tool_version() == before
+    assert installed_version() == "9.9.9"
+
+
 def test_stats_and_reload_carry_it_when_it_applies(tmp_path, monkeypatch):
     import codemap
     from codemap.extract import extract

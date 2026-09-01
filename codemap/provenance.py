@@ -43,18 +43,36 @@ MATCH, OLDER, NEWER, UNKNOWN = "match", "older", "newer", "unknown"
 
 # -- tool identity (D2) -------------------------------------------------------
 
-@lru_cache(maxsize=1)
-def tool_version() -> str | None:
-    """The installed distribution's version, or None when it is not installed.
+def installed_version() -> str | None:
+    """What the distribution *currently on disk* says, read on every call.
 
-    The single source: `codemap.__version__` reads it too, having drifted a release
-    behind while it was a literal.
+    R1-C38-f1. `tool_version()` below is cached for a whole process, which is right for
+    provenance — every graph a build writes must carry one version — and wrong for the
+    only question that needs the value twice: has the installation changed underneath a
+    long-running server? The cached reader answers with what was true at import, so a
+    comparison between the two is a comparison of one value with itself.
+
+    Measured before trusting it: an upgrade performed while a process runs *is* visible
+    to a fresh `importlib.metadata.version()`, with no `invalidate_caches()` needed.
     """
     from importlib.metadata import PackageNotFoundError, version
     try:
         return version(DIST_NAME)
     except (PackageNotFoundError, ImportError):
         return None
+
+
+@lru_cache(maxsize=1)
+def tool_version() -> str | None:
+    """The installed distribution's version, or None when it is not installed.
+
+    The single source: `codemap.__version__` reads it too, having drifted a release
+    behind while it was a literal.
+
+    Cached on purpose — a build stamps one version into everything it writes. Anything
+    asking *"is this still true?"* rather than *"what was it?"* wants `installed_version()`.
+    """
+    return installed_version()
 
 
 
