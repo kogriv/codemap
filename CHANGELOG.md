@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-09-01
+
+**A same-day patch for the one thing 0.0.6 added.** Schema unchanged (0.13), no rebuild needed; if you are
+on 0.0.6 and do not run a warm server, nothing here reaches you.
+
 ### Fixed
 
 - **The restart warning 0.0.6 shipped could never fire (R1-C38-f1).** `Session._tool_drift` read the
