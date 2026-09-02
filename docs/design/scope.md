@@ -4,9 +4,9 @@
 7 tests. 🟢 Feature B implemented (R2.0.1, 2026-08-03) — `research/tools/_scope/{bquant.scope.json,
 materialize.py}`, Scope field in the card template + comparison hub, canonical bench `scope_id` pinned
 (`sha256:300e0a01…5e47d2`, bquant@cb89a24, 280 files). All decisions O1–O6 settled.
-🔴 **§1.7 (membership, R1-C41) decided and not implemented** — in git mode the manifest enumerates the
-tracked set while the extractor walks the filesystem, so an untracked or gitignored source file is in the
-graph, absent from `scope.files`, and does not move `scope_id`.
+🟢 **§1.7 (membership) implemented — R1-C41, 2026-09-02, no schema change.** In git mode the manifest
+enumerated the tracked set while the extractor walked the filesystem, so an untracked or gitignored source
+file was in the graph, absent from `scope.files`, and did not move `scope_id`. +9 tests.
 **Backlog:** M19 (product feature A) + R2.0.1 (research harness B) — see [../../BACKLOG.md](../../BACKLOG.md).
 **Motivation:** codemap is deterministic on its **output** (canonical `graph.json`) but says nothing precise
 about its **input**. Today the only record of scope is the M18 sidecar's build *command* (`argv/cwd/target`);
@@ -170,7 +170,7 @@ tools that can't be pointed at a clean file set do.
 
 ### 1.7 Membership: the manifest must describe what was read — R1-C41 (2026-09-02)
 
-**Status:** 🔴 decided, not implemented. Gap: [`gaps/scope_membership_2026-09-02.md`](../../gaps/scope_membership_2026-09-02.md),
+**Status:** 🟢 implemented the same day, no schema bump. Gap: [`gaps/scope_membership_2026-09-02.md`](../../gaps/scope_membership_2026-09-02.md),
 raised by the second real target as [codemap#15](https://github.com/kogriv/codemap/issues/15).
 
 Two enumerations answer the question "what is the input", and nothing compares them: the **manifest**
@@ -209,14 +209,23 @@ on one. So the record is `{"count": N, "sample": [...], "outside_root": bool}` w
 reduced to a bare name by the `relative_root` rule; a naive path write would turn the diagnostic into a
 build crash.
 
-**Open, settle before coding:** `SCHEMA_VERSION` bump. Recommendation **no** — the field is additive and
-optional, the same shape as `skipped`.
+**Settled:** no `SCHEMA_VERSION` bump — the field is additive and optional, the same shape as `skipped`,
+and no consumer reads `inputs` positionally.
 
-**Acceptance:** the untracked module enters the manifest with `tracked: false`, moves `scope_id`, and is
-recomputed by `--incremental` (all four fail today); the gitignored one stays out and is named by the
-diagnostic *and* by `provenance.inputs`; both clean builds keep 0 violations; the pinned R2 bench
-`scope_id` (`sha256:300e0a01…5e47d2`) is re-checked explicitly and does not move; reverting the enumeration
-line turns the untracked test red (R1-C37 discipline).
+**The trap the design did not foresee — found in implementation, before the check was written.** The two
+sides do not share an origin: node paths are relative to the graph's base (R1-C31), manifest paths to the
+scope root. On `src/pkg` those differ by a segment, and comparing the strings as they stand called **2 of 2**
+files of a healthy build unlisted. The node path is therefore joined onto the build's known base and
+re-expressed against the scope root — lexically, never through `resolve()`, so a symlinked checkout cannot
+rewrite the answer. Both shapes of the `src/` layout are pinned by tests.
+
+**Acceptance, measured:** the untracked module enters the manifest with `tracked: false`, moves `scope_id`
+(`2b1dc442…` → `71e77b60…`) and is recomputed by `--incremental` (which previously answered
+`unchanged: 0 module(s) recomputed` over a file that had just grown a symbol); the gitignored one stays out
+and is named by the diagnostic *and* by `provenance.inputs`; both clean builds keep 0 violations; a clean
+tree resolves to the identical `scope_id` under old and new code (`sha256:2c1da6e0…`); the pinned R2 bench
+re-materializes to `sha256:300e0a01…5e47d2`, 280 files, `verify ✓`. Mutation (R1-C37): dropping `--others`
+reddens 3 tests, dropping the provenance wiring reddens 4. Suite 734 → 743.
 
 ---
 

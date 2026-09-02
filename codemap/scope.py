@@ -90,8 +90,17 @@ def _pick_root(core: Path, consumers, docs) -> tuple[Path, str]:
     return base, "fs"
 
 
-def _enumerate_git(root: Path, roots: list[tuple[str, str]]) -> tuple[list[str], dict]:
-    """git ls-files over the scope pathspecs → (rel paths, {path: git_blob})."""
+def _enumerate_git(root: Path, roots: list[tuple[str, str]]) -> tuple[list[str], dict, set[str]]:
+    """git ls-files over the scope pathspecs → (rel paths, {path: git_blob}, untracked).
+
+    Two calls, because "the input" is not "the commit" (R1-C41). The tracked set is what
+    ``git ls-files`` knows; ``--others --exclude-standard`` adds exactly what ``git add .``
+    would stage — a module that exists and has not been added yet is read by the extractor
+    like any other, so leaving it out made the manifest describe a different input than the
+    graph was built from, without moving ``scope_id``. Ignored files stay out on purpose:
+    if ``.gitignore`` says a file is not part of the tree, the manifest does not get to
+    decide otherwise — the membership check names them instead (design §1.7 D2).
+    """
     specs = [rp for rp, _ in roots if rp]
     out = _git(root, "ls-files", "-s", "--", *specs) or ""
     paths, blobs = [], {}
@@ -104,7 +113,9 @@ def _enumerate_git(root: Path, roots: list[tuple[str, str]]) -> tuple[list[str],
         if len(cols) >= 2:
             blobs[path] = cols[1]
         paths.append(path)
-    return paths, blobs
+    others = _git(root, "ls-files", "--others", "--exclude-standard", "--", *specs) or ""
+    untracked = {p for p in others.splitlines() if p}
+    return paths + sorted(untracked), blobs, untracked
 
 
 def _enumerate_fs(root: Path, roots, include, exclude_dirs) -> list[str]:
@@ -138,10 +149,10 @@ def resolve_scope(
     roots = _roots_spec(root, core, consumers, docs)
 
     if mode == "git":
-        rels, blobs = _enumerate_git(root, roots)
+        rels, blobs, untracked = _enumerate_git(root, roots)
         rels = [r for r in rels if _match_include(Path(r).name, include)]
     else:
-        rels, blobs = _enumerate_fs(root, roots, include, exclude_dirs), {}
+        rels, blobs, untracked = _enumerate_fs(root, roots, include, exclude_dirs), {}, set()
 
     files = []
     for rel in sorted(set(rels)):
@@ -155,6 +166,11 @@ def resolve_scope(
                "loc": data.count(b"\n") + (1 if data and not data.endswith(b"\n") else 0)}
         if rel in blobs:
             rec["git_blob"] = blobs[rel]
+        if mode == "git":
+            # Always stated, never inferred from a missing key — absence is ambiguous
+            # (R1-C28's rule, applied to the manifest). fs mode omits it: there is no
+            # index to be tracked in, so the question does not arise.
+            rec["tracked"] = rel not in untracked
         files.append(rec)
 
     scope_id = "sha256:" + hashlib.sha256(
@@ -199,6 +215,51 @@ def _git_block(root: Path, roots: list[tuple[str, str]], mode: str) -> dict:
     dirty_files = sorted(line[3:].strip() for line in status.splitlines() if line.strip())
     return {"mode": mode, "commit": commit, "ref": ref,
             "dirty": bool(dirty_files), "dirty_files": dirty_files}
+
+
+def unlisted_files(node_files, scope: dict, *, base: str | Path | None = None,
+                   sample: int = 5) -> dict:
+    """Files the graph was built from that the manifest does not list (R1-C41).
+
+    The manifest is the artifact a consumer reads to answer *"what exactly was
+    analyzed"*, and until this check existed it could answer wrong in silence: the
+    graph carried a module whose file the sidecar never mentioned, and ``scope_id`` —
+    the same value ``--incremental`` and ``watch`` key off — did not move.
+
+    **The two sides do not share an origin**, which is the whole difficulty. Node paths
+    are relative to the graph's own base (R1-C31: the parent of the package, or the
+    common ancestor of the roots), manifest paths are relative to the scope root (the
+    git top-level). On a ``src/`` layout those differ by a segment, and a naive string
+    comparison called both files of a healthy build unlisted — measured, 2 of 2. So the
+    node path is joined onto ``base`` and re-expressed against the scope root before it
+    is looked up; lexically, never through ``resolve()``, so a symlinked checkout does
+    not silently rewrite the answer.
+
+    Returns ``{count, sample, outside_root}`` — always, including ``count: 0``, because
+    a missing field is not the same statement as "nothing was unlisted". Paths outside
+    the scope root are reduced to a bare name: they are absolute (the D5 symptom of a
+    file the build should never have read), and the provenance block this ends up in
+    refuses absolute paths by contract.
+    """
+    root = Path(scope.get("root") or ".")
+    listed = {f["path"] for f in scope.get("files") or ()}
+    unlisted: set[str] = set()
+    outside = False
+    for raw in node_files:
+        if not raw:
+            continue
+        p = Path(raw)
+        absolute = p if p.is_absolute() else Path(os.path.normpath(Path(base or root) / p))
+        try:
+            rel = absolute.relative_to(root).as_posix()
+        except ValueError:
+            outside = True
+            unlisted.add(p.name)
+            continue
+        if rel not in listed:
+            unlisted.add(rel)
+    return {"count": len(unlisted), "sample": sorted(unlisted)[:sample],
+            "outside_root": outside}
 
 
 def diff_scopes(a: dict, b: dict) -> dict:

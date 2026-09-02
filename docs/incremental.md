@@ -124,6 +124,13 @@ Worth knowing before relying on it:
   `scope_id` — the same manifest a build records in its sidecar. No second include list to
   drift apart, and content hashes rather than mtimes, so `touch` is not a rebuild and a
   revert to identical bytes is not one either.
+- **A new file counts before you `git add` it (0.0.8).** Until then git-mode enumeration
+  listed only the tracked set, so a module you had just written was read by the extractor
+  and absent from the identity: `--incremental` answered `unchanged: 0 module(s)
+  recomputed` over a file that had grown a new symbol, and the watcher had nothing to
+  react to. A file your `.gitignore` excludes still does not enter the manifest — the graph
+  now says so out loud instead (see
+  [provenance.md](provenance.md#when-the-manifest-and-the-graph-disagree-about-the-input)).
 - **Polling, not inotify** — native file events would mean a dependency. The cost is one
   full scope resolve per interval: **median 50 ms** for a 292-file, 4.7 MB tree (~5% of a
   core at the 1 s default). Raise `--interval` on a much larger tree.

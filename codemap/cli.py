@@ -104,7 +104,7 @@ def _cmd_build(args) -> int:
         # roots come from extract_repo in this same call; never inherited from a graph
         # loaded off disk, which is how a stale scope would sneak into a fresh build.
         roots=graph.provenance.get("roots") if (args.consumer or args.docs) else None,
-        inputs=graph.provenance.get("inputs"))
+        inputs=_inputs_with_membership(graph, scope, args))
     # R1-C21: a well-formed but vacuous graph must announce itself — silence is what
     # lets an unparsed layout read as a clean bill of health downstream.
     for d in diagnostics(graph):
@@ -130,6 +130,27 @@ def _cmd_build(args) -> int:
     else:
         print(store.dumps(graph))
     return 0
+
+
+def _inputs_with_membership(graph, scope, args):
+    """The extractor's ``inputs`` block plus the manifest membership result (R1-C41).
+
+    Computed here because it is the one place that holds both sides: the graph and the
+    scope manifest that claims to describe its input. The *result* travels in the graph
+    (beside ``skipped``, which carries the same kind of fact) because build-time stderr
+    never reaches whoever reads the artifact an hour later, possibly without the sidecar.
+
+    Omitted entirely when no manifest resolved — that is "could not compare", and writing
+    a zero there would turn an unknown into a clean bill of health.
+    """
+    inputs = dict(graph.provenance.get("inputs") or {})
+    if not scope:
+        return inputs or None
+    from codemap.scope import unlisted_files
+    base = roots_base(args.path, tuple(args.consumer or ()), tuple(args.docs or ()))
+    inputs["unlisted"] = unlisted_files(
+        (n.file for n in graph.nodes.values() if n.file), scope, base=base)
+    return inputs
 
 
 def _resolve_scope_quietly(args):

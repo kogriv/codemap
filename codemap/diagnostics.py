@@ -21,6 +21,7 @@ NO_CROSS_ROOT_EDGES = "no_cross_root_edges"
 SCHEMA_MISMATCH = "schema_mismatch"
 UNREAD_INPUTS = "unread_inputs"
 MODULE_COUNT_MISMATCH = "module_count_mismatch"
+SCOPE_MEMBERSHIP = "scope_membership"
 
 #: A ``warning`` invalidates the conclusions a surface draws from the graph — read them as
 #: unknown. A ``note`` states a fact about how the graph was built and invalidates nothing.
@@ -189,6 +190,42 @@ def unread_inputs_diagnostic(graph) -> dict | None:
     }
 
 
+def scope_membership_diagnostic(graph) -> dict | None:
+    """Flag files the graph was built from that the input manifest never listed (R1-C41).
+
+    Sibling of the conservation law above, and it catches what that one provably cannot:
+    the count compares the *extractor's* walk against the graph, so when both agree and
+    only the **manifest** disagrees — an untracked or gitignored module, a file leaked in
+    from outside the target — it stays silent, correctly. Reported by the second real
+    target (issue #15), who found a sidecar listing 47 files with a hash on each beside a
+    graph built from 48.
+
+    Derived from ``provenance.inputs.unlisted``, which the build records because the
+    comparison needs the scope manifest and a consumer may hold only the graph. Absent
+    field means the build could not compare (no manifest resolved) — that is *unknown*,
+    not zero, so it is not reported as a clean result.
+    """
+    unlisted = ((graph.provenance or {}).get("inputs") or {}).get("unlisted") or {}
+    count = unlisted.get("count") or 0
+    if not count:
+        return None
+    sample = ", ".join(unlisted.get("sample") or [])
+    where = (" (at least one lies outside the scope root entirely)"
+             if unlisted.get("outside_root") else "")
+    return {
+        "code": SCOPE_MEMBERSHIP,
+        "severity": WARNING,
+        "unlisted": count,
+        "consequence": ("The manifest and `scope_id` describe a different input than this "
+                        "graph was built from, so read the input identity as **unknown** — "
+                        "and with it `--incremental` and `watch`, which key off that value."),
+        "message": (
+            f"{count} file(s) in this graph are not listed in the input manifest{where}: "
+            f"{sample}" + (" …" if count > len(unlisted.get("sample") or []) else "")
+        ),
+    }
+
+
 def module_count_diagnostic(graph) -> dict | None:
     """Conservation law over the build: modules cannot outnumber the files that define
     them, nor silently fall short of them (R1-C23 / design D6).
@@ -236,7 +273,8 @@ def diagnostics(graph) -> list[dict]:
     """Every diagnostic that applies to ``graph`` (empty list when it looks sound)."""
     checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph),
               cross_root_diagnostic(graph), schema_diagnostic(graph),
-              unread_inputs_diagnostic(graph), module_count_diagnostic(graph))
+              unread_inputs_diagnostic(graph), module_count_diagnostic(graph),
+              scope_membership_diagnostic(graph))
     return [d for d in checks if d is not None]
 
 

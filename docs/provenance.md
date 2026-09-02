@@ -30,6 +30,7 @@ tree, and a claim without its qualifiers cannot be checked.
 | `inputs.python_files` | how many `.py` files the walk found — the input half of the conservation check below |
 | `inputs.skipped` | files that produced **no module**, each with a reason (`syntax` / `encoding` / `io` / `unread`). Absent when there are none |
 | `inputs.aliased_modules` | modules skipped because their real file was already read under another name (a directory symlink). Absent when there are none |
+| `inputs.unlisted` | `{count, sample, outside_root}` — files this graph was built from that the input manifest does not list. Present whenever a manifest resolved, **including `count: 0`**; absent means the build could not compare, which is *unknown*, not clean |
 | `roots` | present on a repo-scoped build (`--consumer` / `--docs`): core, consumers, docs, mode — each **relative to the graph's path origin**, never absolute (see below) |
 
 ## One origin for every path (schema 0.13)
@@ -155,12 +156,50 @@ pkg/broken.py, pkg/latin1.py  Anything those files define or depend on is missin
 not absent — dead-code, layers and impact are all short by that much.
 ```
 
-Two derived checks read `inputs` (they are recomputed on read, never stored):
+Three derived checks read `inputs` (they are recomputed on read, never stored):
 
 - **unread inputs** — the warning above, wherever the graph is presented.
 - **module conservation** — modules cannot outnumber the files that define them, nor
   fall short of them unexplained. Both directions are *provably* wrong states, so there
   is no threshold to tune. It flags a symlink-cycle explosion without knowing what a
   symlink is, and an unexplained shortfall without knowing what a syntax error is.
+- **scope membership** — every file in the graph must be one the input manifest lists.
 
 See [hard-python.md](hard-python.md) for what produces these conditions.
+
+## When the manifest and the graph disagree about the input
+
+The sidecar's manifest is the artifact you read to answer *"what exactly was analyzed"*,
+and until 0.0.8 it could answer wrong in silence. In git mode it enumerated the **tracked**
+set while the extractor walked the **filesystem**, so a module that exists and has not been
+`git add`ed — or one your `.gitignore` excludes — was in the graph, absent from
+`scope.files`, and did not move `scope_id`. Reported by a second target whose sidecar listed
+47 files with a hash on each beside a graph built from 48
+([#15](https://github.com/kogriv/codemap/issues/15)).
+
+That is not a reporting nicety: `scope_id` is the cache key for `build --incremental` and
+the `watch` probe, so an edit that does not move it is an edit the rebuild does not see.
+
+Two things changed:
+
+- **Untracked source is part of the input.** git-mode enumeration now adds
+  `git ls-files --others --exclude-standard` — exactly what `git add .` would stage. Those
+  records carry `tracked: false` and no `git_blob`; every git-mode record states `tracked`
+  either way, because a missing key is not a statement. A clean tree resolves to the
+  identical `scope_id` it did before.
+- **Gitignored files are named, not adopted.** If `.gitignore` says a file is not part of
+  the tree, the manifest does not overrule it — the graph says so instead:
+
+```
+[warning] 1 file(s) in this graph are not listed in the input manifest:
+pkg/generated_version.py  The manifest and `scope_id` describe a different input than this
+graph was built from, so read the input identity as unknown — and with it `--incremental`
+and `watch`, which key off that value.
+```
+
+The check runs forward only — a manifest file that produced no node is legitimately common
+(a `.md` that yields no doc node, a deliberately unreadable fixture) and its Python half is
+already *unread inputs*.
+
+**Design:** [design/scope.md §1.7](design/scope.md).
+**Gap:** [../gaps/scope_membership_2026-09-02.md](../gaps/scope_membership_2026-09-02.md).

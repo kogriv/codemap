@@ -5,6 +5,48 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.8] - 2026-09-02
+
+**The artifact that answers "what exactly was analyzed" could answer wrong, in silence.** Schema unchanged
+(0.13); an existing graph still says what it said, but it carries no record of whether its manifest matched
+it, so rebuild if you rely on `scope_id` as an identity or as a cache key.
+
+### Fixed
+
+- **In git mode the input manifest described a different input than the graph was built from (R1-C41).**
+  Reported by the second real target ([#15](https://github.com/kogriv/codemap/issues/15)) beside a fix they
+  had just confirmed, as the point that fix does not close: their sidecar listed 47 files with a `git_blob`
+  and a `sha256` on each while the graph carried 48.
+
+  Measuring it made the defect wider than the report — no decoy directory is needed. The manifest enumerated
+  the **tracked** set (`git ls-files`) while the extractor walked the **filesystem**, so a module that
+  exists and has not been `git add`ed, or one your `.gitignore` excludes, was in the graph, absent from
+  `scope.files`, and moved `scope_id` not at all: two graphs with different content came back carrying the
+  same input identity. The conservation law stayed silent and was right to — the extractor's own count and
+  the graph agree, and the manifest is not in that comparison. In fs mode the two sides agree by
+  construction, which is why a non-git tree never showed this.
+
+  It is not a reporting nicety. `scope_id` is the cache key for `build --incremental` and the `watch` probe:
+  the measurement returned `unchanged: 0 module(s) recomputed` over a file that had just grown a new symbol.
+  The design had named the limit and delegated it to an `include` overlay that was never cut — in git mode
+  `include` filters *after* `ls-files`, so it can drop a file and can never add one.
+
+  Three parts. **Enumeration** now adds `git ls-files --others --exclude-standard` — exactly what `git add .`
+  would stage; those records carry `tracked: false` and no `git_blob`, and every git-mode record states
+  `tracked` either way, because a missing key is not a statement. **Membership** is checked rather than
+  trusted: every file in the graph must be one the manifest lists, and gitignored files stay outside the
+  manifest on purpose — if `.gitignore` says a file is not part of the tree, the manifest does not overrule
+  it; the graph says so out loud instead. **The result travels in the graph**
+  (`provenance.inputs.unlisted`, beside `skipped`), because build-time stderr never reaches whoever reads
+  the artifact an hour later; `count: 0` is written, and the field is *omitted* when no manifest resolved,
+  since that is unknown rather than clean.
+
+  Measured: the untracked module now enters the manifest, moves `scope_id`, and is recomputed incrementally;
+  a clean tree resolves to the **identical** `scope_id` under old and new code; the pinned research
+  benchmark re-materializes unchanged. The trap the design did not foresee, found before the check was
+  written: the two sides do not share a path origin, and comparing them as they stand called 2 of 2 files of
+  a healthy `src/` layout unlisted.
+
 ## [0.0.7] - 2026-09-01
 
 **A same-day patch for the one thing 0.0.6 added.** Schema unchanged (0.13), no rebuild needed; if you are
