@@ -14,6 +14,44 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   (Same pass, the other direction: the cross-tool caller sets those numbers rest on came back **57 and 78 in
   all three builds** while the graph around them did not — the claim was checked rather than lucky.)
 
+- **`--incremental` does not inherit the deep tier's noise — it freezes it, and goes blind to it (R1-C43).**
+  Schema unchanged (0.13). This came out of our own "not checked" list: the R1-C42 gap ended by naming the
+  question, and the same sentence went to a consumer as a *named but unmeasured* hypothesis. Measured now, on
+  an 88-module package where eight full deep builds of an unchanged tree give **three** distinct artifacts and
+  one real `accesses` edge is present in 6 of them:
+
+  - **The sample is frozen.** From a graph missing that edge, five consecutive incremental builds recovered it
+    **0 times**; full builds of the very same tree recovered it **5 of 5**. So "build it again and see" — the
+    remedy 0.0.9 published for tier noise, and the one we sent the consumer — does nothing under
+    `--incremental`. The reverse arm holds too (3 of 3 keep an edge they had): the splice adds no noise of its
+    own, it preserves someone else's.
+  - **The miss defends itself.** The invalidation rule reads the *old* graph, so a missing edge is a missing
+    reason to recompute. Proven by contrast: the same edit to the module owning the target invalidated the
+    writing module when the edge was present and did **not** when it was absent — the two modules are not
+    import-linked, so that rule was the only route.
+  - The hypothesis's own caveat — "until that module changes again" — was **too mild**: a re-resolved module
+    is a fresh sample, and the edge came back in only 4 of 9.
+
+  **Shipped: disclosure only.** `provenance.incremental` is written by every build, `false` included (absent
+  means the graph predates the field — *unknown*, not *full*), and a deep graph carrying spliced regions gets
+  an `incremental_deep_splice` **note** that says outright not to re-test by rebuilding incrementally. The
+  fast tier is excluded: byte-identity to a full build is pinned there, so there is no sample to freeze.
+
+  **The obvious fix was measured and rejected**: refusing to splice any module that admits `unresolved > 0`
+  captures **69 of 88** modules (78%), above the full-rebuild threshold — the rule degenerates into a full
+  rebuild. It cannot be narrowed either, and that is structural: `unresolved` *means* the target is unknown,
+  so the set cannot be indexed by the changed module, which is exactly what the rule needs. The two doors that
+  would close it (a periodic full rebuild; refusing to conclude *absence* from such a graph) are BACKLOG
+  R1-C43.
+
+  **Corrects three of our own claims:** R1-C9's acceptance bar was stated without a tier ("byte-identical to a
+  full rebuild" — unreachable on deep, where two full builds already differ), so the suite now pins the two
+  halves separately: the **content** matches a full build, and the **artifact does not present itself** as
+  one. `docs/incremental.md` said the deep path "introduces no divergence of its own" — refuted above. And the
+  R1-C9 test docstring still carried the cache-warmth cause that R1-C42 refuted the day before: yesterday's
+  correction was grepped for in the docs, not in the tree. +11 tests.
+  [Measurement](gaps/incremental_noise_persistence_2026-09-02.md).
+
 
 ## [0.0.9] - 2026-09-02
 

@@ -104,7 +104,11 @@ def _cmd_build(args) -> int:
         # roots come from extract_repo in this same call; never inherited from a graph
         # loaded off disk, which is how a stale scope would sneak into a fresh build.
         roots=graph.provenance.get("roots") if (args.consumer or args.docs) else None,
-        inputs=_inputs_with_membership(graph, scope, args))
+        inputs=_inputs_with_membership(graph, scope, args),
+        # R1-C43: this call *overwrites* whatever update_graph stamped, so the flag has
+        # to be re-derived here or it is lost. `unchanged` counts as carried over too —
+        # nothing in that graph was recomputed by this build at all.
+        incremental=(incr_info or {}).get("mode") in ("incremental", "unchanged"))
     # R1-C21: a well-formed but vacuous graph must announce itself — silence is what
     # lets an unparsed layout read as a clean bill of health downstream.
     for d in diagnostics(graph):

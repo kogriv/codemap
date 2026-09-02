@@ -25,6 +25,7 @@ tree, and a claim without its qualifiers cannot be checked.
 | `tool.commit` | short HEAD of codemap's own checkout — **absent** when codemap was installed from a wheel; never guessed |
 | `tool.dirty` | whether codemap's own checkout had uncommitted changes. Two builds from one commit with different working trees are two different tools |
 | `tier` | `fast` (ast) or `deep` (jedi). Two tiers answer call-graph questions differently, so this is part of the identity |
+| `incremental` | whether parts of this graph were **carried over rather than recomputed in this build**. Always present, `false` included; absent means the graph predates the field, which is *unknown*, not *full*. On the deep tier it carries a consequence — [see below](#an-incremental-deep-graph-is-a-frozen-sample) |
 | `scope_id` | sha-256 over the sorted `path\tsha256` list of every input file — the identity of the tree that was read |
 | `source.commit` / `ref` / `dirty` | the target's VCS state, when the target is in a git repo. `dirty` covers **the scanned roots only**, not the whole repo |
 | `inputs.python_files` | how many `.py` files the walk found — the input half of the conservation check below |
@@ -208,6 +209,36 @@ What follows for you:
   lucky one.
 
 **Measurement:** [../gaps/deep_tier_nondeterminism_2026-09-02.md](../gaps/deep_tier_nondeterminism_2026-09-02.md).
+
+## An incremental deep graph is a frozen sample
+
+The advice above — *a deep graph is one sample, so build it again* — has one exception,
+and it is the case where the advice is most likely to be taken: `build --incremental`.
+That path recomputes only the modules an edit touched and splices the rest from the
+previous graph, so on the deep tier **the parts it did not recompute keep the previous
+build's sample, misses included**. Building again incrementally returns them unchanged.
+
+Measured on an 88-module package: from a graph missing one real `accesses` edge, five
+consecutive incremental builds recovered it **0 times**, while full builds of the same
+tree recovered it **5 of 5**. And the miss is self-defending — the invalidation rule that
+would recompute the writing module reads the old graph, where the edge is precisely what
+is absent, so editing the module that owns the target did **not** mark the writer for
+recompute. With the edge present, the same edit did.
+
+Every such graph now says so:
+
+```
+[note] parts of this deep graph were spliced from an earlier build rather than
+recomputed: on this tier that carries the earlier build's jedi sample forward, including
+anything it missed. Do not read a missing call or attribute edge here as evidence that
+nothing depends on a symbol, and do not test that by rebuilding incrementally — only a
+full rebuild resamples.
+```
+
+The fast tier is excluded: there the splice is byte-identical to a full build and the
+suite pins it, so there is no sample to freeze.
+
+**Measurement:** [../gaps/incremental_noise_persistence_2026-09-02.md](../gaps/incremental_noise_persistence_2026-09-02.md).
 
 ## When the manifest and the graph disagree about the input
 

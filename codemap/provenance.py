@@ -155,9 +155,16 @@ def relative_root(root: str | Path | None, path: str | Path) -> str:
 
 
 def build_provenance(*, tier: str, scope: dict | None = None,
-                     roots: dict | None = None, inputs: dict | None = None) -> dict:
-    """Assemble the ``provenance`` block. Deterministic; no clock, no absolute path."""
-    prov: dict = {"tool": tool_identity(), "tier": tier}
+                     roots: dict | None = None, inputs: dict | None = None,
+                     incremental: bool = False) -> dict:
+    """Assemble the ``provenance`` block. Deterministic; no clock, no absolute path.
+
+    ``incremental`` records whether parts of this graph were **carried over rather than
+    recomputed in this build** (R1-C43). Always written, including ``false`` — absence
+    means the graph predates the field, which is *unknown*, not *full* (R1-C28).
+    """
+    prov: dict = {"tool": tool_identity(), "tier": tier,
+                  "incremental": bool(incremental)}
     if inputs:
         # R1-C23/D2: what the extractor read, and what it could not. Belongs with the
         # identity rather than in the sidecar — a consumer holding only the graph is

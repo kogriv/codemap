@@ -7,14 +7,24 @@ fast and deep tiers, over a small multi-module package with cross-module calls,
 inheritance, and attribute access (the relationships the splice must get right).
 
 Deep byte-identity holds here because this fixture's jedi inference is single-hop and
-stable. On large packages jedi's *bounded* deep inference is cache-warmth-dependent —
-two full ``--deep`` builds already differ by a few deep-only edges — so there the
-guarantee is "identical up to jedi's own run-to-run variance" (see docs/incremental.md).
+stable. On large packages it does not, and the two reasons are worth keeping apart:
+
+- Two full ``--deep`` builds of an unchanged tree already differ from each other
+  (R1-C42), so on that tier there is no fixed artifact to be identical *to*. This was
+  attributed to jedi's **cache warmth** until 2026-09-02, when a cold ``XDG_CACHE_HOME``
+  per build flipped just as often (5 of 10) and refuted it; the cause is jedi's
+  per-script execution budget. That correction reached ``docs/incremental.md`` the same
+  day and not this docstring — the copy nobody grepped for.
+- The splice adds a divergence of its own (R1-C43): it carries the previous build's
+  sample forward, and the rule that would invalidate it reads that same incomplete
+  graph. Pinned in ``tests/test_r1c43_incremental_splice.py``.
+
 The splice logic itself is exact, which is what this fixture proves.
 """
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -95,13 +105,30 @@ def _scope(pkg: Path) -> dict:
 
 
 def _assert_incremental_matches_full(old_graph, pkg, scope0, *, deep, expect_mode):
+    """The splice reproduces a full build's *content* — and says it was not one.
+
+    R1-C43 split what used to be a single `dumps == dumps`. The graphs must agree on
+    every node and edge, which is the acceptance bar; they must **disagree** on
+    `provenance.incremental`, because an artifact that was partly carried over may not
+    present itself as one that was recomputed. Comparing the whole file conflated the
+    two, and the field that exists to distinguish them would have read as a regression.
+    """
     scope1 = _scope(pkg)
     inc, info = update_graph(old_graph, pkg, scope0, scope1, deep=deep)
     full = extract(pkg, deep=deep)
-    assert store.dumps(inc) == store.dumps(full), f"incremental != full ({info})"
+
+    def content(g):
+        d = json.loads(store.dumps(g))
+        d.pop("provenance", None)
+        return json.dumps(d, sort_keys=True)
+
+    assert content(inc) == content(full), f"incremental != full ({info})"
+    assert full.provenance["incremental"] is False
     # a small toy package trips the full-rebuild fallback easily; the correctness
-    # invariant (dumps-equal) holds either way, so accept a set of allowed modes.
+    # invariant holds either way, so accept a set of allowed modes — but the flag must
+    # follow the mode that actually ran, not the one we hoped for.
     assert info["mode"] in expect_mode
+    assert inc.provenance["incremental"] is (info["mode"] != "full")
     return inc, info
 
 

@@ -23,6 +23,7 @@ UNREAD_INPUTS = "unread_inputs"
 MODULE_COUNT_MISMATCH = "module_count_mismatch"
 SCOPE_MEMBERSHIP = "scope_membership"
 DEEP_TIER_UNSTABLE = "deep_tier_unstable"
+INCREMENTAL_DEEP_SPLICE = "incremental_deep_splice"
 
 #: A ``warning`` invalidates the conclusions a surface draws from the graph — read them as
 #: unknown. A ``note`` states a fact about how the graph was built and invalidates nothing.
@@ -224,6 +225,42 @@ def deep_tier_diagnostic(graph) -> dict | None:
     }
 
 
+def incremental_splice_diagnostic(graph) -> dict | None:
+    """Say when a deep graph carries regions this build did not recompute (R1-C43).
+
+    Sibling of :func:`deep_tier_diagnostic`, and the reason it is a separate code: that
+    one says *this graph is one sample*, which a reader can act on by building again.
+    This one says the sample is **frozen** — building again incrementally returns it
+    unchanged, so the standard remedy silently does nothing.
+
+    Measured on an 88-module package: from a graph missing one real `accesses` edge,
+    five consecutive incremental builds recovered it **0 times** while full builds of
+    the very same tree recovered it **5 of 5**. And the miss defends itself — the
+    invalidation rule that would have recomputed the writer reads the old graph, where
+    the edge is exactly what is absent (gaps/incremental_noise_persistence_2026-09-02.md).
+
+    Fast tier is excluded on purpose: there the splice is exact and byte-identity to a
+    full build is pinned by the suite, so there is no sample to freeze.
+    """
+    prov = graph.provenance or {}
+    if prov.get("tier") != "deep" or not prov.get("incremental"):
+        return None
+    return {
+        "code": INCREMENTAL_DEEP_SPLICE,
+        "severity": NOTE,
+        "tier": "deep",
+        "consequence": ("Do not read a missing call or attribute edge here as evidence "
+                        "that nothing depends on a symbol, and do not test that by "
+                        "rebuilding incrementally — only a full rebuild resamples."),
+        "message": (
+            "parts of this deep graph were spliced from an earlier build rather than "
+            "recomputed: on this tier that carries the earlier build's jedi sample "
+            "forward, including anything it missed — measured at 0 recoveries in 5 "
+            "incremental builds against 5 of 5 full builds of the same tree."
+        ),
+    }
+
+
 def scope_membership_diagnostic(graph) -> dict | None:
     """Flag files the graph was built from that the input manifest never listed (R1-C41).
 
@@ -308,7 +345,8 @@ def diagnostics(graph) -> list[dict]:
     checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph),
               cross_root_diagnostic(graph), schema_diagnostic(graph),
               unread_inputs_diagnostic(graph), module_count_diagnostic(graph),
-              scope_membership_diagnostic(graph), deep_tier_diagnostic(graph))
+              scope_membership_diagnostic(graph), deep_tier_diagnostic(graph),
+              incremental_splice_diagnostic(graph))
     return [d for d in checks if d is not None]
 
 

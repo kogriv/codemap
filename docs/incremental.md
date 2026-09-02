@@ -42,14 +42,35 @@ so the build falls back to it (reported as `mode: full`).
 - **Fast tier: byte-identical to a full build.** The incremental result serializes
   byte-for-byte the same as `codemap build`; the test suite pins this across edit / add
   / remove, and it holds on bquant (7437 edges, zero diff).
-- **Deep tier: equivalent to a full build, subject to jedi's inference variance.** The
-  splice itself is exact — proven byte-identical on a controlled fixture. But jedi's
-  bounded type inference is not stable across processes, so *two full `--deep` builds of
-  an unchanged tree already differ* from each other by a handful of deep-only edges.
-  Incremental deep is therefore identical to a full deep build *up to that same intrinsic
-  variance* — it introduces no divergence of its own, and is ~12× faster. If you need a
-  reproducible deep graph, that is a property of the deep tier itself, not of incremental.
-  The fast/structural layers are fully deterministic.
+- **Deep tier: cheaper, and weaker in a way the fast tier is not.** The splice itself is
+  exact — proven byte-identical on a controlled fixture — and it is ~12× faster. But
+  jedi's bounded type inference is not stable across processes, so *two full `--deep`
+  builds of an unchanged tree already differ* from each other by a handful of deep-only
+  edges, and the splice does something with that noise a full build does not.
+
+  **Corrected 2026-09-02 (R1-C43):** this bullet used to end *"it introduces no divergence
+  of its own"*. Measured, and that is wrong twice:
+
+  - **The sample is frozen, not resampled.** An edge jedi missed in the old build is
+    copied forward verbatim. Starting from a graph missing one real `accesses` edge, five
+    consecutive incremental builds recovered it **0 times**; full builds of the very same
+    tree recovered it **5 of 5**. The usual remedy for tier noise — *build again and see
+    whether the edge is still gone* — therefore does nothing here.
+  - **The miss defends itself.** The rule that would recompute the module reads the *old*
+    graph, so a missing edge is a missing reason to recompute. Editing the module that
+    owns the target left the writing module unaffected when the edge was absent, and
+    affected when it was present: same edit, same tree, same tool.
+
+  This is structural rather than an oversight — `unresolved` means *we do not know where
+  the edge went*, so that set cannot be indexed by the changed module, which is exactly
+  what the rule needs. What the tool does about it today is **say so**: such a graph
+  carries `provenance.incremental: true` and a `note` wherever it is presented. The doors
+  that would actually close it are BACKLOG R1-C43.
+  [Measurement](../gaps/incremental_noise_persistence_2026-09-02.md).
+
+  **So:** if you need a deep graph to reason about *absence* — "nothing calls this", "this
+  field has no writers" — build it fully. The fast/structural layers are fully
+  deterministic and none of the above touches them.
 
   **Corrected 2026-09-02 (R1-C42):** this bullet used to attribute the variance to jedi's
   cache warmth. Measured and refuted — a cold `XDG_CACHE_HOME` per build flips just as

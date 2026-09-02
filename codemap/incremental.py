@@ -25,6 +25,27 @@ so we fall back to it.
 
 The acceptance bar (BACKLOG R1-C9) is **byte-identical to a full rebuild**; the test
 suite pins exactly that across edit / add / remove scenarios on both tiers.
+
+**That bar is reachable on the fast tier only** — and saying it without a tier was
+wrong twice over (R1-C43). Two full *deep* builds of an unchanged tree are not
+byte-identical to each other (R1-C42), so there is no fixed artifact to be identical
+*to*. Worse, measurement found a divergence this path introduces on its own:
+
+- The splice **freezes a sample.** An edge jedi missed in the old build is copied
+  forward verbatim; measured 0 recoveries in 5 incremental builds against 5 in 5 full
+  builds of the same tree. "Build it again and see" — the standard answer to tier
+  noise — does not work here.
+- The splice **blinds the invalidation that would undo it.** ``_affected_modules``
+  rule (b) below reads the *old* graph, so a missing edge is a missing reason to
+  recompute: editing the module that owns the target left the writer unaffected when
+  the edge was absent, and affected when it was present. Same edit, same tree.
+
+The `unresolved` set cannot be indexed by the changed module — not knowing where an
+edge went is what `unresolved` *means* — so this is structural for a cache keyed on
+its own incomplete answer, not an oversight. What we do about it today is declare it:
+``provenance.incremental`` marks such a graph and the diagnostic says what follows.
+
+Measurement: ``gaps/incremental_noise_persistence_2026-09-02.md``.
 """
 
 from __future__ import annotations
@@ -99,6 +120,10 @@ def _affected_modules(old_graph, new_graph, base_mods, changed_removed, module_o
         if e.type == "imports" and e.target in base_mods:
             affected.add(e.source)
     # rule (b): a module whose old behavioral edge targeted a changed/removed module.
+    # R1-C43, the limit stated where it lives: this reads the OLD graph, so on the deep
+    # tier it is only as complete as that build's jedi sample. An edge the old build
+    # missed is a dependency this rule cannot see — measured: with the edge present the
+    # writer was invalidated, with the same edge missing it was not, on the same edit.
     for e in old_graph.edges:
         if e.type in _DEP_EDGE_TYPES:
             tgt_mod = module_of(e.target)
@@ -147,10 +172,15 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
     """Incrementally rebuild ``old_graph`` for the current source tree.
 
     Returns ``(graph, info)`` where ``info`` records the decision (``mode``:
-    ``unchanged`` | ``incremental`` | ``full`` and the affected module list). The
-    result is byte-identical to ``extract(package_path, deep=deep)`` — the cheap
-    layers are rebuilt whole and the expensive jedi passes are recomputed for the
-    affected modules and spliced from the old graph for the rest.
+    ``unchanged`` | ``incremental`` | ``full`` and the affected module list). The cheap
+    layers are rebuilt whole; the expensive jedi passes are recomputed for the affected
+    modules and spliced from the old graph for the rest.
+
+    On the **fast** tier the result is byte-identical to ``extract(package_path,
+    deep=deep)``. On the **deep** tier it is not, and not only because the target moves
+    (R1-C42): the spliced regions carry the *previous* build's sample, and the splice
+    is self-perpetuating — see the module docstring (R1-C43). Such a graph is stamped
+    ``provenance.incremental: true``.
     """
     target_pkg = old_graph.target
     tier = "deep" if deep else "fast"
@@ -191,5 +221,6 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
                          behavior_only=affected, attr_only=affected)
     unaffected = module_ids - affected
     _splice_unaffected(graph, old_graph, unaffected, module_of)
-    graph.provenance = build_provenance(tier=tier, inputs=graph.provenance.get("inputs"))
+    graph.provenance = build_provenance(tier=tier, inputs=graph.provenance.get("inputs"),
+                                        incremental=True)
     return graph, {"mode": "incremental", "affected": sorted(affected)}
