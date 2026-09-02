@@ -277,6 +277,22 @@ it: the two agree, and the installed metadata matches `pyproject.toml`. A versio
 shape as a scope in two files (M19) or a debounce with its own notion of change (M3.2-f1) — one source, or
 it drifts.
 
+**0.0.9 published 2026-09-02, hours after 0.0.8:** [`codmap` 0.0.9](https://pypi.org/project/codmap/0.0.9/),
+schema **0.13** (unchanged). Same procedure from the pushed commit `b21dff1`, CI green, `twine check` PASSED,
+tag `v0.0.9` written with `-F`.
+
+This one is a release whose entire content is **disclosure**, which makes the verification question sharper
+than usual: not "does it install" and not even "does the fix work", but *does the artifact now say the thing
+it was silent about*. On the published wheel, outside any checkout: a `--deep` build prints the note with the
+measured numbers and a fast build prints nothing; `diff` of two deep graphs prints the noise floor above the
+verdict — on stderr and in the rendered markdown — and `diff` of two fast graphs prints neither. Both halves
+were checked, because a disclosure that fires everywhere is as wrong as one that never fires.
+
+Worth recording about the upload itself: `twine upload` exceeded the shell timeout and the command was
+reported as failed. It had not failed — the release was on PyPI. The check is the index, not the exit code of
+the client, and the same rule applies as to the release scenario: verify the state of the world, not the
+report of the tool that changed it.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
