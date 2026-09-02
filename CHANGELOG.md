@@ -5,6 +5,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+
+- **The 0.0.9 note said "call edges"; the measurement says "jedi-resolved edges".** Re-checking the research
+  track's published numbers against the tier noise it had just documented turned up a third tree where the
+  flap moves an **`accesses`** edge, not a `calls` one — the attribute layer goes through jedi too. The
+  diagnostic and the `diff` caveat now say what was measured, and carry both trees' numbers instead of one.
+  (Same pass, the other direction: the cross-tool caller sets those numbers rest on came back **57 and 78 in
+  all three builds** while the graph around them did not — the claim was checked rather than lucky.)
+
+
 ## [0.0.9] - 2026-09-02
 
 **A limit that lived in a comment in a CI workflow is not a disclosed limit.** Schema unchanged (0.13).

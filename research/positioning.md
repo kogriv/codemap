@@ -647,6 +647,13 @@ over an embedded graph store, written in TypeScript, sharing not one line of cod
 `ontoindex impact MACDZoneAnalyzer --include-tests`, depth-1 CALLS edges: **57**. Not approximately —
 set-identical, nothing on either side alone. Repeated on `get_sample_data`: **78 versus 78**.
 
+One thing had to be checked before that sentence was allowed to stand, and it was checked a day late.
+Our 57 came off a **deep** build, and the deep tier is not byte-stable (R1-C42) — a set-identity claim
+resting on a single build rests on a sample. Three builds of the pinned scope: the artifacts were not
+byte-identical (one `accesses` edge of 12190 came and went), and the caller sets were **57 and 78 every
+time, the same elements**. The noise exists and does not reach the number the story is about. Had it
+reached it, this section would say something else.
+
 That is the strongest external check either tool has had, and it is worth being precise about what it
 validates. Not that either is *complete* — both could miss the same call in the same way. But two
 independent implementations converging exactly on two answers of that size is not something a shaky graph

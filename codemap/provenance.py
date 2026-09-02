@@ -273,8 +273,8 @@ def comparability(old: dict | None, new: dict | None) -> dict:
             # real call edge in ~9500. A caveat, not a difference: it is the right pair,
             # the reader just must not read a two-edge delta as a fact about the code.
             caveats.append("both sides are deep-tier, which is not byte-stable: two "
-                           "builds of an unchanged tree can differ by a few call edges, "
-                           "so read a small call-graph delta as possible tool noise")
+                           "builds of an unchanged tree can differ by a few jedi-resolved "
+                           "edges, so read a small delta as possible tool noise")
     return {
         "comparable": not differences,
         "differences": differences,

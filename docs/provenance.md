@@ -175,11 +175,13 @@ See [hard-python.md](hard-python.md) for what produces these conditions.
 differently. It is also there for a second reason, which until 0.0.9 was written down
 nowhere a reader would find it: **`deep` graphs are not reproducible byte-for-byte.**
 
-Measured on two trees. Ten deep builds of an unchanged tree here produced **two** distinct
-artifacts (7 and 3): two per-symbol `calls` counters out of 2133 nodes moved one call
-between `external` and `unresolved`, and no edges changed. On a larger external tree one
-build in seven lost a **real** call edge of 9524 — a call through `getattr` whose receiver
-type jedi resolved in six runs and not in the seventh.
+Measured on three trees. Ten deep builds of an unchanged tree here produced **two**
+distinct artifacts (7 and 3): two per-symbol `calls` counters out of 2133 nodes moved one
+call between `external` and `unresolved`, and no edges changed. On the pinned research
+benchmark, three builds gave two artifacts differing by exactly one **`accesses`** edge of
+12190 — so the flap is not confined to `calls`; the attribute layer uses jedi too. On a
+larger external tree one build in seven lost a **real** call edge of 9524 — a call through
+`getattr` whose receiver type jedi resolved in six runs and not in the seventh.
 
 The cause is jedi's per-script execution budget (`total_function_execution_limit` and its
 per-function siblings). An inference that runs out of budget returns no values, and no
@@ -200,6 +202,10 @@ What follows for you:
   a two-release comparison, a provenance argument. The fast tier is `ast`-only and stable.
 - The fast tier is a *subset* of the deep tier by construction (R1-C26), so nothing is lost
   by gating on it; the deep tier's extra edges are the part that carries the noise.
+- **A published number off a deep build deserves a second build.** Ours did: the caller sets
+  behind the research track's cross-tool comparison came back identical in three runs while
+  the graph around them did not — which is the difference between a checked claim and a
+  lucky one.
 
 **Measurement:** [../gaps/deep_tier_nondeterminism_2026-09-02.md](../gaps/deep_tier_nondeterminism_2026-09-02.md).
 

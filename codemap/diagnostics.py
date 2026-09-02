@@ -213,12 +213,13 @@ def deep_tier_diagnostic(graph) -> dict | None:
         "severity": NOTE,
         "tier": "deep",
         "consequence": ("Everything here is a lower bound as usual; treat a difference "
-                        "of a few call edges between two deep graphs as possible tool "
+                        "of a few jedi-resolved edges between two deep graphs as tool "
                         "noise rather than a change in the code."),
         "message": (
             "built on the deep (jedi) tier, which is not byte-stable: two builds of an "
-            "unchanged tree can differ by a few call edges — measured at roughly one run "
-            "in three on a 2133-node tree, by two per-symbol counters and no edges."
+            "unchanged tree can differ by a few jedi-resolved edges — measured at roughly "
+            "one run in three on two trees: two per-symbol call counters on one, one "
+            "`accesses` edge of 12190 on the other."
         ),
     }
 

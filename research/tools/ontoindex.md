@@ -112,7 +112,14 @@ is a reminder that a completeness field is only worth what its computation is.
 ids, against `codemap callers` on the deep graph: **57 vs 57, set-identical, no element on either side
 alone.** On `get_sample_data`: **78 vs 78**. Two engines that share no code path — tree-sitter + LadybugDB
 against griffe + jedi — agreeing exactly on a 57-element and a 78-element answer is the strongest external
-check either has had. It also gives codemap something the earlier cards did not: CodeGraph's 58 needed a
+check either has had.
+
+**Re-verified 2026-09-02 against our own tier noise (R1-C42).** The codemap side of that comparison came
+off a deep build, and the deep tier is not byte-stable — so a set-identity claim resting on one build is
+resting on a sample. Three deep builds of the pinned scope: the two artifacts were **not** byte-identical
+(one `accesses` edge of 12190 came and went), and the caller sets were **57 and 78 in all three, the same
+elements each time**. The noise is real and did not touch the quantity the claim stands on. Stated because
+the difference between "we got lucky" and "we checked" is exactly what this card is for. It also gives codemap something the earlier cards did not: CodeGraph's 58 needed a
 paragraph to adjudicate one disputed entry; here there is nothing to adjudicate.
 
 Two caveats kept from the same run. Their `--depth` default is **3** and tests are **excluded by default**:
