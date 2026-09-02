@@ -97,3 +97,45 @@ Byte-identity is **not** the criterion — this adds true edges.
 4. `research/bench/callgraph_accuracy.py` precision is **unchanged**; recall may rise.
 5. Additions only: no call edge present before the change disappears.
 6. Deterministic within the deep tier's known jedi variance (documented in `docs/incremental.md`).
+
+---
+
+## D6 — The tier's noise floor is a property to declare, not to hide (R1-C42, 2026-09-02)
+
+**Status:** ✅ shipped (no schema change). **Gap:**
+[deep_tier_nondeterminism_2026-09-02](../../gaps/deep_tier_nondeterminism_2026-09-02.md).
+
+D5.6 above says acceptance is "deterministic within the deep tier's known jedi variance". That phrase
+was doing more work than it looked: the variance was *known* to this design and to the CI workflow, and
+absent from the places a consumer reads. A second target compared two deep graphs across a release and
+briefly concluded a regression that was the tool.
+
+**Measured, both trees.** Ten deep builds of an unchanged tree here: two distinct artifacts (7/3), the
+delta two per-symbol `calls` counters out of 2133 nodes and no edges. On their larger tree: one build in
+seven, one real call edge of 9524 — a `getattr` receiver jedi typed six times and not the seventh.
+
+**Mechanism, as far as we took it.** jedi bounds inference with per-script execution counters
+(`total_function_execution_limit` and its per-function siblings); an inference that runs out returns no
+values, and at our boundary no values is `unresolved`. At the first divergent call site the counter
+entering it differs by exactly one between the two outcomes, with every earlier classification in that
+file identical. Why that one execution differs between processes we did not establish; five external
+explanations were refuted at ten runs each — hash-seed randomization, jedi's and parso's disk caches,
+jedi's compiled subprocess, the garbage collector, and ASLR. "Cache warmth" was among them, and it is
+the cause `docs/incremental.md` had been asserting all along; that bullet is now corrected in place, with
+the refutation stated rather than the sentence quietly rewritten.
+
+**Decision: declare it, three places.**
+
+1. **On the artifact.** A `note` (never a warning — nothing in the graph is invalid; it is a correct
+   sample of a slightly fuzzy function) on every `tier: deep` graph, carrying the measured numbers.
+2. **On a comparison.** `comparability()` grows `caveats`, separate from `differences`: two deep graphs
+   stay *comparable* — refusing would be wrong — and the noise floor is printed above the verdict.
+   Mixed tiers keep their existing incomparability and take no caveat, so the softer signal can never
+   dilute the harder one.
+3. **In the docs**, with the numbers rather than "may vary slightly", and with the false cross-reference
+   in `docs/ci.md` named as false instead of quietly repaired.
+
+**Rejected.** Raising jedi's limits (changes both cost and results, and the cause of the spread is not
+established — a guess presented as a fix); unioning N runs into one graph (still a sample, at N× cost);
+moving the CI byte-identity gate to the deep tier (the fast tier is a *subset* of deep by D2 above, so
+the gate loses nothing where it stands, and the noise lives exactly in the part fast does not touch).

@@ -253,6 +253,7 @@ def comparability(old: dict | None, new: dict | None) -> dict:
     were dead.
     """
     differences: list[str] = []
+    caveats: list[str] = []
     if not old or not new:
         differences.append("one of the graphs records no provenance "
                            "(built before schema 0.12) — the pair cannot be verified")
@@ -264,9 +265,20 @@ def comparability(old: dict | None, new: dict | None) -> dict:
         old_roots, new_roots = old.get("roots"), new.get("roots")
         if old_roots != new_roots:
             differences.append(f"different scope roots: {old_roots} → {new_roots}")
+        if old.get("tier") == new.get("tier") == "deep":
+            # R1-C42: matching tiers make the pair comparable, and on the deep tier that
+            # is not the same as "every difference here is a code change". Measured on
+            # two trees: builds of an *unchanged* tree differ in roughly one run of
+            # three, by a couple of call classifications — and on the larger tree by one
+            # real call edge in ~9500. A caveat, not a difference: it is the right pair,
+            # the reader just must not read a two-edge delta as a fact about the code.
+            caveats.append("both sides are deep-tier, which is not byte-stable: two "
+                           "builds of an unchanged tree can differ by a few call edges, "
+                           "so read a small call-graph delta as possible tool noise")
     return {
         "comparable": not differences,
         "differences": differences,
+        "caveats": caveats,
         "old": describe(old),
         "new": describe(new),
     }

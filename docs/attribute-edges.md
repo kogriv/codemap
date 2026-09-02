@@ -32,8 +32,10 @@ access; a `@property` is an *attribute* node in griffe, so reading `obj.prop` is
 | `obj.field` on a typed local | `c = make(); c.width` | `deep` | deep (`jedi`) |
 | `obj.field`, `obj` untyped | `x.field` (x unknown) | — (unresolved counter, no edge) | — |
 
-The fast tier is pure stdlib `ast` (sub-second, deterministic); the deep tier
-(`--deep` / `deep=True`) infers the receiver's type with jedi to resolve `obj.field`.
+The fast tier is pure stdlib `ast` (sub-second, byte-stable); the deep tier
+(`--deep` / `deep=True`) infers the receiver's type with jedi to resolve `obj.field` — and
+is [not byte-stable](provenance.md#the-deep-tier-is-not-byte-stable): the same inference
+that resolves a receiver in one build can come back empty in the next.
 Per-function `extras.attr_access` records `out` / `resolved` / `unresolved` counts, so
 the graph reports its own coverage — attribute access is a **lower bound**, like calls.
 

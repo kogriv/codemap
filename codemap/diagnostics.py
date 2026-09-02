@@ -22,6 +22,7 @@ SCHEMA_MISMATCH = "schema_mismatch"
 UNREAD_INPUTS = "unread_inputs"
 MODULE_COUNT_MISMATCH = "module_count_mismatch"
 SCOPE_MEMBERSHIP = "scope_membership"
+DEEP_TIER_UNSTABLE = "deep_tier_unstable"
 
 #: A ``warning`` invalidates the conclusions a surface draws from the graph — read them as
 #: unknown. A ``note`` states a fact about how the graph was built and invalidates nothing.
@@ -190,6 +191,38 @@ def unread_inputs_diagnostic(graph) -> dict | None:
     }
 
 
+def deep_tier_diagnostic(graph) -> dict | None:
+    """State the deep tier's noise floor on the artifact itself (R1-C42).
+
+    A **note**, not a warning: nothing here is wrong, and no finding below is invalid.
+    What was missing is that the tier's instability was known — measured at R1-C9, and
+    the reason the CI determinism job runs the fast tier only — while living exclusively
+    in a comment in a workflow file. A consumer read "deterministic" and built a
+    two-release comparison on it; the difference they saw was the tool, not the code.
+
+    Measured on two trees: ten deep builds of an unchanged tree produced **two** distinct
+    artifacts (7/3), differing in two per-symbol call counters and no edges; on a larger
+    tree one build in seven lost one real call edge of 9524. The cause is jedi's
+    per-script execution budget — an inference that runs out of it returns nothing, and
+    that reads as `unresolved` rather than as an error.
+    """
+    if (graph.provenance or {}).get("tier") != "deep":
+        return None
+    return {
+        "code": DEEP_TIER_UNSTABLE,
+        "severity": NOTE,
+        "tier": "deep",
+        "consequence": ("Everything here is a lower bound as usual; treat a difference "
+                        "of a few call edges between two deep graphs as possible tool "
+                        "noise rather than a change in the code."),
+        "message": (
+            "built on the deep (jedi) tier, which is not byte-stable: two builds of an "
+            "unchanged tree can differ by a few call edges — measured at roughly one run "
+            "in three on a 2133-node tree, by two per-symbol counters and no edges."
+        ),
+    }
+
+
 def scope_membership_diagnostic(graph) -> dict | None:
     """Flag files the graph was built from that the input manifest never listed (R1-C41).
 
@@ -274,7 +307,7 @@ def diagnostics(graph) -> list[dict]:
     checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph),
               cross_root_diagnostic(graph), schema_diagnostic(graph),
               unread_inputs_diagnostic(graph), module_count_diagnostic(graph),
-              scope_membership_diagnostic(graph))
+              scope_membership_diagnostic(graph), deep_tier_diagnostic(graph))
     return [d for d in checks if d is not None]
 
 

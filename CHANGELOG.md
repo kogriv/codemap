@@ -5,6 +5,45 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.9] - 2026-09-02
+
+**A limit that lived in a comment in a CI workflow is not a disclosed limit.** Schema unchanged (0.13).
+Nothing about what codemap extracts changes here; what changes is that a `--deep` graph now tells you what
+kind of artifact it is.
+
+### Fixed
+
+- **The deep tier is not byte-stable, and only the CI workflow said so (R1-C42).** A second target built the
+  same unchanged tree seven times and lost a real `calls` edge — resolved through `getattr` — in one of them:
+  9524 edges against 9523. They had briefly read that as a regression between two releases, which is exactly
+  what the docs invited: README said "deterministic" with no tier attached, `docs/ci.md` said the limit was
+  "documented in provenance.md", `provenance.md` said the opposite in the general voice, and the one place
+  that did name it (`docs/incremental.md`) gave a cause — jedi's cache warmth — that this measurement
+  refutes.
+
+  Reproduced here on a different tree: ten deep builds of an unchanged tree produced **two** distinct
+  artifacts (7 and 3), differing in two per-symbol call counters out of 2133 nodes and no edges — one call
+  moving between `external` and `unresolved` while `out` and `resolved` held. Localized to three method
+  calls whose receiver type jedi types in some runs and not others. Five external explanations were tested
+  at ten runs each and refuted: hash-seed randomization, jedi's and parso's on-disk caches, jedi's compiled
+  subprocess, the garbage collector, and address-space randomization. The mechanism, as far as we took it,
+  is jedi's per-script execution budget — an inference that runs out of it returns no values, and no values
+  is indistinguishable at our boundary from "nothing to find", so the call is recorded `unresolved`. Why the
+  budget consumed before a given call site differs by exactly one between processes we did not establish,
+  and the gap says so.
+
+  So the fix is disclosure, not a claim to have made jedi deterministic. Every `tier: deep` graph now
+  carries a `note` (never a warning — the graph is a correct sample of a slightly fuzzy function, and
+  nothing in it is invalid) stating the measured numbers. `codemap diff` prints the noise floor above the
+  verdict when both sides are deep: `comparability()` grows a `caveats` list, kept separate from
+  `differences` so that a pair of deep graphs stays *comparable* — refusing would be wrong — while a
+  genuine incomparability is never softened by it. README, `provenance.md`, `ci.md`, `attribute-edges.md`
+  and `incremental.md` now carry the same numbers, and `ci.md` names its own false cross-reference rather
+  than quietly repairing it.
+
+  Anything that must be reproducible byte-for-byte belongs on the fast tier, which is byte-stable and is
+  a subset of the deep tier by construction — the CI gate loses nothing by staying there.
+
 ## [0.0.8] - 2026-09-02
 
 **The artifact that answers "what exactly was analyzed" could answer wrong, in silence.** Schema unchanged

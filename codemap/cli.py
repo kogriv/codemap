@@ -747,6 +747,8 @@ def _cmd_diff(args) -> int:
             print(f"[warning] {line}", file=sys.stderr)
         print(f"[warning] differences below may be tool changes, not code changes "
               f"(old: {cmp['old']} | new: {cmp['new']})", file=sys.stderr)
+    for caveat in cmp.get("caveats") or ():
+        print(f"[note] {caveat}", file=sys.stderr)
     print(render_apidiff(old, new), end="")
     if args.exit_code and not build_apidiff(old, new)["ok"]:
         return 1

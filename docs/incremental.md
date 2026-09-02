@@ -44,13 +44,20 @@ so the build falls back to it (reported as `mode: full`).
   / remove, and it holds on bquant (7437 edges, zero diff).
 - **Deep tier: equivalent to a full build, subject to jedi's inference variance.** The
   splice itself is exact — proven byte-identical on a controlled fixture. But jedi's
-  bounded type inference is **cache-warmth-dependent**, so *two full `--deep` builds of
-  bquant already differ* from each other by a handful of deep-only edges (one resolves
-  a chain the other's colder cache didn't). Incremental deep is therefore identical to a
-  full deep build *up to that same intrinsic variance* — it introduces no divergence of
-  its own, and is ~12× faster. If you need a reproducible deep graph, that's a property
-  of the deep tier itself, not of incremental. The fast/structural layers are fully
-  deterministic.
+  bounded type inference is not stable across processes, so *two full `--deep` builds of
+  an unchanged tree already differ* from each other by a handful of deep-only edges.
+  Incremental deep is therefore identical to a full deep build *up to that same intrinsic
+  variance* — it introduces no divergence of its own, and is ~12× faster. If you need a
+  reproducible deep graph, that is a property of the deep tier itself, not of incremental.
+  The fast/structural layers are fully deterministic.
+
+  **Corrected 2026-09-02 (R1-C42):** this bullet used to attribute the variance to jedi's
+  cache warmth. Measured and refuted — a cold `XDG_CACHE_HOME` per build flips just as
+  often (5 of 10). The cause is jedi's per-script execution budget: an inference that runs
+  out of it returns nothing, and nothing reads as `unresolved`. Five external explanations,
+  cache warmth among them, were tested at ten runs each and refuted — see
+  [provenance.md](provenance.md#the-deep-tier-is-not-byte-stable) and the
+  [measurement](../gaps/deep_tier_nondeterminism_2026-09-02.md).
 - **No-op is free.** If no package `.py` file changed, the old graph is returned
   untouched (`mode: unchanged`) — the hot path for a future file watcher (M3.2).
 - **…but only when the *builder* is unchanged too** (R1-C25). The source tree is not the

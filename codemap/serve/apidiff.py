@@ -53,6 +53,10 @@ def render_apidiff(old: Graph, new: Graph) -> str:
                    + f". Old: {prov['old']} | new: {prov['new']}. "
                      "Differences below may be tool changes, not code changes.")
         out.append("")
+    # R1-C42: comparable, and still carrying a noise floor the reader has to know about.
+    for caveat in prov.get("caveats") or ():
+        out.append(f"> ℹ️ {caveat}.")
+        out.append("")
 
     removed = d["removed"]
     if removed:

@@ -24,9 +24,18 @@ had never been checked because there had never been a second interpreter — and
 ## Two scoping decisions worth knowing
 
 **`determinism` runs the fast tier only.** Not an oversight. R1-C9 measured that the deep (jedi)
-tier is *not* byte-stable — two full deep builds of the same tree differ by a couple of edges. That
-limit is documented in [provenance.md](provenance.md) and in the backlog; asserting deep determinism
-in CI would be this milestone making exactly the kind of unchecked claim it exists to end.
+tier is *not* byte-stable — two full deep builds of the same tree differ by a couple of edges;
+asserting deep determinism in CI would be this milestone making exactly the kind of unchecked claim
+it exists to end.
+
+That paragraph used to end "*that limit is documented in provenance.md and in the backlog*", and it
+was not: `provenance.md` said the opposite in the general voice, and README said "deterministic"
+with no tier attached. A consumer read the claim as written, compared two deep graphs across a
+release, and briefly concluded a regression that was the tool, not the code. **A limit that lives
+only in a comment in a CI workflow is not disclosed.** It is now stated on the artifact itself, in
+[provenance.md](provenance.md#the-deep-tier-is-not-byte-stable), in
+[README](../README.md#one-caveat-on-deterministic), and by `codemap diff` when both sides are deep
+(R1-C42).
 
 **It compares two builds in one job, not across runs.** The determinism test that taught this
 project the most (R1-C22-f1) went red because the *input* moved under it, not because the tool was

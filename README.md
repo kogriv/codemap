@@ -8,7 +8,7 @@ and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **743 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **752 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -22,8 +22,9 @@ export edges, best-effort call edges, registry-family `implements` links, string
 and per-call argument contracts — then answers questions over it.
 
 Design principles: **source-only** (static `ast`/`griffe`, never imports the target), **deterministic**
-(canonical sorted JSON, no timestamps — diffable), **CLI-AI-first** (JSON by default, stable exit
-codes), **honest** (approximations are labeled, not hidden).
+(canonical sorted JSON, no timestamps — diffable; byte-stable on the fast tier, see the caveat
+[below](#one-caveat-on-deterministic)), **CLI-AI-first** (JSON by default, stable exit codes),
+**honest** (approximations are labeled, not hidden).
 
 ## Point questions and whole-graph questions
 
@@ -210,6 +211,22 @@ reports it — 100% precision / 100% decidable-recall on a hand-labeled suite, a
 against *all* true edges (the price of Python's dynamism), and a grep-vs-graph proof that the graph is ~2×
 cheaper than grep for impact on unique names, tens of × on polymorphic ones, and no cheaper for locating a
 symbol.
+
+## One caveat on "deterministic"
+
+The **fast tier is byte-stable**: two builds of an unchanged tree produce identical files, and CI
+compares the bytes on every push. The **deep tier (`--deep`, jedi) is not**. Ten deep builds of an
+unchanged tree here produced two distinct artifacts — differing in two per-symbol call counters out
+of 2133 nodes, no edges — and on a larger external tree one build in seven lost one real call edge of
+9524. The cause is jedi's per-script execution budget: an inference that runs out of it returns
+nothing, and nothing is recorded as `unresolved`.
+
+So a deep graph is one sample of a slightly fuzzy function, not a function of its input. Every deep
+build says so in its own diagnostics, and `codemap diff` says so when both sides are deep — read a
+delta of a few call edges as possible tool noise before reading it as a change in the code. Anything
+that must be reproducible byte-for-byte — a gate, a two-release comparison — belongs on the fast tier.
+
+**Measurement:** [gaps/deep_tier_nondeterminism_2026-09-02.md](gaps/deep_tier_nondeterminism_2026-09-02.md).
 
 ## Dogfooding
 

@@ -60,9 +60,11 @@ what makes the `pytest …` line `codemap tests` prints paste-able. See
 
 ## Two rules the block obeys
 
-**No clock.** The canonical graph is timestamp-free, so two builds of an unchanged tree
-are byte-identical. That property is what makes "deterministic" checkable at all, and a
-`built_at` field would destroy it. Wall-clock time lives in the sidecar.
+**No clock.** The canonical graph is timestamp-free, so two **fast-tier** builds of an
+unchanged tree are byte-identical. That property is what makes "deterministic" checkable
+at all, and a `built_at` field would destroy it. Wall-clock time lives in the sidecar.
+The deep tier does not reach the same bar — [see below](#the-deep-tier-is-not-byte-stable),
+and that is why CI compares bytes on the fast tier only.
 
 **No absolute paths.** The graph is the half that travels — attached to a ticket,
 committed to a sibling repo, handed to an agent. Paths here are repo-relative or a bare
@@ -166,6 +168,40 @@ Three derived checks read `inputs` (they are recomputed on read, never stored):
 - **scope membership** — every file in the graph must be one the input manifest lists.
 
 See [hard-python.md](hard-python.md) for what produces these conditions.
+
+## The deep tier is not byte-stable
+
+`tier` is in the provenance block because the two tiers answer call-graph questions
+differently. It is also there for a second reason, which until 0.0.9 was written down
+nowhere a reader would find it: **`deep` graphs are not reproducible byte-for-byte.**
+
+Measured on two trees. Ten deep builds of an unchanged tree here produced **two** distinct
+artifacts (7 and 3): two per-symbol `calls` counters out of 2133 nodes moved one call
+between `external` and `unresolved`, and no edges changed. On a larger external tree one
+build in seven lost a **real** call edge of 9524 — a call through `getattr` whose receiver
+type jedi resolved in six runs and not in the seventh.
+
+The cause is jedi's per-script execution budget (`total_function_execution_limit` and its
+per-function siblings). An inference that runs out of budget returns no values, and no
+values is indistinguishable, at our boundary, from "nothing to find" — so the call is
+recorded `unresolved`. What varies between processes is how much budget earlier queries in
+the same file consumed. Five external explanations were tested and refuted at ten runs
+each: hash-seed randomization, jedi's and parso's on-disk caches, jedi's compiled
+subprocess, the garbage collector, and address-space randomization.
+
+What follows for you:
+
+- **A deep graph is one sample, not a function, of its input.** Every deep build states this
+  in its own diagnostics as a `note` — nothing in it is invalid, and a small call-graph
+  delta between two of them is not evidence of a change in the code.
+- **`codemap diff` says so too** when both sides are deep: the pair stays comparable, with
+  the noise floor named above the verdict.
+- **Anything that must be reproducible byte-for-byte belongs on the fast tier** — a CI gate,
+  a two-release comparison, a provenance argument. The fast tier is `ast`-only and stable.
+- The fast tier is a *subset* of the deep tier by construction (R1-C26), so nothing is lost
+  by gating on it; the deep tier's extra edges are the part that carries the noise.
+
+**Measurement:** [../gaps/deep_tier_nondeterminism_2026-09-02.md](../gaps/deep_tier_nondeterminism_2026-09-02.md).
 
 ## When the manifest and the graph disagree about the input
 
