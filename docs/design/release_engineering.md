@@ -248,6 +248,26 @@ answer), no absolute paths, and signatures rendering their `*`, `/` and `**` mar
 Both tags were written after the fact, `v0.0.6` naming its own supersession. A release that is corrected
 within the day is still a release someone may have installed.
 
+**0.0.8 published 2026-09-02:** [`codmap` 0.0.8](https://pypi.org/project/codmap/0.0.8/), schema **0.13**
+(unchanged). Same procedure from a clean tree at the pushed commit `8d9c138`, CI green before the upload,
+`twine check` PASSED on both artifacts, tag `v0.0.8` written with `-F`.
+
+The release exists for one fix (R1-C41): in git mode the input manifest enumerated the tracked set while
+the extractor walked the filesystem, so an untracked or gitignored module was in the graph, absent from
+`scope.files`, and did not move `scope_id`. So the scenario to verify was not "does it install" but *does a
+file that is not in the index reach the manifest, and does the identity move when it does* — driven on the
+published wheel, in a clean venv outside any checkout, over a throwaway git repo: the untracked module came
+back in the manifest with `tracked: false`, `scope_id` moved, and `--incremental` recomputed it
+(`1 module(s) recomputed`, the new symbol present) where the same sequence had answered `unchanged: 0`.
+The gitignored module stayed out and was named by the warning.
+
+**And the half that a fix like this must also prove: that nothing moved for everyone else.** `scope_id` is
+an identity other people pin — the research benchmark pins one, and the second target verifies its graphs
+against a recorded manifest. So both published wheels were installed side by side and pointed at the same
+clean tree: 0.0.7 and 0.0.8 returned the byte-identical `sha256:11851fa9…`. The change is inert wherever
+nothing is untracked, which is the only way this fix could ship without invalidating every pinned id in
+circulation. Third release running, the verification is what decided whether the release was finished.
+
 **And the release found one of its own.** `codemap/__init__.py` declared `__version__ = "0.0.2"` while
 0.0.3 was on PyPI — a literal that had drifted a release behind, stamping the wrong version into every SCIP
 index and ctags file. Graphs were unaffected, and the reason is the interesting part: `provenance` asks
