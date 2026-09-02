@@ -4,6 +4,9 @@
 7 tests. 🟢 Feature B implemented (R2.0.1, 2026-08-03) — `research/tools/_scope/{bquant.scope.json,
 materialize.py}`, Scope field in the card template + comparison hub, canonical bench `scope_id` pinned
 (`sha256:300e0a01…5e47d2`, bquant@cb89a24, 280 files). All decisions O1–O6 settled.
+🔴 **§1.7 (membership, R1-C41) decided and not implemented** — in git mode the manifest enumerates the
+tracked set while the extractor walks the filesystem, so an untracked or gitignored source file is in the
+graph, absent from `scope.files`, and does not move `scope_id`.
 **Backlog:** M19 (product feature A) + R2.0.1 (research harness B) — see [../../BACKLOG.md](../../BACKLOG.md).
 **Motivation:** codemap is deterministic on its **output** (canonical `graph.json`) but says nothing precise
 about its **input**. Today the only record of scope is the M18 sidecar's build *command* (`argv/cwd/target`);
@@ -131,13 +134,18 @@ files, `venv_bquant` = 0 (gitignored); git already holds per-blob hashes; `HEAD 
   means the scope is reproducible from the commit alone — "scope = `bquant@cb89a24` over pathspec …", a
   shareable one-liner. A **dirty** tree is still exact: our sha-256 captures the actual working-tree bytes
   (git can't hash uncommitted content), and `dirty`/`dirty_files` flag the divergence from `HEAD`.
+  **Corrected 2026-09-02 (§1.7):** "still exact" holds for *tracked-modified* files only. An **untracked**
+  or **gitignored** source file is read by the extractor and never enters the manifest at all, so it moves
+  neither `scope_id` nor the file list — measured, not argued.
 - **Free blob hashes:** record `git_blob` per file (from `git ls-tree`) alongside our `sha256` — no extra
   file reads. Informational; identity stays sha256.
 - **Diff shortcut:** when both sides are git-anchored & clean, `scope --diff` may delegate to
   `git diff --name-status <a.commit> <b.commit>` (rename-aware) instead of the path/hash comparison.
 - **Not a requirement:** git mode is a *preferred-when-available* layer; the sha-256 identity, fs-mode, and
   the spec overlay work with or without git, and git mode only covers tracked files (untracked/generated
-  files enter via the spec's `include`).
+  files enter via the spec's `include`). **That escape hatch was never cut (§1.7):** `include` is applied as
+  a filter *after* `git ls-files`, so it can remove a file from the manifest and can never add one, and
+  product `resolve_scope` takes no spec at all — the spec overlay is Feature B only.
 
 ### 1.6 Operating mode: in-place (live) vs materialized (benchmark) — O2
 
@@ -159,6 +167,56 @@ general answer.
 Rule of thumb: **live/product = in-place; one-shot cross-tool diff of an uncooperative tool = materialize.**
 codemap itself never needs materialization even in the benchmark (it takes the real tree in git mode); only
 tools that can't be pointed at a clean file set do.
+
+### 1.7 Membership: the manifest must describe what was read — R1-C41 (2026-09-02)
+
+**Status:** 🔴 decided, not implemented. Gap: [`gaps/scope_membership_2026-09-02.md`](../../gaps/scope_membership_2026-09-02.md),
+raised by the second real target as [codemap#15](https://github.com/kogriv/codemap/issues/15).
+
+Two enumerations answer the question "what is the input", and nothing compares them: the **manifest**
+enumerates the *tracked* set (`git ls-files`), the **extractor** walks the *filesystem*. In fs mode they
+agree by construction; in git mode they are different sets. Measured on 0.0.7: an untracked or a gitignored
+module contributes nodes to the graph, is absent from `scope.files`, and leaves `scope_id` **unchanged** —
+two graphs with different content carried the same input identity. `module_count_diagnostic` is silent and
+correct while it happens (the extractor's own count matches the graph; the manifest is not in that
+comparison), and `--incremental` printed `unchanged: 0 module(s) recomputed` over a file that had just
+grown a new symbol. `scope_id` is not a description — it is the cache key for `--incremental` and the
+`watch` probe, so this is a correctness defect, not a reporting one.
+
+**D1 — enumerate what will be read.** git mode adds `git ls-files --others --exclude-standard` (exactly
+what `git add .` would stage). Those records carry `sha256`/`bytes`/`role` like any other, no `git_blob`
+(there is none), and a `tracked: false` marker so a consumer can tell "in the tree" from "in the commit".
+`scope_id` becomes sensitive to untracked source — which is what a cache key must be. Cost measured: 4 ms
+vs 2 ms for the plain `ls-files` on the dogfood tree. *Rejected:* enumerating purely by filesystem — that
+throws away the gitignore-correctness git mode exists for (O6), and a stray `venv_*` would move the scope
+again.
+
+**D2 — membership as a check, not as trust.** Every node's `file` must resolve into `scope.files`. D1
+closes the untracked hole; the **gitignored** one stays open on purpose — if `.gitignore` says a file is
+not part of the tree, the manifest must not quietly decide otherwise, and the honest answer is to say the
+graph was built over files the repo excludes. New diagnostic `SCOPE_MEMBERSHIP` (warning), naming the count
+and up to five paths; consequence: the manifest and `scope_id` describe a different input than the graph was
+built from — read the identity as **unknown**. Forward direction only: the reverse (a scope file with no
+node) is legitimately noisy — 23 of 187 on our own repo-scoped build, all explained (21 `.md`, one `.md`
+under tests, one deliberately unreadable fixture) — and its Python half is already `unread_inputs`.
+
+**D3 — the fact travels in the graph.** Build-time stderr does not reach a consumer reading the artifact an
+hour later, possibly without the sidecar. The comparison runs at build time (the scope is in hand) and its
+*result* is recorded in `provenance.inputs`, beside `skipped`/`aliased_modules`, which carry the same kind
+of fact. **Constraint that must not be missed:** the files this check catches are the ones most likely to
+carry an **absolute** path, and the provenance block is path-free by contract — `build_provenance` raises
+on one. So the record is `{"count": N, "sample": [...], "outside_root": bool}` with out-of-root paths
+reduced to a bare name by the `relative_root` rule; a naive path write would turn the diagnostic into a
+build crash.
+
+**Open, settle before coding:** `SCHEMA_VERSION` bump. Recommendation **no** — the field is additive and
+optional, the same shape as `skipped`.
+
+**Acceptance:** the untracked module enters the manifest with `tracked: false`, moves `scope_id`, and is
+recomputed by `--incremental` (all four fail today); the gitignored one stays out and is named by the
+diagnostic *and* by `provenance.inputs`; both clean builds keep 0 violations; the pinned R2 bench
+`scope_id` (`sha256:300e0a01…5e47d2`) is re-checked explicitly and does not move; reverting the enumeration
+line turns the untracked test red (R1-C37 discipline).
 
 ---
 
