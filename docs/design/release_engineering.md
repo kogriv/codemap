@@ -293,6 +293,31 @@ reported as failed. It had not failed — the release was on PyPI. The check is 
 the client, and the same rule applies as to the release scenario: verify the state of the world, not the
 report of the tool that changed it.
 
+**0.0.10 published 2026-09-03:** [`codmap` 0.0.10](https://pypi.org/project/codmap/0.0.10/), schema
+**0.13** (unchanged). Same procedure from the pushed commit `a392928`, CI green, `twine check` PASSED on
+both artifacts, tag `v0.0.10` written with `-F`.
+
+Second release in a row whose whole content is disclosure, and the verification question is sharper again,
+because this one **changes the bytes of every graph, not only of the graphs it warns about**:
+`provenance.incremental` is written by every build. So the two halves had to be checked against each other,
+from PyPI, in clean venvs outside any checkout:
+
+- **It fires where it should.** An incremental `--deep` build reports `incremental: true` and prints the
+  `incremental_deep_splice` note — on stderr *and* rendered into a report read from the stored graph. A full
+  deep build reports `false` and prints nothing. The fast tier stays silent on both counts. And 0.0.9 on the
+  same tree has **no such key at all**, which is the case the field exists to distinguish: absent is
+  *unknown*, not *full*.
+- **It is inert where it has nothing to say.** 0.0.9 and 0.0.10 pointed at the same tree on the fast tier
+  (byte-stable, so the comparison is meaningful there and is not on deep) came back with the same
+  `scope_id` — `sha256:e0e64d52d0e6da7b0` — the same 2869 nodes / 8408 edges, and **byte-identical apart
+  from that single key**. Third release running, this half is what decides whether a release is finished:
+  `scope_id` is an identity other people pin.
+
+Also worth recording: the version endpoint answered before the sdist appeared in it. The first read of
+`pypi.org/pypi/codmap/0.0.10/json` listed only the wheel; seconds later it listed both. The rule from 0.0.9
+holds in the other direction too — check the index rather than the client, and check it until it is
+*complete*, not until it is non-empty.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
