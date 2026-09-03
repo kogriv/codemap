@@ -61,6 +61,15 @@ so the build falls back to it (reported as `mode: full`).
     owns the target left the writing module unaffected when the edge was absent, and
     affected when it was present: same edit, same tree, same tool.
 
+  - **What a recomputed module gives you is a full build's answer.** Measured 2026-09-03
+    over 24 paired samples, each arm reading the same tree state: a module that lands in
+    the affected set resolves exactly as well as it does in a full build (best state 5 of
+    24 on both sides, sign test `p = 1.000`). So the weakness above is precisely located —
+    it is in the modules the build *skips*, not in the ones it redoes. An earlier reading
+    of this suggested otherwise and was retracted: that sample had been collected through
+    the very rule described in the previous bullet, which only observes runs where the
+    edge is still present.
+
   This is structural rather than an oversight — `unresolved` means *we do not know where
   the edge went*, so that set cannot be indexed by the changed module, which is exactly
   what the rule needs. What the tool does about it today is **say so**: such a graph

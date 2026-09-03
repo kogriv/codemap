@@ -31,6 +31,14 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
     import-linked, so that rule was the only route.
   - The hypothesis's own caveat — "until that module changes again" — was **too mild**: a re-resolved module
     is a fresh sample, and the edge came back in only 4 of 9.
+  - **And a module that *is* recomputed is recomputed no worse.** The first pass left a signal that it might
+    be — the best state was reached 0 times in 9 incremental recomputes against 4 of 8 full builds — and that
+    signal was **ours, and wrong**. Closed with 24 paired samples, each arm building the *same* tree state:
+    the best state comes up **5 of 24 on both sides**, mean resolved 11.83 against 11.96, sign test over the
+    17 discordant pairs `p = 1.000`. The first sample had been drawn *by the defect it was measuring* — the
+    recompute was triggered through the invalidation rule that reads the old graph, so it only ever sampled
+    runs where the edge was still there. This matters for what the entry above claims: the harm is entirely
+    in **not recomputing**, not in recomputing worse, and until this run the two were indistinguishable.
 
   **Shipped: disclosure only.** `provenance.incremental` is written by every build, `false` included (absent
   means the graph predates the field — *unknown*, not *full*), and a deep graph carrying spliced regions gets
@@ -44,12 +52,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   would close it (a periodic full rebuild; refusing to conclude *absence* from such a graph) are BACKLOG
   R1-C43.
 
-  **Corrects three of our own claims:** R1-C9's acceptance bar was stated without a tier ("byte-identical to a
+  **Corrects four of our own claims:** R1-C9's acceptance bar was stated without a tier ("byte-identical to a
   full rebuild" — unreachable on deep, where two full builds already differ), so the suite now pins the two
   halves separately: the **content** matches a full build, and the **artifact does not present itself** as
   one. `docs/incremental.md` said the deep path "introduces no divergence of its own" — refuted above. And the
   R1-C9 test docstring still carried the cache-warmth cause that R1-C42 refuted the day before: yesterday's
-  correction was grepped for in the docs, not in the tree. +11 tests.
+  correction was grepped for in the docs, not in the tree. And the fourth is the signal above, published in
+  the gap as a signal and retracted by our own follow-up run a day later. +13 tests.
   [Measurement](gaps/incremental_noise_persistence_2026-09-02.md).
 
 
