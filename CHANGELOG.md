@@ -5,6 +5,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.10] - 2026-09-03
+
+**An incremental deep graph no longer passes for a full one.** Schema unchanged (0.13). Nothing about what
+codemap extracts changes here; what changes is that a graph built with `--incremental` says so, and a deep
+one carrying spliced regions says what that costs the reader. Every build now writes
+`provenance.incremental` — `false` included, because a missing field means *unknown*, not *full*.
+
 ### Fixed
 
 - **The 0.0.9 note said "call edges"; the measurement says "jedi-resolved edges".** Re-checking the research
