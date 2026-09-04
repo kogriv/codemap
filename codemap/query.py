@@ -696,6 +696,14 @@ class Query:
                "by_distance": by_distance, "max_distance": max_distance,
                "risk": self._impact_risk(len(refs), max_distance, len(by_root),
                                          kind=kind)}
+        # R1-C44 / D1: a symbol the graph does not hold has no blast radius to report —
+        # `none` here used to be an affirmative "nothing depends on it" about a name the
+        # tool had never seen (a typo, another tree, a copy under another directory name).
+        if node is None:
+            out["risk"] = "unknown"
+            out["risk_reason"] = ("symbol not in graph — nothing is known about it; "
+                                  "this is not an empty blast radius")
+            return out
         # Honesty (R1-C20 P0, issue #1): a field with no modelled accessor is a
         # *lower bound*, not proof of safety — attribute access resolution is
         # best-effort. Say so instead of the affirmative "none".

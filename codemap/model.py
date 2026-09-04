@@ -97,6 +97,13 @@ EDGE_TYPES = frozenset({
     "accesses",       # function → attribute node it reads/writes (extras.access, R1-C20)
 })
 
+# The subset of EDGE_TYPES an incremental build splices from the old graph for modules
+# it did not recompute (``incremental.py``) — and therefore the classes a deep+incremental
+# graph answers from an *earlier* build's jedi sample (R1-C43). Lives with the vocabulary
+# because two layers that may not import each other need it: the extractor's union
+# (R1-C45) and the serve layer, which derives from it which ops must say so (R1-C44 / D4).
+SPLICED_EDGE_TYPES = frozenset({"calls", "accesses", "references"})
+
 
 @dataclass
 class Node:

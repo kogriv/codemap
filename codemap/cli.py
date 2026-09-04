@@ -102,6 +102,12 @@ def _cmd_build(args) -> int:
               "resampled; run a full build", file=sys.stderr)
         return 2
     if args.consumer or args.docs:
+        if getattr(args, "incremental", False):
+            # R1-C44 / D6: the flag used to be swallowed here without a word. Not an
+            # error — a stated boundary: the incremental path is single-package.
+            print("[note] --incremental was not applied: --consumer/--docs make this a "
+                  "repo-scoped build, which is always full (the incremental path is "
+                  "single-package only)", file=sys.stderr)
         graph = extract_repo(
             args.path,
             consumers=tuple(args.consumer or ()),
@@ -891,7 +897,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
 
     b = sub.add_parser("build", help="Build the canonical graph from a package path.")
-    b.add_argument("path", help="Path to the package directory (holds __init__.py).")
+    b.add_argument("path", help="Path to the package directory (holds __init__.py). Its "
+                                "directory name is the package name every node id starts "
+                                "with — a copy under another name answers to that name.")
     b.add_argument("-o", "--out", help="Write graph.json here (default: stdout JSON).")
     b.add_argument("--deep", action="store_true",
                    help="Deep call resolution via jedi (richer, ~1 min; default fast).")
@@ -904,8 +912,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Consumer granularity: thin=per-file (default), full=per-function.")
     b.add_argument("--incremental", action="store_true",
                    help="Reuse an existing --out graph + its scope sidecar: recompute "
-                        "only changed modules (R1-C9). Identical to a full build; much "
-                        "faster on --deep. Single-package only (no --consumer/--docs).")
+                        "only changed modules (R1-C9). Byte-identical to a full build on "
+                        "the fast tier; on --deep it carries the earlier build's jedi "
+                        "sample forward (docs/incremental.md). Much faster on --deep. "
+                        "Single-package only (no --consumer/--docs).")
     b.add_argument("--repeat", type=int, default=1, metavar="N",
                    help="--deep only: run the jedi layer N times and union the samples. "
                         "One deep build is one sample (a real edge was present in 75%% "

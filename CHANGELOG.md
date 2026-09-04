@@ -5,6 +5,31 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+
+- **An empty answer now says which kind of empty it is (R1-C44).** `impact` on a symbol the graph does
+  not hold used to answer `risk: "none"` — an affirmative "nothing depends on it" about a name the tool
+  had never seen — and `callers`/`callees`/`flows`/`accessors`/`tests`/`query` returned an envelope
+  byte-identical to the one for a real symbol nobody references. `canonical_info()` had computed "no such
+  symbol"; `handle()` discarded it with a truthiness test. Now every resolving op carries
+  `resolved: {input, id: null, found: false, …}` for a ghost (`ok` stays true — the question was
+  well-formed and this is the answer), a found resolution says `found: true`, and `Query.impact` answers
+  `risk: "unknown"` with a reason. Found from our own measurement mistake: a probe searched `bquant.…` on
+  a graph rooted `target.…` and read eighteen honest-looking empty answers as data.
+- **`query` by full id opened an empty dossier.** `find` matches short names only, so the id an agent
+  gets back from `search` — the F23 case, fixed for `impact` in 0.0.4 — found nothing here. The dossier
+  now resolves through `canonical_info` before concluding "no such symbol".
+- **`accessors` carried no `epistemic` block at all.** It reads `accesses`, modelled best-effort. The
+  partial-op set is now *derived* from a table of which edge classes each op reads, as is the set of ops
+  that must name the incremental splice: on a `tier: deep` + `incremental: true` graph those ops add
+  `epistemic.splice` (the first `reason` is kept — a different fact); a deep graph older than the field
+  gets a quieter wording that says what is unknown. `model.SPLICED_EDGE_TYPES` is the one list both the
+  incremental build and the serve layer read.
+- **Three side fixes.** `build --incremental`'s help said "Identical to a full build" without a tier —
+  the last live copy of the claim R1-C43 refuted for deep; `--incremental` with `--consumer/--docs` was
+  swallowed silently and now prints a note; `build`'s help and README say node ids start with the package
+  directory's name, because a copy under another name answers to that name.
+
 ## [0.0.11] - 2026-09-04
 
 **A deep build is one sample with a measured share, and "build again" now says how many times.** Schema

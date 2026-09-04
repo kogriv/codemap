@@ -57,7 +57,7 @@ from codemap.extract.griffe_extractor import (
     add_behavioral_layer, build_structural, extract,
 )
 from codemap.extract.union import BEHAVIOR_CALL_RES
-from codemap.model import Graph
+from codemap.model import SPLICED_EDGE_TYPES, Graph
 from codemap.provenance import build_provenance, tool_identity
 from codemap.scope import diff_scopes
 
@@ -75,8 +75,9 @@ _BEHAVIOR_REF_RES = frozenset({"name", "annotation"})
 # it — or the fast tier's byte-identity to a full build (R1-C9) breaks on it.
 _BEHAVIORAL_EXTRAS = ("calls", "control", "complexity", "attr_access", "shadows")
 # Old edge types whose target landing in a changed/removed module makes the source
-# module stale (it must re-resolve). Only the spliced passes matter here.
-_DEP_EDGE_TYPES = frozenset({"calls", "accesses", "references"})
+# module stale (it must re-resolve). Only the spliced passes matter here — and the serve
+# layer reads the same set to know which ops answer from a spliced class (R1-C44).
+_DEP_EDGE_TYPES = SPLICED_EDGE_TYPES
 
 # Above this fraction of modules affected, a full rebuild is cheaper (and trivially
 # correct) — no point splicing most of the graph.

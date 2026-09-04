@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from codemap.model import SCHEMA_VERSION, Graph
+from codemap.model import SCHEMA_VERSION, SPLICED_EDGE_TYPES as _SPLICED_EDGE_TYPES, Graph
 from codemap.query import Query
 from codemap.serve.api_surface import render_api_surface
 from codemap.serve.architecture import build_architecture, render_architecture
@@ -40,13 +40,61 @@ _REPORTS = {
 # disclaimers). Absence of the label = structural/complete (imports, contains,
 # inherits, exports — exact). One label per answer (no per-edge confidence: edges
 # already carry `resolution`). From the GitNexus разбор, built natively.
-_PARTIAL_OPS = frozenset({"callers", "callees", "impact", "flows", "call_contract",
-                          "tests", "covers"})
+# R1-C44 / D4: which edge classes each relational op reads. Two sets are *derived* from
+# this table instead of being listed by hand, so that adding an op — or adding an edge
+# class to the incremental splice — forces a decision here rather than a silent gap:
+#   `_PARTIAL_OPS`  — ops that lean on best-effort static resolution (calls, accesses),
+#                     and so answer a lower bound (R1-C13);
+#   `_SPLICE_OPS`   — ops that read a class the incremental build splices from the old
+#                     graph, and so on a deep+incremental graph read the *earlier* build's
+#                     jedi sample (R1-C43).
+# `accessors` used to be in neither — it reads `accesses`, modelled best-effort, and
+# carried no `epistemic` at all (found by the R1-C44 measurement).
+_OP_EDGE_CLASSES = {
+    "callers": frozenset({"calls"}),
+    "callees": frozenset({"calls"}),
+    "call_contract": frozenset({"calls"}),
+    "flows": frozenset({"calls"}),
+    "impact": frozenset({"calls", "references", "accesses"}),
+    "accessors": frozenset({"accesses"}),
+    "tests": frozenset({"calls", "references"}),
+    "covers": frozenset({"calls", "references"}),
+}
+_BEST_EFFORT_CLASSES = frozenset({"calls", "accesses"})
+_PARTIAL_OPS = frozenset(op for op, cls in _OP_EDGE_CLASSES.items()
+                         if cls & _BEST_EFFORT_CLASSES)
+_SPLICE_OPS = frozenset(op for op, cls in _OP_EDGE_CLASSES.items()
+                        if cls & _SPLICED_EDGE_TYPES)
 _EPISTEMIC_PARTIAL = {
     "epistemic": "partial",
-    "reason": "leans on static call resolution (partial for Python) — a lower "
-              "bound; pair with grep/tests before acting.",
+    "reason": "leans on static resolution of calls and attribute accesses (partial "
+              "for Python) — a lower bound; pair with grep/tests before acting.",
 }
+# D4 — the second reason, named separately: "a lower bound by static resolution" and
+# "part of this graph was carried over, not recomputed" are different facts.
+_EPISTEMIC_SPLICE = (
+    "parts of this deep graph were carried over from an earlier build rather than "
+    "recomputed (provenance.incremental: true), and this op reads edge classes the "
+    "splice copies — a missing edge here may be the earlier build's jedi miss, and "
+    "rebuilding incrementally will not resample it; only a full build (or --repeat) does."
+)
+# D5 — a graph older than the field: say what is not known, not more.
+_EPISTEMIC_SPLICE_UNKNOWN = (
+    "this deep graph predates provenance.incremental, so whether parts of it were "
+    "carried over from an earlier build is unknown; this op reads edge classes an "
+    "incremental build would splice."
+)
+
+
+def _not_found(name_or_id: str) -> dict:
+    """The resolution block for a symbol the graph does not hold (R1-C44 / D1).
+
+    ``ok`` stays true — the question was well-formed and this *is* the answer. What
+    must not happen is the answer being indistinguishable from "found, and nothing
+    references it": that envelope used to be byte-identical for both.
+    """
+    return {"input": name_or_id, "id": None, "found": False,
+            "ambiguous": False, "alternatives": []}
 
 # R1-C28: ops that cut a computed answer down to a limit. Orthogonal to _PARTIAL_OPS
 # — that one is about how well calls *resolve*; this one is about how much of the
@@ -132,6 +180,13 @@ def tool_drift(running: str | None, installed: str | None) -> dict | None:
 def build_query_result(q: Query, name: str) -> dict:
     """The full symbol dossier — shared by ``codemap query`` and warm serve."""
     matches = q.find(name)
+    if not matches:
+        # R1-C44 (the F23 gap, on this surface): `find` matches short names only, so the
+        # full id an agent gets back from `search` used to open an *empty* dossier here.
+        # Resolve it the way every relational op does before concluding "no such symbol".
+        info = q.canonical_info(name)
+        if info:
+            matches = [q.graph.nodes[info["id"]]]
     result: dict = {
         "name": name,
         "defined_at": q.where_defined(name),
@@ -233,7 +288,10 @@ class Session:
         warning when a bare short name resolved to one of many defs arbitrarily.
         """
         info = self.query.canonical_info(name_or_id)
-        self._resolution = info
+        # R1-C44 / D2: `canonical_info` computes "no such symbol" as None, and this
+        # method used to drop it on the floor — the raw input went on to be looked up
+        # in the graph and answered with an honest-looking empty list.
+        self._resolution = {**info, "found": True} if info else _not_found(name_or_id)
         return info["id"] if info else name_or_id
 
     # -- dispatch ------------------------------------------------------------
@@ -263,13 +321,34 @@ class Session:
         except Exception as exc:  # a bad arg must not kill the resident process
             return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
         r = self._resolution
-        if r and (r["ambiguous"] or r["input"] != r["id"]):
-            env["resolved"] = r
+        # R1-C44 / D2: three-way, not a truthiness test. "not found" is the one case the
+        # block exists for and was the one case `if r and …` threw away.
+        if r is not None:
+            if not r["found"]:
+                env["resolved"] = r
+            elif r["ambiguous"] or r["input"] != r["id"]:
+                env["resolved"] = r
         if op in _PARTIAL_OPS:  # R1-C13: machine-readable "this is a lower bound"
-            env["epistemic"] = _EPISTEMIC_PARTIAL
+            env["epistemic"] = self._epistemic(op)
         if self._limit is not None:  # R1-C28: how much of the answer survived the cut
             env["limit"] = self._limit
         return env
+
+    def _epistemic(self, op: str) -> dict:
+        """The lower-bound block for ``op``, with the splice reason when it applies (D4/D5).
+
+        Conditioned on the graph *and* the op: only a deep graph can carry a frozen
+        sample, and only an op reading a spliced class reads it. On a full deep graph
+        and on the fast tier the block is exactly the R1-C13 one.
+        """
+        block = dict(_EPISTEMIC_PARTIAL)
+        prov = self.graph.provenance or {}
+        if op in _SPLICE_OPS and prov.get("tier") == "deep":
+            if prov.get("incremental") is True:
+                block["splice"] = _EPISTEMIC_SPLICE
+            elif "incremental" not in prov:
+                block["splice"] = _EPISTEMIC_SPLICE_UNKNOWN
+        return block
 
     # -- ops (each takes an args dict) ---------------------------------------
 
@@ -355,12 +434,17 @@ class Session:
         return out
 
     def _op_query(self, args) -> dict:
-        return build_query_result(self.query, args["name"])
+        result = build_query_result(self.query, args["name"])
+        if not result["matches"]:  # R1-C44: an empty dossier says why it is empty
+            self._resolution = _not_found(args["name"])
+        return result
 
     def _op_impact(self, args) -> dict:
         sym = args["symbol"]
         depth = int(args.get("depth", 2))
         ids = self.query.impact_targets(sym)  # F23: accept full id / re-export too
+        if not ids:  # R1-C44: this op resolves on its own, so it records on its own
+            self._resolution = _not_found(sym)
         return {
             "symbol": sym,
             "impact": [self.query.impact(sid, depth=depth) for sid in ids],

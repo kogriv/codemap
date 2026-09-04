@@ -22,7 +22,9 @@ def render_impact(query: Query, symbol: str, *, depth: int = 2) -> str:
     )
     lines.append("")
     if not ids:
-        lines.append(f"_No definition found for `{symbol}`._")
+        lines.append(f"_No definition found for `{symbol}` — nothing is known about it; "
+                     "this is not an empty blast radius. Check the name (ids start with "
+                     "the package directory's name)._")
         return "\n".join(lines) + "\n"
 
     for sid in ids:

@@ -125,7 +125,7 @@ Optional extras: `mcp` (Model Context Protocol server), `scip` (protobuf, for SC
 ## Quickstart
 
 ```bash
-# build the canonical graph of a package
+# build the canonical graph of a package (its directory name is the package name every id starts with)
 codemap build ./yourpkg -o graph.json
 
 # repo-scoped: add consumers (tests/examples) + docs for blast-radius/impact
