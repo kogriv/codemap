@@ -12,8 +12,8 @@ What is pinned:
    `imported` and another `deep` becomes the `deep` variant, whole.
 2. What varied is written on the artifact (`extras.seen`, `provenance.samples`), and
    nothing is written when nothing varied — a single-sample build keeps its bytes.
-3. The flag is refused out loud where it means nothing (fast tier) or would lie
-   (`--incremental`), never swallowed.
+3. The flag is refused out loud where it means nothing (fast tier), never swallowed;
+   with `--incremental` it is allowed since R1-C47 — N becomes a property of the chain.
 4. The note carries the measured numbers in both wordings; the `runs ≥ 2` wording is
    checked on an **actual** union graph (R1-C37), not a hand-built provenance dict.
 """
@@ -152,11 +152,11 @@ def test_repeat_on_the_fast_tier_exits_2(capsys):
     assert "--deep" in capsys.readouterr().err
 
 
-def test_repeat_with_incremental_exits_2(tmp_path, capsys):
+def test_repeat_with_incremental_is_a_chain(tmp_path):
+    """R1-C47 revised D8: the combination is allowed, and N belongs to the chain."""
     out = tmp_path / "graph.json"
-    assert cli.main(["build", str(FIX), "--deep", "--repeat", "2", "--incremental", "-o", str(out)]) == 2
-    assert "--incremental" in capsys.readouterr().err
-    assert not out.exists()
+    assert cli.main(["build", str(FIX), "--deep", "--repeat", "2", "--incremental", "-o", str(out)]) == 0
+    assert store.load(out).provenance["samples"]["runs"] == 2
 
 
 def test_repeat_below_one_exits_2(capsys):

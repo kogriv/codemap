@@ -5,6 +5,24 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Added
+
+- **`--incremental --repeat N` and `watch --repeat N` (R1-C47).** R1-C43 door (2) asked for a periodic full
+  rebuild with N justified by measurement. The measurement — twenty real bquant commits replayed as
+  incremental ticks, three chains against a fresh `--repeat 3` build of every commit — refuted it: a chain
+  with a `--repeat 3` base missed 6 edge-ticks, the same chain with a full `--repeat 3` every fifth tick
+  missed 10, a chain with a single-sample base missed 16, and the edge its base lost at tick 0 was still
+  missing at tick 20. Every miss traced to a single jedi sample somewhere in the chain — the base, the
+  fallback full build that a 63-module commit forced on tick 3, or the recompute of the touched modules;
+  none to age. So the chain now samples N times at all three places: the fallback is a full `--repeat N`
+  build, and each tick's recompute runs N fresh interpreters restricted to the affected modules, merged,
+  then spliced as before. N is a property of the chain — recorded in `provenance.samples.runs`, and a
+  request with a different N restarts the chain from a full build (`reason: samples-changed`), so every
+  `extras.seen` in the graph means "k of the same N". This revises 0.0.11's D8, which made the two flags
+  exclusive on a reason that only holds when N changes.
+  Measured on the same replay: the new chain missed **3** edge-ticks against 6 / 10 / 16, the fallback tick
+  was a full `--repeat 3` build, and an ordinary tick took 11–28 s with three interpreters in parallel.
+
 ### Fixed
 
 - **An empty answer now says which kind of empty it is (R1-C44).** `impact` on a symbol the graph does

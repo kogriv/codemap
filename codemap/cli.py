@@ -85,21 +85,15 @@ def _cmd_build(args) -> int:
     incr_info = None
     repeat = getattr(args, "repeat", None)
     repeat = 1 if repeat is None else repeat
-    # R1-C45 / D7–D8: refused out loud, never swallowed. The fast tier is byte-stable and
-    # CI pins it, so N runs there buy nothing and cost N minutes; and an incremental graph's
-    # spliced part is an earlier build's sample by definition (R1-C43), so resampling only
-    # the affected modules would leave `seen` relative to different N on neighbouring edges.
+    # R1-C45 / D7: refused out loud, never swallowed. The fast tier is byte-stable and CI
+    # pins it, so N runs there buy nothing and cost N minutes. With --incremental the flag
+    # is allowed since R1-C47: N is a property of the chain, and a different N restarts it.
     if repeat < 1:
         print("error: --repeat must be >= 1", file=sys.stderr)
         return 2
     if repeat > 1 and not args.deep:
         print(f"error: --repeat {repeat} needs --deep — the fast tier is byte-stable, so "
               "repeating it unions identical samples", file=sys.stderr)
-        return 2
-    if repeat > 1 and getattr(args, "incremental", False):
-        print(f"error: --repeat {repeat} cannot be combined with --incremental — the spliced "
-              "part of an incremental graph is an earlier build's sample and cannot be "
-              "resampled; run a full build", file=sys.stderr)
         return 2
     if args.consumer or args.docs:
         if getattr(args, "incremental", False):
@@ -207,12 +201,15 @@ def _incremental_build(args):
     old_meta = read_meta(args.out)
     old_scope = (old_meta or {}).get("scope")
     if not (Path(args.out).exists() and old_scope):
-        return extract(args.path, deep=args.deep), {"mode": "full", "affected": []}
+        return extract(args.path, deep=args.deep, repeat=getattr(args, "repeat", None) or 1), \
+            {"mode": "full", "affected": []}
     old_graph = store.load(args.out)
     new_scope = resolve_scope(args.path)
+    repeat = getattr(args, "repeat", None) or 1
     if old_graph.target != Path(args.path).resolve().name:
-        return extract(args.path, deep=args.deep), {"mode": "full", "affected": []}
-    return update_graph(old_graph, args.path, old_scope, new_scope, deep=args.deep)
+        return extract(args.path, deep=args.deep, repeat=repeat), {"mode": "full", "affected": []}
+    return update_graph(old_graph, args.path, old_scope, new_scope, deep=args.deep,
+                        repeat=repeat)
 
 
 def _watch_build_argv(args) -> list[str]:
@@ -225,6 +222,8 @@ def _watch_build_argv(args) -> list[str]:
     argv = ["build", args.path, "-o", args.out, "--incremental"]
     if args.deep:
         argv.append("--deep")
+    if (getattr(args, "repeat", None) or 1) > 1:
+        argv += ["--repeat", str(args.repeat)]  # R1-C47: N is a property of the chain
     for c in args.consumer or ():
         argv += ["--consumer", c]
     for d in args.docs or ():
@@ -267,6 +266,7 @@ def _cmd_watch(args) -> int:
     build_args = _argparse.Namespace(
         path=args.path, out=args.out, deep=args.deep, consumer=args.consumer,
         docs=args.docs, mode=args.mode, incremental=True,
+        repeat=getattr(args, "repeat", None) or 1,
         _argv=_watch_build_argv(args))
 
     reported: set[str] = set()
@@ -921,7 +921,8 @@ def build_parser() -> argparse.ArgumentParser:
                         "One deep build is one sample (a real edge was present in 75%% "
                         "of single builds, measured); an edge seen in fewer than N runs "
                         "carries extras.seen, provenance.samples records N. Costs N× the "
-                        "jedi time. Not combinable with --incremental.")
+                        "jedi time, in parallel. With --incremental N becomes a property "
+                        "of the chain: a different N restarts it from a full build.")
     b.set_defaults(func=_cmd_build)
 
     sc = sub.add_parser("scope", help="Resolve the input scope manifest (scope_id + profile), or --diff two.")
@@ -1025,6 +1026,11 @@ def build_parser() -> argparse.ArgumentParser:
     w.add_argument("--docs", action="append", metavar="PATH", help="Docs root. Repeatable.")
     w.add_argument("--mode", choices=["thin", "full"], default="thin",
                    help="Consumer granularity (as for `build`).")
+    w.add_argument("--repeat", type=int, default=1, metavar="N",
+                   help="--deep only: sample the jedi layer N times on every build this "
+                        "loop makes — base, fallback and each tick's recompute (R1-C47). "
+                        "Measured: an incremental chain's misses come from single samples, "
+                        "not from age.")
     w.add_argument("--cycles", type=int, default=None,
                    help="Stop after N polls instead of running forever (CI / testing).")
     _add_poll_options(

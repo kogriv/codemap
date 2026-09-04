@@ -54,9 +54,9 @@ import copy
 from pathlib import Path
 
 from codemap.extract.griffe_extractor import (
-    add_behavioral_layer, build_structural, extract,
+    add_behavioral_layer, build_structural, collect_samples, extract,
 )
-from codemap.extract.union import BEHAVIOR_CALL_RES
+from codemap.extract.union import BEHAVIOR_CALL_RES, merge_samples
 from codemap.model import SPLICED_EDGE_TYPES, Graph
 from codemap.provenance import build_provenance, tool_identity
 from codemap.scope import diff_scopes
@@ -160,21 +160,38 @@ def _splice_unaffected(new_graph, old_graph, unaffected, module_of) -> None:
                     node.extras[k] = copy.deepcopy(old_extras[k])
 
 
-def _same_builder(provenance: dict, tier: str) -> bool:
-    """Was the old graph produced by *this* codemap, on this tier? (R1-C25)
+def _same_builder(provenance: dict, tier: str, repeat: int = 1) -> str | None:
+    """Why the old graph is *not* from this builder — ``None`` when it is (R1-C25).
 
     A graph with no provenance (pre-0.12) cannot answer, so it is treated as a
     different builder — the conservative direction: a needless full rebuild costs a
     minute, a silently stale graph costs a wrong answer.
+
+    R1-C47: the sample count is part of the builder. ``extras.seen`` on a spliced edge
+    means "k of N", and it can only mean that if N is the same N the chain has used all
+    along — a request with a different N starts a new chain from a full build.
     """
     if not provenance:
-        return False
-    return (provenance.get("tool") == tool_identity()
-            and provenance.get("tier") == tier)
+        return "builder-changed"
+    if (provenance.get("tool") != tool_identity()
+            or provenance.get("tier") != tier):
+        return "builder-changed"
+    if ((provenance.get("samples") or {}).get("runs", 1)) != repeat:
+        return "samples-changed"
+    return None
+
+
+def _full(package_path, *, deep: bool, repeat: int) -> Graph:
+    """A full build with the chain's sample count (R1-C47 / D2)."""
+    return extract(package_path, deep=deep, repeat=repeat)
+
+
+def _count_seen(graph: Graph) -> int:
+    return sum(1 for e in graph.edges if "seen" in e.extras)
 
 
 def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dict,
-                 *, deep: bool = False) -> tuple[Graph, dict]:
+                 *, deep: bool = False, repeat: int = 1) -> tuple[Graph, dict]:
     """Incrementally rebuild ``old_graph`` for the current source tree.
 
     Returns ``(graph, info)`` where ``info`` records the decision (``mode``:
@@ -187,16 +204,25 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
     (R1-C42): the spliced regions carry the *previous* build's sample, and the splice
     is self-perpetuating — see the module docstring (R1-C43). Such a graph is stamped
     ``provenance.incremental: true``.
+
+    ``repeat=N`` (R1-C47) makes every place this path samples — the fallback full build
+    and the recompute of the affected modules — take N samples in fresh interpreters,
+    merged as a full ``--repeat`` build would be. Measured on twenty real commits: the
+    chain's misses come from single samples, not from age, so this is the remedy and a
+    periodic full rebuild is not. N must equal the old graph's ``samples.runs`` or the
+    chain restarts from a full build (``reason: samples-changed``).
     """
     target_pkg = old_graph.target
     tier = "deep" if deep else "fast"
     # R1-C25: the input is not the only thing that can change. `unchanged` below decides
     # from the source tree alone, so an upgraded codemap over an untouched tree used to
     # return yesterday's graph built by yesterday's extractor — the exact confusion the
-    # provenance block exists to name. A different tool or tier is a full rebuild.
-    if not _same_builder(old_graph.provenance, tier):
-        graph = extract(package_path, deep=deep)
-        return graph, {"mode": "full", "affected": [], "reason": "builder-changed"}
+    # provenance block exists to name. A different tool, tier or sample count is a full
+    # rebuild.
+    reason = _same_builder(old_graph.provenance, tier, repeat)
+    if reason is not None:
+        return _full(package_path, deep=deep, repeat=repeat), \
+            {"mode": "full", "affected": [], "reason": reason}
 
     d = diff_scopes(old_scope, new_scope)
     changed = {m for p in d["changed"] if (m := _path_to_module(p, target_pkg))}
@@ -219,14 +245,32 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
                                  module_of) & module_ids
 
     if not module_ids or len(affected) >= _FULL_FALLBACK_FRACTION * len(module_ids):
+        if repeat > 1:
+            # R1-C47: the fallback used to be the chain's weakest point — a 63-module
+            # commit reset a --repeat 3 chain to one sample on the replay's third tick.
+            return _full(package_path, deep=deep, repeat=repeat), \
+                {"mode": "full", "affected": sorted(affected)}
         add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
         graph.provenance = build_provenance(tier=tier, inputs=graph.provenance.get("inputs"))
         return graph, {"mode": "full", "affected": sorted(affected)}
 
-    add_behavioral_layer(graph, root, module_name, search_path, deep=deep,
-                         behavior_only=affected, attr_only=affected)
+    if repeat > 1:
+        # R1-C47 / D2: N fresh interpreters, each restricted to the affected modules;
+        # the structural base is rebuilt in each (deterministic, ~4 s) so the merge
+        # sees identical nodes. The spliced part keeps its own `seen` — same N (D1).
+        graph, stats = merge_samples(collect_samples(package_path, deep=deep,
+                                                     runs=repeat, only=affected))
+        graph.loaded_schema = None
+    else:
+        add_behavioral_layer(graph, root, module_name, search_path, deep=deep,
+                             behavior_only=affected, attr_only=affected)
+        stats = {"runs": 1}
     unaffected = module_ids - affected
     _splice_unaffected(graph, old_graph, unaffected, module_of)
+    if repeat > 1:
+        # `unstable` describes the artifact a reader holds, not the part this tick
+        # touched: recount over recomputed and spliced edges alike.
+        stats = {"runs": repeat, "unstable": _count_seen(graph)}
     graph.provenance = build_provenance(tier=tier, inputs=graph.provenance.get("inputs"),
-                                        incremental=True)
+                                        incremental=True, samples=stats)
     return graph, {"mode": "incremental", "affected": sorted(affected)}

@@ -1,6 +1,6 @@
 # Design — The incremental chain samples N times everywhere it samples at all
 
-**Status:** 🟡 **proposed** (2026-09-04, no schema change).
+**Status:** ✅ **shipped** (2026-09-04, no schema change). Acceptance measured on the replay's fourth arm — a `--repeat 3` base and `--incremental --repeat 3` on every tick: **3** edge-ticks missed against the plain `--repeat 3` chain's 6, the periodic-full chain's 10 and the single-sample chain's 16; the fallback tick was a full `--repeat 3` build; ordinary ticks 11–28 s, the two 27–29-module ticks 46–51 s.
 **Motivates:** gap [incremental_chain_replay_2026-09-04](../../gaps/incremental_chain_replay_2026-09-04.md) —
 R1-C43 door (2), "a periodic full rebuild every N ticks", measured on twenty real commits and refuted.
 **Backlog:** R1-C47 (this document); R1-C43 door (2) closes here.

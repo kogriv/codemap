@@ -140,15 +140,22 @@ def add_behavioral_layer(graph, root, module_name, search_path, *, deep: bool,
                  only=attr_only)
 
 
-def _sample_worker(package_path: str, deep: bool) -> dict:
-    """One full extraction in a child interpreter; returns the graph as a dict (R1-C45)."""
+def _sample_worker(package_path: str, deep: bool, only=None) -> dict:
+    """One extraction in a child interpreter; returns the graph as a dict (R1-C45).
+
+    ``only`` (a set of module paths) restricts the two jedi passes to those modules —
+    the incremental hook (R1-C9), so a chain can resample just what a tick touched
+    (R1-C47). The structural base is rebuilt in every worker regardless: cheap,
+    deterministic, and cheaper than shipping it across processes.
+    """
     graph, root, module_name, search_path = build_structural(package_path)
-    add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
+    add_behavioral_layer(graph, root, module_name, search_path, deep=deep,
+                         behavior_only=only, attr_only=only)
     return graph.to_dict()
 
 
 def collect_samples(package_path, *, deep: bool, runs: int,
-                    workers: int | None = None) -> list[Graph]:
+                    workers: int | None = None, only=None) -> list[Graph]:
     """``runs`` independent samples of ``package_path``, each in a fresh interpreter.
 
     Lives here, beside the two functions the worker calls, so ``extract/union.py`` stays
@@ -161,7 +168,8 @@ def collect_samples(package_path, *, deep: bool, runs: int,
     ctx = multiprocessing.get_context("spawn")
     procs = max(1, min(runs, workers or os.cpu_count() or 1))
     with ctx.Pool(processes=procs) as pool:
-        dicts = pool.starmap(_sample_worker, [(str(package_path), deep)] * runs)
+        dicts = pool.starmap(_sample_worker,
+                             [(str(package_path), deep, set(only) if only else None)] * runs)
     samples = []
     for d in dicts:
         g = Graph.from_dict(d)

@@ -17,11 +17,20 @@ prior `graph.json` and its `graph.json.meta.json` sidecar (written automatically
 `--out` build — it carries the M19.A input scope manifest); without them, or on a
 different target, it falls back to a full build.
 
-`--incremental` and `--repeat N` are refused together (exit 2): the spliced part of an
-incremental graph is an earlier build's sample by definition, so resampling only the
-affected modules would leave `extras.seen` on one edge relative to this build's N and on
-its neighbour to some earlier build's. Resample with a full `build --deep --repeat N`
-(see [provenance.md](provenance.md#the-deep-tier-is-not-byte-stable)).
+**`--incremental --repeat N` samples N times everywhere the chain samples at all** (R1-C47):
+the base build, the fallback full build a large change forces, and the recompute of the
+modules each tick touched — N fresh interpreters restricted to those modules, merged, then
+spliced as usual. N is a property of the chain: the graph records it
+(`provenance.samples.runs`) and a request with a different N restarts the chain from a full
+build (`mode: full`, `reason: samples-changed`), so every `extras.seen` in the graph means
+"k of the same N". `watch --repeat N` does the same on every build the loop makes.
+
+Why this and not a periodic full rebuild: twenty real commits replayed as incremental ticks
+against a fresh `--repeat 3` build of each — a chain with a `--repeat 3` base missed 6
+edge-ticks, the same chain with a full `--repeat 3` every fifth tick missed 10, a chain with
+a single-sample base missed 16 (and the edge its base lost at tick 0 was still missing at
+tick 20). Every miss traced to a single jedi sample somewhere in the chain; none to age
+([measurement](../gaps/incremental_chain_replay_2026-09-04.md)).
 
 ## How it works
 

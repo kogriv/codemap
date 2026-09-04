@@ -235,8 +235,10 @@ unstable among 13 675). So one build misses such an edge about 1 time in 4, two 
 1 in 64. `codemap build --deep --repeat N` builds N samples — each in a fresh interpreter, the
 regime the share was measured in; in-process repeats come in correlated streaks — and unions them: an edge seen in fewer
 than N runs carries `extras.seen`, `provenance.samples` records N and how many edges varied, and the
-note on the graph says both. Refused out loud on the fast tier (byte-stable already) and together with
-`--incremental` (a spliced graph cannot be resampled).
+note on the graph says both. Refused out loud on the fast tier (byte-stable already). With `--incremental`
+and `watch`, N becomes a property of the chain and every place the chain samples — base, fallback, each
+tick's recompute — samples N times; measured on twenty real commits, that is what removes the chain's misses,
+and a periodic full rebuild does not.
 
 **Measurement:** [gaps/deep_tier_nondeterminism_2026-09-02.md](gaps/deep_tier_nondeterminism_2026-09-02.md),
 [gaps/deep_tier_union_by_repeat_2026-09-04.md](gaps/deep_tier_union_by_repeat_2026-09-04.md).
