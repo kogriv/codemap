@@ -5,6 +5,10 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- The consumer's three colliding pairs from a third tree (codemap#17 — a read and a write, an annotation
+  and a name, a dict-literal and a subscript) are now fed to the `--repeat` merge literally; no code change,
+  the per-class key already kept all six, and the test fails under a `(type, source, target)` key.
+
 ## [0.0.12] - 2026-09-04
 
 **An empty answer says which kind of empty it is, and the incremental chain stops sampling once.** Schema

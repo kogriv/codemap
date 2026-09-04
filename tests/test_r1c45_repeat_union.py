@@ -82,6 +82,30 @@ def test_a_read_and_a_write_of_one_attribute_are_two_edges_not_one():
     assert stats == {"runs": 2, "unstable": 0}
 
 
+def test_the_third_trees_three_pairs_survive_the_merge_and_deep_wins_only_by_resolution():
+    """codemap#17: on the consumer's 219-file tree 17 logical triples carry two records on
+    the deep tier — a read and a write, a name as annotation and as value, a dict-literal
+    and a subscript write of one column. Fed literally: every pair must come out as two
+    edges, and only an `imported`/`deep` pair on a call may collapse — by `resolution`,
+    not by the rest of `extras`."""
+    pairs = [
+        ("accesses", "pkg.a", "pkg.B.by_k", {"access": "read", "resolution": "self"}),
+        ("accesses", "pkg.a", "pkg.B.by_k", {"access": "write", "resolution": "self"}),
+        ("references", "pkg.a", "pkg.B", {"resolution": "annotation", "sites": 1}),
+        ("references", "pkg.a", "pkg.B", {"resolution": "name", "sites": 1}),
+        ("writes", "pkg.a", "column:n_zones", {"access": "dict-literal", "resolution": "string-key"}),
+        ("writes", "pkg.a", "column:n_zones", {"access": "subscript", "resolution": "string-key"}),
+        ("calls", "pkg.a", "pkg.B.m", {"resolution": "imported", "via": "B.m", "callsites": 1}),
+    ]
+    deeper = pairs[:-1] + [("calls", "pkg.a", "pkg.B.m", {"resolution": "deep", "via": "B.m", "callsites": 2})]
+    merged, stats = merge_samples([_graph(pairs), _graph(deeper), _graph(pairs)])
+    assert len(merged.edges) == 7, "six facts in three pairs plus one call — nothing collapsed"
+    assert all("seen" not in e.extras for e in merged.edges), "every fact was in every run"
+    call = next(e for e in merged.edges if e.type == "calls")
+    assert call.extras == {"resolution": "deep", "via": "B.m", "callsites": 2}
+    assert stats == {"runs": 3, "unstable": 0}
+
+
 def test_a_construct_write_and_a_deep_write_are_two_sites_and_both_survive():
     pair = [("accesses", "pkg.a", "pkg.B.f", {"access": "write", "resolution": "construct"}),
             ("accesses", "pkg.a", "pkg.B.f", {"access": "write", "resolution": "deep"})]
