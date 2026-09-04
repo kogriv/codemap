@@ -1,6 +1,9 @@
 # Design — The deep tier is a union with the fast tier, not a replacement
 
-**Status:** ✅ **shipped** (2026-08-25, no schema change).
+**Status:** ✅ **shipped** (2026-08-25, no schema change). D6 shipped 2026-09-02.
+**D7–D9:** 🟡 **proposed** (2026-09-04, no schema change) — `--repeat N`, revisiting D6's rejection on the
+consumer's measurement (issue [#16](https://github.com/kogriv/codemap/issues/16), gap
+[deep_tier_union_by_repeat_2026-09-04](../../gaps/deep_tier_union_by_repeat_2026-09-04.md), backlog R1-C45).
 **User docs:** [../flat-layout.md](../flat-layout.md#the-deep-tier).
 **Decisions resolved:** D1 = **yes** (`_flat_qualify`, the mirror of `module_imports` at the jedi boundary),
 D2 = **yes, and wider than first drafted** — the fallback also fires when jedi names something that is not a
@@ -139,3 +142,125 @@ the refutation stated rather than the sentence quietly rewritten.
 established — a guess presented as a fix); unioning N runs into one graph (still a sample, at N× cost);
 moving the CI byte-identity gate to the deep tier (the fast tier is a *subset* of deep by D2 above, so
 the gate loses nothing where it stands, and the noise lives exactly in the part fast does not touch).
+
+---
+
+## D7 — `--repeat N`: union N samples, merged per edge class (2026-09-04)
+
+**Status:** 🟡 proposed. **Gap:**
+[deep_tier_union_by_repeat_2026-09-04](../../gaps/deep_tier_union_by_repeat_2026-09-04.md). **Backlog:** R1-C45.
+**Reverses one line of D6** — "unioning N runs into one graph (still a sample, at N× cost)". The first half
+stays true. The second half is a price, not an argument, and the consumer put the price beside what it buys:
+a real edge present in 75 % of 168 full builds is missed by one build 1 time in 4, by two 1 in 16, by three
+1 in 64. Our own eight builds of the same tree agree (5 of 8; union of any three equals the union of all
+eight in 55 cases of 56). "Build again and see" was advice that did not say how many times.
+
+**Recommended: yes — as an explicit, paid-for flag, merged by a per-class key, with what varied marked on
+the artifact.**
+
+### What is unioned
+
+Only the two jedi passes vary. Measured: 13 674 of 13 675 edges byte-identical across eight builds, the one
+exception an `accesses` edge; structural, dispatch, family, dataflow, consumer/doc and `references
+name|annotation` edges identical in all eight — those are resolved without jedi. So the build runs
+`build_structural` **once**, `add_behavioral_layer` **N times** on copies, and merges. The cheap passes are
+rerun with the layer for simplicity (~4 s each on bquant against ~93 s of jedi); their edges are expected
+identical and any that are not are counted as unstable like the rest — a deterministic pass that turns out
+not to be is a finding, not something to hide behind an assert.
+
+### The merge key is per class — not `(type, source, target)`
+
+The consumer proposed merging by the logical triple and letting the deeper variant win. Measured against
+the data, that key collapses distinct facts: 96 triples inside a *single* build carry two records — a read
+and a write of the same attribute by the same function; a name used as annotation and as value; a
+`construct` write and a `deep` write of the same field from two different sites. All 96 are present in
+every build. What counts as identity depends on how the pass resolves:
+
+| class | how the pass resolves | identity key | what can vary between runs | rule |
+|---|---|---|---|---|
+| `calls` with `resolution ∈ {module, self, imported, deep}` | jedi first, fast fallback (D2) | `(source, target, via)` — unique within one build, verified on 2807 edges | the same site as `deep` in one run and `imported`/`self`/`module` in another; a `deep` run may also carry more `callsites` and extra method edges | keep the `deep` variant whole when any run has it, else the first run's variant |
+| `accesses` | form first (`construct` / `self` / `class`), jedi **only** for a local or expression receiver | full key — the label is a property of the site's syntax | presence only; no label swap in 4649 keys × 8 runs | union by full key |
+| everything else | no jedi | full key | nothing (measured 0 of 8) | union by full key; count as unstable if it does |
+
+An edge seen in fewer than N runs carries `extras.seen: k`. Nothing is written when `k == N`, so a graph
+built with `--repeat 1` (the default) is byte-identical in its edges to today's — the only new bytes in a
+default build are `provenance.samples`.
+
+### Node counters
+
+`extras.calls` and `extras.attr_access` are per-**site** counters, and sites dedupe into edges: the measured
+node had three counter variants (`resolved` 11/12/13 of 13) behind one flapping edge. Per node, take the
+variant with the fewest `unresolved` (tie: most `resolved`, tie: first run). `control` and `complexity` are
+AST-only and taken from the first run.
+
+### Provenance
+
+`provenance.samples = {"runs": N}` on **every** build, fast tier included — one sample is a fact about every
+graph ever built, and writing it removes the need to know the field's history. With `N ≥ 2` the block also
+carries `"unstable": K` (edges with `seen < N`). `unstable` is **absent** for `N = 1`: it is not measurable
+from one run, and absent means *unmeasured*, not zero (R1-C28).
+
+### Refused loudly, not swallowed
+
+`--repeat N > 1` on the fast tier exits 2 with the reason: the fast tier is byte-stable and CI pins it, so N
+runs buy nothing and cost N minutes. A flag silently ignored is the defect D6 of
+[absent_answers](absent_answers.md) is fixing elsewhere.
+
+- **Alternative rejected: run only the jedi passes N times and the cheap passes once.** Saves ~4 s × N on
+  bquant and requires reordering `add_behavioral_layer`, whose order is fixed and documented. Not worth a
+  second code path for 4 % of the cost.
+- **Alternative rejected: union everything by full key and let `calls` carry two records.** That is the
+  consumer's own retraction: one call described as `imported` and as `deep` at once, with contradicting
+  metadata, and `diff` reading it as an added edge.
+- **Alternative rejected: average or vote instead of union.** The tiers are lower bounds by construction
+  and the accuracy bench scores precision at 100 %; a variant present in any run is a variant jedi found,
+  not one it invented. Voting would throw away exactly the edges the flag exists to recover.
+
+## D8 — Where `--repeat` applies, and where it is refused
+
+**Recommended: full builds only — single-package and repo-scoped; mutually exclusive with `--incremental`;
+`refresh` inherits it; `watch` does not get it.**
+
+- `extract_repo(repeat=N)` passes it to `extract`; consumer and doc scans are deterministic and run once.
+- **`--incremental` and `--repeat` together exit 2.** The spliced part of an incremental graph is the
+  earlier build's sample by definition (R1-C43); resampling only the affected modules would leave a graph
+  where `seen` on one edge is relative to this build's N and on its neighbour to some earlier build's, with
+  no way to tell which. The two flags have opposite intent — one freezes the sample, the other widens it —
+  and the honest combination is "periodic full build with `--repeat`", which is R1-C43 door (2) and is
+  designed there, not here.
+- `codemap refresh` replays the sidecar's `argv`, so a graph built with `--repeat 3` refreshes with
+  `--repeat 3` without a code change. `watch` is the incremental loop and keeps its per-tick cost; the docs
+  say so.
+- `serve --build` keeps building single samples; a served graph is loaded from a file the user built.
+
+## D9 — The note names the measured share and the N it implies
+
+**Recommended: yes — two wordings, chosen by `provenance.samples.runs`, both carrying numbers.**
+
+Today the note says "roughly one run in three" and stops. The consumer's point is that a reader deciding
+whether to trust an *absence* needs the per-edge share and what N does to it, and that a graph built with
+`--repeat` should say what it saw vary rather than quote a constant.
+
+- **`runs = 1`:** the tier is not byte-stable; measured on an 88-module tree, a real `accesses` edge was
+  present in 126 of 168 full builds (75 %) — one build misses such an edge about 1 time in 4, two builds
+  1 in 16, three 1 in 64; `--repeat N` unions N samples. Consequence: do not read a missing call or
+  attribute edge in one build as absence.
+- **`runs = N ≥ 2`:** union of N samples; K edge(s) were seen in fewer than N runs and carry
+  `extras.seen`; at the measured rate an edge missed by all N runs has probability 0.25^N. Consequence:
+  edges with `seen` are the ones the tier is unsure about; everything else was in every run.
+- **`comparability()`** adds the sample count of each side to its caveat. Two deep graphs stay comparable;
+  a reader now sees "1 sample → 3 samples" and knows the noise floor is not symmetric.
+
+The 75 % is stated as *measured on one tree for one edge*, never as a property of the tier: the consumer's
+own batches ranged from 1 of 7 to 7 of 7, and eight builds cannot see an edge with a 95 % share at all
+(gap §3). The note's job is to name the number the advice rests on, so that when the number is wrong for
+some tree, the reader can see which number to distrust.
+
+**Acceptance (R1-C45):** a synthetic pair of samples — one with `imported`, one with `deep` plus a method
+edge — merges to the `deep` variant and the method edge with `seen: 1`, and a read/write pair of `accesses`
+on one key survives as two edges; `--repeat 3` on bquant on a frozen tree yields a graph whose edge set
+equals the union of the three underlying samples, `samples.unstable` equals the count of `seen` edges, and
+every non-jedi edge class is identical across the three; `--repeat 1` changes no edge byte on either tier
+(only `provenance.samples`); fast tier + `--repeat 2` and `--incremental` + `--repeat` both exit 2 with a
+message; the note carries the numbers in both wordings and a mutation dropping the `runs ≥ 2` branch
+reddens a test that feeds an actual union graph (R1-C37).
