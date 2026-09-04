@@ -341,6 +341,27 @@ Nothing new to record about the procedure itself; the one lesson of the day belo
 side and is in the gap — repeating the jedi layer inside one process is not the regime whose share was
 measured, so the flag costs an interpreter per sample.
 
+**0.0.12 published 2026-09-04:** [`codmap` 0.0.12](https://pypi.org/project/codmap/0.0.12/), schema
+**0.13** (unchanged). Same procedure from the pushed commit `311456d`, CI green, `twine check` PASSED on
+both artifacts, tag `v0.0.12` written with `-F`.
+
+No new graph bytes this time — the content lives in the answer envelope, the incremental path and the
+CLI — so the two halves were checked accordingly, from PyPI, in clean venvs:
+
+- **Inert where it has nothing to say.** Fast tier, 0.0.11 against 0.0.12 on the pinned tree: the same
+  `scope_id`, the same 2868 nodes / 8407 edges, provenance identical apart from the tool version.
+- **It does what it says.** `impact` on a ghost id: 0.0.11 carries no `resolved` block, 0.0.12 carries
+  `{input, id: null, found: false, …}`; `query` by a full id opens a dossier with one match. `build --deep
+  --repeat 2 --incremental`: 0.0.11 exits 2, 0.0.12 builds the base (86 s, two interpreters), a real tick
+  recomputes 11 modules in 20 s with `samples: {runs: 2}` and `incremental: true`, and a request with
+  `--repeat 3` over that chain restarts it from a full build with `runs: 3`.
+
+One lesson for the procedure, the mirror of 0.0.10's: the JSON endpoint listed both files on the first
+read, and `uv pip install codmap==0.0.12` still found no such version for the next minute or so — the
+**simple index** the installer reads lags the JSON API. The verification's first run failed on nothing but
+that, and everything downstream of the install failed with it. Read the index the *installer* reads, and
+retry the install itself, not the endpoint.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
