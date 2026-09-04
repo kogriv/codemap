@@ -318,6 +318,29 @@ Also worth recording: the version endpoint answered before the sdist appeared in
 holds in the other direction too — check the index rather than the client, and check it until it is
 *complete*, not until it is non-empty.
 
+**0.0.11 published 2026-09-04:** [`codmap` 0.0.11](https://pypi.org/project/codmap/0.0.11/), schema
+**0.13** (unchanged). Same procedure from the pushed commit `4c11930`, CI green, `twine check` PASSED on
+both artifacts, tag `v0.0.11` written with `-F`. The index listed both files on the first read this time.
+
+The first release in a while whose content is a *capability* rather than a disclosure — `--repeat N` — and
+still one that changes the bytes of every graph by a key (`provenance.samples`). Verified from PyPI, two
+clean venvs (0.0.10 and 0.0.11), one pinned tree, both directions:
+
+- **Inert where it has nothing to say.** Fast tier, 0.0.10 against 0.0.11: the same `scope_id`
+  (`sha256:1740f432c6a705af1`), the same 2868 nodes / 8407 edges, byte-identical in nodes and edges; the
+  provenance differs in exactly `samples` (`{"runs": 1}`, absent in 0.0.10) and the tool version. Fast
+  stderr empty on both. `--repeat 2` without `--deep` exits 2 with its reason.
+- **It does what it says where it should.** Deep tier: 0.0.10 prints the old "one run in three" note,
+  0.0.11 prints "126 of 168 full builds (75 %)" and names `--repeat`. `--deep --repeat 2` **from the
+  installed wheel** — the case that checks the spawned sampling worker is importable outside a checkout —
+  ran in 76 s, wrote `samples: {"runs": 2, "unstable": 1}`, and the one `seen` edge is the measured probe.
+  `report dead-code` on a package with a method defined twice shows the "Shadowed definitions — certain"
+  section under 0.0.11 and nothing under 0.0.10.
+
+Nothing new to record about the procedure itself; the one lesson of the day belongs to the measurement
+side and is in the gap — repeating the jedi layer inside one process is not the regime whose share was
+measured, so the flag costs an interpreter per sample.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
