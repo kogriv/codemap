@@ -227,6 +227,11 @@ runs buy nothing and cost N minutes. A flag silently ignored is the defect D6 of
 
 ## D8 — Where `--repeat` applies, and where it is refused
 
+> **Revised the same day by [incremental_resample.md](incremental_resample.md) D1 (R1-C47).** The exclusion with
+> `--incremental` below rested on `seen` being relative to different N on neighbouring edges — true only when N
+> changes between builds. With N a property of the chain (a different N is a different builder), the combination
+> is allowed and is the measured fix for the chain's misses; `watch` gets the flag too. Kept as written for the record.
+
 **Recommended: full builds only — single-package and repo-scoped; mutually exclusive with `--incremental`;
 `refresh` inherits it; `watch` does not get it.**
 
