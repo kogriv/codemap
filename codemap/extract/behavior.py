@@ -78,6 +78,9 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
         modmembers = set(mod.members.keys())
         script = _jedi_script(source, fp, project) if deep else None
         nested: dict[tuple[str, str], dict] = {}
+        # R1-C46: the surviving definition says which earlier bodies it replaced. Stamped
+        # here because this pass holds the AST; the walkers below skip those bodies.
+        _stamp_shadows(graph, tree, modpath)
         for fnode, class_stack, scope in _named_functions_scoped(tree):
             node_id = _node_id(modpath, class_stack, fnode.name)
             local = local_imports.get(id(fnode))
@@ -349,17 +352,105 @@ def _class_members(mod, class_stack, modules) -> dict:
 
 # -- ast scope walking -------------------------------------------------------
 
+_DEF_NODES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+# Decorators that make a repeated binding of one name legitimate (R1-C46 / D2): an
+# `@overload` *before* the implementation, a property accessor or a singledispatch
+# registration *after* the first binding. Matched on the decorator's last dotted segment
+# with any call stripped, so `typing.overload` and `@f.register(int)` both count.
+_EXEMPT_EARLIER = frozenset({"overload"})
+_EXEMPT_LATER = frozenset({"setter", "getter", "deleter", "register"})
+
+
+def _decorator_tails(node) -> list[str]:
+    out = []
+    for d in node.decorator_list:
+        text = ast.unparse(d).split("(", 1)[0]
+        out.append(text.rsplit(".", 1)[-1])
+    return out
+
+
+def _rebinding_is_legitimate(earlier, later) -> bool:
+    if later.name == "_":
+        return True  # singledispatch convention
+    if any(t in _EXEMPT_EARLIER for t in _decorator_tails(earlier)):
+        return True
+    return any(t in _EXEMPT_LATER for t in _decorator_tails(later))
+
+
+def _shadow_map(tree) -> tuple[set[int], dict, list[tuple[int, int]]]:
+    """Definitions that a later definition of the same name in the same body replaces.
+
+    R1-C46: griffe keeps the **last** body of a name defined twice and drops the first
+    without a word; the AST walkers here used to visit *both* and attribute both bodies'
+    calls to the one surviving node — an edge from code that can never run. So every
+    walker skips the shadowed subtree, and the surviving node records what it shadowed.
+
+    Only a *direct* statement of a module, class or function body shadows or is
+    shadowed. A definition under ``if`` / ``try`` / ``with`` is conditional on either
+    side (``if TYPE_CHECKING:``, an ``except ImportError`` fallback): it neither replaces
+    nor is replaced, and both bodies keep being walked — the honest over-approximation.
+
+    Returns ``(ids of AST nodes to skip, records, dead line ranges)``; ``records`` maps
+    ``(scope chain, name) -> {"linenos": [...], "node": bool}`` where ``node`` says the
+    chain is classes only, i.e. the survivor is a definition node the graph holds.
+    """
+    skip: set[int] = set()
+    records: dict[tuple[tuple[str, ...], str], dict] = {}
+    ranges: list[tuple[int, int]] = []
+
+    def walk(node, scope: list[str], kinds: list[str]) -> None:
+        if isinstance(node, (ast.Module, *_DEF_NODES)):
+            last: dict[str, ast.AST] = {}
+            for stmt in node.body:
+                if not isinstance(stmt, _DEF_NODES):
+                    continue
+                prev = last.get(stmt.name)
+                if prev is not None and not _rebinding_is_legitimate(prev, stmt):
+                    skip.add(id(prev))
+                    ranges.append((prev.lineno, getattr(prev, "end_lineno", prev.lineno)))
+                    rec = records.setdefault((tuple(scope), stmt.name),
+                                             {"linenos": [], "node": all(k == "c" for k in kinds)})
+                    rec["linenos"].append(prev.lineno)
+                last[stmt.name] = stmt
+        for child in ast.iter_child_nodes(node):
+            if id(child) in skip:
+                continue
+            if isinstance(child, ast.ClassDef):
+                walk(child, scope + [child.name], kinds + ["c"])
+            elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                walk(child, scope + [child.name], kinds + ["f"])
+            else:
+                walk(child, scope, kinds)
+
+    walk(tree, [], [])
+    return skip, records, ranges
+
+
+def _stamp_shadows(graph, tree, prefix: str) -> None:
+    """Write ``extras.shadows`` on every surviving definition node under ``prefix``."""
+    for (scope, name), rec in _shadow_map(tree)[1].items():
+        if not rec["node"]:
+            continue
+        nid = ".".join([prefix, *scope, name])
+        if nid in graph.nodes:
+            graph.nodes[nid].extras["shadows"] = sorted(rec["linenos"])
+
+
 def _named_functions(tree):
     """Yield (FunctionDef, [class names]) for functions reachable as definitions.
 
     Tracks the class nesting so we can rebuild canonical ids. Functions nested
     inside other functions are still yielded but filtered out by the caller
-    (their id won't match a graph node).
+    (their id won't match a graph node). A definition shadowed by a later one of
+    the same name in the same body is not yielded (R1-C46, :func:`_shadow_map`).
     """
     results = []
+    skip = _shadow_map(tree)[0]
 
     def visit(node, class_stack):
         for child in ast.iter_child_nodes(node):
+            if id(child) in skip:
+                continue
             if isinstance(child, ast.ClassDef):
                 visit(child, class_stack + [child.name])
             elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
@@ -845,9 +936,12 @@ def _named_functions_scoped(tree):
     because `dataflow`/`dispatch`/`attrflow` unpack the two-tuple.
     """
     results = []
+    skip = _shadow_map(tree)[0]  # R1-C46: a shadowed body is not walked
 
     def visit(node, class_stack, scope):
         for child in ast.iter_child_nodes(node):
+            if id(child) in skip:
+                continue
             if isinstance(child, ast.ClassDef):
                 visit(child, class_stack + [child.name], scope + [child.name])
             elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):

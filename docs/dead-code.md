@@ -58,6 +58,30 @@ codemap report dead-code --build ./pkg                 # all tiers, grouped
 codemap report dead-code --build ./pkg --min-confidence high   # only the strongest signals
 ```
 
+## Shadowed definitions — certain, not graded
+
+A name defined twice in one scope — a method written twice in a class, a function
+repeated at module level — is listed in its own section ahead of the graded candidates:
+
+```
+## Shadowed definitions — certain: 1
+
+- `pkg.Thing.get` — defined at line 11 shadows the definition at line 8; the earlier body can never run.
+```
+
+It is not a candidate because it is not a heuristic: Python binds the later body and the
+earlier one cannot run whatever calls it. The surviving node carries `extras.shadows`
+(the shadowed line numbers), and the extractor walks only the body that can run — before
+this, both bodies' calls were attributed to the one node, so the graph claimed a call
+from code that never executes (R1-C46, found by a consumer as a `contains` record that
+appeared twice).
+
+Three idioms rebind a name on purpose and are exempt by decorator, never by guess:
+`@overload` before the implementation, `@x.setter` / `.getter` / `.deleter`, and a
+`@f.register` (or the singledispatch `_`) after the base. A definition under `if` or
+`try` — `if TYPE_CHECKING:`, an `except ImportError` fallback — neither shadows nor is
+shadowed; both bodies keep being walked.
+
 ## Whitelist
 
 Some functions are wired by machinery codemap's static edges can't see — argparse

@@ -17,6 +17,12 @@ prior `graph.json` and its `graph.json.meta.json` sidecar (written automatically
 `--out` build — it carries the M19.A input scope manifest); without them, or on a
 different target, it falls back to a full build.
 
+`--incremental` and `--repeat N` are refused together (exit 2): the spliced part of an
+incremental graph is an earlier build's sample by definition, so resampling only the
+affected modules would leave `extras.seen` on one edge relative to this build's N and on
+its neighbour to some earlier build's. Resample with a full `build --deep --repeat N`
+(see [provenance.md](provenance.md#the-deep-tier-is-not-byte-stable)).
+
 ## How it works
 
 The build splits cleanly by cost:

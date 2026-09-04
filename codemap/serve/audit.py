@@ -86,6 +86,8 @@ def build_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
         "candidates": dead,
         "totals": {c: sum(1 for d in dead if d["confidence"] == c)
                    for c in ("high", "medium", "low")},
+        # R1-C46: certain, not graded — a body a later definition replaced cannot run.
+        "shadowed": query.shadowed_definitions(),
         "whitelist": {"patterns": list(whitelist), "error": whitelist_error},
         "min_confidence": min_confidence,
         "diagnostics": diagnostics(query.graph),
@@ -176,6 +178,20 @@ def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
             f"_{breakdown} — tests/examples/scripts/research are never imported; "
             "expected orphan. Excluded from dead-code candidates (F8)._"
         )
+    # R1-C46: a name defined twice in one scope. Ahead of the graded list and worded as
+    # a certainty, because it is one: the earlier body cannot run whatever calls it.
+    shadowed = query.shadowed_definitions()
+    if shadowed:
+        lines.append("")
+        lines.append(f"## Shadowed definitions — certain: {len(shadowed)}")
+        lines.append("")
+        lines.append("_A later definition of the same name in the same scope replaced "
+                     "these; the earlier body can never run. Not a heuristic._")
+        lines.append("")
+        for s in shadowed:
+            earlier = ", ".join(str(ln) for ln in s["shadows"])
+            lines.append(f"- `{s['id']}` — defined at line {s['lineno']} shadows the "
+                         f"definition at line {earlier}; the earlier body can never run.")
     # R1-C8: uncalled private functions, graded by confidence with a provenance reason.
     lines.append("")
     filt = f" (min-confidence: {min_confidence})" if min_confidence else ""

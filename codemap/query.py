@@ -603,6 +603,24 @@ class Query:
         return {"id": n.id, "confidence": confidence,
                 "root": self.root_of(n.id), "reasons": reasons}
 
+    def shadowed_definitions(self) -> list[dict]:
+        """Definitions that replaced an earlier definition of the same name (R1-C46).
+
+        Not a graded candidate: a body a later ``def`` in the same scope replaced can
+        never run, and no inbound edge changes that — so it is listed apart from
+        :meth:`dead_code`, whose bands all mean "probably". Read from ``extras.shadows``,
+        which the extractor stamps on the surviving node (``extract/behavior.py``).
+        """
+        out = []
+        for n in self.graph.nodes.values():
+            shadows = n.extras.get("shadows")
+            if shadows:
+                out.append({"id": n.id, "kind": n.kind, "root": self.root_of(n.id),
+                            "file": n.file, "lineno": n.lineno,
+                            "shadows": list(shadows)})
+        out.sort(key=lambda d: d["id"])
+        return out
+
     # -- impact / blast-radius (M6 — repo scope) -----------------------------
 
     def root_of(self, node_id: str) -> str:

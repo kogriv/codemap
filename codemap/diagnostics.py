@@ -207,20 +207,50 @@ def deep_tier_diagnostic(graph) -> dict | None:
     per-script execution budget — an inference that runs out of it returns nothing, and
     that reads as `unresolved` rather than as an error.
     """
-    if (graph.provenance or {}).get("tier") != "deep":
+    prov = graph.provenance or {}
+    if prov.get("tier") != "deep":
         return None
+    # R1-C45: a reader deciding whether to trust an *absence* needs the per-edge share and
+    # what N does to it — "roughly one run in three" named the noise and not its remedy.
+    # The 75 % is stated as measured on one tree for one edge (126 of 168 full builds,
+    # issue #16; 5 of 8 here), never as a property of the tier: the consumer's own batches
+    # ranged from 1 of 7 to 7 of 7, and eight builds cannot see a 95 % edge at all.
+    samples = prov.get("samples") or {}
+    runs = samples.get("runs") or 1
+    if runs >= 2:
+        unstable = samples.get("unstable", 0)
+        residual = 0.25 ** runs
+        return {
+            "code": DEEP_TIER_UNSTABLE,
+            "severity": NOTE,
+            "tier": "deep",
+            "samples": runs,
+            "unstable": unstable,
+            "consequence": ("Edges carrying `extras.seen` are the ones the tier is unsure "
+                            "about; everything else was present in every run."),
+            "message": (
+                f"union of {runs} deep (jedi) samples of one tree: {unstable} edge(s) "
+                f"were seen in fewer than {runs} runs and carry `extras.seen`. At the "
+                f"measured per-run rate (a real edge present in 75 % of single builds) "
+                f"an edge missed by all {runs} runs has probability about "
+                f"{residual * 100:.2g} %."
+            ),
+        }
     return {
         "code": DEEP_TIER_UNSTABLE,
         "severity": NOTE,
         "tier": "deep",
+        "samples": 1,
         "consequence": ("Everything here is a lower bound as usual; treat a difference "
                         "of a few jedi-resolved edges between two deep graphs as tool "
-                        "noise rather than a change in the code."),
+                        "noise rather than a change in the code, and do not read a "
+                        "missing call or attribute edge in one build as absence."),
         "message": (
-            "built on the deep (jedi) tier, which is not byte-stable: two builds of an "
-            "unchanged tree can differ by a few jedi-resolved edges — measured at roughly "
-            "one run in three on two trees: two per-symbol call counters on one, one "
-            "`accesses` edge of 12190 on the other."
+            "built on the deep (jedi) tier, which is not byte-stable — one build is one "
+            "sample. Measured on an 88-module tree, a real `accesses` edge was present in "
+            "126 of 168 full builds (75 %): one build misses such an edge about 1 time in "
+            "4, two builds 1 in 16, three 1 in 64. `build --repeat N` unions N samples "
+            "and marks what varied."
         ),
     }
 

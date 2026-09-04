@@ -1,8 +1,11 @@
 # Design — The deep tier is a union with the fast tier, not a replacement
 
 **Status:** ✅ **shipped** (2026-08-25, no schema change). D6 shipped 2026-09-02.
-**D7–D9:** 🟡 **proposed** (2026-09-04, no schema change) — `--repeat N`, revisiting D6's rejection on the
-consumer's measurement (issue [#16](https://github.com/kogriv/codemap/issues/16), gap
+**D7–D9:** ✅ **shipped** (2026-09-04, no schema change) — `--repeat N`, revisiting D6's rejection on the
+consumer's measurement. Acceptance measured on the frozen tree: `--repeat 3` over the full repo scope is
+exactly the union of eight sequential builds (4850 / 13675, one `seen` edge, non-jedi classes and nodes
+byte-identical to a single build) in 109 s of wall-clock against ~100 s for one build; `--repeat 8` on the
+core gives the probe edge `seen: 5` of 8, the share the eight sequential processes gave (issue [#16](https://github.com/kogriv/codemap/issues/16), gap
 [deep_tier_union_by_repeat_2026-09-04](../../gaps/deep_tier_union_by_repeat_2026-09-04.md), backlog R1-C45).
 **User docs:** [../flat-layout.md](../flat-layout.md#the-deep-tier).
 **Decisions resolved:** D1 = **yes** (`_flat_qualify`, the mirror of `module_imports` at the jedi boundary),
@@ -147,7 +150,7 @@ the gate loses nothing where it stands, and the noise lives exactly in the part 
 
 ## D7 — `--repeat N`: union N samples, merged per edge class (2026-09-04)
 
-**Status:** 🟡 proposed. **Gap:**
+**Status:** ✅ shipped. **Gap:**
 [deep_tier_union_by_repeat_2026-09-04](../../gaps/deep_tier_union_by_repeat_2026-09-04.md). **Backlog:** R1-C45.
 **Reverses one line of D6** — "unioning N runs into one graph (still a sample, at N× cost)". The first half
 stays true. The second half is a price, not an argument, and the consumer put the price beside what it buys:
@@ -162,11 +165,18 @@ the artifact.**
 
 Only the two jedi passes vary. Measured: 13 674 of 13 675 edges byte-identical across eight builds, the one
 exception an `accesses` edge; structural, dispatch, family, dataflow, consumer/doc and `references
-name|annotation` edges identical in all eight — those are resolved without jedi. So the build runs
-`build_structural` **once**, `add_behavioral_layer` **N times** on copies, and merges. The cheap passes are
-rerun with the layer for simplicity (~4 s each on bquant against ~93 s of jedi); their edges are expected
-identical and any that are not are counted as unstable like the rest — a deterministic pass that turns out
-not to be is a finding, not something to hide behind an assert.
+name|annotation` edges identical in all eight — those are resolved without jedi. Their edges are expected
+identical across samples and any that are not are counted as unstable like the rest — a deterministic pass
+that turns out not to be is a finding, not something to hide behind an assert.
+
+**Each sample is a fresh interpreter, run concurrently.** The first draft ran `build_structural` once and
+`add_behavioral_layer` N times on copies in one process — cheap, and wrong to promise a share on: eight
+in-process passes on the same tree gave two artifacts in streaks (1 | 2–6 | 7–8; gap §3a). Eight passes
+cannot establish that consecutive in-process runs are independent, and the 75 % was measured across
+processes — the consumer's 175 and our eight. So `collect_samples` spawns (`spawn`, not `fork`, which
+would inherit the state that makes passes correlate) one interpreter per sample and runs them in parallel;
+the consumer measured 8 parallel builds against sequential ones at the same share (10/12 vs 11/12). Cost:
+N × the memory of one build, and about one build's wall-clock time on a machine with N cores.
 
 ### The merge key is per class — not `(type, source, target)`
 
@@ -206,9 +216,8 @@ from one run, and absent means *unmeasured*, not zero (R1-C28).
 runs buy nothing and cost N minutes. A flag silently ignored is the defect D6 of
 [absent_answers](absent_answers.md) is fixing elsewhere.
 
-- **Alternative rejected: run only the jedi passes N times and the cheap passes once.** Saves ~4 s × N on
-  bquant and requires reordering `add_behavioral_layer`, whose order is fixed and documented. Not worth a
-  second code path for 4 % of the cost.
+- **Alternative rejected: repeat the layer in one process on copies of the structural base.** Cheapest to
+  write and the first draft; refuted by the in-process measurement above before it shipped.
 - **Alternative rejected: union everything by full key and let `calls` carry two records.** That is the
   consumer's own retraction: one call described as `imported` and as `deep` at once, with contradicting
   metadata, and `diff` reading it as an added edge.

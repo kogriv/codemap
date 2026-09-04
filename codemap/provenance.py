@@ -156,15 +156,22 @@ def relative_root(root: str | Path | None, path: str | Path) -> str:
 
 def build_provenance(*, tier: str, scope: dict | None = None,
                      roots: dict | None = None, inputs: dict | None = None,
-                     incremental: bool = False) -> dict:
+                     incremental: bool = False, samples: dict | None = None) -> dict:
     """Assemble the ``provenance`` block. Deterministic; no clock, no absolute path.
 
     ``incremental`` records whether parts of this graph were **carried over rather than
     recomputed in this build** (R1-C43). Always written, including ``false`` — absence
     means the graph predates the field, which is *unknown*, not *full* (R1-C28).
+
+    ``samples`` records how many deep samples this graph unions (R1-C45, ``build
+    --repeat N``): ``{"runs": N}`` plus ``"unstable": K`` — edges seen in fewer than N
+    runs — when N ≥ 2. Always written, ``{"runs": 1}`` on every ordinary build of either
+    tier: one sample is a fact about every graph ever built. ``unstable`` is absent for
+    one run because it cannot be measured from one, and absent means *unmeasured*.
     """
     prov: dict = {"tool": tool_identity(), "tier": tier,
-                  "incremental": bool(incremental)}
+                  "incremental": bool(incremental),
+                  "samples": dict(samples) if samples else {"runs": 1}}
     if inputs:
         # R1-C23/D2: what the extractor read, and what it could not. Belongs with the
         # identity rather than in the sidecar — a consumer holding only the graph is
@@ -248,7 +255,18 @@ def describe(prov: dict | None) -> str:
         bits.append(f"source={src['commit']}{'+dirty' if src.get('dirty') else ''}")
     if prov.get("scope_id"):
         bits.append(f"scope={prov['scope_id'][7:19]}")
+    runs = (prov.get("samples") or {}).get("runs")
+    if runs and runs > 1:
+        bits.append(f"samples={runs}")
     return ", ".join(bits)
+
+
+def _samples_str(prov: dict) -> str:
+    """``1 sample`` / ``3 samples`` / ``samples unrecorded`` (a graph older than the field)."""
+    runs = (prov.get("samples") or {}).get("runs")
+    if runs is None:
+        return "samples unrecorded"
+    return f"{runs} sample{'s' if runs != 1 else ''}"
 
 
 def comparability(old: dict | None, new: dict | None) -> dict:
@@ -279,9 +297,13 @@ def comparability(old: dict | None, new: dict | None) -> dict:
             # three, by a couple of call classifications — and on the larger tree by one
             # real call edge in ~9500. A caveat, not a difference: it is the right pair,
             # the reader just must not read a two-edge delta as a fact about the code.
+            # R1-C45: the noise floor is not symmetric when the sides union a different
+            # number of samples — say how many each side has, so "1 → 3" reads as what
+            # it is: the newer graph saw more, not the code changed.
             caveats.append("both sides are deep-tier, which is not byte-stable: two "
                            "builds of an unchanged tree can differ by a few jedi-resolved "
-                           "edges, so read a small delta as possible tool noise")
+                           "edges, so read a small delta as possible tool noise "
+                           f"(old: {_samples_str(old)}, new: {_samples_str(new)})")
     return {
         "comparable": not differences,
         "differences": differences,

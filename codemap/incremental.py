@@ -56,19 +56,24 @@ from pathlib import Path
 from codemap.extract.griffe_extractor import (
     add_behavioral_layer, build_structural, extract,
 )
+from codemap.extract.union import BEHAVIOR_CALL_RES
 from codemap.model import Graph
 from codemap.provenance import build_provenance, tool_identity
 from codemap.scope import diff_scopes
 
 # Behavioral `calls` resolutions produced by add_behavior (vs registry-dispatch,
 # which add_dispatch produces whole & fresh — those must NOT be spliced from old).
-_BEHAVIOR_CALL_RES = frozenset({"module", "self", "imported", "deep"})
+# R1-C45: the same set is the class `--repeat` merges by quality — what is spliced and
+# what is unstable are one list, so it is defined once, beside the merge.
+_BEHAVIOR_CALL_RES = BEHAVIOR_CALL_RES
 # R1-C22: `references` resolutions the behavioral pass owns (a name used as a value, or
 # as a type annotation). The consumer/doc references carry other resolutions and belong
 # to the repo-scope pass, which the incremental path does not touch.
 _BEHAVIOR_REF_RES = frozenset({"name", "annotation"})
 # Node-extras keys owned by the two jedi-sensitive passes (spliced for unaffected).
-_BEHAVIORAL_EXTRAS = ("calls", "control", "complexity", "attr_access")
+# `shadows` (R1-C46) is stamped by the behavioral pass too, so an unaffected module keeps
+# it — or the fast tier's byte-identity to a full build (R1-C9) breaks on it.
+_BEHAVIORAL_EXTRAS = ("calls", "control", "complexity", "attr_access", "shadows")
 # Old edge types whose target landing in a changed/removed module makes the source
 # module stale (it must re-resolve). Only the spliced passes matter here.
 _DEP_EDGE_TYPES = frozenset({"calls", "accesses", "references"})

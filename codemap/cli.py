@@ -83,6 +83,24 @@ def _graph_from(args):
 
 def _cmd_build(args) -> int:
     incr_info = None
+    repeat = getattr(args, "repeat", None)
+    repeat = 1 if repeat is None else repeat
+    # R1-C45 / D7–D8: refused out loud, never swallowed. The fast tier is byte-stable and
+    # CI pins it, so N runs there buy nothing and cost N minutes; and an incremental graph's
+    # spliced part is an earlier build's sample by definition (R1-C43), so resampling only
+    # the affected modules would leave `seen` relative to different N on neighbouring edges.
+    if repeat < 1:
+        print("error: --repeat must be >= 1", file=sys.stderr)
+        return 2
+    if repeat > 1 and not args.deep:
+        print(f"error: --repeat {repeat} needs --deep — the fast tier is byte-stable, so "
+              "repeating it unions identical samples", file=sys.stderr)
+        return 2
+    if repeat > 1 and getattr(args, "incremental", False):
+        print(f"error: --repeat {repeat} cannot be combined with --incremental — the spliced "
+              "part of an incremental graph is an earlier build's sample and cannot be "
+              "resampled; run a full build", file=sys.stderr)
+        return 2
     if args.consumer or args.docs:
         graph = extract_repo(
             args.path,
@@ -90,11 +108,12 @@ def _cmd_build(args) -> int:
             docs=tuple(args.docs or ()),
             mode=args.mode,
             deep=args.deep,
+            repeat=repeat,
         )
     elif getattr(args, "incremental", False) and args.out:
         graph, incr_info = _incremental_build(args)
     else:
-        graph = extract(args.path, deep=args.deep)
+        graph = extract(args.path, deep=args.deep, repeat=repeat)
     # R1-C25: stamp the input's identity into the graph itself. The scope manifest is
     # resolved here once and reused for the sidecar below — the graph gets the part that
     # must travel with it (scope_id, source commit), the sidecar keeps the rebuild recipe.
@@ -108,7 +127,10 @@ def _cmd_build(args) -> int:
         # R1-C43: this call *overwrites* whatever update_graph stamped, so the flag has
         # to be re-derived here or it is lost. `unchanged` counts as carried over too —
         # nothing in that graph was recomputed by this build at all.
-        incremental=(incr_info or {}).get("mode") in ("incremental", "unchanged"))
+        incremental=(incr_info or {}).get("mode") in ("incremental", "unchanged"),
+        # R1-C45: same trap — the extractor stamped the sample count; carry it, or a
+        # `--repeat 3` graph leaves here saying `runs: 1`.
+        samples=graph.provenance.get("samples"))
     # R1-C21: a well-formed but vacuous graph must announce itself — silence is what
     # lets an unparsed layout read as a clean bill of health downstream.
     for d in diagnostics(graph):
@@ -884,6 +906,12 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Reuse an existing --out graph + its scope sidecar: recompute "
                         "only changed modules (R1-C9). Identical to a full build; much "
                         "faster on --deep. Single-package only (no --consumer/--docs).")
+    b.add_argument("--repeat", type=int, default=1, metavar="N",
+                   help="--deep only: run the jedi layer N times and union the samples. "
+                        "One deep build is one sample (a real edge was present in 75%% "
+                        "of single builds, measured); an edge seen in fewer than N runs "
+                        "carries extras.seen, provenance.samples records N. Costs N× the "
+                        "jedi time. Not combinable with --incremental.")
     b.set_defaults(func=_cmd_build)
 
     sc = sub.add_parser("scope", help="Resolve the input scope manifest (scope_id + profile), or --diff two.")

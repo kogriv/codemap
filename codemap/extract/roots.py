@@ -32,7 +32,7 @@ import os
 import re
 from pathlib import Path
 
-from codemap.extract.behavior import _arg_contract, _arg_shape
+from codemap.extract.behavior import _arg_contract, _arg_shape, _shadow_map
 from codemap.extract.griffe_extractor import extract
 from codemap.provenance import canonicalize
 from codemap.model import Edge, Graph, Node
@@ -78,18 +78,20 @@ def extract_repo(
     docs: tuple[str | Path, ...] = (),
     mode: str = "thin",
     deep: bool = False,
+    repeat: int = 1,
 ) -> Graph:
     """Build a repo-scoped graph: core package + consumer roots + doc roots.
 
     ``core`` is analysed exactly as the single-package extractor (griffe, plus the
-    behavioral pass when ``deep``). ``consumers`` and ``docs`` are extra root
-    directories scanned for references into the core. ``mode`` is ``"thin"`` or
+    behavioral pass when ``deep``, unioned over ``repeat`` samples — R1-C45).
+    ``consumers`` and ``docs`` are extra root directories scanned for references into
+    the core; those scans are deterministic and run once. ``mode`` is ``"thin"`` or
     ``"full"`` (see module docstring).
     """
     if mode not in ("thin", "full"):
         raise ValueError(f"mode must be 'thin' or 'full', got {mode!r}")
 
-    graph = extract(core, deep=deep)
+    graph = extract(core, deep=deep, repeat=repeat)
     core_pkg = graph.target
     for node in graph.nodes.values():
         node.extras.setdefault("root", "core")
@@ -266,8 +268,14 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
         if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Attribute)
     }
     func_ranges = _func_ranges(tree) if mode == "full" else []
+    # R1-C46: a use inside a body that a later definition replaced is not a use — it
+    # would attribute a reference (or a call) to code that never runs, in either mode.
+    dead = _shadow_map(tree)[2]
 
     for node in ast.walk(tree):
+        line = getattr(node, "lineno", None)
+        if line is not None and any(a <= line <= b for a, b in dead):
+            continue
         target = None
         use_node = node
         if isinstance(node, ast.Name) and node.id in symbol_map:
@@ -375,14 +383,28 @@ def _materialize_defs(graph, tree, mod_id, label, file: str | None = None) -> No
                             extras={"root": label}))
         parent = ".".join([mod_id, *class_stack]) if class_stack else mod_id
         graph.add_edge(Edge("contains", parent, node_id))
+    # R1-C46: one node and one `contains` per definition that can run (issue #16 found
+    # the record twice); the survivor says which earlier bodies it replaced.
+    for (scope, name), rec in _shadow_map(tree)[1].items():
+        if rec["node"]:
+            nid = ".".join([mod_id, *scope, name])
+            if nid in graph.nodes:
+                graph.nodes[nid].extras["shadows"] = sorted(rec["linenos"])
 
 
 def _defs(tree):
-    """Yield (def-node, [enclosing class/def names]) for top-level & nested defs."""
+    """Yield (def-node, [enclosing class/def names]) for top-level & nested defs.
+
+    A body shadowed by a later definition of the same name in the same scope is not
+    yielded (R1-C46, :func:`_shadow_map`).
+    """
     results = []
+    skip = _shadow_map(tree)[0]
 
     def visit(node, stack):
         for child in ast.iter_child_nodes(node):
+            if id(child) in skip:
+                continue
             if isinstance(child, ast.ClassDef):
                 results.append((child, list(stack)))
                 visit(child, stack + [child.name])
@@ -399,9 +421,12 @@ def _defs(tree):
 def _func_ranges(tree):
     """(start, end, node_id) for each def, longest-first, to place a use by line."""
     ranges = []
+    skip = _shadow_map(tree)[0]  # R1-C46: a shadowed body owns no uses
 
     def visit(node, mod_stack):
         for child in ast.iter_child_nodes(node):
+            if id(child) in skip:
+                continue
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 nid = ".".join([*mod_stack, child.name])
                 end = getattr(child, "end_lineno", child.lineno)

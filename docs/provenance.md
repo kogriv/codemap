@@ -26,6 +26,7 @@ tree, and a claim without its qualifiers cannot be checked.
 | `tool.dirty` | whether codemap's own checkout had uncommitted changes. Two builds from one commit with different working trees are two different tools |
 | `tier` | `fast` (ast) or `deep` (jedi). Two tiers answer call-graph questions differently, so this is part of the identity |
 | `incremental` | whether parts of this graph were **carried over rather than recomputed in this build**. Always present, `false` included; absent means the graph predates the field, which is *unknown*, not *full*. On the deep tier it carries a consequence — [see below](#an-incremental-deep-graph-is-a-frozen-sample) |
+| `samples` | `{"runs": N}` — how many independent deep samples this graph unions (`build --repeat N`, R1-C45), plus `"unstable": K` (edges seen in fewer than N runs, each carrying `extras.seen`) when N ≥ 2. Always present, `{"runs": 1}` on every ordinary build of either tier; `unstable` is absent for one run because it cannot be measured from one, and absent means *unmeasured*, not zero |
 | `scope_id` | sha-256 over the sorted `path\tsha256` list of every input file — the identity of the tree that was read |
 | `source.commit` / `ref` / `dirty` | the target's VCS state, when the target is in a git repo. `dirty` covers **the scanned roots only**, not the whole repo |
 | `inputs.python_files` | how many `.py` files the walk found — the input half of the conservation check below |
@@ -208,7 +209,18 @@ What follows for you:
   the graph around them did not — which is the difference between a checked claim and a
   lucky one.
 
-**Measurement:** [../gaps/deep_tier_nondeterminism_2026-09-02.md](../gaps/deep_tier_nondeterminism_2026-09-02.md).
+- **The advice now names N.** A consumer measured a real edge in 126 of 168 full builds (75 %); eight
+  builds here found the same edge in 5 of 8 and nothing else unstable among 13 675. One build misses
+  such an edge about 1 time in 4, two 1 in 16, three 1 in 64. `build --deep --repeat N` builds N
+  samples in N fresh interpreters and unions them; the merge is per edge class (a `calls` site
+  resolved `deep` in any run wins whole; an `accesses` edge is matched on its full key, because
+  its label is a property of the site), an edge seen in fewer than N runs carries `extras.seen`,
+  and `provenance.samples` records N and the count. Repeating the layer *inside one process* is
+  not the regime that was measured — eight in-process passes came in correlated streaks (1 | 2–6 |
+  7–8) — which is why the flag costs N interpreters, run concurrently.
+
+**Measurement:** [../gaps/deep_tier_nondeterminism_2026-09-02.md](../gaps/deep_tier_nondeterminism_2026-09-02.md),
+[../gaps/deep_tier_union_by_repeat_2026-09-04.md](../gaps/deep_tier_union_by_repeat_2026-09-04.md).
 
 ## An incremental deep graph is a frozen sample
 

@@ -18,6 +18,7 @@ Emits (M0 + M1 + M1.5):
 from __future__ import annotations
 
 import ast
+import multiprocessing
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,6 +30,7 @@ from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import add_dispatch, add_family_links
 from codemap.extract.gsource import NESTED_IMPORT_HINT, module_file, module_identity
+from codemap.extract.union import merge_samples
 from codemap.provenance import build_provenance
 from codemap.model import Edge, Graph, Node
 
@@ -138,20 +140,61 @@ def add_behavioral_layer(graph, root, module_name, search_path, *, deep: bool,
                  only=attr_only)
 
 
-def extract(package_path: str | Path, *, deep: bool = False) -> Graph:
+def _sample_worker(package_path: str, deep: bool) -> dict:
+    """One full extraction in a child interpreter; returns the graph as a dict (R1-C45)."""
+    graph, root, module_name, search_path = build_structural(package_path)
+    add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
+    return graph.to_dict()
+
+
+def collect_samples(package_path, *, deep: bool, runs: int,
+                    workers: int | None = None) -> list[Graph]:
+    """``runs`` independent samples of ``package_path``, each in a fresh interpreter.
+
+    Lives here, beside the two functions the worker calls, so ``extract/union.py`` stays
+    a pure merge and the import graph stays acyclic — codemap's own ``no_lazy_cycles``
+    contract caught the first draft, which reached back from ``union`` with a
+    function-local import. ``workers`` bounds concurrency (default: the machine's core
+    count, capped at ``runs``). Spawn, not fork: a forked child would inherit exactly the
+    state that makes an in-process repeat correlate with the pass before it.
+    """
+    ctx = multiprocessing.get_context("spawn")
+    procs = max(1, min(runs, workers or os.cpu_count() or 1))
+    with ctx.Pool(processes=procs) as pool:
+        dicts = pool.starmap(_sample_worker, [(str(package_path), deep)] * runs)
+    samples = []
+    for d in dicts:
+        g = Graph.from_dict(d)
+        g.loaded_schema = None  # a fresh build, not a file — keep schema_diagnostic quiet
+        samples.append(g)
+    return samples
+
+
+def extract(package_path: str | Path, *, deep: bool = False, repeat: int = 1) -> Graph:
     """Build a code graph from a Python package directory.
 
     ``deep=True`` runs the jedi-backed call resolver (M5) — richer call-graph
     (local-variable type inference) at ~1 min build cost; default is the fast
     ast tier (sub-second). See ``extract/behavior.py``.
+
+    ``repeat=N`` (R1-C45) builds N samples — **each in a fresh interpreter**, the
+    regime whose recovery share was measured; in-process repeats come in correlated
+    streaks (see ``extract/union.py``) — and unions them: a deep build is one sample
+    of jedi's bounded inference, and an edge seen in fewer than N runs carries
+    ``extras.seen``.
     """
-    graph, root, module_name, search_path = build_structural(package_path)
-    add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
+    if repeat > 1:
+        graph, stats = merge_samples(collect_samples(package_path, deep=deep, runs=repeat))
+    else:
+        graph, root, module_name, search_path = build_structural(package_path)
+        add_behavioral_layer(graph, root, module_name, search_path, deep=deep)
+        stats = {"runs": 1}
     # R1-C25: even a library-built graph says which tool and which tier made it. The
     # input identity (scope_id, source commit) is added by whoever resolved the scope —
     # `extract` deliberately does not hash the tree a second time.
     graph.provenance = build_provenance(tier="deep" if deep else "fast",
-                                        inputs=graph.provenance.get("inputs"))
+                                        inputs=graph.provenance.get("inputs"),
+                                        samples=stats)
     return graph
 
 

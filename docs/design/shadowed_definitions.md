@@ -1,6 +1,6 @@
 # Design — A name defined twice in one scope is a finding, not a duplicate edge
 
-**Status:** 🟡 **proposed** (2026-09-04, no schema change — one new open `extras` key).
+**Status:** ✅ **shipped** (2026-09-04, no schema change — one new open `extras` key). Acceptance measured: fast-tier graphs of the pinned bquant tree (2868 nodes / 8407 edges) and of codemap's own tree (1045 / 3029) are byte-identical in nodes and edges before and after; the fixture pins the phantom edge, the four exemptions and the consumer-root duplicate.
 **Motivates:** issue [#16 §5](https://github.com/kogriv/codemap/issues/16) — a consumer found one
 `contains` record twice in their graph and, behind it, a method their class defined twice; gap
 [deep_tier_union_by_repeat_2026-09-04 §5](../../gaps/deep_tier_union_by_repeat_2026-09-04.md).

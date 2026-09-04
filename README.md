@@ -131,6 +131,9 @@ codemap build ./yourpkg -o graph.json
 # repo-scoped: add consumers (tests/examples) + docs for blast-radius/impact
 codemap build ./yourpkg --deep --mode full --consumer ./tests --docs ./docs -o graph.json
 
+# deep tier: union N independent samples (one build misses a real edge ~1 time in 4)
+codemap build ./yourpkg --deep --repeat 3 -o graph.json
+
 # ask about a symbol (JSON by default; --format text for humans)
 codemap query analyze_zones --graph graph.json
 
@@ -226,7 +229,17 @@ build says so in its own diagnostics, and `codemap diff` says so when both sides
 delta of a few call edges as possible tool noise before reading it as a change in the code. Anything
 that must be reproducible byte-for-byte — a gate, a two-release comparison — belongs on the fast tier.
 
-**Measurement:** [gaps/deep_tier_nondeterminism_2026-09-02.md](gaps/deep_tier_nondeterminism_2026-09-02.md).
+**How many times to build.** A consumer measured 175 full deep builds of one tree and found a real
+edge present in **75 %** of them; eight builds here agreed (5 of 8, the same edge, and nothing else
+unstable among 13 675). So one build misses such an edge about 1 time in 4, two builds 1 in 16, three
+1 in 64. `codemap build --deep --repeat N` builds N samples — each in a fresh interpreter, the
+regime the share was measured in; in-process repeats come in correlated streaks — and unions them: an edge seen in fewer
+than N runs carries `extras.seen`, `provenance.samples` records N and how many edges varied, and the
+note on the graph says both. Refused out loud on the fast tier (byte-stable already) and together with
+`--incremental` (a spliced graph cannot be resampled).
+
+**Measurement:** [gaps/deep_tier_nondeterminism_2026-09-02.md](gaps/deep_tier_nondeterminism_2026-09-02.md),
+[gaps/deep_tier_union_by_repeat_2026-09-04.md](gaps/deep_tier_union_by_repeat_2026-09-04.md).
 
 ## Dogfooding
 

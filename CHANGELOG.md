@@ -5,6 +5,52 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+**A deep build is one sample with a measured share, and "build again" now says how many times.** Schema
+unchanged (0.13) — two new open `extras` keys (`seen`, `shadows`) and one provenance field (`samples`).
+Raised by the second target (issue #16): 175 full deep builds of one tree, a real edge present in **75 %**
+of them, and two asks. Measured here on the same frozen tree, eight full builds: 13 674 of 13 675 edges
+identical in all eight, the one exception the same `accesses` edge (5 of 8), nothing unstable outside the
+two jedi passes, and the union of any three builds equal to the union of all eight in 55 cases of 56.
+
+### Added
+
+- **`codemap build --deep --repeat N`** — N independent samples, each in a fresh interpreter, unioned
+  into one graph (R1-C45, design D7–D9 in `docs/design/deep_tier_union.md`). The merge key is **per edge
+  class**, not `(type, source, target)`: inside one build 96 such triples legitimately carry two records
+  (a read and a write of one attribute; a `construct` write and a `deep` write from two sites), so
+  `accesses` edges are matched on their full key, while a behavioural `calls` site — resolved jedi-first
+  with a fast fallback, so the same site can come out `deep` or `imported` — is matched on
+  `(source, target, via)` and the `deep` variant wins whole. An edge seen in fewer than N runs carries
+  `extras.seen: k`; node counters keep the run that resolved the most sites. `provenance.samples`
+  records `{"runs": N}` on **every** build (fast tier included — one sample is a fact about every graph
+  ever built) and adds `"unstable": K` only when N ≥ 2, because it cannot be measured from one run and
+  absent must mean *unmeasured*. Refused out loud, exit 2, on the fast tier (byte-stable already) and
+  together with `--incremental` (a spliced graph cannot be resampled). `refresh` replays the flag from
+  the sidecar. This reverses one line of our own D6 ("still a sample, at N× cost"): the first half stays
+  true, the second was a price, not an argument.
+- **The deep-tier note names the share and what N does to it.** On a one-sample graph: "a real
+  `accesses` edge was present in 126 of 168 full builds (75 %): one build misses such an edge about 1
+  time in 4, two builds 1 in 16, three 1 in 64". On a union graph: how many runs, how many edges carry
+  `seen`, and the residual 0.25^N — stated as *measured on one tree for one edge*, never as a property
+  of the tier. `codemap diff`'s caveat now says how many samples each side unions.
+- **A name defined twice in one scope is a certain finding** (R1-C46, `docs/design/shadowed_definitions.md`).
+  The consumer saw a `contains` record twice; behind it a method their class defined twice. Reproduced on
+  a toy package it was worse than the duplicate: griffe keeps the last body silently, and the behavioural
+  walkers visited **both** bodies and attributed both to the one node — a `calls` edge from code that can
+  never run, so `impact` on its callee answered "one caller". Now only the body that can run is walked,
+  the survivor carries `extras.shadows` (the shadowed line numbers), consumer roots emit one node and one
+  edge, a use inside the dead body is not a use, and `report dead-code` lists it under **"Shadowed
+  definitions — certain"** ahead of the graded candidates. Exempt by decorator, never by guess:
+  `@overload` before the implementation, `@x.setter`/`.getter`/`.deleter`, `@f.register` and the
+  singledispatch `_`; a definition under `if`/`try` neither shadows nor is shadowed.
+
+### Fixed
+
+- In-process repetition of the jedi layer is **not** the regime the 75 % was measured in: eight passes in
+  one interpreter came in correlated streaks (1 | 2–6 | 7–8). The first draft of `--repeat` did exactly
+  that and was replaced before it shipped by one interpreter per sample, run concurrently — the consumer
+  measured 8 parallel builds against sequential ones at the same share.
+
 ## [0.0.10] - 2026-09-03
 
 **An incremental deep graph no longer passes for a full one.** Schema unchanged (0.13). Nothing about what
