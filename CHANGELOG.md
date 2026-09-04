@@ -5,6 +5,8 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.11] - 2026-09-04
+
 **A deep build is one sample with a measured share, and "build again" now says how many times.** Schema
 unchanged (0.13) — two new open `extras` keys (`seen`, `shadows`) and one provenance field (`samples`).
 Raised by the second target (issue #16): 175 full deep builds of one tree, a real edge present in **75 %**
