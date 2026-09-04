@@ -5,6 +5,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.12] - 2026-09-04
+
+**An empty answer says which kind of empty it is, and the incremental chain stops sampling once.** Schema
+unchanged (0.13); no new graph bytes — everything here lives in the answer envelope, the incremental path and
+the CLI. Two measurements behind it: a probe that read eighteen honest-looking empty answers as data, and
+twenty real commits replayed as incremental ticks.
+
 ### Added
 
 - **`--incremental --repeat N` and `watch --repeat N` (R1-C47).** R1-C43 door (2) asked for a periodic full
