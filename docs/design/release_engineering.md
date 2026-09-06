@@ -362,6 +362,25 @@ read, and `uv pip install codmap==0.0.12` still found no such version for the ne
 that, and everything downstream of the install failed with it. Read the index the *installer* reads, and
 retry the install itself, not the endpoint.
 
+**0.0.13 published 2026-09-06:** [`codmap` 0.0.13](https://pypi.org/project/codmap/0.0.13/), schema
+**0.13** (unchanged). Same procedure from the pushed commit `58cd849`, CI green, `twine check` PASSED on
+both artifacts, tag `v0.0.13` written with `-F`.
+
+This one changes graph bytes — one value of an open field — so the check from PyPI, clean venvs, 0.0.12
+beside 0.0.13 on the pinned reporter's tree, was the byte-diff itself:
+
+- **Exactly the promised edge.** 2965 nodes identical; 8617 edges of which one differs —
+  `zones.cache → zones.pipeline`, `{}` under 0.0.12 and `{"scope": "type_checking"}` under 0.0.13;
+  provenance identical apart from the tool version.
+- **The gate the issue was about.** The reporter's contract with `no_cycles = true`: 0.0.12 ❌ one cycle,
+  "9 not judged"; 0.0.13 ✅, "10 not judged … 1 import(s) under `TYPE_CHECKING` read as never running";
+  the architecture line reads 271 / 26 under 0.0.12 and 270 / 26 / 1 under 0.0.13.
+- **The merge path is alive.** `build --deep --repeat 2` on a two-module tree writes
+  `samples: {runs: 2, unstable: 0}`.
+
+The simple index served the version on the first install attempt this time; the retry loop from 0.0.12's
+lesson stayed in the script and was not needed.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
