@@ -119,7 +119,7 @@ class Query:
         # made an incomplete map read as a safety property.
         self._imports = nx.DiGraph()
         self._imports_eager = nx.DiGraph()
-        self._import_scopes = {"module": 0, "function": 0}
+        self._import_scopes = {"module": 0, "function": 0, "type_checking": 0}
         for n in graph.nodes.values():
             if n.kind == "module":
                 self._imports.add_node(n.id)
@@ -127,8 +127,11 @@ class Query:
         for e in graph.edges:
             if e.type == "imports":
                 self._imports.add_edge(e.source, e.target)
-                if e.extras.get("scope") == "function":
-                    self._import_scopes["function"] += 1
+                scope = e.extras.get("scope")
+                if scope in ("function", "type_checking"):
+                    # R1-C29: runs when the function runs; R1-C48: never runs. Neither
+                    # is an import-time edge.
+                    self._import_scopes[scope] += 1
                 else:
                     self._imports_eager.add_edge(e.source, e.target)
                     self._import_scopes["module"] += 1
@@ -885,7 +888,8 @@ class Query:
         return [c for c in nx.simple_cycles(self._imports_eager)]
 
     def lazy_import_cycles(self) -> list[list[str]]:
-        """Dependency cycles that close **only** through a function-local import.
+        """Dependency cycles that close **only** through a non-eager import — one
+        written inside a function (R1-C29) or under ``if TYPE_CHECKING:`` (R1-C48).
 
         Not an import-time failure, and not nothing: the modules still cannot be
         separated, and the lazy import is the evidence someone already hit this. Before
@@ -904,7 +908,8 @@ class Query:
         did not look for them".
         """
         return {"module_level": self._import_scopes["module"],
-                "function_local": self._import_scopes["function"]}
+                "function_local": self._import_scopes["function"],
+                "type_checking": self._import_scopes["type_checking"]}
 
     def orphan_modules(self, root: str | None = None) -> list[str]:
         """Modules with no incoming imports (dead-code candidates — heuristic).

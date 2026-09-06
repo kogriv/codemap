@@ -156,8 +156,9 @@ def render_docs(query: Query) -> str:
         # proof of acyclicity, which this map cannot support.
         out.append("- No import cycle found in the eager import graph.")
     if lazy:
-        out.append(f"- **{len(lazy)} dependency cycle(s) closed only by a function-local "
-                   f"import** — deliberate, and still mutual coupling.")
+        out.append(f"- **{len(lazy)} dependency cycle(s) closed only by a non-eager "
+                   f"import** (function-local, or under `if TYPE_CHECKING:`) — deliberate, "
+                   f"and still mutual coupling.")
     if lay["violations"]:
         out.append("- **Layer violations (mutual dependency):** "
                    + ", ".join(f"{a} ↔ {b}" for a, b in lay["violations"]))

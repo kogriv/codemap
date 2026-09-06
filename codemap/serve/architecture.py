@@ -19,7 +19,8 @@ def build_architecture(query: Query) -> dict:
     """Structured whole-system overview (cycles + layers + coupling + hotspots).
 
     R1-C29: ``cycles`` are the **import-time** ones and ``lazy_cycles`` the dependency
-    cycles closed only by a function-local import. Splitting them is the point — a lazy
+    cycles closed only by a non-eager import — function-local (R1-C29) or under
+    ``if TYPE_CHECKING:`` (R1-C48). Splitting them is the point — a lazy
     import is how a developer *fixes* an import cycle, so folding the two together would
     report someone's fix as their bug, while dropping the second (what this tool did
     until issue #11) hides that the modules are still inseparable. ``import_map`` is
@@ -78,15 +79,16 @@ def render_architecture(query: Query) -> str:
                 sorted(a["cycles"], key=lambda c: (len(c), c))]
                or ["_none found in the eager import graph._"])
     out.append("")
-    out.append(f"_Read {im['module_level']} module-level and {im['function_local']} "
-               f"function-local import(s). Only module-level imports run at import time, "
-               f"so only they can break on import._")
+    out.append(f"_Read {im['module_level']} module-level, {im['function_local']} "
+               f"function-local and {im['type_checking']} `TYPE_CHECKING` import(s). Only "
+               f"module-level imports run at import time, so only they can break on import; "
+               f"an import under `if TYPE_CHECKING:` never runs._")
     out.append("")
     if a["lazy_cycles"]:
-        out.append(f"### Dependency cycles closed only by a function-local import: "
-                   f"{len(a['lazy_cycles'])}")
+        out.append(f"### Dependency cycles closed only by a non-eager import "
+                   f"(function-local, or under `if TYPE_CHECKING:`): {len(a['lazy_cycles'])}")
         out.append("")
-        out.append("_These do **not** break at import time — the lazy import is what "
+        out.append("_These do **not** break at import time — the non-eager import is what "
                    "prevents that, and is usually deliberate. They are listed because "
                    "the modules are still mutually dependent: neither can be extracted "
                    "without the other._")

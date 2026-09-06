@@ -29,8 +29,8 @@ forbidden = [
 # The import graph must be acyclic *at import time* — the eager graph (see below).
 no_cycles = true
 
-# Also gate the coupling a lazy import hides: cycles closed only by an import written
-# inside a function. Off by default, and the reason is worth reading below.
+# Also gate the coupling a non-eager import hides: cycles closed only by an import written
+# inside a function or under `if TYPE_CHECKING:`. Off by default; the reason is below.
 no_lazy_cycles = false
 
 # Every core module's layer must appear in `layers` above — catches a new,
@@ -44,7 +44,7 @@ exhaustive = false
 | `independent` | two layers in a group import each other | the edges between them |
 | `forbidden` | a declared `from → to` import exists | the edges |
 | `no_cycles` | the **eager** import graph has a cycle | the cycles |
-| `no_lazy_cycles` | a cycle is closed only by a function-local import | those cycles |
+| `no_lazy_cycles` | a cycle is closed only by a non-eager import (function-local, or under `if TYPE_CHECKING:`) | those cycles |
 | `exhaustive` | a core module's layer isn't declared in `layers` | the undeclared layers |
 
 Rules that reference a layer not present in the graph are **inert** — you can write
@@ -57,7 +57,17 @@ empty contract (a no-op success), so a broken file never wedges the gate; use
 `no_cycles` gates the **eager** import graph: imports that actually run at import time.
 A cycle closed only by an import written *inside a function* does not fail it, because
 that import is the accepted way to break an import cycle — failing a build for applying
-the remedy would be worse than the disease.
+the remedy would be worse than the disease. Neither does a cycle closed only by an import
+under `if TYPE_CHECKING:` — that import never runs at all, and it is the other standard
+idiom for the same problem. Both scopes are carried on the edge (`extras.scope`:
+`function` / `type_checking`) and both are counted in `import_map`, zero included. What is
+recognised is narrow on purpose: `if TYPE_CHECKING:`, `if typing.TYPE_CHECKING:`, their
+`not` form (which swaps the branches) and the `else` branch (which runs). A compound test
+such as `if TYPE_CHECKING or X:` is *not* read and stays eager — a condition the tool
+cannot read is judged strictly, never leniently
+([R1-C48](../gaps/type_checking_imports_2026-09-06.md), from
+[issue #18](https://github.com/kogriv/codemap/issues/18): the gate was red on the dogfood
+target's one such import, and nothing short of rewriting correct code could turn it green).
 
 But a gate that judges a subset must not let the reader conclude more than it checked.
 A passing run therefore always states its scope:
@@ -66,9 +76,9 @@ A passing run therefore always states its scope:
 ✅ **Contract satisfied.** Rules enforced: no_cycles.
 
 _`no_cycles` judged **the eager import graph only** — imports that run at import time.
-**48** dependency cycle(s) closed only by a function-local import were **not** judged:
+**48** dependency cycle(s) closed only by a non-eager import (function-local, or under `if TYPE_CHECKING:`) were **not** judged:
 such a cycle cannot break on import, but the coupling is real. `report architecture`
-lists them; `no_lazy_cycles = true` gates them._
+lists them; `no_lazy_cycles = true` gates them. 1 import(s) under `TYPE_CHECKING` read as never running._
 ```
 
 The line is printed even when the count is zero (as `"nothing was left out"`, not as an

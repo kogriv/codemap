@@ -5,6 +5,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **An import under `if TYPE_CHECKING:` is a third scope, not an eager edge** (R1-C48, issue #18). It
+  carries `extras.scope = "type_checking"`, is excluded from `no_cycles` and the import-cycle list, joins
+  the lazy cycles when it closes one, and is counted in `import_map.type_checking` always, zero included;
+  `check`'s scope line says how many were read. Recognised narrowly: the bare name, an attribute named
+  `TYPE_CHECKING`, `not`, `else`; a compound test stays eager. The dogfood target's gate was red on its
+  one such import and could not be made green without rewriting correct code.
+
 - **`--repeat` merge: a tie between two variants of one key is broken by a total order, not by which
   sample arrived first** (design D10, codemap#17). Three places chose "the first run's"; a synthetic tie gave
   three graphs from six permutations of the same three samples. The same samples in any order now merge to

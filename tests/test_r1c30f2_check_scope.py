@@ -92,7 +92,7 @@ def test_it_is_declared_even_when_there_is_nothing_to_declare(eager_only):
     contract, violations = _run(eager_only, {"no_cycles": True})
     scope = build_check(eager_only, contract, violations)["scope"]
     assert len(scope) == 1 and scope[0]["count"] == 0
-    assert "no dependency cycle is closed only by a function-local import" \
+    assert "no dependency cycle is closed only by a non-eager import" \
         in render_check(eager_only, contract, violations)
 
 

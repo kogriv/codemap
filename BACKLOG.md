@@ -607,6 +607,17 @@ Python-focus** — если задача его нарушает, это отм�
       призрака — `unknown`, одинокого — `none`; ни одна операция не стала возвращать `ok: false`;
       каждый сплайсимый класс заявлен хотя бы одной операцией (добавили класс — тест требует
       решения); на полном deep и на fast `splice` не появляется; сьют 800 → **834**.
+- [ ] **R1-C48 импорт под `if TYPE_CHECKING:` — третья область видимости, не eager-ребро** 🟡 (S)
+      (2026-09-06, без схемы). Источник: [codemap#18](https://github.com/kogriv/codemap/issues/18) —
+      сессия bquant поставила `no_cycles = true` и получила красный гейт на цикле `zones.cache ↔
+      zones.pipeline`, где единственный импорт стоит под `if TYPE_CHECKING:` и не выполняется никогда.
+      Гэп: [`gaps/type_checking_imports_2026-09-06.md`](gaps/type_checking_imports_2026-09-06.md),
+      дизайн: [`docs/design/type_checking_imports.md`](docs/design/type_checking_imports.md).
+      **Воспроизведено** (bquant `6b17e35`, fast): ребро с пустыми `extras`, 271 module-level / 26
+      function-local, 9 ленивых циклов. Приёмка: гейт зелёный; побайтово ровно одно ребро получает
+      `scope: type_checking`; `import_map` называет его всегда; дерево codemap (свой такой импорт в
+      `mcp_server`) — контракт зелёный, ленивые циклы без изменений; игрушка на все формы условия с
+      мутацией.
 - [x] **R1-C47 инкрементальная цепочка сэмплирует N раз везде, где сэмплирует вообще** ✅ (M)
       (2026-09-04, без схемы; закрывает дверь (2) R1-C43 — другой починкой, чем была открыта). Гэп:
       [`gaps/incremental_chain_replay_2026-09-04.md`](gaps/incremental_chain_replay_2026-09-04.md),

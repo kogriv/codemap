@@ -49,7 +49,7 @@ layers         core 9 · data 12 · indicators 16 · analysis 42 · visualizatio
                analysis → core 38 edges · indicators → core 22 · data → core 13
 violation    ⚠ analysis ↔ core             — one backward edge, written inside a function
 cycle          pipeline → cache → pipeline  — the classic Python import-order landmine
-lazy cycles    40 more, closed only by a function-local import — not import-time failures,
+lazy cycles    40 more, closed only by a non-eager import (function-local or `TYPE_CHECKING`) — not import-time failures,
                still mutual coupling: neither module can be extracted without the other
 coupling       core.logging_config  Ca 96   — a breaking change here reaches 96 modules
 concentration  ZoneVisualizer 35 methods, worst function CC 66 / MI 12.5

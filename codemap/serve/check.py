@@ -33,9 +33,10 @@ def _not_judged(query, contract: ArchitectureContract) -> list[dict]:
     return [{
         "rule": "no_cycles",
         "judged": "the eager import graph — imports that run at import time",
-        "not_judged": "dependency cycles closed only by a function-local import",
+        "not_judged": "dependency cycles closed only by a non-eager import (function-local, or under `if TYPE_CHECKING:`)",
+        "type_checking_imports": query.import_map()["type_checking"],
         "count": len(lazy),
-        "note": ("a lazy import does not run at import time, so such a cycle cannot break "
+        "note": ("a non-eager import does not run at import time, so such a cycle cannot break "
                  "on import; it is still mutual coupling. Set `no_lazy_cycles = true` to "
                  "gate these as well, or see `report architecture` for the list."),
     }]
@@ -132,10 +133,14 @@ def _render_scope(query, contract: ArchitectureContract) -> str:
         return ""
     s = scope[0]
     if not s["count"]:
-        return ("\n_`no_cycles` judged the eager import graph; no dependency cycle is closed "
-                "only by a function-local import either._\n")
+        return (f"\n_`no_cycles` judged the eager import graph; no dependency cycle is closed "
+                f"only by a non-eager import (function-local, or under `if TYPE_CHECKING:`) "
+                f"either. {s['type_checking_imports']} import(s) under `TYPE_CHECKING` read "
+                f"as never running._\n")
     return (f"\n_`no_cycles` judged **the eager import graph only** — imports that run at "
             f"import time. **{s['count']}** dependency cycle(s) closed only by a "
-            f"function-local import were **not** judged: such a cycle cannot break on "
-            f"import, but the coupling is real. `report architecture` lists them; "
-            f"`no_lazy_cycles = true` gates them._\n")
+            f"non-eager import (function-local, or under `if TYPE_CHECKING:`) were **not** "
+            f"judged: such a cycle cannot break on import, but the coupling is real. "
+            f"`report architecture` lists them; `no_lazy_cycles = true` gates them. "
+            f"{s['type_checking_imports']} import(s) under `TYPE_CHECKING` read as never "
+            f"running._\n")

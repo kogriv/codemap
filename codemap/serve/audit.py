@@ -29,11 +29,13 @@ def render_dependencies(query: Query) -> str:
         # map that would have to be complete to support it demonstrably is not.
         lines.append("_none found in the eager import graph._")
     lines.append("")
-    lines.append(f"_Read {im['module_level']} module-level and {im['function_local']} "
-                 f"function-local import(s); only the former run at import time. "
-                 + (f"{len(lazy)} further cycle(s) close through a lazy import — real "
-                    f"coupling, not an import-time failure._" if lazy
-                    else "No cycle closes through a lazy import._"))
+    lines.append(f"_Read {im['module_level']} module-level, {im['function_local']} "
+                 f"function-local and {im['type_checking']} `TYPE_CHECKING` import(s); only "
+                 f"the first run at import time. "
+                 + (f"{len(lazy)} further cycle(s) close through a non-eager import "
+                    f"(function-local, or under `if TYPE_CHECKING:`) — real coupling, not "
+                    f"an import-time failure._" if lazy
+                    else "No cycle closes through a non-eager import._"))
     lines.append("")
 
     lines.append("## Most-depended-on modules (top 15)")

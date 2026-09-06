@@ -115,6 +115,13 @@ explosion without knowing what a symlink is.
   import. Those appear separately, as "dependency cycles closed only by a function-local
   import". A class-body import is treated as eager, because it runs at class-definition
   time; griffe records neither, so both are collected by codemap's own AST pass.
+- An import under `if TYPE_CHECKING:` (or `typing.TYPE_CHECKING`, or the `else` of
+  `if not TYPE_CHECKING:`) is a third scope, `extras.scope = "type_checking"`: written at
+  module level, never run. It is a dependency (coupling, dependents, orphans) and is
+  excluded from import cycles like a function-local import; a cycle it closes is listed
+  with the lazy ones. griffe files it as module-level, so codemap demotes it — unless the
+  same target is also imported eagerly, in which case the edge reads eager (R1-C48,
+  issue #18). A compound test (`if TYPE_CHECKING or X:`) is not read and stays eager.
 - `type X = int | str` (PEP 695 alias) produces no node.
 - The names a star import binds are not expanded.
 - Dynamic dispatch remains dynamic: `getattr`, `importlib`, and registry lookups by a

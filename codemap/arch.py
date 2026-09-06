@@ -207,7 +207,8 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
             worst = sorted(lazy, key=lambda c: (len(c), c))
             violations.append(Violation(
                 "no_lazy_cycles",
-                f"{len(lazy)} dependency cycle(s) closed only by a function-local import",
+                f"{len(lazy)} dependency cycle(s) closed only by a non-eager import "
+                f"(function-local, or under `if TYPE_CHECKING:`)",
                 modules=tuple(" → ".join(c) + " → " + c[0] for c in worst),
             ))
 

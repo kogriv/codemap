@@ -265,8 +265,9 @@ def _input_report(graph, pkg_dir: Path, root: Path, walk) -> dict:
     return report
 
 
-def _source_import_targets(module) -> list[tuple[str, str]]:
-    """``(target, scope)`` for the imports griffe's module-level map does not carry.
+def _source_import_targets(module) -> tuple[list[tuple[str, str]], set[str]]:
+    """``([(target, scope)], eager targets)`` — the imports griffe's module-level map does
+    not carry, and the targets it carries correctly.
 
     Two families, one traversal, one parse — griffe records neither, and both used to be
     invisible to the import graph:
@@ -282,6 +283,11 @@ def _source_import_targets(module) -> list[tuple[str, str]]:
     - **imports written in a class body** → scope ``"module"``. They run at
       class-definition time, i.e. at import time, so they are ordinary eager dependencies
       and *can* close a real import cycle. griffe does not record them either (measured).
+    - **imports under `if TYPE_CHECKING:`** (R1-C48 / issue #18) → scope
+      ``"type_checking"``. griffe *does* record these, as module-level — it has no notion
+      of a condition that is always false at run time — so the second value returned is
+      the set of targets imported at plain module level: the caller demotes griffe's entry
+      for a target that appears only under ``TYPE_CHECKING``.
 
     Cost discipline, and it is not theoretical: the first version of this walked every
     function's subtree separately, which is quadratic in nesting and cost the dogfood
@@ -293,13 +299,13 @@ def _source_import_targets(module) -> list[tuple[str, str]]:
     try:
         src = module.source
     except Exception:                       # no source (namespace dir, synthetic)
-        return []
+        return [], set()
     if not NESTED_IMPORT_HINT.search(src):
-        return []
+        return [], set()
     try:
         tree = ast.parse(src)
     except (SyntaxError, ValueError):
-        return []                            # unreadable: D2's report owns this file
+        return [], set()                     # unreadable: D2's report owns this file
     modpath = module.canonical_path
     f = module_file(module)
     is_pkg = f is not None and f.name == "__init__.py"
@@ -312,9 +318,11 @@ def _source_import_targets(module) -> list[tuple[str, str]]:
         return node.module or ""
 
     out: list[tuple[str, str]] = []
+    eager: set[str] = set()   # targets imported at plain module level (griffe has them)
 
     def visit(node, scope: str | None) -> None:
-        """``scope`` is None at module level (griffe has those), else module|function."""
+        """``scope`` is None at module level (griffe has those), else
+        module|function|type_checking."""
         for child in ast.iter_child_nodes(node):
             if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 visit(child, "function")
@@ -322,9 +330,21 @@ def _source_import_targets(module) -> list[tuple[str, str]]:
                 # A class body runs at import time — unless we are already inside a
                 # function, in which case the whole thing does not.
                 visit(child, "function" if scope == "function" else "module")
+            elif isinstance(child, ast.If) and scope in (None, "type_checking") \
+                    and (tc := _type_checking_branches(child)) is not None:
+                # R1-C48 (issue #18): `if TYPE_CHECKING:` never runs. Its body is a third
+                # scope; its `else` is ordinary module level. Inside a function the whole
+                # `if` is function-local already and is not looked at.
+                body_scope, else_scope = tc
+                for stmt in child.body:
+                    visit_stmt(stmt, body_scope if body_scope else scope)
+                for stmt in child.orelse:
+                    visit_stmt(stmt, else_scope if else_scope else scope)
             elif isinstance(child, ast.Import):
                 if scope is not None:
                     out.extend((a.name, scope) for a in child.names)
+                else:
+                    eager.update(a.name for a in child.names)
             elif isinstance(child, ast.ImportFrom):
                 target = resolve(child)
                 if not target:
@@ -333,6 +353,8 @@ def _source_import_targets(module) -> list[tuple[str, str]]:
                 if scope is None:
                     if star:                 # the D3 case: griffe records nothing
                         out.append((target, "module"))
+                    eager.add(target)
+                    eager.update(f"{target}.{a.name}" for a in child.names if a.name != "*")
                     continue
                 # `from pkg.mod import name` → keep the member paths so the resolver walks
                 # down to the containing module exactly as it does for the module-level
@@ -343,19 +365,49 @@ def _source_import_targets(module) -> list[tuple[str, str]]:
             else:
                 visit(child, scope)
 
+    def visit_stmt(stmt, scope: str | None) -> None:
+        """Route one statement through ``visit`` as if it were the only child."""
+        holder = ast.Module(body=[stmt], type_ignores=[])
+        visit(holder, scope)
+
     visit(tree, None)
-    return out
+    return out, eager
+
+
+def _type_checking_branches(node: ast.If) -> tuple[str | None, str | None] | None:
+    """``(scope of body, scope of else)`` for a recognised ``TYPE_CHECKING`` test, else None.
+
+    Recognised, narrowly (design D3): the bare name ``TYPE_CHECKING``, any attribute named
+    ``TYPE_CHECKING`` (``typing.TYPE_CHECKING``, ``t.TYPE_CHECKING``), and ``not`` of either,
+    which swaps the branches. A compound test (``TYPE_CHECKING or X``) is *not* recognised
+    and stays eager: a condition the tool cannot read is judged strictly, never leniently.
+    ``None`` in a slot means "the enclosing scope" (module level).
+    """
+    test, negated = node.test, False
+    if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
+        test, negated = test.operand, True
+    is_tc = ((isinstance(test, ast.Name) and test.id == "TYPE_CHECKING")
+             or (isinstance(test, ast.Attribute) and test.attr == "TYPE_CHECKING"))
+    if not is_tc:
+        return None
+    return (None, "type_checking") if negated else ("type_checking", None)
 
 
 def _collect(graph, obj, root, target_pkg, walk) -> None:
     if obj.kind.value == "module":
         _claim(obj, walk)  # the root claims its own path before any member is walked
         _add_node(graph, obj, root)
+        # R1-C23/D3 (star imports) + R1-C29 (function-local and class-body imports) +
+        # R1-C48 (`if TYPE_CHECKING:`): everything griffe's module-level map does not
+        # carry, or carries under the wrong scope, in one parse.
+        nested, eager = _source_import_targets(obj)
+        type_checking = {tgt for tgt, scope in nested if scope == "type_checking"}
         for name, tgt in (obj.imports or {}).items():
-            walk.imports.append((obj.canonical_path, tgt, "module"))
-        # R1-C23/D3 (star imports) + R1-C29 (function-local and class-body imports):
-        # everything griffe's module-level map does not carry, in one parse.
-        for tgt, scope in _source_import_targets(obj):
+            # griffe files an import under `if TYPE_CHECKING:` as module-level; it never
+            # runs. Demote it unless the same target is also imported eagerly (D2).
+            scope = "type_checking" if tgt in type_checking and tgt not in eager else "module"
+            walk.imports.append((obj.canonical_path, tgt, scope))
+        for tgt, scope in nested:
             walk.imports.append((obj.canonical_path, tgt, scope))
     for name, member in obj.members.items():
         if member.is_alias:
@@ -429,6 +481,13 @@ def _emit_decorated_by(graph, obj) -> None:
 
 # -- pass 2: resolve export + import edges against known nodes ----------------
 
+#: How early an import scope reaches its target: an edge carries the earliest (R1-C29 D2,
+#: R1-C48 D2). ``module`` runs at import time, ``type_checking`` never, ``function`` when
+#: the function runs — the middle one is ordered before ``function`` only so the label
+#: names the construct actually written at module level.
+_SCOPE_RANK = {"module": 0, "type_checking": 1, "function": 2}
+
+
 def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
     module_ids = sorted(
         (n.id for n in graph.nodes.values() if n.kind == "module"), key=len, reverse=True
@@ -457,7 +516,7 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
     # the eager import it is. `scope` only ever *weakens* to "function" for a pair that
     # has no module-level import at all — the edge says how the dependency is reached at
     # its earliest, never how it happens to appear last in the walk.
-    ordered = sorted(imports, key=lambda t: t[2] == "function")
+    ordered = sorted(imports, key=lambda t: _SCOPE_RANK.get(t[2], 0))
 
     # pass A — package-qualified targets. Exact, and run first so that a pair reachable
     # both ways is recorded as exact rather than inferred.
@@ -472,7 +531,7 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
         if key in seen:
             continue
         seen.add(key)
-        extras = {"scope": "function"} if scope == "function" else {}
+        extras = {"scope": scope} if scope != "module" else {}
         graph.add_edge(Edge("imports", src_module, tgt_module, extras=extras))
 
     # pass B — flat layout (R1-C21): sibling modules importing each other by bare name
@@ -489,8 +548,8 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
             continue
         seen.add(key)
         extras = {"resolution": "flat"}
-        if scope == "function":
-            extras["scope"] = "function"
+        if scope != "module":
+            extras["scope"] = scope
         graph.add_edge(Edge("imports", src_module, tgt_module, extras=extras))
 
 

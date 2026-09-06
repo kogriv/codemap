@@ -282,7 +282,10 @@ Fixed the same day ([R1-C29](../gaps/import_map_module_level_2026-08-28.md), fro
 [issue #11](https://github.com/kogriv/codemap/issues/11)): function-local imports are in the map, tagged;
 import cycles stay the *eager* ones, because a lazy import is how that failure is prevented and reporting
 it as a cycle would call someone's fix a bug; the cycles that close only through a lazy import get their
-own section. The tool's 41 are now set-identical to an independent AST scan's 41. Two things stayed
+own section. The tool's 41 are now set-identical to an independent AST scan's 41. A third scope
+joined them later ([R1-C48](../gaps/type_checking_imports_2026-09-06.md), issue #18): an import under
+`if TYPE_CHECKING:` never runs, so it is not eager either — the gate had been red on the dogfood
+target's one such import. Two things stayed
 learned rather than fixed: the affirmative sentence *"import graph is acyclic"* is gone from all three
 renderers that carried it, and **a tool cannot be the judge of its own recall** — the truth set has to
 come from outside it.
