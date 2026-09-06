@@ -1,7 +1,11 @@
 # Design — An import under `if TYPE_CHECKING:` is a third scope, not an eager edge
 
-**Status:** 🟡 in progress (2026-09-06, no schema change — `extras.scope` is an open field, a new
-value). **Motivates:** gap [type_checking_imports_2026-09-06](../../gaps/type_checking_imports_2026-09-06.md)
+**Status:** ✅ **shipped** (2026-09-06, no schema change — `extras.scope` is an open field, a new
+value). Acceptance measured on the reporter's tree (bquant `6b17e35`, fast tier): `no_cycles = true`
+green; scope line "10 cycles not judged … 1 import(s) under `TYPE_CHECKING` read as never running";
+`import_map` 270 / 26 / 1; byte-diff against the build before the change — 2965 nodes identical, 8617
+edges of which exactly one differs, `cache → pipeline` gaining `scope: type_checking`. codemap's own
+tree: 104 / 41 / 1, contract green, no lazy cycle before or after. **Motivates:** gap [type_checking_imports_2026-09-06](../../gaps/type_checking_imports_2026-09-06.md)
 — [codemap#18](https://github.com/kogriv/codemap/issues/18): `no_cycles` red on a correct tree.
 **Backlog:** R1-C48. **User docs:** [../architecture-contracts.md](../architecture-contracts.md),
 [../hard-python.md](../hard-python.md).

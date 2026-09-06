@@ -63,10 +63,15 @@ def test_dependencies_both_ways(q):
 
 
 def test_cycle_detection(q):
-    cycles = q.import_cycles()
-    # bquant has a real pipeline<->cache circular dependency.
-    flat = {frozenset(c) for c in cycles}
-    assert frozenset({PIPELINE, "bquant.analysis.zones.cache"}) in flat
+    # bquant's pipeline<->cache pair is mutually dependent, and the cache side reaches
+    # pipeline only through an import under `if TYPE_CHECKING:` — which never runs. Until
+    # R1-C48 (issue #18) that edge was counted as eager and this test pinned the defect:
+    # the pair is a *dependency* cycle, and not an import-time one.
+    pair = frozenset({PIPELINE, "bquant.analysis.zones.cache"})
+    assert pair not in {frozenset(c) for c in q.import_cycles()}, \
+        "an import under TYPE_CHECKING must not close an eager cycle"
+    assert pair in {frozenset(c) for c in q.lazy_import_cycles()}
+    assert q.import_map()["type_checking"] >= 1
 
 
 def test_orphan_modules(q):

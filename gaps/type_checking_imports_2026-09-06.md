@@ -1,9 +1,9 @@
 # Гэп: импорт под `if TYPE_CHECKING:` судится как eager — корректное дерево красное навсегда
 
 **Дата:** 2026-09-06. **Источник:** [codemap#18](https://github.com/kogriv/codemap/issues/18) от
-сессии bquant, вставшей на гейт `codemap check` с `no_cycles = true`. **Статус:** воспроизведено,
-дизайн — [`docs/design/type_checking_imports.md`](../docs/design/type_checking_imports.md),
-бэклог R1-C48.
+сессии bquant, вставшей на гейт `codemap check` с `no_cycles = true`. **Статус:** воспроизведено и
+**закрыто в тот же день** — дизайн [`docs/design/type_checking_imports.md`](../docs/design/type_checking_imports.md),
+бэклог R1-C48, приёмка в §6.
 
 ## 1. Что видно
 
@@ -81,3 +81,22 @@ griffe кладёт в `module.imports` всё, что написано на у�
   распознаются, судятся как eager. Не измерено, насколько они встречаются.
 - Импорт под `TYPE_CHECKING` как источник `references`/`calls` на deep-тире — jedi видит его как
   обычное имя; это про разрешение имён (D4 в `hard_python_robustness.md`), а не про eager-граф.
+
+## 6. Приёмка — на том же дереве, тем же способом
+
+`codemap 7b2f602` против `dc2335d`, bquant `6b17e35`, fast:
+
+| | до | после |
+|---|---|---|
+| `no_cycles = true` | ❌ 1 цикл `cache ↔ pipeline` | ✅ зелёный |
+| строка охвата | «9 не судилось» | «**10** не судилось … **1** import(s) under `TYPE_CHECKING` read as never running» |
+| `import_map` | 271 / 26 | 270 / 26 / **1** |
+| узлы | 2965 | те же 2965, побайтово |
+| рёбра | 8617 | 8617; отличается **ровно одно**: `cache → pipeline` получает `{"scope": "type_checking"}` |
+| provenance | | совпадает кроме `tool` |
+
+Дерево codemap: 104 / 41 / **1** (`serve/mcp_server.py`), собственный контракт зелёный, ленивых циклов
+ни до, ни после. Игрушка: шесть строк таблицы D3 плюс пара «и так, и так» — по тесту на каждую; мутация
+«условие не распознаётся» (`_type_checking_branches → None`) возвращает ребро в eager и красит тест.
+Сьют — в записи коммита.
+
