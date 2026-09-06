@@ -5,6 +5,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **`--repeat` merge: a tie between two variants of one key is broken by a total order, not by which
+  sample arrived first** (design D10, codemap#17). Three places chose "the first run's"; a synthetic tie gave
+  three graphs from six permutations of the same three samples. The same samples in any order now merge to
+  the same bytes, pinned in the suite with that tie as the positive control. On eight live samples of the
+  dogfood tree no key had two candidates and 48 input orders gave one graph before and after — same hash.
+
 - The consumer's three colliding pairs from a third tree (codemap#17 — a read and a write, an annotation
   and a name, a dict-literal and a subscript) are now fed to the `--repeat` merge literally; no code change,
   the per-class key already kept all six, and the test fails under a `(type, source, target)` key.
