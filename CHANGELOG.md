@@ -5,6 +5,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.13] - 2026-09-06
+
+**A third import scope, and a merge that no longer depends on arrival order.** Schema unchanged (0.13);
+`extras.scope` gains the value `type_checking`, so one edge of the dogfood tree changes bytes — the one that
+kept its `no_cycles` gate red. Both fixes came from the neighbours' issues (#17, #18), each measured on the
+tree it was reported from.
+
 - **An import under `if TYPE_CHECKING:` is a third scope, not an eager edge** (R1-C48, issue #18). It
   carries `extras.scope = "type_checking"`, is excluded from `no_cycles` and the import-cycle list, joins
   the lazy cycles when it closes one, and is counted in `import_map.type_checking` always, zero included;
