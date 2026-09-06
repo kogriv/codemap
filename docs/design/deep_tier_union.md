@@ -188,7 +188,7 @@ every build. What counts as identity depends on how the pass resolves:
 
 | class | how the pass resolves | identity key | what can vary between runs | rule |
 |---|---|---|---|---|
-| `calls` with `resolution ∈ {module, self, imported, deep}` | jedi first, fast fallback (D2) | `(source, target, via)` — unique within one build, verified on 2807 edges | the same site as `deep` in one run and `imported`/`self`/`module` in another; a `deep` run may also carry more `callsites` and extra method edges | keep the `deep` variant whole when any run has it, else the first run's variant |
+| `calls` with `resolution ∈ {module, self, imported, deep}` | jedi first, fast fallback (D2) | `(source, target, via)` — unique within one build, verified on 2807 edges | the same site as `deep` in one run and `imported`/`self`/`module` in another; a `deep` run may also carry more `callsites` and extra method edges | keep the `deep` variant whole when any run has it; among equals, the variant with more `callsites`, then the greater serialized `extras` — a total order, never the first run (D10) |
 | `accesses` | form first (`construct` / `self` / `class`), jedi **only** for a local or expression receiver | full key — the label is a property of the site's syntax | presence only; no label swap in 4649 keys × 8 runs | union by full key |
 | everything else | no jedi | full key | nothing (measured 0 of 8) | union by full key; count as unstable if it does |
 
@@ -200,8 +200,8 @@ default build are `provenance.samples`.
 
 `extras.calls` and `extras.attr_access` are per-**site** counters, and sites dedupe into edges: the measured
 node had three counter variants (`resolved` 11/12/13 of 13) behind one flapping edge. Per node, take the
-variant with the fewest `unresolved` (tie: most `resolved`, tie: first run). `control` and `complexity` are
-AST-only and taken from the first run.
+variant with the fewest `unresolved` (tie: most `resolved`, tie: the greater serialized counter — a total
+order, D10). `control` and `complexity` are AST-only and identical across runs; taken from the first.
 
 ### Provenance
 
@@ -278,3 +278,25 @@ every non-jedi edge class is identical across the three; `--repeat 1` changes no
 (only `provenance.samples`); fast tier + `--repeat 2` and `--incremental` + `--repeat` both exit 2 with a
 message; the note carries the numbers in both wordings and a mutation dropping the `runs ≥ 2` branch
 reddens a test that feeds an actual union graph (R1-C37).
+
+## D10 — Every choice between variants of one key is a total order (2026-09-06)
+
+**Status:** ✅ shipped, no schema change. **Trigger:** the consumer's hint on codemap#17 — in their own
+pipeline a stable sort on one key let equal observations keep arrival order, and permuting the input moved
+the result in 8 probes of 19. D7 had three places of the same shape: two `deep` variants of one call, two
+non-`deep` variants, and a counter tie all resolved to "the first run's". A synthetic tie fed to the merge
+gave **3 distinct graphs from the 6 permutations of 3 samples** — the invariant "the same samples in any
+order merge to the same bytes" was not held.
+
+**Recommended: rank candidates, never take the first.** `_rank(edge) = (is deep, callsites, serialized
+extras)` and `_counter_rank(c) = (−unresolved, resolved, serialized counter)`; the maximum wins. The merged
+graph is then a function of the *set* of samples. The serialized tail is arbitrary but total; it decides only
+when the measured qualities are equal, and it decides the same way every time.
+
+**Probe form, from the consumer's trap.** Their first probe permuted a stream that was already totally
+ordered and reported a clean zero. Ours permutes the **samples on the way into `merge_samples`** — a
+permutation of anything after the merge is blind, because serialization sorts edges — and carries a positive
+control: the synthetic tie above, on which the pre-D10 code must and does differ. Live measurement in the
+gap's postscript (§9): the census of keys with more than one candidate on eight samples of the dogfood tree,
+and the number of distinct graphs across 48 input orders, before and after.
+

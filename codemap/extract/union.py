@@ -36,7 +36,10 @@ An edge seen in fewer than N runs carries ``extras.seen: k``; nothing is written
 ``k == N``, so a single-sample build's edges are byte-identical to what they were. Node
 counters (``calls`` / ``attr_access``) count *sites*, which dedupe into edges — the
 measured node had three counter variants behind one flapping edge — so per node the
-variant with the fewest ``unresolved`` is kept (tie: most ``resolved``, tie: first run).
+variant with the fewest ``unresolved`` is kept (tie: most ``resolved``, tie: the serialized
+counter). Every choice between variants of one key is a **total order** over the candidates
+(:func:`_rank`, :func:`_counter_rank`): the merged graph is a function of the set of
+samples, and the same samples in any order produce the same bytes.
 
 **Every sample is a fresh process.** The share above was measured across processes —
 the consumer's 175 builds and the eight here. Repeating the behavioural layer *inside*
@@ -74,20 +77,30 @@ def _identity(e: Edge) -> tuple:
             json.dumps(e.extras, sort_keys=True, ensure_ascii=False))
 
 
-def _deeper(new: Edge, current: Edge) -> bool:
-    return (new.extras.get("resolution") == "deep"
-            and current.extras.get("resolution") != "deep")
+def _rank(e: Edge) -> tuple:
+    """Total order among the variants of one identity key: ``deep`` beats any other
+    resolution, more call sites beat fewer, and the serialized ``extras`` break what is
+    left — so the winner is a function of the *set* of samples, never of the order they
+    arrived in. The consumer's hint on codemap#17: where two candidates are equally
+    legitimate, 'first one wins' is a dependence on arrival order, and one that a probe
+    permuting the *output* can never see."""
+    ex = e.extras
+    return (ex.get("resolution") == "deep", ex.get("callsites", 0),
+            json.dumps(ex, sort_keys=True, ensure_ascii=False))
+
+
+def _counter_rank(c: dict) -> tuple:
+    return (-c.get("unresolved", 0), c.get("resolved", 0), json.dumps(c, sort_keys=True))
 
 
 def _better_counter(a: dict | None, b: dict | None) -> dict | None:
-    """The counter variant that resolved more sites (``None`` never beats a value)."""
+    """The counter variant that resolved more sites (``None`` never beats a value);
+    a tie is broken by the serialized counter, not by which sample came first."""
     if a is None:
         return b
     if b is None:
         return a
-    ka = (-a.get("unresolved", 0), a.get("resolved", 0))
-    kb = (-b.get("unresolved", 0), b.get("resolved", 0))
-    return b if kb > ka else a
+    return b if _counter_rank(b) > _counter_rank(a) else a
 
 
 def merge_samples(samples: list[Graph]) -> tuple[Graph, dict]:
@@ -116,7 +129,7 @@ def merge_samples(samples: list[Graph]) -> tuple[Graph, dict]:
             else:
                 if key not in seen_this_run:
                     entry[0] += 1
-                if _deeper(e, entry[1]):
+                if _rank(e) > _rank(entry[1]):
                     entry[1] = e
             seen_this_run.add(key)
 

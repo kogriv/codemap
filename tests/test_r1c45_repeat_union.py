@@ -72,6 +72,31 @@ def test_the_order_of_runs_does_not_change_the_result():
     assert _edges(merge_samples([shallow, deep])[0]) == _edges(merge_samples([deep, shallow])[0])
 
 
+def test_the_same_samples_in_any_order_merge_to_the_same_bytes():
+    """codemap#17, the consumer's hint: where two candidates are equally legitimate, the
+    choice must not depend on the order the samples arrived in. The three places the
+    rule 'deep wins, else first run' could see a tie are fed here — two `deep` variants
+    of one call, two non-deep variants of one call, and a counter tie — and every
+    permutation of the same samples must serialize to the same bytes (provenance is
+    the first sample's by contract and is left out)."""
+    import itertools
+    a = _graph([("calls", "pkg.a", "pkg.B", {"resolution": "deep", "callsites": 1, "via": "B"}),
+                ("calls", "pkg.a", "pkg.B.m", {"resolution": "imported", "callsites": 1, "via": "m"})],
+               {"attr_access": {"out": 4, "resolved": 3, "unresolved": 1, "external": 0}})
+    b = _graph([("calls", "pkg.a", "pkg.B", {"resolution": "deep", "callsites": 2, "via": "B"}),
+                ("calls", "pkg.a", "pkg.B.m", {"resolution": "imported", "callsites": 2, "via": "m"})],
+               {"attr_access": {"out": 4, "resolved": 3, "unresolved": 1, "external": 1}})
+    c = _graph([("calls", "pkg.a", "pkg.B", {"resolution": "deep", "callsites": 1, "via": "B"})])
+
+    def bytes_of(samples):
+        d = json.loads(store.dumps(merge_samples(list(samples))[0]))
+        d.pop("provenance", None)
+        return json.dumps(d, sort_keys=True)
+
+    outcomes = {bytes_of(p) for p in itertools.permutations([a, b, c])}
+    assert len(outcomes) == 1, f"{len(outcomes)} distinct graphs from the same three samples"
+
+
 def test_a_read_and_a_write_of_one_attribute_are_two_edges_not_one():
     """`(type, source, target)` would collapse these; 96 such pairs exist in one bquant build."""
     pair = [("accesses", "pkg.a", "pkg.B.f", {"access": "read", "resolution": "self"}),
