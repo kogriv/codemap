@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from codemap.diagnostics import diagnostics, render_lines
+from codemap.model import CONFIDENCE_ORDER, RESOLUTIONS, UNKNOWN_CONFIDENCE
 from codemap.query import Query
 from codemap.tomlio import read_toml
 
@@ -250,6 +251,22 @@ def render_behavior(query: Query) -> str:
             by_res[e.extras.get("resolution", "?")] = by_res.get(e.extras.get("resolution", "?"), 0) + 1
     calls_edges = sum(by_res.values())
     lines.append(f"_Emitted {calls_edges} `calls` edges (deduped caller→callee)._")
+    # R1-C39: the route was already on every edge; what a route is worth was not.
+    grades: dict[str, int] = {}
+    for value, count in by_res.items():
+        row = RESOLUTIONS.get(("calls", value))
+        grade = row["confidence"] if row else UNKNOWN_CONFIDENCE
+        grades[grade] = grades.get(grade, 0) + count
+    if grades:
+        lines.append("")
+        lines.append("- by route grade: " + ", ".join(
+            f"**{g}** {grades[g]}" for g in CONFIDENCE_ORDER if g in grades)
+            + (f", unknown {grades[UNKNOWN_CONFIDENCE]}"
+               if UNKNOWN_CONFIDENCE in grades else ""))
+        lines.append("")
+        lines.append("_`exact` — a binding read from the source found the target; "
+                     "`inferred` — a type-inference engine did (precise, but one deep "
+                     "build is a sample); `heuristic` — a name match, not a binding._")
     bridged = by_res.get("registry", 0) + by_res.get("registry-candidate", 0)
     if bridged:
         lines.append("")

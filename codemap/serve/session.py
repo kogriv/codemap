@@ -370,6 +370,9 @@ class Session:
             "edges": len(self.graph.edges),
             "node_kinds": dict(Counter(n.kind for n in self.graph.nodes.values())),
             "edge_types": dict(Counter(e.type for e in self.graph.edges)),
+            # R1-C39: how much of this graph a binding found, and how much a name match.
+            # The route was always on the edge; what it is worth was never stated.
+            "confidence": self.query.confidence_map(),
         }
         # M18 + #3: age of the graph WE SERVE (not the on-disk file), with an explicit
         # stale flag when the artifact was rebuilt after we loaded it.
@@ -515,10 +518,12 @@ class Session:
         return res
 
     def _op_callers(self, args) -> list:
-        return self.query.callers(self._canon(args["symbol"]))
+        return self.query.callers(self._canon(args["symbol"]),
+                                  min_confidence=args.get("min_confidence"))
 
     def _op_callees(self, args) -> list:
-        return self.query.callees(self._canon(args["symbol"]))
+        return self.query.callees(self._canon(args["symbol"]),
+                                  min_confidence=args.get("min_confidence"))
 
     def _op_implementers(self, args) -> list:
         return self.query.implementers(self._canon(args["protocol"]))

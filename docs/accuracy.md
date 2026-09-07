@@ -115,6 +115,48 @@ print(dict(agg))
 PY
 ```
 
+### What found each edge, and what that is worth
+
+The rate above answers "how much of the call graph is there". The next question is "how was
+each piece of it found", and every edge has carried that answer all along in
+`extras.resolution` — six distinguishable routes on `calls` alone. What it did not carry is
+what a route is *worth*, so an edge found by reading an import binding and an edge produced
+by fanning a factory out across a registry family read identically.
+
+Each `(edge type, resolution)` pair now has a **grade** — an ordinal, never a probability
+(a computed `0.92466…` claims a precision that is not there):
+
+| Grade | What produced the edge | Values |
+|---|---|---|
+| `exact` | a binding read from the source | `self`, `module`, `imported`, `registry`, `flat`, `string-key`, `annotation`, `name`, `doc` |
+| `inferred` | a type-inference engine (jedi, deep tier) | `deep` |
+| `heuristic` | a name match, not a binding — an honest over-approximation | `registry-candidate` |
+
+The vocabulary is closed (`codemap/model.py: RESOLUTIONS`) and guarded in both directions: a
+value the table does not know fails the suite, and so does a row that stops appearing in any
+build. The grade is **derived, not stored** — the graph bytes do not move, and there is no
+second copy to disagree with the first.
+
+One caveat the table states rather than hides: on `references` the field answers a different
+question. Three of its four values (`annotation`, `name`, `doc`) name the *kind of site*, not
+the route — so "filter by resolution" is a meaningful request across `calls` and `accesses`,
+and a confused one across every edge type at once.
+
+Two places use it:
+
+```bash
+codemap serve …        # stats → confidence.by_grade / by_pair
+```
+
+```python
+q.callers(symbol, min_confidence="exact")   # only calls a binding found
+```
+
+Measured on **bquant** (fast tier): 5 533 `exact`, 49 `heuristic`, 3 021 edges with no route
+at all (`contains`, `inherits`, … — syntax, nothing to resolve). Those 49 are the whole
+difference the filter makes: across the 25 symbols reached by a registry fan-out, `callers`
+returns 50 and `callers(min_confidence="exact")` returns 1.
+
 ---
 
 ## (b) grep-vs-graph — is the graph worth it?

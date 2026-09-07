@@ -5,6 +5,21 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **Every edge says what found it, and what that route is worth** (R1-C39). The route was already on
+  the edge — `extras.resolution`, six distinguishable values on `calls` alone — but six modules emitted
+  those values and nothing enumerated them, so a new or mistyped one shipped in silence; and nothing
+  said what a route is *worth*, so an edge found by reading an import binding and an edge produced by
+  fanning a factory across a registry family read identically. The vocabulary is now closed in
+  `model.RESOLUTIONS`, guarded in both directions (an unknown pair fails; so does a declared row that
+  stops appearing), and each pair carries a **grade**: `exact` (a binding read from the source),
+  `inferred` (a type-inference engine — precise, but one deep build is a sample), `heuristic` (a name
+  match, not a binding). An ordinal, never a probability. New: `callers` / `callees` take
+  `min_confidence`, `stats` reports `confidence.by_grade` / `by_pair`, and `report behavior` grades its
+  call edges. The grade is **derived, not stored** — schema unchanged (0.13), and a rebuild of the same
+  tree is byte-identical in nodes and edges. Measured on bquant: 5533 exact / 49 heuristic / 3021 edges
+  with no route at all; across the 25 symbols a registry fan-out reaches, `callers` returns 50 and
+  `callers(min_confidence="exact")` returns 1.
+
 - **`impact` says which flows the change lands on, and at which step** (R1-C40). codemap had both ends
   — `impact` walks inbound ("who references this"), `flows` walks outbound ("what a call sets in
   motion") — and nothing joining them, so the question asked *before* a change ("what stops working, and

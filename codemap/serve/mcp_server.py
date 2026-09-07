@@ -151,14 +151,20 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("resolve", {"name": name})
 
     @server.tool()
-    def callers(symbol: str) -> dict:
-        """Functions that statically call `symbol` (resolved calls only)."""
-        return op("callers", {"symbol": symbol})
+    def callers(symbol: str, min_confidence: str | None = None) -> dict:
+        """Functions that statically call `symbol` (resolved calls only).
+        `min_confidence` keeps only edges whose route grades at least that strong:
+        `exact` (a binding in the source found the target), `inferred` (a type-inference
+        engine did — precise, but one deep build samples ~3 of 4 live edges), `heuristic`
+        (a name match, e.g. a factory fanned out across a registry family). Omit for
+        every resolved edge. `stats` reports the whole graph's grade mix."""
+        return op("callers", {"symbol": symbol, "min_confidence": min_confidence})
 
     @server.tool()
-    def callees(symbol: str) -> dict:
-        """Internal symbols that `symbol` statically calls."""
-        return op("callees", {"symbol": symbol})
+    def callees(symbol: str, min_confidence: str | None = None) -> dict:
+        """Internal symbols that `symbol` statically calls. `min_confidence` as in
+        `callers`: exact | inferred | heuristic."""
+        return op("callees", {"symbol": symbol, "min_confidence": min_confidence})
 
     @server.tool()
     def tests(symbol: str, depth: int = 3, cap: int = 25) -> dict:

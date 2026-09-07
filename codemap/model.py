@@ -97,6 +97,107 @@ EDGE_TYPES = frozenset({
     "accesses",       # function → attribute node it reads/writes (extras.access, R1-C20)
 })
 
+# Closed vocabulary of ``extras.resolution`` (R1-C39), keyed by (edge type, value).
+#
+# The route was already on the edge before this table existed — `calls` alone carries six
+# distinguishable values — but five modules emitted them and nothing enumerated them, so a
+# new or mistyped value shipped in silence. The guard is the R1-C7 shape: a pair absent
+# here fails, and a row that stops appearing in any build fails too.
+#
+# ``means`` is the honest part. On `calls`/`accesses` the value says **how the target was
+# found** (route); on `references` three of four values say **what kind of site** it was
+# (an annotation, a name used as a value, a doc mention) and only `imported` is a route.
+# One field, two questions — stated rather than papered over (design D4).
+#
+# ``confidence`` is a *grade*, never a probability: `exact` (the target came from a binding
+# read in the source), `inferred` (a type-inference engine produced it — precise but a
+# sample: one deep build misses a live edge ~1 time in 4, R1-C42), `heuristic` (a name
+# match, not a binding — an honest over-approximation). A computed float would read as a
+# precision that is not there. It is derived, never stored: writing it on the edge would be
+# a second source of truth for a pure function of the first (design D2/D3).
+RESOLUTIONS: dict[tuple[str, str], dict[str, str]] = {
+    ("calls", "self"): {"means": "route", "confidence": "exact",
+                        "how": "receiver is `self`; target is a member of the enclosing class"},
+    ("calls", "module"): {"means": "route", "confidence": "exact",
+                          "how": "the name is defined at this module's level"},
+    ("calls", "imported"): {"means": "route", "confidence": "exact",
+                            "how": "the name is bound by an import statement in this file"},
+    ("calls", "deep"): {"means": "route", "confidence": "inferred",
+                        "how": "receiver type inferred by jedi (deep tier only)"},
+    ("calls", "registry"): {"means": "route", "confidence": "exact",
+                            "how": "a literal registry key resolved to the registered impl (M7)"},
+    ("calls", "registry-candidate"): {
+        "means": "route", "confidence": "heuristic",
+        "how": "a factory/getter call fanned out to every member of the family — an "
+               "honest over-approximation, not a resolved target"},
+    ("accesses", "self"): {"means": "route", "confidence": "exact",
+                           "how": "`self.attr` inside the class that declares the attribute"},
+    ("accesses", "class"): {"means": "route", "confidence": "exact",
+                            "how": "`Class.attr` through an import or module member"},
+    ("accesses", "construct"): {"means": "route", "confidence": "exact",
+                                "how": "`Class(...).attr` — the constructor names the owner"},
+    ("accesses", "deep"): {"means": "route", "confidence": "inferred",
+                           "how": "owner type inferred by jedi (deep tier only)"},
+    ("references", "annotation"): {"means": "site", "confidence": "exact",
+                                   "how": "the symbol appears in a type annotation"},
+    ("references", "name"): {"means": "site", "confidence": "exact",
+                             "how": "the symbol is named as a value (dict entry, default=…)"},
+    ("references", "doc"): {"means": "site", "confidence": "exact",
+                            "how": "a documentation file names the symbol"},
+    ("references", "imported"): {"means": "route", "confidence": "exact",
+                                 "how": "a consumer root names an imported core symbol"},
+    ("reads", "string-key"): {"means": "route", "confidence": "exact",
+                              "how": "a literal subscript key — the column set is an "
+                                     "over-set, dict access lands here too"},
+    ("writes", "string-key"): {"means": "route", "confidence": "exact",
+                               "how": "a literal subscript key (see `reads`)"},
+    ("imports", "flat"): {"means": "route", "confidence": "exact",
+                          "how": "sibling import under a flat layout (R1-C21)"},
+    ("export", "flat"): {"means": "route", "confidence": "exact",
+                         "how": "re-export inferred under a flat layout (R1-C21)"},
+}
+
+#: Edge types that carry no ``resolution``: pure syntax, with no route to record.
+UNRESOLVED_EDGE_TYPES = frozenset({"contains", "inherits", "decorated_by", "implements"})
+
+#: Grades, strongest first — the order `min_confidence` filters by.
+CONFIDENCE_ORDER = ("exact", "inferred", "heuristic")
+
+#: A value this build's table does not know. Reachable only from an artifact built by
+#: another version of the tool — never from a graph this build produced (the guard test
+#: is what keeps that true), so it is reported, not raised, when a graph is merely read.
+UNKNOWN_CONFIDENCE = "unknown"
+
+
+def resolution_of(edge, *, strict: bool = True) -> dict[str, str] | None:
+    """The table row for ``edge``, or ``None`` when it carries no ``resolution``.
+
+    ``None`` is a legitimate answer (``contains`` has no route), and it is distinct from
+    a value the table does not know. Under ``strict`` that one raises — a silent unknown
+    is how an open vocabulary pretends to be closed — and this is the form the guard test
+    and the extractor use. Reading a *foreign* graph passes ``strict=False`` and gets an
+    ``unknown`` grade instead: refusing to open an artifact from another version is a
+    worse answer than saying which part of it this build cannot grade.
+    """
+    value = edge.extras.get("resolution")
+    if value is None:
+        return None
+    row = RESOLUTIONS.get((edge.type, value))
+    if row is None:
+        if not strict:
+            return {"means": "route", "confidence": UNKNOWN_CONFIDENCE,
+                    "how": f"{value!r} is not in this build's table"}
+        raise KeyError(f"unknown resolution {value!r} on a {edge.type!r} edge — add it to "
+                       f"RESOLUTIONS (codemap/model.py) with its meaning and grade")
+    return row
+
+
+def confidence_of(edge, *, strict: bool = True) -> str | None:
+    """Grade of ``edge``: exact | inferred | heuristic, or ``None`` when it has no route."""
+    row = resolution_of(edge, strict=strict)
+    return row["confidence"] if row else None
+
+
 # The subset of EDGE_TYPES an incremental build splices from the old graph for modules
 # it did not recompute (``incremental.py``) — and therefore the classes a deep+incremental
 # graph answers from an *earlier* build's jedi sample (R1-C43). Lives with the vocabulary

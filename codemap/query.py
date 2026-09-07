@@ -13,7 +13,19 @@ import re
 
 import networkx as nx
 
-from codemap.model import Graph, Node
+from codemap.model import CONFIDENCE_ORDER, Graph, Node, confidence_of
+
+
+def _grade_rank(grade: str | None) -> int:
+    """Route grades ordered strongest-first (R1-C39); an unknown one sorts last."""
+    return CONFIDENCE_ORDER.index(grade) if grade in CONFIDENCE_ORDER else len(CONFIDENCE_ORDER)
+
+
+def _check_grade(min_confidence: str | None) -> None:
+    if min_confidence is not None and min_confidence not in CONFIDENCE_ORDER:
+        raise ValueError(f"min_confidence must be one of {CONFIDENCE_ORDER}, "
+                         f"got {min_confidence!r}")
+
 
 # Dead-code confidence, most-certain first (R1-C8). "high" = no inbound edge of any
 # kind and no decorator/registry hook; "medium" = an implicit-use hook (decorator /
@@ -162,7 +174,16 @@ class Query:
         self._call_in: dict[str, list[tuple[str, dict]]] = {}
         for e in graph.edges:
             if e.type == "calls":
-                self._calls.add_edge(e.source, e.target)
+                # R1-C39: the grade of the route rides on the graph edge, so `callers` /
+                # `callees` can answer "only what a binding found". Two edges may collapse
+                # onto one pair (a call resolved exactly at one site, fanned out from a
+                # registry at another) — the *strongest* wins: the pair is genuinely
+                # connected by a binding, whatever else also points that way.
+                grade = confidence_of(e, strict=False)
+                prev = self._calls.edges.get((e.source, e.target), {}).get("confidence")
+                if prev is not None and _grade_rank(prev) < _grade_rank(grade):
+                    grade = prev
+                self._calls.add_edge(e.source, e.target, confidence=grade)
                 self._call_in.setdefault(e.target, []).append((e.source, e.extras))
         # implements edges (M9/F4): concrete impl -> Protocol (structural typing,
         # synthesised via the registry family since it's never inherited).
@@ -412,17 +433,53 @@ class Query:
 
     # -- call graph (M4, best-effort — see gaps/ CM-09) ----------------------
 
-    def callers(self, symbol_id: str) -> list[str]:
-        """Functions that statically call ``symbol_id`` (resolved calls only)."""
-        if symbol_id not in self._calls:
-            return []
-        return sorted(self._calls.predecessors(symbol_id))
+    def callers(self, symbol_id: str, *, min_confidence: str | None = None) -> list[str]:
+        """Functions that statically call ``symbol_id`` (resolved calls only).
 
-    def callees(self, symbol_id: str) -> list[str]:
-        """Internal symbols ``symbol_id`` statically calls."""
+        ``min_confidence`` (R1-C39) keeps only edges whose route grades at least that
+        strong — ``"exact"`` asks for calls a *binding* found and drops the honest
+        over-approximations (a factory fanned out across a registry family). Default:
+        every resolved edge, whatever found it.
+        """
+        _check_grade(min_confidence)  # before the membership test: a bad argument must
+        if symbol_id not in self._calls:  # not pass silently just because the symbol is
+            return []                     # absent from the call graph
+        return sorted(src for src in self._calls.predecessors(symbol_id)
+                      if self._passes(src, symbol_id, min_confidence))
+
+    def callees(self, symbol_id: str, *, min_confidence: str | None = None) -> list[str]:
+        """Internal symbols ``symbol_id`` statically calls (see :meth:`callers`)."""
+        _check_grade(min_confidence)
         if symbol_id not in self._calls:
             return []
-        return sorted(self._calls.successors(symbol_id))
+        return sorted(tgt for tgt in self._calls.successors(symbol_id)
+                      if self._passes(symbol_id, tgt, min_confidence))
+
+    def _passes(self, source: str, target: str, min_confidence: str | None) -> bool:
+        if min_confidence is None:
+            return True
+        grade = self._calls.edges[source, target].get("confidence")
+        return _grade_rank(grade) <= _grade_rank(min_confidence)
+
+    def confidence_map(self) -> dict[str, dict[str, int]]:
+        """Edge counts by route grade, and by (edge type, resolution) pair — R1-C39.
+
+        The answer to "how much of this graph was found by a binding, and how much by a
+        name match", which no field of the artifact stated before: the route was on every
+        edge, but nothing said what a route is worth. Edges with no route at all
+        (``contains``, ``inherits``, …) are counted under ``none`` rather than dropped —
+        absence is a number here too (R1-C28).
+        """
+        by_grade: dict[str, int] = {}
+        by_pair: dict[str, int] = {}
+        for e in self.graph.edges:
+            grade = confidence_of(e, strict=False) or "none"
+            by_grade[grade] = by_grade.get(grade, 0) + 1
+            if e.extras.get("resolution") is not None:
+                key = f"{e.type}:{e.extras['resolution']}"
+                by_pair[key] = by_pair.get(key, 0) + 1
+        return {"by_grade": dict(sorted(by_grade.items())),
+                "by_pair": dict(sorted(by_pair.items()))}
 
     def call_contract(self, symbol_id: str) -> list[dict]:
         """Per-caller argument contract of calls into ``symbol_id`` (+ members) — F7.
