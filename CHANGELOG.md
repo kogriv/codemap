@@ -5,6 +5,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A rule that ran names itself.** `no_type_only_cycles` was enforced but missing from `check`'s
+  "Rules enforced" line, and a contract holding only that rule printed `Rules enforced: .` — reported by the
+  consumer the day they took 0.0.14. The R1-C30-f2 defect from the other side: there a reader concluded more
+  than was checked, here less. A guard test now walks the contract's own fields, so a rule added later
+  without a line fails the suite.
+
 ## [0.0.14] - 2026-09-07
 
 **A cycle has three kinds, and the second rule stops refusing the typing idiom.** Schema unchanged (0.13);

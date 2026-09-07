@@ -204,3 +204,30 @@ def test_the_reports_carry_both_kinds_and_say_zero(both, tmp_path):
     quiet = Query(extract(str(_pkg(tmp_path, {"a": "from .b import x\n", "b": "x = 1\n"}))))
     assert build_architecture(quiet)["type_only_cycles"] == []
     assert "and 0 through an import under `if TYPE_CHECKING:`" in render_dependencies(quiet)
+
+
+# -- f1: a rule that ran must name itself ---------------------------------------------------
+
+def test_every_enforced_rule_names_itself_in_the_passing_line(tmp_path):
+    """Reported by the consumer the day they took 0.0.14: `no_type_only_cycles` was
+    enforced and absent from "Rules enforced", and a contract holding only that rule
+    printed "Rules enforced: ." — the R1-C30-f2 defect from the other side. The loop is
+    over the contract's own fields, so a rule added later without a line here fails."""
+    import dataclasses
+    quiet = Query(extract(str(_pkg(tmp_path, {"a": "from .b import x\n", "b": "x = 1\n"}))))
+    skip = {"error", "path"}
+    names = [f.name for f in dataclasses.fields(arch.ArchitectureContract) if f.name not in skip]
+    assert "no_type_only_cycles" in names
+    for name in names:
+        value = {"layers": ("core",), "independent": (("core", "data"),),
+                 "forbidden": (("core", "data"),)}.get(name, True)
+        contract = arch.ArchitectureContract(**{name: value})
+        assert not contract.is_empty(), f"{name} alone must be a contract"
+        md = render_check(quiet, contract, arch.check_contract(quiet, contract))
+        assert "Contract satisfied" in md, f"{name} alone should pass on a two-module tree"
+        listed = md.split("Rules enforced:")[1].split(".\n")[0]
+        assert listed.strip(), f"{name} ran and the line named nothing"
+        stem = {"layers": "layered", "independent": "independent",
+                "forbidden": "forbidden"}.get(name, name)
+        assert stem in listed, f"{name} was enforced but is missing from {listed!r}"
+

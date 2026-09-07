@@ -104,6 +104,10 @@ def render_check(query, contract: ArchitectureContract, violations: list[Violati
                 "and this exits 0. Use `--require-contract` to make a missing contract a "
                 "failure, or `--root DIR` if the file lives elsewhere._\n")
     if not violations:
+        # R1-C49-f1 (consumer, issue #18): every enforced rule must name itself here. A
+        # rule that ran and stayed silent is the R1-C30-f2 defect from the other side —
+        # there the reader concluded more than was checked, here less. `tests/
+        # test_r1c49_type_only_cycles.py` fails if a new rule is added and not listed.
         rules = []
         if contract.layers:
             rules.append(f"layered ({len(contract.layers)})")
@@ -115,6 +119,8 @@ def render_check(query, contract: ArchitectureContract, violations: list[Violati
             rules.append("no_cycles")
         if contract.no_lazy_cycles:
             rules.append("no_lazy_cycles")
+        if contract.no_type_only_cycles:
+            rules.append("no_type_only_cycles")
         if contract.exhaustive:
             rules.append("exhaustive")
         return (f"# Architecture check — `{target}`\n\n"
