@@ -381,6 +381,27 @@ beside 0.0.13 on the pinned reporter's tree, was the byte-diff itself:
 The simple index served the version on the first install attempt this time; the retry loop from 0.0.12's
 lesson stayed in the script and was not needed.
 
+**0.0.14 published 2026-09-07:** [`codmap` 0.0.14](https://pypi.org/project/codmap/0.0.14/), schema
+**0.13** (unchanged). Same procedure from the pushed commit `2f61e54`, CI green, `twine check` PASSED on
+both artifacts, tag `v0.0.14` written with `-F`.
+
+No graph bytes move this time — the release changes how cycles are *classified*, so the check from PyPI,
+clean venvs, 0.0.13 beside 0.0.14 on the pinned reporter's tree, compared verdicts rather than bytes:
+
+- **The graph is untouched.** 2965 nodes and 8617 edges identical in both directions, provenance the same
+  apart from the tool version.
+- **The classification moved.** `report architecture`: 0.0.13 prints one section, "closed only by a
+  non-eager import … 10"; 0.0.14 prints two, 9 function-local and 1 under `if TYPE_CHECKING:`.
+- **The rules follow it.** With `no_cycles` + `no_lazy_cycles`, 0.0.13 names 10 cycles including the
+  `TYPE_CHECKING` pair; 0.0.14 names 9 and leaves that pair to `no_type_only_cycles`, which refuses it
+  (exit 2) when added. With `no_cycles` alone, the scope line splits 10 into "9 … and 1 …".
+
+A procedure note, not a tool one: the verification script appended `no_lazy_cycles = true` to a contract
+that already declared it `false`, and both versions answered *"Contract not read — nothing was enforced"*
+with exit 2. That is R1-C27 working exactly as designed — a contract that would not parse must not read as
+a contract that does not exist — but it cost a rerun. Build a modified contract by **replacing** the line,
+never by appending a second copy.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
