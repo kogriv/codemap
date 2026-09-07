@@ -5,6 +5,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.14] - 2026-09-07
+
+**A cycle has three kinds, and the second rule stops refusing the typing idiom.** Schema unchanged (0.13);
+no graph bytes move — the change is in how cycles are classified and which rule judges which. From the
+second half of issue #18, filed by the one consumer of three running both cycle rules.
+
 - **A cycle has three kinds, and `no_lazy_cycles` no longer refuses the typing idiom** (R1-C49,
   issue #18). 0.0.13 moved a `TYPE_CHECKING` cycle out of `no_cycles` and into `no_lazy_cycles`, where the
   one consumer running both rules met it again: one red became another. Cycles are now partitioned by the
