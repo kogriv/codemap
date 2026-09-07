@@ -402,6 +402,26 @@ with exit 2. That is R1-C27 working exactly as designed — a contract that woul
 a contract that does not exist — but it cost a rerun. Build a modified contract by **replacing** the line,
 never by appending a second copy.
 
+**0.0.15 published 2026-09-07:** [`codmap` 0.0.15](https://pypi.org/project/codmap/0.0.15/), schema
+**0.13** (unchanged). Same procedure from the pushed commit `e513a36`, CI green, `twine check` PASSED on
+both artifacts, tag `v0.0.15` written with `-F`.
+
+One line of output, so the check from PyPI was that line, on a tree where the rule **passes** — and the
+first run measured the wrong thing: the dogfood tree *has* a type-only cycle, so the rule fails there and a
+passing line never prints. Repeated on a two-module tree that has none:
+
+```
+0.0.14   only no_type_only_cycles   ✅ Contract satisfied. Rules enforced: .
+0.0.15   only no_type_only_cycles   ✅ Contract satisfied. Rules enforced: no_type_only_cycles.
+0.0.14   all three rules            ✅ … Rules enforced: no_cycles, no_lazy_cycles.
+0.0.15   all three rules            ✅ … Rules enforced: no_cycles, no_lazy_cycles, no_type_only_cycles.
+```
+
+Graph bytes on the pinned tree: 2965 nodes and 8617 edges, symmetric difference empty, provenance the same
+apart from the tool version. **Procedure lesson:** when the fix lives in the *passing* branch, the
+verification tree must be one where the rule passes — a red tree exercises the other branch and answers
+nothing. Same shape as R1-C37, met in a release check rather than a test.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
