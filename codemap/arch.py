@@ -21,6 +21,7 @@ integration gate reads). All rules operate on the **core** module import graph
     # also gate the coupling a lazy import hides: cycles closed only by an import
     # written inside a function. Off by default — see below.
     no_lazy_cycles = false
+    no_type_only_cycles = false
     # every core module's layer must appear in `layers` (catches a new,
     # undeclared top-level package slipping in).
     exhaustive = false
@@ -54,6 +55,7 @@ class ArchitectureContract:
     forbidden: tuple[tuple[str, str], ...] = ()
     no_cycles: bool = False
     no_lazy_cycles: bool = False
+    no_type_only_cycles: bool = False
     exhaustive: bool = False
     error: str | None = None
     # R1-C35: the file this contract was looked for in. "No contract found" is only
@@ -63,7 +65,8 @@ class ArchitectureContract:
 
     def is_empty(self) -> bool:
         return not (self.layers or self.independent or self.forbidden
-                    or self.no_cycles or self.no_lazy_cycles or self.exhaustive)
+                    or self.no_cycles or self.no_lazy_cycles
+                    or self.no_type_only_cycles or self.exhaustive)
 
 
 @dataclass(frozen=True)
@@ -71,7 +74,7 @@ class Violation:
     """One broken rule, with the concrete import edges (or cycle) that break it."""
 
     rule: str            # layered | independent | forbidden | no_cycles | no_lazy_cycles
-    #                      | exhaustive
+    #                      | no_type_only_cycles | exhaustive
     summary: str         # human one-liner
     edges: tuple[tuple[str, str], ...] = field(default=())   # offending (importer, imported)
     modules: tuple[str, ...] = field(default=())             # for exhaustive / cycles
@@ -112,6 +115,7 @@ def parse_contract(section: dict) -> ArchitectureContract:
         forbidden=tuple(forbidden),
         no_cycles=bool(section.get("no_cycles", False)),
         no_lazy_cycles=bool(section.get("no_lazy_cycles", False)),
+        no_type_only_cycles=bool(section.get("no_type_only_cycles", False)),
         exhaustive=bool(section.get("exhaustive", False)),
     )
 
@@ -207,8 +211,25 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
             worst = sorted(lazy, key=lambda c: (len(c), c))
             violations.append(Violation(
                 "no_lazy_cycles",
-                f"{len(lazy)} dependency cycle(s) closed only by a non-eager import "
-                f"(function-local, or under `if TYPE_CHECKING:`)",
+                f"{len(lazy)} dependency cycle(s) closed only by a function-local import",
+                modules=tuple(" → ".join(c) + " → " + c[0] for c in worst),
+            ))
+
+    # -- no_type_only_cycles: the third kind, and the one with no runtime dependency ----
+    # R1-C49 (issue #18): a cycle that needs an import under `if TYPE_CHECKING:` cannot
+    # break at import time and does not couple the modules at run time either — the two
+    # only name each other's types. Gating it is a style choice about the type layer, so
+    # it is opt-in and separate: the consumer who asked for this had `no_lazy_cycles` on
+    # against lazy imports used as a way around `no_cycles`, and the standard typing
+    # idiom is not that.
+    if contract.no_type_only_cycles:
+        type_only = query.type_only_import_cycles()
+        if type_only:
+            worst = sorted(type_only, key=lambda c: (len(c), c))
+            violations.append(Violation(
+                "no_type_only_cycles",
+                f"{len(type_only)} dependency cycle(s) closed only by an import under "
+                f"`if TYPE_CHECKING:`",
                 modules=tuple(" → ".join(c) + " → " + c[0] for c in worst),
             ))
 

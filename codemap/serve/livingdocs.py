@@ -144,6 +144,7 @@ def render_docs(query: Query) -> str:
     # -- architecture caveats (the honest health section) -------------------
     cycles = query.import_cycles()
     lazy = query.lazy_import_cycles()
+    type_only = query.type_only_import_cycles()
     lay = query.layers()
     gods = query.hotspots()["god_classes"]
     out.append("## Architecture notes")
@@ -156,9 +157,12 @@ def render_docs(query: Query) -> str:
         # proof of acyclicity, which this map cannot support.
         out.append("- No import cycle found in the eager import graph.")
     if lazy:
-        out.append(f"- **{len(lazy)} dependency cycle(s) closed only by a non-eager "
-                   f"import** (function-local, or under `if TYPE_CHECKING:`) — deliberate, "
-                   f"and still mutual coupling.")
+        out.append(f"- **{len(lazy)} dependency cycle(s) closed only by a function-local "
+                   f"import** — deliberate, and still runtime coupling.")
+    if type_only:
+        out.append(f"- **{len(type_only)} dependency cycle(s) closed only by an import under "
+                   f"`if TYPE_CHECKING:`** — the modules name each other's types and have no "
+                   f"runtime dependency.")
     if lay["violations"]:
         out.append("- **Layer violations (mutual dependency):** "
                    + ", ".join(f"{a} ↔ {b}" for a, b in lay["violations"]))

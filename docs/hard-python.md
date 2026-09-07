@@ -118,8 +118,8 @@ explosion without knowing what a symlink is.
 - An import under `if TYPE_CHECKING:` (or `typing.TYPE_CHECKING`, or the `else` of
   `if not TYPE_CHECKING:`) is a third scope, `extras.scope = "type_checking"`: written at
   module level, never run. It is a dependency (coupling, dependents, orphans) and is
-  excluded from import cycles like a function-local import; a cycle it closes is listed
-  with the lazy ones. griffe files it as module-level, so codemap demotes it — unless the
+  excluded from import cycles like a function-local import; a cycle it closes is a third
+  kind of its own, not a lazy one (R1-C49) — the two modules have no runtime dependency. griffe files it as module-level, so codemap demotes it — unless the
   same target is also imported eagerly, in which case the edge reads eager (R1-C48,
   issue #18). A compound test (`if TYPE_CHECKING or X:`) is not read and stays eager.
 - `type X = int | str` (PEP 695 alias) produces no node.

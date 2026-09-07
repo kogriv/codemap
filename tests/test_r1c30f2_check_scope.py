@@ -75,7 +75,7 @@ def test_the_passing_report_names_what_was_not_judged(lazy_cycle):
     out = render_check(lazy_cycle, contract, violations)
     assert "Contract satisfied" in out
     assert "eager import graph only" in out
-    assert "**1** dependency cycle(s)" in out
+    assert "**1** cycle(s) closed only by a function-local import" in out
 
 
 def test_the_structured_payload_carries_it_too(lazy_cycle):
@@ -92,8 +92,9 @@ def test_it_is_declared_even_when_there_is_nothing_to_declare(eager_only):
     contract, violations = _run(eager_only, {"no_cycles": True})
     scope = build_check(eager_only, contract, violations)["scope"]
     assert len(scope) == 1 and scope[0]["count"] == 0
-    assert "no dependency cycle is closed only by a non-eager import" \
-        in render_check(eager_only, contract, violations)
+    md = render_check(eager_only, contract, violations)
+    assert "**0** cycle(s) closed only by a function-local import" in md
+    assert "**0** closed only by an import under `if TYPE_CHECKING:`" in md
 
 
 def test_a_failing_run_carries_the_same_disclosure(lazy_cycle):
@@ -129,7 +130,14 @@ def test_the_opt_in_alone_is_a_contract(lazy_cycle):
 
 
 def test_opting_in_removes_the_disclaimer_because_nothing_is_left_out(lazy_cycle):
+    """R1-C49: there are three kinds now, so "nothing is left out" needs all three rules.
+    With only `no_lazy_cycles` added, the type-only cycles are still unjudged and the
+    disclosure must keep saying so — a gated kind drops out of it, the others do not."""
     contract, violations = _run(lazy_cycle, {"no_cycles": True, "no_lazy_cycles": True})
+    scope = build_check(lazy_cycle, contract, violations)["scope"]
+    assert len(scope) == 1 and scope[0]["lazy_gated"] is True and scope[0]["lazy"] == 0
+    contract, violations = _run(lazy_cycle, {"no_cycles": True, "no_lazy_cycles": True,
+                                             "no_type_only_cycles": True})
     assert build_check(lazy_cycle, contract, violations)["scope"] == []
     assert "not** judged" not in render_check(lazy_cycle, contract, violations)
 

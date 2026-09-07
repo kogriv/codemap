@@ -77,8 +77,10 @@ def test_build_architecture_has_all_sections(q):
     a = build_architecture(q)
     # R1-C29 added two: `lazy_cycles` (dependency cycles closed only by a function-local
     # import — real coupling, not an import-time failure) and `import_map` (how many
+    # imports each scope contributed). R1-C49 added `type_only_cycles`, the third kind —
+    # closed only by an import under `if TYPE_CHECKING:`, i.e. no runtime dependency at all —
     # imports of each scope the map was built from, always, zero included).
-    assert set(a) == {"target", "cycles", "lazy_cycles", "import_map",
+    assert set(a) == {"target", "cycles", "lazy_cycles", "type_only_cycles", "import_map",
                       "layers", "coupling", "hotspots"}
     assert a["target"] == "dispatchpkg"
 

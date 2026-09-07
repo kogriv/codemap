@@ -27,18 +27,29 @@ def _not_judged(query, contract: ArchitectureContract) -> list[dict]:
     a field that appears only when there is something to say forces a machine consumer to
     tell "nothing was skipped" from "this build does not report skips", and it cannot.
     """
-    if not contract.no_cycles or contract.no_lazy_cycles:
-        return []   # not enforced, or the contract opted into judging them too
-    lazy = query.lazy_import_cycles()
+    if not contract.no_cycles:
+        return []                                   # not enforced
+    if contract.no_lazy_cycles and contract.no_type_only_cycles:
+        return []                                   # the contract judges all three kinds
+    # R1-C49: two kinds may be left out, and they are different things. Whichever of them
+    # this contract does not gate is what the reader must be told about — reporting one
+    # sum over both is the defect the third consumer filed.
+    lazy = [] if contract.no_lazy_cycles else query.lazy_import_cycles()
+    type_only = [] if contract.no_type_only_cycles else query.type_only_import_cycles()
     return [{
         "rule": "no_cycles",
         "judged": "the eager import graph — imports that run at import time",
-        "not_judged": "dependency cycles closed only by a non-eager import (function-local, or under `if TYPE_CHECKING:`)",
+        "not_judged": "dependency cycles that do not close at import time",
+        "lazy": len(lazy),
+        "type_only": len(type_only),
+        "lazy_gated": contract.no_lazy_cycles,
+        "type_only_gated": contract.no_type_only_cycles,
         "type_checking_imports": query.import_map()["type_checking"],
-        "count": len(lazy),
-        "note": ("a non-eager import does not run at import time, so such a cycle cannot break "
-                 "on import; it is still mutual coupling. Set `no_lazy_cycles = true` to "
-                 "gate these as well, or see `report architecture` for the list."),
+        "count": len(lazy) + len(type_only),
+        "note": ("`lazy` needs a function-local import — runtime coupling, gated by "
+                 "`no_lazy_cycles = true`. `type_only` needs an import under "
+                 "`if TYPE_CHECKING:` — no runtime dependency at all, gated by "
+                 "`no_type_only_cycles = true`. `report architecture` lists both."),
     }]
 
 
@@ -132,15 +143,15 @@ def _render_scope(query, contract: ArchitectureContract) -> str:
     if not scope:
         return ""
     s = scope[0]
-    if not s["count"]:
-        return (f"\n_`no_cycles` judged the eager import graph; no dependency cycle is closed "
-                f"only by a non-eager import (function-local, or under `if TYPE_CHECKING:`) "
-                f"either. {s['type_checking_imports']} import(s) under `TYPE_CHECKING` read "
-                f"as never running._\n")
+    parts = []
+    if not s["lazy_gated"]:
+        parts.append(f"**{s['lazy']}** cycle(s) closed only by a function-local import "
+                     f"(runtime coupling — `no_lazy_cycles = true` gates them)")
+    if not s["type_only_gated"]:
+        parts.append(f"**{s['type_only']}** closed only by an import under "
+                     f"`if TYPE_CHECKING:` (no runtime dependency at all — "
+                     f"`no_type_only_cycles = true` gates them)")
     return (f"\n_`no_cycles` judged **the eager import graph only** — imports that run at "
-            f"import time. **{s['count']}** dependency cycle(s) closed only by a "
-            f"non-eager import (function-local, or under `if TYPE_CHECKING:`) were **not** "
-            f"judged: such a cycle cannot break on import, but the coupling is real. "
-            f"`report architecture` lists them; `no_lazy_cycles = true` gates them. "
-            f"{s['type_checking_imports']} import(s) under `TYPE_CHECKING` read as never "
-            f"running._\n")
+            f"import time. Not judged: {' and '.join(parts)}. `report architecture` lists "
+            f"them. {s['type_checking_imports']} import(s) under `TYPE_CHECKING` read as "
+            f"never running._\n")

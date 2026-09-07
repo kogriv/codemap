@@ -163,13 +163,13 @@ def test_architecture_never_claims_acyclic(lazy_cycle):
     assert "acyclic" not in md, "a partial map cannot support a property claim"
     assert "none found in the eager import graph" in md
     assert "function-local and 0 `TYPE_CHECKING` import(s)" in md
-    assert "Dependency cycles closed only by a non-eager import (function-local, or under `if TYPE_CHECKING:`): 1" in md
+    assert "Dependency cycles closed only by a function-local import: 1" in md
 
 
 def test_dependencies_report_never_claims_acyclic(lazy_cycle):
     md = render_dependencies(Query(extract(str(lazy_cycle))))
     assert "acyclic" not in md
-    assert "close through a non-eager import" in md
+    assert "close through a function-local import" in md
 
 
 def test_architecture_payload_carries_both_kinds_and_the_counts(lazy_cycle):

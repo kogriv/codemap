@@ -18,9 +18,10 @@ from codemap.query import Query
 def build_architecture(query: Query) -> dict:
     """Structured whole-system overview (cycles + layers + coupling + hotspots).
 
-    R1-C29: ``cycles`` are the **import-time** ones and ``lazy_cycles`` the dependency
-    cycles closed only by a non-eager import — function-local (R1-C29) or under
-    ``if TYPE_CHECKING:`` (R1-C48). Splitting them is the point — a lazy
+    Three kinds, by the weakest scope that closes the cycle (R1-C49): ``cycles`` break at
+    import time, ``lazy_cycles`` need a function-local import (runtime coupling), and
+    ``type_only_cycles`` need one under ``if TYPE_CHECKING:`` (no runtime dependency at
+    all). Splitting them is the point — a lazy
     import is how a developer *fixes* an import cycle, so folding the two together would
     report someone's fix as their bug, while dropping the second (what this tool did
     until issue #11) hides that the modules are still inseparable. ``import_map`` is
@@ -31,6 +32,7 @@ def build_architecture(query: Query) -> dict:
         "target": query.graph.target,
         "cycles": query.import_cycles(),
         "lazy_cycles": query.lazy_import_cycles(),
+        "type_only_cycles": query.type_only_import_cycles(),
         "import_map": query.import_map(),
         "layers": query.layers(),
         "coupling": query.coupling(),
@@ -85,18 +87,34 @@ def render_architecture(query: Query) -> str:
                f"an import under `if TYPE_CHECKING:` never runs._")
     out.append("")
     if a["lazy_cycles"]:
-        out.append(f"### Dependency cycles closed only by a non-eager import "
-                   f"(function-local, or under `if TYPE_CHECKING:`): {len(a['lazy_cycles'])}")
+        out.append(f"### Dependency cycles closed only by a function-local import: "
+                   f"{len(a['lazy_cycles'])}")
         out.append("")
-        out.append("_These do **not** break at import time — the non-eager import is what "
+        out.append("_These do **not** break at import time — the lazy import is what "
                    "prevents that, and is usually deliberate. They are listed because "
-                   "the modules are still mutually dependent: neither can be extracted "
-                   "without the other._")
+                   "the modules are still mutually dependent at run time: neither can be "
+                   "extracted without the other._")
         out.append("")
         out.extend(f"- {' → '.join(c)} → {c[0]}" for c in
                    sorted(a["lazy_cycles"], key=lambda c: (len(c), c))[:20])
         if len(a["lazy_cycles"]) > 20:
             out.append(f"- _… {len(a['lazy_cycles']) - 20} more_")
+        out.append("")
+    if a["type_only_cycles"]:
+        # R1-C49: the third kind, kept apart from the second because the difference is the
+        # whole point — these modules have no runtime dependency on each other at all.
+        out.append(f"### Dependency cycles closed only by an import under "
+                   f"`if TYPE_CHECKING:`: {len(a['type_only_cycles'])}")
+        out.append("")
+        out.append("_Neither module pulls the other at any moment of execution — they name "
+                   "each other's types. Not an import-time failure and not runtime coupling; "
+                   "`no_type_only_cycles = true` gates them if the type layer must not close "
+                   "a cycle either._")
+        out.append("")
+        out.extend(f"- {' → '.join(c)} → {c[0]}" for c in
+                   sorted(a["type_only_cycles"], key=lambda c: (len(c), c))[:20])
+        if len(a["type_only_cycles"]) > 20:
+            out.append(f"- _… {len(a['type_only_cycles']) - 20} more_")
         out.append("")
 
     # -- coupling -----------------------------------------------------------

@@ -70,7 +70,9 @@ def test_cycle_detection(q):
     pair = frozenset({PIPELINE, "bquant.analysis.zones.cache"})
     assert pair not in {frozenset(c) for c in q.import_cycles()}, \
         "an import under TYPE_CHECKING must not close an eager cycle"
-    assert pair in {frozenset(c) for c in q.lazy_import_cycles()}
+    assert pair not in {frozenset(c) for c in q.lazy_import_cycles()}, \
+        "nor a runtime one: R1-C49, the pair has no runtime dependency at all"
+    assert pair in {frozenset(c) for c in q.type_only_import_cycles()}
     assert q.import_map()["type_checking"] >= 1
 
 

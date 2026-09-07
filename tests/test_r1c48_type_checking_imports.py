@@ -127,10 +127,13 @@ def test_a_pair_imported_both_ways_reads_eager(tree):
 
 # -- D4 / D5: the graphs and the map ----------------------------------------------------
 
-def test_the_cycle_is_lazy_not_eager(tree):
+def test_the_cycle_is_not_eager(tree):
+    """R1-C49 moved it one further: not eager (this fix), and not lazy either — the pair
+    has no runtime dependency at all, so it is the third kind."""
     q = tree[2]
     assert q.import_cycles() == [], "the gate's defect: this used to be the one eager cycle"
-    assert [sorted(c) for c in q.lazy_import_cycles()] == [["tcpkg.cache", "tcpkg.pipeline"]]
+    assert q.lazy_import_cycles() == []
+    assert [sorted(c) for c in q.type_only_import_cycles()] == [["tcpkg.cache", "tcpkg.pipeline"]]
 
 
 def test_import_map_names_the_scope_always(tree):
@@ -148,9 +151,9 @@ def test_every_consumer_says_which_imports_it_did_not_judge(tree):
     assert a["import_map"]["type_checking"] == 3
     md = render_architecture(q)
     assert "3 `TYPE_CHECKING` import(s)" in md
-    assert "closed only by a non-eager import (function-local, or under `if TYPE_CHECKING:`): 1" in md
+    assert "closed only by an import under `if TYPE_CHECKING:`: 1" in md
     assert "`TYPE_CHECKING` import(s)" in render_dependencies(q)
-    assert "non-eager import" in render_docs(q)
+    assert "closed only by an import under `if TYPE_CHECKING:`" in render_docs(q)
 
 
 def test_the_gate_is_green_and_names_what_it_read(tree):
@@ -161,15 +164,18 @@ def test_the_gate_is_green_and_names_what_it_read(tree):
     payload = build_check(q, contract, violations)
     assert payload["ok"] is True
     assert payload["scope"][0]["count"] == 1
+    assert payload["scope"][0]["type_only"] == 1 and payload["scope"][0]["lazy"] == 0
     assert payload["scope"][0]["type_checking_imports"] == 3
     md = render_check(q, contract, violations)
     assert "3 import(s) under `TYPE_CHECKING` read as never running" in md
 
 
-def test_no_lazy_cycles_still_gates_the_coupling(tree):
-    contract = arch.ArchitectureContract(no_lazy_cycles=True)
-    v = arch.check_contract(tree[2], contract)
-    assert [x.rule for x in v] == ["no_lazy_cycles"]
+def test_the_type_only_rule_gates_the_coupling(tree):
+    """R1-C49: `no_lazy_cycles` is about a lazy import used to walk around `no_cycles`,
+    which this is not; the opt-in rule for the type layer is the one that fires."""
+    assert arch.check_contract(tree[2], arch.ArchitectureContract(no_lazy_cycles=True)) == []
+    v = arch.check_contract(tree[2], arch.ArchitectureContract(no_type_only_cycles=True))
+    assert [x.rule for x in v] == ["no_type_only_cycles"]
     assert "under `if TYPE_CHECKING:`" in v[0].summary
 
 

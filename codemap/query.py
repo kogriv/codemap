@@ -119,20 +119,27 @@ class Query:
         # made an incomplete map read as a safety property.
         self._imports = nx.DiGraph()
         self._imports_eager = nx.DiGraph()
+        # R1-C49: between the two — everything that can execute. A `TYPE_CHECKING` import
+        # never does, so a cycle that needs one is not runtime coupling at all.
+        self._imports_runtime = nx.DiGraph()
         self._import_scopes = {"module": 0, "function": 0, "type_checking": 0}
         for n in graph.nodes.values():
             if n.kind == "module":
                 self._imports.add_node(n.id)
                 self._imports_eager.add_node(n.id)
+                self._imports_runtime.add_node(n.id)
         for e in graph.edges:
             if e.type == "imports":
                 self._imports.add_edge(e.source, e.target)
                 scope = e.extras.get("scope")
                 if scope in ("function", "type_checking"):
                     # R1-C29: runs when the function runs; R1-C48: never runs. Neither
-                    # is an import-time edge.
+                    # is an import-time edge — but only the first is a runtime one.
                     self._import_scopes[scope] += 1
+                    if scope == "function":
+                        self._imports_runtime.add_edge(e.source, e.target)
                 else:
+                    self._imports_runtime.add_edge(e.source, e.target)
                     self._imports_eager.add_edge(e.source, e.target)
                     self._import_scopes["module"] += 1
         # export edges: name -> [target definition paths]
@@ -888,16 +895,35 @@ class Query:
         return [c for c in nx.simple_cycles(self._imports_eager)]
 
     def lazy_import_cycles(self) -> list[list[str]]:
-        """Dependency cycles that close **only** through a non-eager import — one
-        written inside a function (R1-C29) or under ``if TYPE_CHECKING:`` (R1-C48).
+        """Dependency cycles that close **only** through a function-local import.
 
         Not an import-time failure, and not nothing: the modules still cannot be
-        separated, and the lazy import is the evidence someone already hit this. Before
-        R1-C29 these were invisible — on the target this project benchmarks on, eight of
-        the nine cycles present were of this kind and the report said "1".
+        separated at run time, and the lazy import is the evidence someone already hit
+        this. Before R1-C29 these were invisible — on the target this project benchmarks
+        on, eight of the nine cycles present were of this kind and the report said "1".
+
+        R1-C49 narrowed this back after R1-C48 briefly widened it: a cycle that needs an
+        import under ``if TYPE_CHECKING:`` is not runtime coupling at all and is returned
+        by :meth:`type_only_import_cycles`. The partition is by the **weakest scope that
+        closes the cycle**, not by which scopes appear in it — a pair coupled through a
+        function-local import stays *lazy* however many type imports also run between
+        them, or a tree could hide real coupling by adding one.
         """
         eager = {frozenset(c) for c in nx.simple_cycles(self._imports_eager)}
-        return [c for c in nx.simple_cycles(self._imports) if frozenset(c) not in eager]
+        return [c for c in nx.simple_cycles(self._imports_runtime)
+                if frozenset(c) not in eager]
+
+    def type_only_import_cycles(self) -> list[list[str]]:
+        """Dependency cycles that close **only** with an import under ``if TYPE_CHECKING:``.
+
+        The third kind (R1-C49, issue #18). These modules name each other's types and have
+        **no runtime dependency whatever**: neither import pulls the other at any moment of
+        execution. That is why they are not gated by ``no_lazy_cycles`` — which exists
+        against a lazy import used to walk *around* ``no_cycles`` — and get their own
+        opt-in rule instead.
+        """
+        runtime = {frozenset(c) for c in nx.simple_cycles(self._imports_runtime)}
+        return [c for c in nx.simple_cycles(self._imports) if frozenset(c) not in runtime]
 
     def import_map(self) -> dict:
         """How much of the import graph each scope contributed (R1-C29).

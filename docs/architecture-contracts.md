@@ -29,9 +29,13 @@ forbidden = [
 # The import graph must be acyclic *at import time* — the eager graph (see below).
 no_cycles = true
 
-# Also gate the coupling a non-eager import hides: cycles closed only by an import written
-# inside a function or under `if TYPE_CHECKING:`. Off by default; the reason is below.
+# Also gate the coupling a lazy import hides: cycles closed only by an import written
+# inside a function. Off by default; the reason is below.
 no_lazy_cycles = false
+
+# And the third kind: cycles closed only by an import under `if TYPE_CHECKING:`, where the
+# modules name each other's types and have no runtime dependency at all. Off by default.
+no_type_only_cycles = false
 
 # Every core module's layer must appear in `layers` above — catches a new,
 # undeclared top-level package slipping in.
@@ -44,7 +48,8 @@ exhaustive = false
 | `independent` | two layers in a group import each other | the edges between them |
 | `forbidden` | a declared `from → to` import exists | the edges |
 | `no_cycles` | the **eager** import graph has a cycle | the cycles |
-| `no_lazy_cycles` | a cycle is closed only by a non-eager import (function-local, or under `if TYPE_CHECKING:`) | those cycles |
+| `no_lazy_cycles` | a cycle is closed only by a function-local import | those cycles |
+| `no_type_only_cycles` | a cycle is closed only by an import under `if TYPE_CHECKING:` | those cycles |
 | `exhaustive` | a core module's layer isn't declared in `layers` | the undeclared layers |
 
 Rules that reference a layer not present in the graph are **inert** — you can write
@@ -69,6 +74,27 @@ cannot read is judged strictly, never leniently
 [issue #18](https://github.com/kogriv/codemap/issues/18): the gate was red on the dogfood
 target's one such import, and nothing short of rewriting correct code could turn it green).
 
+### Three kinds of cycle, and which rule judges which
+
+A cycle is classified by the **weakest import scope that closes it**
+([R1-C49](../gaps/type_only_cycles_2026-09-07.md), the second half of issue #18):
+
+| kind | closes with | what it means | rule |
+|---|---|---|---|
+| eager | module-level imports alone | breaks at import time | `no_cycles` |
+| lazy | needs a function-local import | runtime coupling; the lazy import is a way *around* `no_cycles` | `no_lazy_cycles` |
+| type-only | needs an import under `if TYPE_CHECKING:` | the modules name each other's types and have **no runtime dependency at all** | `no_type_only_cycles` |
+
+The partition is by requirement, not by presence: a pair that also imports each other at
+run time stays *lazy* however many type imports run between them, so a tree cannot launder
+runtime coupling into the type layer by adding one. Every report prints all three counts,
+zero included, and `check`'s scope line names whichever kinds *this* contract did not gate.
+
+`no_lazy_cycles` deliberately does **not** cover the third kind. It exists against a lazy
+import used to walk around `no_cycles` — a runtime dependency that was merely deferred —
+and the typing idiom is not that. The consumer who runs both rules had a tree that could
+not satisfy them and keep `if TYPE_CHECKING:` at all; that is the defect R1-C49 fixes.
+
 But a gate that judges a subset must not let the reader conclude more than it checked.
 A passing run therefore always states its scope:
 
@@ -76,9 +102,10 @@ A passing run therefore always states its scope:
 ✅ **Contract satisfied.** Rules enforced: no_cycles.
 
 _`no_cycles` judged **the eager import graph only** — imports that run at import time.
-**48** dependency cycle(s) closed only by a non-eager import (function-local, or under `if TYPE_CHECKING:`) were **not** judged:
-such a cycle cannot break on import, but the coupling is real. `report architecture`
-lists them; `no_lazy_cycles = true` gates them. 1 import(s) under `TYPE_CHECKING` read as never running._
+Not judged: **48** cycle(s) closed only by a function-local import (runtime coupling —
+`no_lazy_cycles = true` gates them) and **1** closed only by an import under `if TYPE_CHECKING:`
+(no runtime dependency at all — `no_type_only_cycles = true` gates them). `report architecture`
+lists them. 1 import(s) under `TYPE_CHECKING` read as never running._
 ```
 
 The line is printed even when the count is zero (as `"nothing was left out"`, not as an

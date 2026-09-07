@@ -5,6 +5,17 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A cycle has three kinds, and `no_lazy_cycles` no longer refuses the typing idiom** (R1-C49,
+  issue #18). 0.0.13 moved a `TYPE_CHECKING` cycle out of `no_cycles` and into `no_lazy_cycles`, where the
+  one consumer running both rules met it again: one red became another. Cycles are now partitioned by the
+  weakest scope that closes them — eager, lazy (needs a function-local import; runtime coupling), type-only
+  (needs an import under `if TYPE_CHECKING:`; no runtime dependency at all) — and the third kind has its own
+  opt-in rule `no_type_only_cycles`, off by default. Every report prints all three counts, zero included.
+  **Behaviour change:** a contract with `no_lazy_cycles = true` no longer fails on a type-only cycle; add
+  `no_type_only_cycles = true` to keep gating it. A pair also coupled at run time stays *lazy*, so the type
+  layer cannot be used to launder coupling. Measured: bquant 0 eager / 9 lazy / 1 type-only (0 / 10 on
+  0.0.13); codemap 0 / 0 / 0 with one `TYPE_CHECKING` import.
+
 ## [0.0.13] - 2026-09-06
 
 **A third import scope, and a merge that no longer depends on arrival order.** Schema unchanged (0.13);

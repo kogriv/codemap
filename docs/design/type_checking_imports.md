@@ -1,6 +1,6 @@
 # Design — An import under `if TYPE_CHECKING:` is a third scope, not an eager edge
 
-**Status:** ✅ **shipped** (2026-09-06, no schema change — `extras.scope` is an open field, a new
+**Status:** ✅ **shipped** (2026-09-06; D4 revised by [R1-C49](type_only_cycles.md) on 2026-09-07, no schema change — `extras.scope` is an open field, a new
 value). Acceptance measured on the reporter's tree (bquant `6b17e35`, fast tier): `no_cycles = true`
 green; scope line "10 cycles not judged … 1 import(s) under `TYPE_CHECKING` read as never running";
 `import_map` 270 / 26 / 1; byte-diff against the build before the change — 2965 nodes identical, 8617
@@ -61,10 +61,10 @@ strictly, never leniently — a gate that guesses "probably never runs" is not a
 ## D4 — The eager graph excludes it; the lazy cycles include it
 
 `Query._imports_eager` drops `type_checking` edges as it drops `function` ones. A cycle closed
-only through such an import is still mutual coupling — the modules reference each other's
-types — and reports where lazy cycles report: `lazy_cycles`, `no_lazy_cycles`. The five
-consumers that say "closed only by a function-local import" now say "closed only by a non-eager
-import (function-local, or under `if TYPE_CHECKING:`)".
+only through such an import was first reported with the lazy ones — **revised the next day by
+[R1-C49](type_only_cycles.md)**: it is a third kind, because those modules have no runtime
+dependency on each other at all, and folding it into `no_lazy_cycles` made that rule refuse the
+typing idiom. See that document for the partition and the wording the consumers carry now.
 
 ## D5 — `import_map` gains `type_checking`, always
 

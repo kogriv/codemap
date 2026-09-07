@@ -18,6 +18,7 @@ def render_dependencies(query: Query) -> str:
 
     cycles = query.import_cycles()
     lazy = query.lazy_import_cycles()
+    type_only = query.type_only_import_cycles()
     im = query.import_map()
     lines.append(f"## Import cycles: {len(cycles)}")
     lines.append("")
@@ -31,11 +32,10 @@ def render_dependencies(query: Query) -> str:
     lines.append("")
     lines.append(f"_Read {im['module_level']} module-level, {im['function_local']} "
                  f"function-local and {im['type_checking']} `TYPE_CHECKING` import(s); only "
-                 f"the first run at import time. "
-                 + (f"{len(lazy)} further cycle(s) close through a non-eager import "
-                    f"(function-local, or under `if TYPE_CHECKING:`) — real coupling, not "
-                    f"an import-time failure._" if lazy
-                    else "No cycle closes through a non-eager import._"))
+                 f"the first run at import time. {len(lazy)} further cycle(s) close through "
+                 f"a function-local import (runtime coupling, not an import-time failure) "
+                 f"and {len(type_only)} through an import under `if TYPE_CHECKING:` (no "
+                 f"runtime dependency at all)._")
     lines.append("")
 
     lines.append("## Most-depended-on modules (top 15)")
@@ -63,6 +63,8 @@ def build_dependencies(query: Query) -> dict:
         "import_cycles": [list(c) for c in sorted(query.import_cycles(), key=lambda c: (len(c), c))],
         "lazy_import_cycles": [list(c) for c in
                                sorted(query.lazy_import_cycles(), key=lambda c: (len(c), c))],
+        "type_only_import_cycles": [list(c) for c in
+                                    sorted(query.type_only_import_cycles(), key=lambda c: (len(c), c))],
         "most_depended_on": [{"module": m, "imported_by": g.in_degree(m)}
                              for m in ranked[:15] if g.in_degree(m)],
         "diagnostics": diagnostics(query.graph),

@@ -481,11 +481,13 @@ def _emit_decorated_by(graph, obj) -> None:
 
 # -- pass 2: resolve export + import edges against known nodes ----------------
 
-#: How early an import scope reaches its target: an edge carries the earliest (R1-C29 D2,
-#: R1-C48 D2). ``module`` runs at import time, ``type_checking`` never, ``function`` when
-#: the function runs — the middle one is ordered before ``function`` only so the label
-#: names the construct actually written at module level.
-_SCOPE_RANK = {"module": 0, "type_checking": 1, "function": 2}
+#: How strongly an import scope reaches its target: an edge carries the strongest (R1-C29
+#: D2, R1-C48 D2). ``module`` runs at import time, ``function`` when the function runs,
+#: ``type_checking`` never. A pair reached by both a function-local and a ``TYPE_CHECKING``
+#: import is a **function-local** dependency: it can execute, and labelling it by the
+#: import that cannot would let a tree launder runtime coupling into the type layer
+#: (R1-C49, and the test that says so).
+_SCOPE_RANK = {"module": 0, "function": 1, "type_checking": 2}
 
 
 def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
