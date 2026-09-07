@@ -110,7 +110,10 @@ _UNLIMITED_BY_DESIGN = {
     "pack": "budget is a token budget the caller sets on purpose, and the result is "
             "explicitly a *pack* — self-describing by construction",
     "impact": "depth bounds the walk, it does not slice a computed list; the reach is "
-              "already echoed back as by_distance / max_distance",
+              "already echoed back as by_distance / max_distance, and flow_depth "
+              "likewise bounds the flow walk while counting what lies past it "
+              "(beyond_depth). Both lists come back whole here; the transport cut "
+              "lives in _compact_impact and declares itself there (R1-C40)",
     "flows": "depth likewise bounds the walk, and the answer carries its own depth",
 }
 
@@ -442,13 +445,20 @@ class Session:
     def _op_impact(self, args) -> dict:
         sym = args["symbol"]
         depth = int(args.get("depth", 2))
+        flow_depth = int(args.get("flow_depth", 5))
         ids = self.query.impact_targets(sym)  # F23: accept full id / re-export too
         if not ids:  # R1-C44: this op resolves on its own, so it records on its own
             self._resolution = _not_found(sym)
         return {
             "symbol": sym,
-            "impact": [self.query.impact(sid, depth=depth) for sid in ids],
-            "markdown": render_impact(self.query, sym, depth=depth),
+            # R1-C40: blast radius and the flows it lands on are two answers kept side by
+            # side, not merged — "who references" and "where in a scenario the change
+            # first bites" have different partialities, and each states its own.
+            "impact": [{**self.query.impact(sid, depth=depth),
+                        "flows": self.query.flows_to(sid, max_depth=flow_depth)}
+                       for sid in ids],
+            "markdown": render_impact(self.query, sym, depth=depth,
+                                      flow_depth=flow_depth),
         }
 
     def _op_resolve(self, args) -> dict | None:

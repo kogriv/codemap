@@ -507,7 +507,8 @@ def _cmd_report(args) -> int:
     if args.kind == "impact":
         if not args.symbol:
             raise SystemExit("error: report impact needs --symbol <name>")
-        print(render_impact(Query(graph), args.symbol, depth=args.depth), end="")
+        print(render_impact(Query(graph), args.symbol, depth=args.depth,
+                            flow_depth=args.flow_depth), end="")
         return 0
     if args.kind in ("communities", "flows"):
         from codemap.serve.subsystems import render_communities, render_flows
@@ -542,7 +543,11 @@ def _report_json(graph, args) -> dict:
         ids = q.impact_targets(args.symbol)
         return {"kind": "impact", "target": graph.target, "symbol": args.symbol,
                 "matched": ids,
-                "reports": [{"id": sid, **q.impact(sid, depth=args.depth)} for sid in ids]}
+                # R1-C40: the flows the change lands on ride next to the blast radius,
+                # not inside it — two answers with two different partialities.
+                "reports": [{"id": sid, **q.impact(sid, depth=args.depth),
+                             "flows": q.flows_to(sid, max_depth=args.flow_depth)}
+                            for sid in ids]}
     if args.kind == "communities":
         return {"kind": "communities", "target": graph.target,
                 "communities": Query(graph).communities()}
@@ -962,6 +967,9 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--symbol", help="Symbol for `report impact` (short or full name).")
     r.add_argument("--depth", type=int, default=2,
                    help="report impact: transitive BFS depth (default 2).")
+    r.add_argument("--flow-depth", type=int, default=5,
+                   help="report impact: how many call steps a flow may take to reach "
+                        "the symbol (default 5, same as `report flows`).")
     r.add_argument("--min-confidence", choices=["low", "medium", "high"], default=None,
                    help="report dead-code: only show candidates at/above this confidence.")
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")

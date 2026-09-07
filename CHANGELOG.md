@@ -5,6 +5,19 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **`impact` says which flows the change lands on, and at which step** (R1-C40). codemap had both ends
+  — `impact` walks inbound ("who references this"), `flows` walks outbound ("what a call sets in
+  motion") — and nothing joining them, so the question asked *before* a change ("what stops working, and
+  where in the scenario") had no answer. `report impact` gains a **Flows reached** section, and the json
+  / MCP / serve payloads a `flows` block: per entry point of the root, the shortest number of call steps
+  to the symbol or one of its members. Called *reached*, not *broken* — the graph knows the symbol is on
+  the path, not what an edit does to it. Three partialities are stated separately rather than left to be
+  inferred from a short list: `non_call_refs` (a reference arriving by import / inheritance / decoration
+  / attribute cannot appear in a flow at all), `beyond_depth` (entries that reach further than the bound
+  — counted, not dropped), and `in_call_graph: false` ("nothing to say", which is not "nothing reaches
+  it"). Schema unchanged (0.13). Measured: the reverse walk agrees with the forward `flows` on 1324
+  (symbol, entry) pairs of bquant and 252 of codemap, 0 mismatches.
+
 ## [0.0.15] - 2026-09-07
 
 **A rule that ran names itself.** Schema unchanged (0.13); no graph bytes, one line of `check` output.

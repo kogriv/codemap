@@ -815,6 +815,61 @@ class Query:
         return {"entry": entry, "edges": edges, "reached": len(seen) - 1,
                 "max_depth": max((e["distance"] for e in edges), default=0)}
 
+    def flows_to(self, symbol_id: str, *, max_depth: int = 5,
+                 root: str = "core") -> dict:
+        """Which flows a change to ``symbol_id`` lands on, and at which step (R1-C40).
+
+        The join of the two ends codemap already had: :meth:`impact` walks inbound
+        ("who references"), :meth:`flow` walks outbound ("what a call sets in
+        motion"), and neither answers the question asked *before* a change — "what
+        stops working, and where in the scenario". A flow here is what ``flows``
+        already calls one: an entry point of ``root`` (:meth:`entry_points`).
+        ``first_step`` is the shortest distance in ``calls`` edges from that entry
+        to the symbol **or one of its members** — shortest because "first" is what
+        was asked, and a BFS gives the minimum by construction.
+
+        Computed as one reverse BFS from the targets rather than a forward walk per
+        entry: the distance is the same measured from either end, and the cost drops
+        from O(entries × graph) to O(graph). The equivalence is what the acceptance
+        test checks against :meth:`flow`.
+
+        Says "reached", never "broken" (design D3): the graph knows the symbol lies
+        on the path, not whether the edit breaks it. Three separate partialities are
+        named rather than folded into the list — ``non_call_refs`` (a reference that
+        arrives by import / inheritance / decoration / attribute access cannot appear
+        in a flow at all), ``beyond_depth`` (entries that do reach, further than
+        ``max_depth`` — counted, not silently dropped), and the standing note that
+        call resolution is a lower bound. ``in_call_graph: False`` is the honest
+        "nothing to say about flows" for a symbol the call layer never modelled — not
+        the same answer as an empty list (R1-C44).
+        """
+        targets = {i for i in self._member_ids(symbol_id) if i in self._calls}
+        entries = self.entry_points(root)
+        refs = self.references_to(symbol_id)
+        out = {
+            "symbol": symbol_id, "root": root, "max_depth": max_depth,
+            "in_call_graph": bool(targets), "entry_points": len(entries),
+            "flows": [], "beyond_depth": 0,
+            "non_call_refs": sum(1 for r in refs if r["type"] != "calls"),
+        }
+        if not targets:
+            return out
+        dist = {t: 0 for t in targets}
+        frontier, step = set(targets), 0
+        while frontier:
+            nxt: set[str] = set()
+            for node in sorted(frontier):
+                for pred in self._calls.predecessors(node):
+                    if pred not in dist:
+                        dist[pred] = step + 1
+                        nxt.add(pred)
+            frontier, step = nxt, step + 1
+        reaching = sorted((dist[e], e) for e in entries if e in dist)
+        out["flows"] = [{"entry": e, "first_step": d}
+                        for d, e in reaching if d <= max_depth]
+        out["beyond_depth"] = sum(1 for d, _ in reaching if d > max_depth)
+        return out
+
     # -- relevance ranking (R1-C6) -------------------------------------------
 
     def _expand_seeds(self, seeds) -> set[str]:

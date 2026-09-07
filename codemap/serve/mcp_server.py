@@ -55,15 +55,27 @@ def _compact_impact(env: dict, limit: int) -> dict:
     for e in result.get("impact", []):
         refs = e.get("refs", [])
         shown = min(limit, len(refs))
-        entries.append({**e, "refs": refs[:limit],
-                        "refs_shown": shown, "refs_total": len(refs)})
+        entry = {**e, "refs": refs[:limit],
+                 "refs_shown": shown, "refs_total": len(refs)}
+        # R1-C40: the flows section is a second computed list, cut here as well — in its
+        # own vocabulary, so a reader never has to guess which list the envelope's summed
+        # block describes (it is the refs one).
+        flows = e.get("flows")
+        if isinstance(flows, dict):
+            listed = flows.get("flows", [])
+            entry["flows"] = {**flows, "flows": listed[:limit],
+                              "flows_shown": min(limit, len(listed)),
+                              "flows_total": len(listed)}
+        entries.append(entry)
         shown_total += shown
         refs_total += len(refs)
     result["impact"] = entries
     env["result"] = result
     env["limit"] = limit_block(limit, shown_total, refs_total,
-                               note="applied per impact entry, not across the answer; "
-                                    "the by_root counts are complete regardless")
+                               note="counts the refs list, applied per impact entry, not "
+                                    "across the answer; the by_root counts are complete "
+                                    "regardless, and the flows list carries its own "
+                                    "flows_shown / flows_total")
     return env
 
 
@@ -164,13 +176,18 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("covers", {"test": test, "depth": depth, "cap": cap})
 
     @server.tool()
-    def impact(symbol: str, depth: int = 2, limit: int = 40, full: bool = False) -> dict:
+    def impact(symbol: str, depth: int = 2, limit: int = 40, full: bool = False,
+               flow_depth: int = 5) -> dict:
         """Blast radius of changing `symbol`: inbound references up to `depth`, counted
-        by provenance root (core/tests/docs/…). Compact by default (F22): omits the
-        duplicate markdown and caps the flat ref list at `limit` (by_root counts stay
-        complete, and every entry carries refs_shown/refs_total). Pass full=true for
-        the entire payload including markdown."""
-        env = op("impact", {"symbol": symbol, "depth": depth})
+        by provenance root (core/tests/docs/…), plus `flows` — which entry points reach
+        it and at which step (`first_step`), within `flow_depth`. Compact by default
+        (F22): omits the duplicate markdown and caps each list at `limit` (by_root counts
+        stay complete; entries carry refs_shown/refs_total and flows_shown/flows_total).
+        Flows follow resolved `calls` edges only: `non_call_refs` says how many
+        references cannot appear there, `beyond_depth` how many entries reach further,
+        and `in_call_graph: false` means the call layer never modelled the symbol — not
+        that no flow reaches it. Pass full=true for the entire payload with markdown."""
+        env = op("impact", {"symbol": symbol, "depth": depth, "flow_depth": flow_depth})
         return env if full else _compact_impact(env, limit)
 
     @server.tool()

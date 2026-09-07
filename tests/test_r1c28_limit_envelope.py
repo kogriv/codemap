@@ -244,7 +244,20 @@ def test_block_derives_truncated_when_not_given():
 
 # -- the guard: this rule outlives the fix only if something enforces it -----
 
-_LIMIT_ARG = re.compile(r"""args\.get\(\s*["'](limit|cap|budget|max|top)["']""")
+_LIMIT_ARG = re.compile(
+    r"""args\.get\(\s*["'](?:\w+_)?(limit|cap|budget|max|top)(?:_\w+)?["']""")
+
+
+def test_the_guard_reads_a_qualified_limit_name_too():
+    """R1-C40: the pattern matched the *exact* names only, so an op taking `flow_limit`
+    would have walked past the classification in silence — not because the argument is
+    exempt, but because the guard was looking for a shorter string. An exclusion that was
+    never shown what it must catch is not an exclusion.
+    """
+    assert _LIMIT_ARG.search('args.get("flow_limit", 5)')
+    assert _LIMIT_ARG.search("args.get('max_results')")
+    assert _LIMIT_ARG.search('args.get("limit", 50)'), "the original form still matches"
+    assert not _LIMIT_ARG.search('args.get("depth", 2)'), "a bound is not a cut"
 
 
 def test_every_op_that_reads_a_limit_arg_is_accounted_for():

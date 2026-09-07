@@ -141,7 +141,8 @@ codemap query analyze_zones --graph graph.json
 codemap report architecture   --graph graph.json   # layers, coupling, god-objects, cycles
 codemap report dependencies   --graph graph.json
 codemap report dead-code      --graph graph.json
-codemap report impact --symbol MyClass --graph graph.json
+codemap report impact --symbol MyClass --graph graph.json   # who references it, and which
+                                                            # flows it lands on — at which step
 codemap report api-surface --graph graph.json --format json   # every kind has a json form
 
 # change-set review straight from a diff → risk-sorted dossier

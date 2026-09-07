@@ -62,18 +62,39 @@ def test_dependencies_both_ways(q):
     assert PIPELINE in q.dependents(MODELS)
 
 
-def test_cycle_detection(q):
-    # bquant's pipeline<->cache pair is mutually dependent, and the cache side reaches
-    # pipeline only through an import under `if TYPE_CHECKING:` — which never runs. Until
-    # R1-C48 (issue #18) that edge was counted as eager and this test pinned the defect:
-    # the pair is a *dependency* cycle, and not an import-time one.
-    pair = frozenset({PIPELINE, "bquant.analysis.zones.cache"})
-    assert pair not in {frozenset(c) for c in q.import_cycles()}, \
-        "an import under TYPE_CHECKING must not close an eager cycle"
-    assert pair not in {frozenset(c) for c in q.lazy_import_cycles()}, \
-        "nor a runtime one: R1-C49, the pair has no runtime dependency at all"
-    assert pair in {frozenset(c) for c in q.type_only_import_cycles()}
-    assert q.import_map()["type_checking"] >= 1
+def test_cycle_detection(q, graph):
+    """The three kinds partition cleanly, and each is closed by the scope it claims.
+
+    This test used to name one concrete pair of the target's modules — `pipeline ↔
+    cache`, closed by an import under `if TYPE_CHECKING:` — pinning first the R1-C48 /
+    R1-C49 defect and then their fix. On 2026-09-07 the target removed that annotation
+    as dead, and the assertion went red over a change in **someone else's tree** that
+    codemap had answered correctly. R1-C25's lesson arriving from the other side: a test
+    that names the target's content measures the target. The concrete pairs of each kind
+    live in the synthetic, mutation-verified fixtures (`test_r1c48_*`, `test_r1c49_*`);
+    what belongs here is that the partition holds on a real tree of ~90 modules.
+    """
+    eager = {frozenset(c) for c in q.import_cycles()}
+    lazy = {frozenset(c) for c in q.lazy_import_cycles()}
+    type_only = {frozenset(c) for c in q.type_only_import_cycles()}
+    assert not (eager & lazy) and not (eager & type_only) and not (lazy & type_only), \
+        "a cycle has exactly one kind — the weakest scope that closes it (R1-C49)"
+    assert set(q.import_map()) == {"module_level", "function_local", "type_checking"}
+    assert q.import_map()["module_level"] > 0
+
+    scopes: dict[tuple[str, str], set[str]] = {}
+    for e in graph.edges:
+        if e.type == "imports":
+            scopes.setdefault((e.source, e.target), set()).add(
+                e.extras.get("scope", "module"))
+    def closing(cycle, scope):  # noqa: E306 — reads as part of the assertion below
+        members = set(cycle)
+        return any(scope in s for (src, dst), s in scopes.items()
+                   if src in members and dst in members)
+    for c in lazy:
+        assert closing(c, "function"), f"a lazy cycle needs a function-local edge: {c}"
+    for c in type_only:
+        assert closing(c, "type_checking"), f"a type-only cycle needs one: {c}"
 
 
 def test_orphan_modules(q):

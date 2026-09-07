@@ -11,7 +11,57 @@ from __future__ import annotations
 from codemap.query import Query
 
 
-def render_impact(query: Query, symbol: str, *, depth: int = 2) -> str:
+_FLOW_ROWS = 40
+
+
+def _flow_section(rep: dict) -> list[str]:
+    """R1-C40: which scenarios the change lands on, and at which step.
+
+    The three partialities of `Query.flows_to` are rendered as words, not left for the
+    reader to infer from a short list: an empty flow list next to twenty references is
+    the exact shape that reads as "nothing will break" when it means "the flow layer
+    cannot see this kind of edge".
+    """
+    lines = [f"### Flows reached ({len(rep['flows'])} of {rep['entry_points']} "
+             f"entry point(s) in root `{rep['root']}`)", ""]
+    if not rep["in_call_graph"]:
+        lines += ["_The call layer never modelled this symbol — no resolved call reaches "
+                  "it or leaves it — so there is nothing to say about flows here. This is "
+                  "not 'no flow reaches it'._", ""]
+        return lines
+    if rep["flows"]:
+        lines.append("_`step` — where in the flow the change first lands: 1 means the "
+                     "entry point calls it directly, 0 that the entry point is the "
+                     "symbol itself (or one of its members), so the flow starts inside "
+                     "the change._")
+        lines.append("")
+        for f in rep["flows"][:_FLOW_ROWS]:
+            lines.append(f"- `{f['entry']}` — step {f['first_step']}")
+        if len(rep["flows"]) > _FLOW_ROWS:
+            lines.append(f"- _… {len(rep['flows']) - _FLOW_ROWS} more_")
+    else:
+        lines.append(f"_No entry point reaches it within {rep['max_depth']} step(s)._")
+    lines.append("")
+    notes = []
+    if rep["beyond_depth"]:
+        notes.append(f"{rep['beyond_depth']} further entry point(s) reach it **beyond** "
+                     f"{rep['max_depth']} steps — counted, not listed.")
+    if rep["non_call_refs"]:
+        notes.append(f"{rep['non_call_refs']} direct reference(s) arrive by an edge that "
+                     "is not a call (import / inheritance / decoration / attribute) and "
+                     "cannot appear in a flow at all.")
+    notes.append("Flows follow resolved `calls` edges only — a lower bound both ways: an "
+                 "unresolved caller also leaves a real internal looking like an entry "
+                 "point, so the denominator is an upper bound. *Reached*, not *broken*: "
+                 "the graph knows the symbol is on the path, not whether the change "
+                 "breaks it.")
+    lines.append("_" + " ".join(notes) + "_")
+    lines.append("")
+    return lines
+
+
+def render_impact(query: Query, symbol: str, *, depth: int = 2,
+                  flow_depth: int = 5) -> str:
     """Markdown blast-radius for the symbol matching ``symbol`` (short or full)."""
     ids = query.impact_targets(symbol)  # F23: short name / full id / re-export
     lines = [f"# Impact — `{symbol}`", ""]
@@ -63,6 +113,9 @@ def render_impact(query: Query, symbol: str, *, depth: int = 2) -> str:
             if indirect:
                 lines.append(f"- _+{len(indirect)} transitive (distance >1)_")
             lines.append("")
+
+        # R1-C40: from "who references" to "what stops working, and where".
+        lines += _flow_section(query.flows_to(sid, max_depth=flow_depth))
 
         # F7: argument contract of the call-sites — what a signature change touches.
         contract = query.call_contract(sid)
