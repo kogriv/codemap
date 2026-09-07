@@ -422,6 +422,28 @@ apart from the tool version. **Procedure lesson:** when the fix lives in the *pa
 verification tree must be one where the rule passes — a red tree exercises the other branch and answers
 nothing. Same shape as R1-C37, met in a release check rather than a test.
 
+**0.0.16 published 2026-09-07:** [`codmap` 0.0.16](https://pypi.org/project/codmap/0.0.16/), schema
+**0.13** (unchanged, fifth release running). Same procedure from the pushed commit `48d032f`, CI green,
+`twine check` PASSED on both artifacts, tag `v0.0.16` written with `-F`. The first release since 0.0.12
+that comes from our own reading rather than a neighbour's issue.
+
+The release note claims the graph does not move, so the check from PyPI was exactly that claim, made with
+**both published versions on one tree** — not with the working copy:
+
+```
+0.0.15 / 0.0.16 on the same 4-module tree:  nodes identical, edges identical
+                                            schema 0.13 → 0.13; only `provenance` differs
+0.0.16  report impact --symbol work         "Flows reached (1 of 1)" · `pkg.entry.main` — step 2
+0.0.15  the same command                    no such section
+0.0.16  report behavior                     "by route grade: **exact** 2"
+0.0.15  the same report                     no such line
+```
+
+**Procedure lesson (small, and it costs a minute of doubt):** the first `uv run --with codmap==X.Y.Z`
+after an upload answers *"there is no version X.Y.Z"* from uv's **cached** index — indistinguishable, at a
+glance, from an upload that failed. `--refresh` resolves it. Check the version's PyPI page before
+concluding anything about the upload.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
