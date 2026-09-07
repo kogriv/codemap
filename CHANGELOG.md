@@ -5,6 +5,15 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.16] - 2026-09-07
+
+**Two questions the graph could answer and did not: where in a scenario a change lands, and what found
+each edge.** Schema unchanged (**0.13**, fifth release running) and **no graph bytes move** — a rebuild
+of the same tree after these changes is byte-identical in nodes and edges, so nothing needs
+re-extracting; bump the pin and the new answers are there. The first release since 0.0.12 that comes
+from our own reading rather than a neighbour's issue: both items were logged on 2026-09-01 while
+measuring OntoIndex, and both turned out to need less than the entry that proposed them.
+
 - **Every edge says what found it, and what that route is worth** (R1-C39). The route was already on
   the edge — `extras.resolution`, six distinguishable values on `calls` alone — but six modules emitted
   those values and nothing enumerated them, so a new or mistyped one shipped in silence; and nothing
