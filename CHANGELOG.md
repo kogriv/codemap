@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.15] - 2026-09-07
+
+**A rule that ran names itself.** Schema unchanged (0.13); no graph bytes, one line of `check` output.
+Reported by the consumer the day they took 0.0.14 and enabled the rule it added.
+
 - **A rule that ran names itself.** `no_type_only_cycles` was enforced but missing from `check`'s
   "Rules enforced" line, and a contract holding only that rule printed `Rules enforced: .` — reported by the
   consumer the day they took 0.0.14. The R1-C30-f2 defect from the other side: there a reader concluded more
