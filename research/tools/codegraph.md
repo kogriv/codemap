@@ -337,6 +337,43 @@ findCircularDependencies: [["cache.py","settings.py"]]
 — which is the whole argument for fixing the edges before exposing the feature, in fifteen lines instead
 of a 207-file table. **No response yet**; this card claims no verdict on the author's behalf.
 
+#### Update 2026-09-08 — the thread moved, and the mechanism now has a name
+
+Someone else (`inth3shadows`) took #1566 further on 2026-09-04: reproduced on **1.6.0** with a five-line
+TypeScript fixture, then localised the cause. Every `instance-method` resolution funnels through
+`resolveMethodOnType` (`src/resolution/name-matcher.ts`, five call sites); it validates that the method
+*exists on the named type* — which is why a wrong inference usually yields nothing — but never asks
+whether the inferred type is a **project** type at all. `Map` is not, so `Map.get` is looked up against
+project classes and matches one by name. The existing `BUILTIN_TYPES` set cannot catch it: it is scalars
+only, holds no `Map`/`Set`/`Array`/`Promise`, and lives in the *extractor*, which the resolver never
+consults. Their proposed guard bails on a built-in object type before the project-class lookup — and they
+say plainly they did **not** build or test it, unlike their patches on #1681/#1683.
+
+Two adjacent issues by the same reporter were **fixed and closed by the author on 2026-09-08** — #1683
+(call-expression receivers fabricating an edge to any same-named top-level symbol; PR #1748) and #1681
+(the Python shape: a top-level function named like a collection method — both a fabricated edge and a
+missed real one; #1748 + #1749). So the fabrication cluster this card measured is being closed upstream.
+**npm `latest` is still 1.6.0** (published 2026-08-26), so every number above still describes the
+*released* tool — and stops describing it the moment those land in a release. Re-measure then; do not
+keep publishing figures for a defect the author has fixed.
+
+**And the same question, asked of ourselves.** Their Python repro run against codemap (2026-09-08,
+`codmap` 0.0.16, both tiers): **no fabricated edge**. `DEFAULTS.get(name)` produces nothing into
+`LRUCache.get`, the only call edge is the real one, and `import_cycles()` is empty where their
+`findCircularDependencies()` reports a cycle. Pushed harder — a project class declaring `get`, `items`,
+`append` plus a module-level `update`, against receivers that are a plain `{}` or `[]`:
+
+| | built-in receiver calls (4) | true `Store.get` calls (2) |
+|---|---|---|
+| fast tier | 0 fabricated | 0 found (only the constructor edge) |
+| deep tier | 0 fabricated | **2 found** (annotated parameter, constructed receiver) |
+
+So the guard #1566 proposes is what an independent implementation already does, and the deep tier shows
+it need not cost the true edges: jedi types the receiver, a built-in resolves to nothing, and an edge is
+emitted only when its target is a node we extracted. The fast tier buys the same safety with recall
+instead — it drops two real calls their resolver would find. Two prices for the same refusal to guess,
+and the second one is ours.
+
 ### Determinism — split the way GitNexus's was
 
 Two clean-room stagings, materialized from the same manifest, indexed independently:
@@ -496,8 +533,10 @@ the cheap half of the difference and is now a backlog candidate (adaptive deboun
   - Anything outside Python, and any repo other than bquant at one commit.
   - Whether the author agrees. The truncation defect is filed as
     [#1639](https://github.com/colbymchenry/codegraph/issues/1639) (400 issues scanned first, no
-    duplicate); **no response yet**, and this card will not claim a verdict on his behalf. The
-    `updatedAt` observation is deliberately *not* filed; see the determinism section for why.
+    duplicate); **still zero comments as of 2026-09-08**, eleven days on, while the author closed two
+    other reporter's issues in the same tracker that morning. Nothing follows from that about the
+    defect: an untouched issue is an untouched issue, and this card will not read a verdict into
+    silence. The `updatedAt` observation is deliberately *not* filed; see the determinism section.
   - Why `allCallers` is ordered as it is. It is stable within a build, but the kind-grouping differs
     between targets (files first on bquant, functions first on the minimal repro), so the ordering is
     edge-insertion order rather than any rule we have identified. The issue does not ask for a
