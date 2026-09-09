@@ -172,6 +172,13 @@ philosophical difference about honest partial answers; it is that pattern not be
 [#1512](https://github.com/colbymchenry/codegraph/issues/1512) is a different defect in the same
 function (same-named definitions merged, no `--file`).
 
+**Outcome (2026-09-08): fixed.** Closed as completed by
+[PR #1772](https://github.com/colbymchenry/codegraph/pull/1772), *"fix: report callers/callees/query
+truncation"* — merged five minutes after the reply, rebased from an earlier attempt (#1647) that had
+stalled, with closeout tracked under #1674. **Not released**: npm `latest` is still 1.6.0, so the
+measurements in this section describe the tool a reader installs today, and stop describing it at the
+next release. Nothing here is claimed about the fix's shape — the PR was not read, only its state.
+
 ### The library surface — the third interface, and nobody is using it
 
 **Added 2026-08-28, on a second pass.** The first разбор measured the CLI and reasoned about the MCP
@@ -349,13 +356,20 @@ only, holds no `Map`/`Set`/`Array`/`Promise`, and lives in the *extractor*, whic
 consults. Their proposed guard bails on a built-in object type before the project-class lookup — and they
 say plainly they did **not** build or test it, unlike their patches on #1681/#1683.
 
-Two adjacent issues by the same reporter were **fixed and closed by the author on 2026-09-08** — #1683
-(call-expression receivers fabricating an edge to any same-named top-level symbol; PR #1748) and #1681
-(the Python shape: a top-level function named like a collection method — both a fabricated edge and a
-missed real one; #1748 + #1749). So the fabrication cluster this card measured is being closed upstream.
-**npm `latest` is still 1.6.0** (published 2026-08-26), so every number above still describes the
-*released* tool — and stops describing it the moment those land in a release. Re-measure then; do not
-keep publishing figures for a defect the author has fixed.
+**The whole cluster was closed on 2026-09-08, this issue included.** #1683 (call-expression receivers;
+PR #1748) and #1681 (the Python shape — a top-level function named like a collection method, both a
+fabricated edge and a missed real one; #1748 + #1749) in the morning; then **#1566 itself** at 19:01,
+implemented in [PR #1790](https://github.com/colbymchenry/codegraph/pull/1790) — receiver inference now
+stops guessing when a known built-in has no matching project method, with a four-fixture before/after
+table, nine new negative regression cases that failed before the fix, and 920 + 889 tests across the
+native and wasm engines. The author evaluated the community patch (#1691) and did **not** use it; the
+`this.<field>.method()` family stays open under #1496/#1691.
+
+**Every number in this card still describes npm `latest` 1.6.0** (published 2026-08-26) — all four PRs
+are merged to `main` and **none is released**, which the author says himself: *"re-index after upgrading
+once it is released."* So the figures are not stale yet, and the condition under which they become stale
+is now written down: **when a release ships, re-measure before quoting 136-vs-41 or the truncation
+behaviour again.** Publishing a fixed defect's numbers is the same offence as an unmarked truncation.
 
 **And the same question, asked of ourselves.** Their Python repro run against codemap (2026-09-08,
 `codmap` 0.0.16, both tiers): **no fabricated edge**. `DEFAULTS.get(name)` produces nothing into
@@ -531,12 +545,15 @@ the cheap half of the difference and is now a backlog candidate (adaptive deboun
     means a labelled call-site suite on their output, which is `research/bench/callgraph_accuracy.py`'s
     job and was not run against a second tool.
   - Anything outside Python, and any repo other than bquant at one commit.
-  - Whether the author agrees. The truncation defect is filed as
-    [#1639](https://github.com/colbymchenry/codegraph/issues/1639) (400 issues scanned first, no
-    duplicate); **still zero comments as of 2026-09-08**, eleven days on, while the author closed two
-    other reporter's issues in the same tracker that morning. Nothing follows from that about the
-    defect: an untouched issue is an untouched issue, and this card will not read a verdict into
-    silence. The `updatedAt` observation is deliberately *not* filed; see the determinism section.
+  - ~~Whether the author agrees.~~ **He does — answered and fixed 2026-09-08.**
+    [#1639](https://github.com/colbymchenry/codegraph/issues/1639) is closed as completed by
+    [PR #1772](https://github.com/colbymchenry/codegraph/pull/1772) (*"fix: report callers/callees/query
+    truncation"*, merged 14:52, rebased from an earlier #1647, closeout tracked under #1674).
+    **Correction to this card, made the same day:** an earlier revision of this line read *"still zero
+    comments, eleven days on, while the author closed two other issues that morning"* — written at
+    midday and already false by the afternoon. The waiting was real; the shape read into it was not,
+    which is the failure this card warns about in the other direction. The `updatedAt` observation
+    remains deliberately *not* filed; see the determinism section.
   - Why `allCallers` is ordered as it is. It is stable within a build, but the kind-grouping differs
     between targets (files first on bquant, functions first on the minimal repro), so the ordering is
     edge-insertion order rather than any rule we have identified. The issue does not ask for a

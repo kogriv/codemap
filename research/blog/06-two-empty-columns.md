@@ -290,6 +290,11 @@ property of the tool. It is edge-insertion order, and my target merely happened 
 mechanism I thought I had found got weaker; the defect got stronger. What a truncated answer drops is
 **arbitrary**, which is exactly why the answer has to say it was truncated.
 
+> **Postscript, 2026-09-08.** The author fixed it: #1639 is closed as completed by PR #1772,
+> *"fix: report callers/callees/query truncation"*, merged the same day. Not released yet, so
+> the numbers above still describe what `npm i` gives you — and stop describing it at the next
+> release. Filed on his terms, fixed on his terms.
+
 ## Who each tool is for
 
 The honest resolution isn't that one class of question is better. It's that they have different
