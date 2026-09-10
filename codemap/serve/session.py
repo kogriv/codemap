@@ -118,6 +118,20 @@ _UNLIMITED_BY_DESIGN = {
 }
 
 
+def _grade_filter(min_confidence, every: list, kept: list, grades: dict) -> dict:
+    """The `filter` block: what the route-grade filter kept, dropped, and out of what.
+
+    R1-C51, the filter half of R1-C28. ``by_grade`` is the composition of the
+    *unfiltered* answer, so an empty ``kept`` is readable on its own — `{"heuristic": 2}`
+    with `returned: 0` says "called, but only through routes you excluded", which a bare
+    `[]` cannot. Emitted even with no filter in force (`min_confidence: null`), because
+    that is when a reader most needs to know what a filter *would* remove.
+    """
+    return {"min_confidence": min_confidence, "returned": len(kept),
+            "total": len(every), "dropped": len(every) - len(kept),
+            "by_grade": grades}
+
+
 def _match(q: Query, n) -> dict:
     """One entry of the ``matches`` list: where the symbol is, and how it is declared.
 
@@ -319,6 +333,7 @@ class Session:
                     "ops": sorted(_OPS)}
         self._resolution = None
         self._limit = None
+        self._filter = None
         try:
             env = {"ok": True, "result": fn(self, args)}
         except Exception as exc:  # a bad arg must not kill the resident process
@@ -335,6 +350,15 @@ class Session:
             env["epistemic"] = self._epistemic(op)
         if self._limit is not None:  # R1-C28: how much of the answer survived the cut
             env["limit"] = self._limit
+        # R1-C51: a *filter* is the same partiality as a limit, and it was not declared.
+        # `callers(min_confidence="exact")` came back as a bare `[]` on symbols that are
+        # called on every run through a factory — reported by the dogfood target with the
+        # measurement that makes it matter (13 of 25 registry targets have no exact
+        # caller at all). Emitted whenever the op accepts the filter, including when it
+        # dropped nothing: a caller must not have to tell "nothing was filtered" from
+        # "this build does not report filtering".
+        if self._filter is not None:
+            env["filter"] = self._filter
         return env
 
     def _epistemic(self, op: str) -> dict:
@@ -518,12 +542,20 @@ class Session:
         return res
 
     def _op_callers(self, args) -> list:
-        return self.query.callers(self._canon(args["symbol"]),
-                                  min_confidence=args.get("min_confidence"))
+        sid = self._canon(args["symbol"])
+        kept = self.query.callers(sid, min_confidence=args.get("min_confidence"))
+        self._filter = _grade_filter(args.get("min_confidence"),
+                                     self.query.callers(sid), kept,
+                                     self.query.caller_grades(sid))
+        return kept
 
     def _op_callees(self, args) -> list:
-        return self.query.callees(self._canon(args["symbol"]),
-                                  min_confidence=args.get("min_confidence"))
+        sid = self._canon(args["symbol"])
+        kept = self.query.callees(sid, min_confidence=args.get("min_confidence"))
+        self._filter = _grade_filter(args.get("min_confidence"),
+                                     self.query.callees(sid), kept,
+                                     self.query.callee_grades(sid))
+        return kept
 
     def _op_implementers(self, args) -> list:
         return self.query.implementers(self._canon(args["protocol"]))

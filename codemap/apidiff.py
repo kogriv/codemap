@@ -45,6 +45,8 @@ class ApiDiff:
     added: list[str] = field(default_factory=list)     # new public symbols
     removed: list[str] = field(default_factory=list)   # deleted public symbols (each breaking)
     changes: list[Change] = field(default_factory=list)  # per-symbol classified changes
+    root: str | None = "core"                          # the provenance root compared (R1-C52)
+    excluded: dict[str, int] = field(default_factory=dict)  # public symbols left unjudged, by root
 
     @property
     def breaking(self) -> list[Change]:
@@ -52,6 +54,8 @@ class ApiDiff:
 
     def to_dict(self) -> dict:
         return {
+            "root": self.root,
+            "excluded": dict(self.excluded),
             "added": sorted(self.added),
             "removed": sorted(self.removed),
             "changes": [
@@ -184,11 +188,43 @@ def _is_public(node: Node) -> bool:
     return node.visibility == "public"
 
 
-def diff_api(old: Graph, new: Graph) -> ApiDiff:
-    """Diff the public API surface of two graphs (old → new)."""
+def _root_of(node: Node) -> str:
+    """Provenance root of a node; an untagged graph is all ``core`` by construction."""
+    return node.extras.get("root", "core")
+
+
+def diff_api(old: Graph, new: Graph, *, root: str | None = "core") -> ApiDiff:
+    """Diff the public API surface of two graphs (old → new).
+
+    ``root`` restricts the comparison to one provenance root, default ``core`` — the
+    package. R1-C52: this used to filter on visibility alone, so on a repo-scoped graph
+    (built with ``--consumer``) every public *test* function counted as added API. The
+    dogfood target measured it on their own release gate: **40 of 47** "added public
+    symbols" were test functions, which means `--exit-code` fired on test churn rather
+    than on the package. A public function in `tests/` is not this package's API.
+
+    Pass ``root=None`` to compare every root, and read ``excluded`` for what a root
+    filter left out — a gate must name what it did not judge (R1-C30-f2).
+    """
     diff = ApiDiff()
-    old_nodes = {i: n for i, n in old.nodes.items() if n.kind in ("function", "class", "attribute")}
-    new_nodes = {i: n for i, n in new.nodes.items() if n.kind in ("function", "class", "attribute")}
+
+    def _pick(graph: Graph) -> tuple[dict, dict[str, int]]:
+        keep, skipped = {}, {}
+        for i, n in graph.nodes.items():
+            if n.kind not in ("function", "class", "attribute"):
+                continue
+            r = _root_of(n)
+            if root is not None and r != root:
+                if _is_public(n):
+                    skipped[r] = skipped.get(r, 0) + 1
+                continue
+            keep[i] = n
+        return keep, skipped
+
+    old_nodes, _ = _pick(old)
+    new_nodes, skipped = _pick(new)
+    diff.root = root
+    diff.excluded = dict(sorted(skipped.items()))
 
     for sid, n in new_nodes.items():
         if sid not in old_nodes and _is_public(n):

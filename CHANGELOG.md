@@ -5,6 +5,31 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A library had no entry point, and the better tier answered emptier** (R1-C50, [issue
+  #19](https://github.com/kogriv/codemap/issues/19)). `entry_points` asked for in-degree zero across
+  the whole graph, so the one function a user enters a package through was disqualified by being
+  used — 43 calls, all from `tests`/`examples`/`scripts`/`research`. On the deep tier the chain above
+  a node closes, the node stops being a head, and `report impact` answered *"step 3"* on fast and
+  *"no entry point reaches it"* on deep — same tree, same version. In-degree is now counted **within
+  the root** (a call from a consumer root is a use, not an internal caller); each entry lists the
+  outside roots that enter it (`entered from tests ×37`), which is the evidence the old rule read as
+  a disqualification; and the empty answer names its kind — including **"the nearest head is at step
+  N, re-run with `--flow-depth N`"**. The note now warns in both directions: an unresolved caller
+  inflates the entry-point count, and resolving one *removes* an entry, so a more complete graph can
+  answer with fewer flows. Reported by the dogfood target while verifying our own measurement.
+- **A filter is partiality too, and it now declares itself** (R1-C51, same issue). `callers(symbol,
+  min_confidence="exact")` returned a bare `[]` for symbols called on every run through a factory:
+  of the 25 symbols a registry fan-out reaches on the dogfood tree, **13 have no `exact` caller at
+  all** — every strategy method. The envelope carries a `filter` block — `{min_confidence, returned,
+  total, dropped, by_grade}` — whenever the op accepts the filter, including when nothing was
+  dropped, in the shape R1-C28 already uses for limits. `by_grade` is the composition of the
+  *unfiltered* answer, so an empty result reads as "called, but only through routes you excluded".
+- **`diff` judged the consumers' API, not the package's** (R1-C52, same issue). `diff_api` filtered
+  on visibility alone, so on a repo-scoped graph public test functions counted as added API — **40 of
+  47** in the reporter's release-gate run, which made `--exit-code` a gate on test churn. It now
+  compares one provenance root (default `core`) and states what it did not judge; `root=None` opts
+  back into everything. Single-package graphs are unaffected but for the new scope line.
+
 ## [0.0.16] - 2026-09-07
 
 **Two questions the graph could answer and did not: where in a scenario a change lands, and what found

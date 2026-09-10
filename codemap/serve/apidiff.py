@@ -44,6 +44,19 @@ def render_apidiff(old: Graph, new: Graph) -> str:
     out.append(f"{verdict} {s['added']} added, {s['removed']} removed, "
                f"{s['changed_symbols']} changed.")
     out.append("")
+    # R1-C52: a gate must name what it did not judge. The verdict covers one root — the
+    # package — and on a repo-scoped graph that leaves the public symbols of `tests`,
+    # `examples` and friends outside it. Silence here is what let 40 test functions read
+    # as 40 additions to the API.
+    if d.get("root") is not None:
+        excluded = d.get("excluded") or {}
+        out.append(f"_Compared: public symbols of root `{d['root']}` — the package._"
+                   if not excluded else
+                   f"_Compared: public symbols of root `{d['root']}` — the package. "
+                   "**Not judged:** "
+                   + ", ".join(f"{n} public symbol(s) in `{r}`" for r, n in excluded.items())
+                   + " — a consumer root is not this package's API._")
+        out.append("")
     # R1-C25/D4: a verdict about the code is only a verdict about the code when both
     # graphs came from the same tool. Say so above the verdict, not in a footnote.
     prov = d.get("provenance") or {}

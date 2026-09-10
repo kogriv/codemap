@@ -834,17 +834,74 @@ class Query:
         return out
 
     def entry_points(self, root: str = "core") -> list[str]:
-        """Call-forest roots: functions that call out but are never called (resolved).
+        """Call-forest roots: functions that call out and are called by nothing *in
+        their own root* (resolved calls only).
 
-        Where behaviour starts — public API / mains / not-yet-triggered. Restricted
-        to one provenance ``root`` (default core). Best-effort: call resolution is
-        partial, so an unresolved caller can leave a real internal as an entry point.
+        Where behaviour starts — public API / mains / not-yet-triggered. Restricted to
+        one provenance ``root`` (default core).
+
+        R1-C50: "called by nothing" used to mean in-degree zero **across the whole
+        graph**, which on a library means the public API is never an entry point — the
+        one function a user enters the package through is called from `tests`,
+        `examples` and `scripts`, and those 43 calls were what disqualified it. A call
+        from a consumer root is a *use*, not an internal caller; being used is not
+        evidence of being reachable-from-elsewhere. Reported by the dogfood target as
+        [issue #19](https://github.com/kogriv/codemap/issues/19). On a single-package
+        graph every node is `core`, so this is the same set as before by construction.
+
+        Best-effort in **both** directions: an unresolved caller leaves a real internal
+        looking like an entry point (the set is an over-estimate), and resolving one
+        *removes* an entry point (it is an under-estimate of heads whose chain the
+        resolver cannot close). The second direction is what #19 measured.
         """
         return sorted(
             n for n in self._calls.nodes
             if self.root_of(n) == root
-            and self._calls.out_degree(n) > 0 and self._calls.in_degree(n) == 0
+            and self._calls.out_degree(n) > 0
+            and not any(self.root_of(p) == root
+                        for p in self._calls.predecessors(n))
         )
+
+    def external_callers(self, symbol_id: str, root: str = "core") -> dict[str, int]:
+        """Resolved callers of ``symbol_id`` living **outside** ``root``, by root.
+
+        R1-C50/D8: on an entry point this is the evidence that the head is public —
+        `{"tests": 43}` says the package is entered here, which is exactly what the
+        in-degree rule used to read as a disqualification.
+        """
+        out: dict[str, int] = {}
+        if symbol_id in self._calls:
+            for p in self._calls.predecessors(symbol_id):
+                r = self.root_of(p)
+                if r != root:
+                    out[r] = out.get(r, 0) + 1
+        return dict(sorted(out.items()))
+
+    def caller_grades(self, symbol_id: str) -> dict[str, int]:
+        """Histogram of the route grades of the resolved calls *into* ``symbol_id``.
+
+        R1-C51: what `callers(min_confidence=…)` would drop, so a filtered answer can
+        say so instead of coming back as a bare empty list. Reported by the dogfood
+        target with the measurement that makes it matter: of the 25 symbols their
+        registry fan-out reaches, **13 have no `exact` caller at all** — every strategy
+        method — so `min_confidence="exact"` answers `[]` about symbols that are called
+        on every run, through an object a factory returned for a string key.
+        """
+        out: dict[str, int] = {}
+        if symbol_id in self._calls:
+            for p in self._calls.predecessors(symbol_id):
+                g = self._calls.edges[p, symbol_id].get("confidence") or "unknown"
+                out[g] = out.get(g, 0) + 1
+        return dict(sorted(out.items(), key=lambda kv: _grade_rank(kv[0])))
+
+    def callee_grades(self, symbol_id: str) -> dict[str, int]:
+        """Histogram of the route grades of the resolved calls *out of* ``symbol_id``."""
+        out: dict[str, int] = {}
+        if symbol_id in self._calls:
+            for t in self._calls.successors(symbol_id):
+                g = self._calls.edges[symbol_id, t].get("confidence") or "unknown"
+                out[g] = out.get(g, 0) + 1
+        return dict(sorted(out.items(), key=lambda kv: _grade_rank(kv[0])))
 
     def flow(self, entry: str, *, max_depth: int = 5) -> dict:
         """Forward call-flow from ``entry`` along ``calls`` edges, bounded by depth.
@@ -906,7 +963,8 @@ class Query:
         out = {
             "symbol": symbol_id, "root": root, "max_depth": max_depth,
             "in_call_graph": bool(targets), "entry_points": len(entries),
-            "flows": [], "beyond_depth": 0,
+            "flows": [], "beyond_depth": 0, "nearest_beyond": None,
+            "inbound_calls": sum(len(self._calls.pred[t]) for t in targets),
             "non_call_refs": sum(1 for r in refs if r["type"] != "calls"),
         }
         if not targets:
@@ -922,9 +980,16 @@ class Query:
                         nxt.add(pred)
             frontier, step = nxt, step + 1
         reaching = sorted((dist[e], e) for e in entries if e in dist)
-        out["flows"] = [{"entry": e, "first_step": d}
+        out["flows"] = [{"entry": e, "first_step": d,
+                         "external_callers": self.external_callers(e, root)}
                         for d, e in reaching if d <= max_depth]
-        out["beyond_depth"] = sum(1 for d, _ in reaching if d > max_depth)
+        beyond = [d for d, _ in reaching if d > max_depth]
+        # R1-C50/D9: "0 flows" and "0 flows, and the nearest head is one step past the
+        # bound" are different answers, and the second one is actionable. Naming only
+        # the count made the headline read as unreachable — measured on a deep graph
+        # where four real heads sat at step 6 under a bound of 5.
+        out["beyond_depth"] = len(beyond)
+        out["nearest_beyond"] = min(beyond) if beyond else None
         return out
 
     # -- relevance ranking (R1-C6) -------------------------------------------

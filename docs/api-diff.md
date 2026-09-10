@@ -13,6 +13,23 @@ Signatures are parsed with the stdlib `ast` (each stored signature is read as
 `def <sig>: …`), so parameter analysis is exact, not string-diffing. Only **public**
 symbols participate — private churn is not an API change.
 
+**Scope: one provenance root — the package (`core`).** On a repo-scoped graph (built with
+`--consumer ./tests` and friends) a public function in `tests/` is not this package's API,
+and counting it as one turns `--exit-code` into a gate on test churn. R1-C52, reported by
+the dogfood target from their own release-gate run: **40 of 47** "added public symbols"
+were test functions. The report now names its scope under the verdict, and lists what it
+did **not** judge:
+
+```
+✅ No breaking changes. 7 added, 0 removed, 0 changed.
+
+_Compared: public symbols of root `core` — the package. **Not judged:** 40 public
+symbol(s) in `tests`, 3 in `examples` — a consumer root is not this package's API._
+```
+
+A single-package graph has one root by construction, so nothing there changes but the
+scope line. `diff_api(old, new, root=None)` compares every root when that is what you want.
+
 | Change | Severity | Why |
 |---|---|---|
 | public symbol removed | **breaking** | callers referencing it break |

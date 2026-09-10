@@ -36,25 +36,46 @@ def _flow_section(rep: dict) -> list[str]:
                      "the change._")
         lines.append("")
         for f in rep["flows"][:_FLOW_ROWS]:
-            lines.append(f"- `{f['entry']}` — step {f['first_step']}")
+            ext = f.get("external_callers") or {}
+            tail = ("  _(entered from " + ", ".join(f"{r} ×{n}" for r, n in ext.items())
+                    + ")_" if ext else "")
+            lines.append(f"- `{f['entry']}` — step {f['first_step']}{tail}")
         if len(rep["flows"]) > _FLOW_ROWS:
             lines.append(f"- _… {len(rep['flows']) - _FLOW_ROWS} more_")
+    elif rep["nearest_beyond"] is not None:
+        # R1-C50/D9: an empty list with a head one step past the bound is not the same
+        # answer as an empty list, and it is the one a reader can act on.
+        lines.append(f"_No entry point within {rep['max_depth']} step(s) — but "
+                     f"{rep['beyond_depth']} reach it further out, the nearest at step "
+                     f"**{rep['nearest_beyond']}**. Re-run with `--flow-depth "
+                     f"{rep['nearest_beyond']}` to see them._")
+    elif rep["inbound_calls"]:
+        lines.append(f"_No entry point reaches it, at any depth — yet {rep['inbound_calls']} "
+                     "resolved call(s) do reach it. Every chain above it is either closed "
+                     "in a call cycle (no head to start from) or starts outside root "
+                     f"`{rep['root']}`. Not 'nothing calls it'._")
     else:
-        lines.append(f"_No entry point reaches it within {rep['max_depth']} step(s)._")
+        lines.append(f"_No entry point reaches it within {rep['max_depth']} step(s), and "
+                     "no resolved call reaches it either._")
     lines.append("")
     notes = []
-    if rep["beyond_depth"]:
+    if rep["beyond_depth"] and rep["flows"]:
         notes.append(f"{rep['beyond_depth']} further entry point(s) reach it **beyond** "
-                     f"{rep['max_depth']} steps — counted, not listed.")
+                     f"{rep['max_depth']} steps (nearest at step "
+                     f"{rep['nearest_beyond']}) — counted, not listed.")
     if rep["non_call_refs"]:
         notes.append(f"{rep['non_call_refs']} direct reference(s) arrive by an edge that "
                      "is not a call (import / inheritance / decoration / attribute) and "
                      "cannot appear in a flow at all.")
-    notes.append("Flows follow resolved `calls` edges only — a lower bound both ways: an "
-                 "unresolved caller also leaves a real internal looking like an entry "
-                 "point, so the denominator is an upper bound. *Reached*, not *broken*: "
-                 "the graph knows the symbol is on the path, not whether the change "
-                 "breaks it.")
+    notes.append("Flows follow resolved `calls` edges only, and the entry-point set is "
+                 "best-effort in **both** directions: an unresolved caller leaves a real "
+                 "internal looking like an entry point (the denominator is an upper "
+                 "bound), while resolving one *removes* an entry point and can lengthen "
+                 "a chain past `--flow-depth` — so a **more** complete graph can answer "
+                 "with **fewer** flows. A call from another root (`tests`, `examples`) is "
+                 "a use, not an internal caller, and does not disqualify a head. "
+                 "*Reached*, not *broken*: the graph knows the symbol is on the path, not "
+                 "whether the change breaks it.")
     lines.append("_" + " ".join(notes) + "_")
     lines.append("")
     return lines

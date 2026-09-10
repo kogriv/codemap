@@ -208,9 +208,14 @@ def test_a_reference_that_cannot_appear_in_a_flow_is_counted(q):
 
 
 def test_the_depth_bound_is_stated_when_nothing_reaches(q):
+    """R1-C50/D9 replaced the bare "No entry point reaches it within N step(s)" here:
+    a head one step past the bound is a different answer from no head at all, and the
+    only one a reader can act on. The bare sentence survives for the case that really
+    is empty — see `test_never_modelled_by_the_call_layer_is_not_an_empty_flow_list`."""
     md = render_impact(q, "flowpkg.leaf.hit", flow_depth=1)
-    assert "No entry point reaches it within 1 step(s)" in md
-    assert "reach it **beyond** 1 steps" in md
+    assert "No entry point within 1 step(s)" in md
+    assert "1 reach it further out, the nearest at step **2**" in md
+    assert "--flow-depth 2" in md
 
 
 # -- D5: three kinds of emptiness -------------------------------------------------------
