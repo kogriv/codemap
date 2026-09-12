@@ -98,9 +98,17 @@ def test_cycle_detection(q, graph):
 
 
 def test_orphan_modules(q):
+    """An invariant, not a name: `bquant.cli` was the example until the target grew a
+    `__main__.py` that imports it, and the assertion started measuring the target
+    rather than the query (R1-C25 — the second time in this suite, after
+    `test_cycle_detection`). What must hold on any tree: an orphan is a module the
+    import graph has no inbound edge for."""
     orphans = q.orphan_modules()
-    assert isinstance(orphans, list)
-    assert "bquant.cli" in orphans  # entry point, imported by nothing internally
+    assert isinstance(orphans, list) and orphans, "the dogfood tree has orphans"
+    for mod in orphans:
+        assert q.graph.nodes[mod].kind == "module"
+        assert not [e for e in q.graph.edges
+                    if e.type == "imports" and e.target == mod], f"{mod} is imported"
 
 
 def test_determinism_with_edges():
