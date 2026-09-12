@@ -613,6 +613,46 @@ That last one is not rhetorical. CodeGraph's `query` carries a wall-clock `updat
 two builds of identical source return different bytes. One field, probably a one-line fix — and exactly
 the property build-story #4 was about.
 
+### The epilogue the post promised (2026-09-08)
+
+Every post in this series ends on the same standing line: *measured your tool and got it wrong? open an
+issue.* Two of ours were open in CodeGraph's tracker when post 6 went out — [#1639](https://github.com/colbymchenry/codegraph/issues/1639)
+(`callers`/`callees`/`query` truncating at `--limit 20` with nothing in the response saying so) and a
+comment on [#1566](https://github.com/colbymchenry/codegraph/issues/1566) (name-matched receivers
+fabricating call edges, hence **136 reported cycles where the package has 1**).
+
+**Both were answered and fixed on the same day, eleven days in.** #1639 closed as completed by
+[PR #1772](https://github.com/colbymchenry/codegraph/pull/1772) in the morning; #1566 itself at 19:01,
+implemented in [PR #1790](https://github.com/colbymchenry/codegraph/pull/1790) — receiver inference now
+stops guessing when a known built-in has no matching project method, with a four-fixture before/after
+table, **nine negative regression cases that failed before the fix**, and 920 + 889 tests across the native
+and wasm engines. The author evaluated a community patch and did not use it; the `this.<field>.method()`
+family stays open under #1496/#1691.
+
+Three things there are worth keeping, and only one of them is about them.
+
+1. **The mechanism got its name from a third party, not from us.** `inth3shadows` reproduced #1566 on 1.6.0
+   with a five-line TypeScript fixture and localised it: every `instance-method` resolution funnels through
+   `resolveMethodOnType`, which validates that the method *exists on the named type* — which is why a wrong
+   inference usually yields nothing — but never asks whether the inferred type is a **project** type at all.
+   `Map` is not, so `Map.get` gets matched against project classes by name. A report with a repro attracts
+   people who can localise; a report with a verdict attracts nobody.
+2. **Our numbers are not stale yet, and the condition under which they become stale is now written down.**
+   All four PRs are merged to `main` and **none is released** — npm `latest` is still 1.6.0 (2026-08-26),
+   and the author says so himself: *"re-index after upgrading once it is released."* Every figure in the card
+   still describes shipping behaviour. Backlog item **R2-codegraph** holds the obligation: when a release
+   ships, re-measure before quoting 136-vs-41 or the truncation behaviour again. Publishing a fixed defect's
+   numbers is the same offence as an unmarked truncation.
+3. **One line of ours was wrong, in this series' characteristic direction.** An earlier revision of the card
+   read *"still zero comments, eleven days on, while the author closed two other issues that morning"* —
+   written at midday and already false by the afternoon. The waiting was real; the shape read into it was
+   not. Struck through and dated in place rather than deleted, because the correction is the content.
+
+And the same question asked of ourselves, which was not free: their Python repro, run against codemap 0.0.16
+on both tiers, produces **no fabricated edge** — and the fast tier pays for that refusal with recall,
+dropping **2 real calls** their resolver finds, which deep recovers. Two prices for the same refusal to
+guess, and the second one is ours.
+
 ### What we take, what we keep
 - **Take:** the watcher loop (M3.2 reranked up — the cost is no longer unknown, it is 121 ms), the
   inline signature on symbol lookup, and the two-arm benchmark contamination control, which is not
@@ -710,12 +750,160 @@ had it. The fourth was written by the same people and nothing caught it — beca
 that asks *can this field ever be wrong*, and the absence of exactly that test is what our own release
 earlier the same week was about (R1-C38-f1).
 
-- **Take:** per-edge resolution *reason* with graded confidence (R1-C39); `earliest_broken_step` on affected
+Published as blog post **[07 — two graphs that agreed](blog/07-two-graphs-agreed.md)**
+([RU](blog/07-two-graphs-agreed.ru.md)).
+
+- **Take:** per-edge resolution *reason* with graded confidence (R1-C39); the first broken step on affected
   flows (R1-C40) — "what stops working" rather than "who references".
+  **Taken, both shipped in 0.0.16 (2026-09-09).** R1-C39 landed as `model.RESOLUTIONS`, keyed by
+  `(edge type, resolution)` and carrying `means` / `confidence` / `how`, with confidence an **ordinal**
+  (`exact | inferred | heuristic`) rather than the float this card admired — a 0.9 invites arithmetic that
+  the evidence does not support, which is the one thing we did not copy. R1-C40 landed as `flows_to`, and
+  the field is named `first_step`, not `earliest_broken_step`: the sketch's name promised an ordering over
+  breakage we cannot compute, and the honest answer is the first step of the route we did find. The sketch
+  being renamed by the implementation is the normal case, not a slip.
 - **Keep:** the `limit` block computed from the same numbers that did the cutting, never maintained beside
   them. And the diffable, byte-stable artifact: their graph is not reproducible from identical input
   (10 745/20 232 versus 10 747/20 227 nodes/edges), which no amount of labelling compensates for.
 - **Verdict:** learn (strong). AGPL-3.0 closes wrap and integrate regardless of merit.
+
+---
+
+## Build-story #8 — "Eight of my last twelve fixes were the same bug" (ourselves)
+
+Facts: [`docs/design/narrowing_audit.md`](../docs/design/narrowing_audit.md) (the matrix),
+[`docs/design/deterministic_rendering.md`](../docs/design/deterministic_rendering.md),
+[`gaps/flow_entry_points_2026-09-10.md`](../gaps/flow_entry_points_2026-09-10.md),
+[`gaps/cycle_rotation_nondeterminism_2026-09-12.md`](../gaps/cycle_rotation_nondeterminism_2026-09-12.md).
+Shipped 2026-09-12 in 0.0.18, schema 0.13 unchanged. Suite 918 → 928 → 938.
+Published as blog post **[08 — eight of twelve](blog/08-eight-of-twelve.md)**
+([RU](blog/08-eight-of-twelve.ru.md)).
+
+### The count that started it
+
+Twelve backlog items closed in a row, R1-C41…R1-C52, each from a real report, each written up, each with
+a guard test. Laid out by **cause** instead of by place, **eight of the twelve are one defect**:
+
+| | what it was |
+|---|---|
+| R1-C28 | a limit cut the answer and did not say |
+| R1-C30-f2 | a gate did not name what it had not judged |
+| R1-C39 | the route was on the edge; what the route is worth was not |
+| R1-C44 | an empty answer did not say which kind of empty |
+| R1-C49-f1 | a rule fired and did not name itself |
+| R1-C50 | the emptiness of flows did not distinguish two cases |
+| R1-C51 | a filter answered with silence and did not declare itself |
+| R1-C52 | `diff` silently judged someone else's root |
+
+One sentence covers all eight: **the answer is narrower than it looks, and it is silent about that.** And
+**four of the last five were found by consumers**, not by us. At which point fixing them one at a time, as
+somebody trips over each, stops being a strategy and becomes a symptom.
+
+### The message that was three findings
+
+The trigger was [#19](https://github.com/kogriv/codemap/issues/19) from the dogfood consumer, the day after
+0.0.16, and it arrived as one report with three things in it. The headline: **a library has no entry point.**
+
+```
+fast:  ### Flows reached (1 of 285 entry point(s) in root `core`)
+deep:  ### Flows reached (0 of 252 entry point(s) in root `core`)
+       _No entry point reaches it within 5 step(s)._
+```
+
+Same tree, same version, same command but `--deep`. `analyze_macd_zones` is the public function a user calls
+to enter the package; it has **43 callers and all 43 are in `tests`/`examples`/`scripts`/`research`**. Our
+definition required `in_degree == 0`, counting inbound edges regardless of which root they came from — so a
+public API stops being an entry point exactly because someone uses it. Inside the package nobody calls it,
+which is the signature of a public API, not of unreachability. And the second mechanism is worse: deep
+resolves `build → run`, `run` loses its entry status, and the head of the chain moves to distance 6 — past
+the default `--flow-depth 5`. **The better the graph resolves, the smaller the set of entry points**; on fast
+it had been working by accident.
+
+The other two findings in the same message were a filter answering with silence and a `diff` judging a root
+nobody asked about. Three findings, one shape.
+
+### The decision: audit the mechanism, not the next instance
+
+So the pass was not "fix #19". It was: ask all **31 operations** one question — *what does this answer narrow,
+and does it say so?* — with a closed vocabulary of narrowing classes, the way the edge vocabulary is closed:
+`limit`, `filter`, `scope`, `bound`, `tier`, `edge-class`, `definition`. Four undeclared narrowings came out
+of it, every one **measured rather than suspected**:
+
+- **`columns` was hiding the larger half.** On the dogfood tree it returned **331 keys of 1057** as a plain
+  list. The narrowing was deliberate (subscripted keys really are the column-ish set); being undeclared is a
+  different thing. Now a `filter` block with `basis`, `total`, `dropped`.
+- **`communities` judged one root and said nothing.** True since R1-C18 in the code, nowhere in the answer.
+  Invisible on a single-root graph — 91 of 91 — and silent on a repo-scoped one.
+- **The entry-point list did not name its definition** — the very definition #19 had just forced us to
+  change.
+- **`export mermaid --scope` cut the diagram 144 lines → 47 with no mark**, and the result read as "the
+  package's class diagram". Now a `%% scope:` line: Mermaid ignores `%%` when rendering, so it costs nothing
+  in the picture and is visible in the source people diff and paste into issues.
+
+### The one that ran the other way
+
+Three of those column operations read `reads`/`writes`, and their partiality points in the **opposite**
+direction: a literal subscript key is indistinguishable from a dict-literal key, so the set is **larger**
+than the truth. Calling that a lower bound is worse than saying nothing — a consumer acting on "at least
+these" will prune too little. It got its own wording rather than borrowing the label that happened to exist.
+
+### The pass nearly broke the rule it was defending
+
+The first version added `query` to the partial-operations list, which meant the label "this answer is a lower
+bound" on a dossier whose `defined_at`, `matches` and signatures are **exact**; only `used_by` comes from the
+better-than-nothing call layer. That label would have said the symbol's *definition* was in doubt.
+**Over-declaring partiality is the same defect as hiding it, pointed the other way.** So a mixed answer
+declares **per field** — and what caught the slip was `test_structural_ops_have_no_label`, written a month
+earlier for a different rule (R1-C13: *absence* of a label means the answer is exact).
+
+### And then the axis the matrix did not have
+
+The next day the lab raised their pin to 0.0.17 and filed [#20](https://github.com/kogriv/codemap/issues/20).
+The graph was inert exactly as promised — **1904 nodes, 4652 edges**, the whole JSON byte-identical but for
+`provenance.version`; verdicts stable 20 runs out of 20. And the **printed cycle chains** differed between
+runs: five runs per version, three distinct md5s, the same three on both versions.
+
+```
+0.0.16:  3d8ea0fb  3d8ea0fb  3d8ea0fb  7c4ee567  a9ae9dc7
+0.0.17:  3d8ea0fb  7c4ee567  7c4ee567  a9ae9dc7  a9ae9dc7
+```
+
+`nx.simple_cycles` enters a cycle wherever set iteration — i.e. string hashing — happens to put it. `arch.py`
+then sorted the cycles by `(len, c)`, which **looked** like canonicalisation and could not be: the key moves
+with the rotation. Our own reproduction widened the perimeter the report had drawn — under eight hash seeds
+**three of seven surfaces** diverged, one of them the structured `architecture` answer the MCP tool returns,
+while `report dependencies` and the living docs were stable because they print counts rather than chains. So
+the fix went in at the source (`query.py`, where cycles are born), not at the consumer the report pointed at.
+
+**The part that cost the most to notice:** the reporter nearly filed this as a *behavioural change* in the
+release, and did not only because they re-measured within one version before writing their conclusion. Our
+own release procedure verifies every claim by comparing the output of **two published versions on one tree** —
+so the next person to read a rotation as a behaviour change would have been us, with the message already sent.
+
+### The lesson (reusable)
+
+**An audit is complete along the axes it has.** The narrowing matrix was full — 31 operations, no cell reading
+"applies and is not declared" — and it could not find the axis it lacked, because it asked whether the answer
+*declares* itself and never whether the answer is the *same twice*. `reproducibility` is now the eighth class,
+and its declaration is a guard across hash seeds in spawned processes (`PYTHONHASHSEED` is read once at
+interpreter start, so an in-process patch cannot produce the condition).
+
+Two smaller rules, each bought with a specific error:
+
+- **A claim about text is verified under a fixed hash seed.** The release procedure now says so, because the
+  procedure that verifies releases was this defect's second victim.
+- **A guard checked with invented data is not checked.** The CI step that now guards the README's test count
+  was first dry-run against a pytest summary I had written from memory; the real numbers differed. The guard
+  existed to stop exactly that.
+
+### What this bought
+- **Kept:** the closed vocabulary, now over narrowings as well as edges — a new class has to be added here,
+  not arrive silently. And the habit of counting one's own closed items by cause, which is what made the
+  pattern visible at all; no single one of the eight looked like anything but its own bug.
+- **Given up:** the idea that a completed audit closes a mechanism. It closes the mechanism *as modelled*.
+  What found the ninth instance was a consumer raising a pin, twenty-four hours later.
+- **Shipped:** 0.0.16, 0.0.17, 0.0.18 across three days, schema **0.13** untouched — the seventh consecutive
+  release without a schema change, which is the point of having the envelope carry these blocks additively.
 
 ---
 
@@ -782,15 +970,40 @@ earlier the same week was about (R1-C38-f1).
   graph' over a graph of 10 745 nodes, because its query would not parse. Discipline is not a property a
   project has; it is one each answer has to be given by something that checks." → build-story #7
 
+---
+
+- "I laid my last twelve bug fixes out by cause instead of by place, and eight of them were the same bug:
+  the answer is narrower than it looks and is silent about that. Four of the last five had been found by
+  consumers, not by me." → build-story #8
+- "A public function with 43 callers, every one of them in tests or examples, stopped being an entry point
+  because somebody used it. Nobody inside the package calls it — which is the signature of a public API, not
+  of unreachable code." → build-story #8
+- "One operation returned 331 of 1057 keys as a plain list. The narrowing was deliberate; being undeclared
+  is a different thing, and the consumer cannot tell those apart." → build-story #8
+- "Over-declaring partiality is the same defect as hiding it, pointed the other way — a blanket 'lower bound'
+  on a mixed answer says the symbol's definition is in doubt. The slip was caught by a test written a month
+  earlier for the opposite rule." → build-story #8
+- "Three operations read a set that is *larger* than the truth, not smaller. Calling that a lower bound is
+  worse than silence: the consumer prunes too little." → build-story #8
+- "A completed audit closes the mechanism as modelled. Mine was full — 31 operations, no undeclared cell —
+  and twenty-four hours later a consumer found the axis it did not have: the answer can be complete,
+  declared, and different from run to run." → build-story #8
+- "The graph was byte-identical but for one version field, the verdicts were stable 20 runs out of 20, and
+  the printed cycle chains had three distinct md5s. The reporter nearly filed it as a behavioural change —
+  and my own release procedure, which compares two published versions' output on one tree, would have been
+  the next victim." → build-story #8
+
 ## Future stories (skeletons — fill on разбор)
 
-- **#8 …** next tool from R2.2 (rag_for_git / Understand-Anything / …). Same shape: setup → the surprising
+- **#9 …** next tool from R2.2 (rag_for_git / Understand-Anything / …). Same shape: setup → the surprising
   measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code,
-  #6 CodeGraph, #7 OntoIndex done.)
-- **The determinism story.** Why a diffable graph matters in a PR — needs a concrete "graph diff caught X"
-  episode from dogfooding (`gaps/`).
+  #6 CodeGraph, #7 OntoIndex done; #4, #5, #8 are about ourselves.)
+- **The determinism story.** ✅ Told twice, neither time as sketched: #4 (a determinism *test* went red and
+  the tool was fine) and #8 (the artifact was byte-stable and the *rendering* was not). The sketch asked for
+  "graph diff caught X" and the episodes that happened were both sharper than that.
 - **The provenance story.** dead-code without false positives; impact that knows tests from core. Has the
-  facts (M8–M12), needs a narrative episode.
+  facts (M8–M12), still needs a narrative episode — the only sketch left, and it has now been outrun by
+  four posts that had one (P5, P6, P7, P8).
 
 _When a разбор produces a surprise worth telling, write it here **while it's hot** — the numbers are cheap to
 record now and expensive to reconstruct later._

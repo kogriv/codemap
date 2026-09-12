@@ -20,11 +20,15 @@ One rule threads all of them: **measurements, not verdict.**
 | 4 | **My determinism test went red. The tool was fine.** — the input was moving under it, and nothing in the artifact could tell that from a real bug. | [EN](04-the-determinism-test-that-was-right.md) | [RU](04-the-determinism-test-that-was-right.ru.md) |
 | 5 | **A month of dogfooding. Then one more repository found seven bugs in two days.** — eleven pre-registered axes, all asked of one tree. What was missing was not an angle but a shape. | [EN](05-the-second-repository.md) | [RU](05-the-second-repository.ru.md) |
 | 6 | **I measured the 68,000-star competitor. It was faster than mine. That wasn't the finding.** — four rivals, and the same two columns empty in all of them. Point questions have a seed symbol; whole-graph questions don't. | [EN](06-two-empty-columns.md) | [RU](06-two-empty-columns.ru.md) |
+| 7 | **Two graphs that share no code agreed exactly. Then one of them disagreed with itself.** — 57 callers against 57, by two implementations with nothing in common. And a field named `truncated` reporting `false` while it dropped 27 of them. | [EN](07-two-graphs-agreed.md) | [RU](07-two-graphs-agreed.ru.md) |
+| 8 | **Eight of my last twelve bug fixes were the same bug.** — sorted by cause instead of by place, the backlog stopped looking like twelve bugs. The audit that followed was full, and missed the next one by a day. | [EN](08-eight-of-twelve.md) | [RU](08-eight-of-twelve.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
-readers can start at 0. Posts 4, 5 and 6 are the ones where the method is turned on the author — 4 on a
-claim of his, 5 on the limits of how he was testing it, 6 on three differentiators he had to give up.
+readers can start at 0. Posts 4, 5, 6 and 8 are the ones where the method is turned on the author — 4 on a
+claim of his, 5 on the limits of how he was testing it, 6 on three differentiators he had to give up, 8 on
+twelve of his own closed bug reports. Post 7 is the one where an outside implementation agreed with his
+numbers exactly, which is the only external check in the series.
 
 ---
 
@@ -76,20 +80,22 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P4 — the determinism story | ✅ EN + RU | [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-25.md) §2, §6; [positioning](../positioning.md) build-story #4 |
 | P5 — the second repository | ✅ EN + RU | issues #4–#10 (all closed); [positioning](../positioning.md) build-story #5 |
 | P6 — two empty columns | ✅ EN + RU | [CodeGraph card](../tools/codegraph.md), [comparison](../comparison.md) matrix, [docs/whole-graph-questions.md](../../docs/whole-graph-questions.md); [positioning](../positioning.md) build-story #6 |
-| P7 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
-| P8 — next tool / methods post | 🔲 later | lands when the next R2 разбор does |
+| P7 — two graphs agreed (OntoIndex) | ✅ EN + RU | [OntoIndex card](../tools/ontoindex.md), [comparison](../comparison.md) matrix; [positioning](../positioning.md) build-story #7 |
+| P8 — eight of twelve (methods) | ✅ EN + RU | [narrowing_audit](../../docs/design/narrowing_audit.md), [deterministic_rendering](../../docs/design/deterministic_rendering.md), gaps [flow_entry_points](../../gaps/flow_entry_points_2026-09-10.md) + [cycle_rotation](../../gaps/cycle_rotation_nondeterminism_2026-09-12.md), issues #19 + #20; [positioning](../positioning.md) build-story #8 |
+| P9 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
+| P10 — next tool | 🔲 later | lands when the next R2 разбор does |
 
 A post's number is its filename slot, assigned **on publication** — a planned post takes the next
 free number when it actually lands, not when it is sketched. Which is why the role-provenance story
-has now been P5, P6 and P7 without a word of it being written: waiting costs it a number each time a
-post that *did* have an episode goes out first. That is the rule working, not failing.
+has now been P5, P6, P7 and P9 without a word of it being written: waiting costs it a number each time
+a post that *did* have an episode goes out first. That is the rule working, not failing.
 
-**P7 is the only writing left, and it is deliberately not forced.** It needs an episode that
+**P9 is the only writing left, and it is deliberately not forced.** It needs an episode that
 actually *happened* — a provenance split that changed a real decision. Inventing one would break
 the single rule the series rests on. Capture it opportunistically while dogfooding, into `gaps/`,
 then promote to [positioning.md](../positioning.md) §Future stories, then write the post.
 
-**Both published posts departed from their sketch, and that is worth recording** — it is the
+**Not one published post was writable from its sketch, and that is worth recording** — it is the
 series' own method turned on its plan. P4 was going to be "a graph diff caught a regression"; the
 episode that landed (2026-08-24) was the sharper inverse — a determinism *test* went red, and the
 cause was the input moving under it, not the tool. Nothing in the artifact could tell those two
@@ -100,12 +106,16 @@ Written up in [graph_provenance_2026-08-25](../../gaps/graph_provenance_2026-08-
 complaint — including the finding the repair made *askable*: `--incremental` had the same blind
 spot one level down. P5 was not planned at all: it came from pointing the tool at a second
 repository, which produced seven issues in forty-eight hours. Neither was P6, which came from
-measuring the field's most-adopted tool and losing three differentiators in the process. Three
-published posts, none of them writable from its sketch — which is the argument for not forcing P7.
+measuring the field's most-adopted tool and losing three differentiators in the process. Nor P7:
+the sketch list held no entry for "a tool sharing no line of code returns the same 57 callers, and
+then the same 78." Nor P8, which came from sorting twelve closed backlog items by cause and finding
+eight of them were one defect — and whose last section exists because a consumer found the ninth
+instance twenty-four hours after the audit declared the mechanism closed. **Five published posts,
+none of them writable from its sketch** — which is the argument for not forcing P9.
 
 Sketch for the one that remains:
 
-- **P7 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
+- **P9 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
   *"12 non-test references — 2 in core, 7 in docs — and 53 in tests."* Beats: multi-root
   provenance → dead-code without the dominant false-positive source → impact tagged by role
   → why an agent needs "what breaks in *core*" → the honest limit (one-hop by default).
@@ -117,6 +127,10 @@ Sketch for the one that remains:
 - [ ] Rival framed as peer/collaborator; no takedown tone.
 - [ ] Positioning line near the top; the standing invitation at the foot ("measured your
       tool and I got it wrong? open an issue").
-- [ ] Current facts (schema 0.12 / 587 tests / 31 ops — 28 MCP tools), not a stale snapshot.
+- [ ] Current facts, read off [`README.md`](../../README.md)'s status line at the time of writing and never
+      copied from an older post — at 2026-09-12: **schema 0.13 / 938 tests / 31 ops — 28 MCP tools**.
+      This checklist line is itself a snapshot and **was stale for two weeks** (it still said 0.12 / 587
+      tests after five releases). The README's count is guarded in CI; this one is not, so it gets re-read
+      rather than trusted.
 - [ ] Code snippets runnable or faithfully quoted (`file:line` where quoted from source).
 - [ ] Both language files updated together; cross-links and the index table above updated.
