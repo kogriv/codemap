@@ -137,7 +137,7 @@ def test_the_cycle_is_not_eager(tree):
 
 
 def test_import_map_names_the_scope_always(tree):
-    assert tree[2].import_map() == {"module_level": 4, "function_local": 1, "type_checking": 3}
+    assert tree[2].import_map() == {"module_level": 4, "function_local": 1, "type_checking": 3, "stub": 0}
 
 
 def test_import_map_says_zero_when_there_is_none(tmp_path):
@@ -150,10 +150,10 @@ def test_every_consumer_says_which_imports_it_did_not_judge(tree):
     a = build_architecture(q)
     assert a["import_map"]["type_checking"] == 3
     md = render_architecture(q)
-    assert "3 `TYPE_CHECKING` import(s)" in md
-    assert "closed only by an import under `if TYPE_CHECKING:`: 1" in md
-    assert "`TYPE_CHECKING` import(s)" in render_dependencies(q)
-    assert "closed only by an import under `if TYPE_CHECKING:`" in render_docs(q)
+    assert "3 `TYPE_CHECKING` and 0 `.pyi` import(s)" in md
+    assert "closed only by an import that never runs (`if TYPE_CHECKING:` or a `.pyi`): 1" in md
+    assert "`TYPE_CHECKING` and 0 `.pyi` import(s)" in render_dependencies(q)
+    assert "closed only by an import that never runs" in render_docs(q)
 
 
 def test_the_gate_is_green_and_names_what_it_read(tree):

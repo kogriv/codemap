@@ -82,9 +82,10 @@ def render_architecture(query: Query) -> str:
                or ["_none found in the eager import graph._"])
     out.append("")
     out.append(f"_Read {im['module_level']} module-level, {im['function_local']} "
-               f"function-local and {im['type_checking']} `TYPE_CHECKING` import(s). Only "
-               f"module-level imports run at import time, so only they can break on import; "
-               f"an import under `if TYPE_CHECKING:` never runs._")
+               f"function-local, {im['type_checking']} `TYPE_CHECKING` and {im['stub']} "
+               f"`.pyi` import(s). Only module-level imports run at import time, so only "
+               f"they can break on import; an import under `if TYPE_CHECKING:` never runs, "
+               f"and a `.pyi` is not executed at all._")
     out.append("")
     if a["lazy_cycles"]:
         out.append(f"### Dependency cycles closed only by a function-local import: "
@@ -103,8 +104,8 @@ def render_architecture(query: Query) -> str:
     if a["type_only_cycles"]:
         # R1-C49: the third kind, kept apart from the second because the difference is the
         # whole point — these modules have no runtime dependency on each other at all.
-        out.append(f"### Dependency cycles closed only by an import under "
-                   f"`if TYPE_CHECKING:`: {len(a['type_only_cycles'])}")
+        out.append(f"### Dependency cycles closed only by an import that never runs "
+                   f"(`if TYPE_CHECKING:` or a `.pyi`): {len(a['type_only_cycles'])}")
         out.append("")
         out.append("_Neither module pulls the other at any moment of execution — they name "
                    "each other's types. Not an import-time failure and not runtime coupling; "

@@ -192,18 +192,19 @@ def test_the_reports_carry_both_kinds_and_say_zero(both, tmp_path):
     assert _flat(a["type_only_cycles"]) == [["bp.typed_a", "bp.typed_b"]]
     md = render_architecture(both)
     assert "Dependency cycles closed only by a function-local import: 1" in md
-    assert "Dependency cycles closed only by an import under `if TYPE_CHECKING:`: 1" in md
+    assert ("Dependency cycles closed only by an import that never runs "
+            "(`if TYPE_CHECKING:` or a `.pyi`): 1") in md
     dep = render_dependencies(both)
     assert "1 further cycle(s) close through a function-local import" in dep
-    assert "1 through an import under `if TYPE_CHECKING:`" in dep
+    assert "1 through an import that never runs" in dep
     assert _flat(build_dependencies(both)["type_only_import_cycles"]) == [["bp.typed_a", "bp.typed_b"]]
     docs = render_docs(both)
     assert "closed only by a function-local import" in docs
-    assert "closed only by an import under `if TYPE_CHECKING:`" in docs
+    assert "closed only by an import that never runs" in docs
 
     quiet = Query(extract(str(_pkg(tmp_path, {"a": "from .b import x\n", "b": "x = 1\n"}))))
     assert build_architecture(quiet)["type_only_cycles"] == []
-    assert "and 0 through an import under `if TYPE_CHECKING:`" in render_dependencies(quiet)
+    assert "and 0 through an import that never runs" in render_dependencies(quiet)
 
 
 # -- f1: a rule that ran must name itself ---------------------------------------------------

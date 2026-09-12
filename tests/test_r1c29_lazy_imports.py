@@ -153,7 +153,7 @@ def test_import_map_is_emitted_even_when_nothing_is_lazy(tmp_path):
     to tell "no lazy imports here" from "this build did not look for them"."""
     pkg = _pkg(tmp_path, {"a.py": "x = 1\n", "b.py": "from pkg.a import x\n"})
     im = Query(extract(str(pkg))).import_map()
-    assert im == {"module_level": 1, "function_local": 0, "type_checking": 0}
+    assert im == {"module_level": 1, "function_local": 0, "type_checking": 0, "stub": 0}
 
 
 # -- and no consumer states acyclicity as a property -------------------------
@@ -162,7 +162,7 @@ def test_architecture_never_claims_acyclic(lazy_cycle):
     md = render_architecture(Query(extract(str(lazy_cycle))))
     assert "acyclic" not in md, "a partial map cannot support a property claim"
     assert "none found in the eager import graph" in md
-    assert "function-local and 0 `TYPE_CHECKING` import(s)" in md
+    assert "function-local, 0 `TYPE_CHECKING` and 0 `.pyi` import(s)" in md
     assert "Dependency cycles closed only by a function-local import: 1" in md
 
 
@@ -176,7 +176,7 @@ def test_architecture_payload_carries_both_kinds_and_the_counts(lazy_cycle):
     a = build_architecture(Query(extract(str(lazy_cycle))))
     assert a["cycles"] == []
     assert [sorted(c) for c in a["lazy_cycles"]] == [["pkg.a", "pkg.b"]]
-    assert a["import_map"] == {"module_level": 1, "function_local": 1, "type_checking": 0}
+    assert a["import_map"] == {"module_level": 1, "function_local": 1, "type_checking": 0, "stub": 0}
 
 
 def test_no_renderer_states_acyclicity_anywhere(tmp_path):

@@ -191,6 +191,11 @@ def _match(q: Query, n) -> dict:
     (posargs / kwargs / splat per call site), which no node field can know.
     """
     e = {"id": n.id, "kind": n.kind, "file": n.file, "lines": [n.lineno, n.endlineno]}
+    if n.extras.get("stub"):
+        # R1-C56/D4: a `.pyi` declaration, not code. Whoever is about to read the body
+        # must learn there is none from the answer, not from the file extension — the
+        # same rule as the epistemic label and the kind of an empty answer.
+        e["stub"] = True
     if n.signature:
         e["signature"] = n.signature
     elif n.kind == "class":

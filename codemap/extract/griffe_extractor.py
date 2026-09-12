@@ -402,13 +402,18 @@ def _collect(graph, obj, root, target_pkg, walk) -> None:
         # carry, or carries under the wrong scope, in one parse.
         nested, eager = _source_import_targets(obj)
         type_checking = {tgt for tgt, scope in nested if scope == "type_checking"}
+        # R1-C56/D1: a `.pyi` is a declaration — Python never executes it, so *none* of
+        # its imports run, whatever they look like. Recorded as a fourth scope rather
+        # than borrowed from `type_checking`: the mechanism is a different one, and the
+        # cycle classes are named by mechanism.
+        stub = _is_stub(obj)
         for name, tgt in (obj.imports or {}).items():
             # griffe files an import under `if TYPE_CHECKING:` as module-level; it never
             # runs. Demote it unless the same target is also imported eagerly (D2).
             scope = "type_checking" if tgt in type_checking and tgt not in eager else "module"
-            walk.imports.append((obj.canonical_path, tgt, scope))
+            walk.imports.append((obj.canonical_path, tgt, "stub" if stub else scope))
         for tgt, scope in nested:
-            walk.imports.append((obj.canonical_path, tgt, scope))
+            walk.imports.append((obj.canonical_path, tgt, "stub" if stub else scope))
     for name, member in obj.members.items():
         if member.is_alias:
             # capture ALL re-exports (public flag kept) — a symbol can be importable
@@ -487,7 +492,7 @@ def _emit_decorated_by(graph, obj) -> None:
 #: import is a **function-local** dependency: it can execute, and labelling it by the
 #: import that cannot would let a tree launder runtime coupling into the type layer
 #: (R1-C49, and the test that says so).
-_SCOPE_RANK = {"module": 0, "function": 1, "type_checking": 2}
+_SCOPE_RANK = {"module": 0, "function": 1, "type_checking": 2, "stub": 3}
 
 
 def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
@@ -599,6 +604,12 @@ def _add_node(graph, obj, root) -> None:
     )
 
 
+def _is_stub(obj) -> bool:
+    """True when ``obj`` lives in a ``.pyi`` — a declaration Python never executes."""
+    f = module_file(obj)
+    return f is not None and f.suffix == ".pyi"
+
+
 def _stub_marked(extras: dict, obj) -> dict:
     """Label a symbol that exists only in a ``.pyi`` stub (R1-C23 / design D5).
 
@@ -607,8 +618,7 @@ def _stub_marked(extras: dict, obj) -> dict:
     a stubs distribution, and leaving them unmarked presents a function that does not
     exist as if it did. Consumers that reason about execution (dead-code) exclude them.
     """
-    f = module_file(obj)
-    if f is not None and f.suffix == ".pyi":
+    if _is_stub(obj):
         extras = {**extras, "stub": True}
     return extras
 

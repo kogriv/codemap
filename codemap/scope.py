@@ -19,7 +19,10 @@ import subprocess
 from pathlib import Path
 
 # What codemap actually consumes as input (source + docs it indexes as references).
-DEFAULT_INCLUDE = ("*.py", "*.md")
+# R1-C56/D3: `.pyi` is here because griffe reads it. Leaving it out made the manifest
+# describe a different input than the graph was built from, so `scope_id` — and with it
+# `--incremental` and `watch` — read as unknown on every tree that ships stubs.
+DEFAULT_INCLUDE = ("*.py", "*.pyi", "*.md")
 # fs-mode default excludes (git mode gets these for free via .gitignore).
 DEFAULT_EXCLUDE_DIRS = frozenset({
     "__pycache__", ".git", ".venv", "venv", "node_modules", "build", "dist",

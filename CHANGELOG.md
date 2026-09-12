@@ -5,6 +5,29 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A `.pyi` is a declaration Python never executes — and it was read as code that runs**
+  (R1-C56, axis B4 — [`gaps/third_shape_2026-09-12.md`](gaps/third_shape_2026-09-12.md) §S1,
+  design [`docs/design/stub_files.md`](docs/design/stub_files.md)). On Pillow the package's
+  **only** hard import cycle in 105 modules was `ImageFont → _imagingft → ImageFont`, and the
+  way back was a line inside `_imagingft.pyi` — a stub for a module written in C. A stub is
+  never executed, so nothing there can break on import: the most actionable number this
+  project publishes was 100 % false positive on that tree. One object had three answers in one
+  tool — the extractor read stubs as modules, the input manifest did not list them (so
+  `scope_id`, and with it `--incremental` and `watch`, read as *unknown* on every tree that
+  ships stubs), and dead-code had a third rule for them. Now: imports written in a `.pyi`
+  carry `extras.scope = "stub"`, a fourth scope rather than a borrowed `type_checking`, since
+  the mechanism differs and the cycle classes are named by mechanism; the cycle view groups by
+  **consequence**, so a stub-closed cycle joins the "never executes" class, whose wording
+  widens to *`if TYPE_CHECKING:` or a `.pyi`*; `import_map` counts the scope always, zero
+  included; `.pyi` joins `DEFAULT_INCLUDE`, so the manifest describes what was actually read;
+  and a dossier entry for a stub-declared symbol carries `stub: true`, because the file
+  extension is not an answer. Measured both ways on frozen checkouts: Pillow hard cycles
+  **1 → 0** with the cycle moving into the never-executes class (11 → 12), its manifest
+  warning gone, `scope_id` stable across rebuilds — and on `_pytest`, 78 modules with no
+  stubs, **nodes, edges and `scope_id` are byte-identical**. Schema unchanged (**0.13**);
+  `extras.scope` gains a value, so on a tree with stubs a few edges and the `scope_id` move,
+  and the first `--incremental` build after upgrading is a full one.
+
 - **An override is reached through its base, so it cannot be graded confidently dead**
   (R1-C55, axis B4 — [`gaps/third_shape_2026-09-12.md`](gaps/third_shape_2026-09-12.md) §S2).
   Found by pointing codemap at three packages written by other people. On Pillow, **40 of 63**

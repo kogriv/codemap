@@ -47,9 +47,10 @@ def _not_judged(query, contract: ArchitectureContract) -> list[dict]:
         "type_checking_imports": query.import_map()["type_checking"],
         "count": len(lazy) + len(type_only),
         "note": ("`lazy` needs a function-local import — runtime coupling, gated by "
-                 "`no_lazy_cycles = true`. `type_only` needs an import under "
-                 "`if TYPE_CHECKING:` — no runtime dependency at all, gated by "
-                 "`no_type_only_cycles = true`. `report architecture` lists both."),
+                 "`no_lazy_cycles = true`. `type_only` needs an import that never runs "
+                 "(`if TYPE_CHECKING:`, or a `.pyi`, which Python does not execute) — no "
+                 "runtime dependency at all, gated by `no_type_only_cycles = true`. "
+                 "`report architecture` lists both."),
     }]
 
 

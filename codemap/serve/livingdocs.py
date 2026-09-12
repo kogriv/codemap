@@ -160,9 +160,9 @@ def render_docs(query: Query) -> str:
         out.append(f"- **{len(lazy)} dependency cycle(s) closed only by a function-local "
                    f"import** — deliberate, and still runtime coupling.")
     if type_only:
-        out.append(f"- **{len(type_only)} dependency cycle(s) closed only by an import under "
-                   f"`if TYPE_CHECKING:`** — the modules name each other's types and have no "
-                   f"runtime dependency.")
+        out.append(f"- **{len(type_only)} dependency cycle(s) closed only by an import that "
+                   f"never runs** (`if TYPE_CHECKING:` or a `.pyi`) — the modules name each "
+                   f"other's types and have no runtime dependency.")
     if lay["violations"]:
         out.append("- **Layer violations (mutual dependency):** "
                    + ", ".join(f"{a} ↔ {b}" for a, b in lay["violations"]))

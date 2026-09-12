@@ -79,7 +79,8 @@ def test_cycle_detection(q, graph):
     type_only = {frozenset(c) for c in q.type_only_import_cycles()}
     assert not (eager & lazy) and not (eager & type_only) and not (lazy & type_only), \
         "a cycle has exactly one kind — the weakest scope that closes it (R1-C49)"
-    assert set(q.import_map()) == {"module_level", "function_local", "type_checking"}
+    assert set(q.import_map()) == {"module_level", "function_local", "type_checking",
+                                   "stub"}
     assert q.import_map()["module_level"] > 0
 
     scopes: dict[tuple[str, str], set[str]] = {}
@@ -94,7 +95,10 @@ def test_cycle_detection(q, graph):
     for c in lazy:
         assert closing(c, "function"), f"a lazy cycle needs a function-local edge: {c}"
     for c in type_only:
-        assert closing(c, "type_checking"), f"a type-only cycle needs one: {c}"
+        # R1-C56: two mechanisms never execute — `if TYPE_CHECKING:` and a `.pyi`. The
+        # class is defined by the consequence, so either scope may be what closes it.
+        assert closing(c, "type_checking") or closing(c, "stub"), \
+            f"a type-only cycle needs an import that never runs: {c}"
 
 
 def test_orphan_modules(q):

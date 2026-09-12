@@ -32,11 +32,11 @@ def render_dependencies(query: Query) -> str:
         lines.append("_none found in the eager import graph._")
     lines.append("")
     lines.append(f"_Read {im['module_level']} module-level, {im['function_local']} "
-                 f"function-local and {im['type_checking']} `TYPE_CHECKING` import(s); only "
-                 f"the first run at import time. {len(lazy)} further cycle(s) close through "
-                 f"a function-local import (runtime coupling, not an import-time failure) "
-                 f"and {len(type_only)} through an import under `if TYPE_CHECKING:` (no "
-                 f"runtime dependency at all)._")
+                 f"function-local, {im['type_checking']} `TYPE_CHECKING` and {im['stub']} "
+                 f"`.pyi` import(s); only the first run at import time. {len(lazy)} further "
+                 f"cycle(s) close through a function-local import (runtime coupling, not an "
+                 f"import-time failure) and {len(type_only)} through an import that never "
+                 f"runs — `if TYPE_CHECKING:` or a `.pyi` (no runtime dependency at all)._")
     lines.append("")
 
     lines.append("## Most-depended-on modules (top 15)")

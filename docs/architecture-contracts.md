@@ -83,11 +83,20 @@ A cycle is classified by the **weakest import scope that closes it**
 |---|---|---|---|
 | eager | module-level imports alone | breaks at import time | `no_cycles` |
 | lazy | needs a function-local import | runtime coupling; the lazy import is a way *around* `no_cycles` | `no_lazy_cycles` |
-| type-only | needs an import under `if TYPE_CHECKING:` | the modules name each other's types and have **no runtime dependency at all** | `no_type_only_cycles` |
+| type-only | needs an import that **never runs**: `if TYPE_CHECKING:`, or one written in a `.pyi` | the modules name each other's types and have **no runtime dependency at all** | `no_type_only_cycles` |
 
 The partition is by requirement, not by presence: a pair that also imports each other at
 run time stays *lazy* however many type imports run between them, so a tree cannot launder
-runtime coupling into the type layer by adding one. Every report prints all three counts,
+runtime coupling into the type layer by adding one.
+
+**A `.pyi` is the second mechanism of the third kind (R1-C56).** Python never executes a stub,
+so none of its imports run — including the ones that name the module importing it. Measured on
+Pillow, whose *only* "hard" cycle in 105 modules was `ImageFont → _imagingft → ImageFont`, the
+way back being a line in `_imagingft.pyi`, a declaration for a module written in C. Nothing
+there can break on import; classifying it as eager made the project's most actionable number
+100 % false positive on that tree. The edge keeps the mechanism (`extras.scope = "stub"`, and
+`import_map` counts it always, zero included), while the cycle class groups by consequence —
+what a reader needs is whether the import can break. Every report prints all three counts,
 zero included, and `check`'s scope line names whichever kinds *this* contract did not gate.
 
 `no_lazy_cycles` deliberately does **not** cover the third kind. It exists against a lazy

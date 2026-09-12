@@ -153,7 +153,10 @@ class Query:
         # R1-C49: between the two — everything that can execute. A `TYPE_CHECKING` import
         # never does, so a cycle that needs one is not runtime coupling at all.
         self._imports_runtime = nx.DiGraph()
-        self._import_scopes = {"module": 0, "function": 0, "type_checking": 0}
+        # R1-C56: `stub` is the fourth scope — a `.pyi` is never executed, so none of its
+        # imports run. Counted apart from `type_checking` (different mechanism, same
+        # consequence) and, like it, kept out of both the eager and the runtime graph.
+        self._import_scopes = {"module": 0, "function": 0, "type_checking": 0, "stub": 0}
         for n in graph.nodes.values():
             if n.kind == "module":
                 self._imports.add_node(n.id)
@@ -163,9 +166,9 @@ class Query:
             if e.type == "imports":
                 self._imports.add_edge(e.source, e.target)
                 scope = e.extras.get("scope")
-                if scope in ("function", "type_checking"):
-                    # R1-C29: runs when the function runs; R1-C48: never runs. Neither
-                    # is an import-time edge — but only the first is a runtime one.
+                if scope in ("function", "type_checking", "stub"):
+                    # R1-C29: runs when the function runs; R1-C48 and R1-C56: never runs.
+                    # Neither is an import-time edge — but only the first is a runtime one.
                     self._import_scopes[scope] += 1
                     if scope == "function":
                         self._imports_runtime.add_edge(e.source, e.target)
@@ -1157,13 +1160,19 @@ class Query:
                                  if frozenset(c) not in eager)
 
     def type_only_import_cycles(self) -> list[list[str]]:
-        """Dependency cycles that close **only** with an import under ``if TYPE_CHECKING:``.
+        """Dependency cycles that close **only** with an import that never executes.
 
         The third kind (R1-C49, issue #18). These modules name each other's types and have
         **no runtime dependency whatever**: neither import pulls the other at any moment of
         execution. That is why they are not gated by ``no_lazy_cycles`` — which exists
         against a lazy import used to walk *around* ``no_cycles`` — and get their own
         opt-in rule instead.
+
+        Two mechanisms, one consequence (R1-C56/D2): an import under ``if TYPE_CHECKING:``
+        and an import written in a ``.pyi``, which Python does not execute at all. The
+        class partitions by consequence — what a reader needs is whether the import can
+        break — while the edge keeps the mechanism in ``extras.scope``. Measured on
+        Pillow, whose *only* "hard" cycle was a stub declaring the module that imports it.
         """
         runtime = {frozenset(c) for c in nx.simple_cycles(self._imports_runtime)}
         return _canonical_cycles(c for c in nx.simple_cycles(self._imports)
@@ -1179,7 +1188,8 @@ class Query:
         """
         return {"module_level": self._import_scopes["module"],
                 "function_local": self._import_scopes["function"],
-                "type_checking": self._import_scopes["type_checking"]}
+                "type_checking": self._import_scopes["type_checking"],
+                "stub": self._import_scopes["stub"]}
 
     def orphan_modules(self, root: str | None = None) -> list[str]:
         """Modules with no incoming imports (dead-code candidates — heuristic).
