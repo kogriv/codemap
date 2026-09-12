@@ -13,7 +13,11 @@ validation on a common target (in progress). Tracked in [../BACKLOG.md](../BACKL
 Every tool below is placed against the stance codemap commits to:
 
 - **source-only** — parses source (griffe + jedi), never builds or runs the target
-- **deterministic** — canonical `graph.json`: sorted, timestamp-free, byte-stable across runs
+- **deterministic** — canonical `graph.json`: sorted, timestamp-free, byte-stable across runs **on the
+  fast tier**. The deep (jedi) tier is a *sample*, not a function: two full deep builds of one tree
+  differ by a couple of edges, which is why `--repeat N` exists (R1-C42). The axis is narrower than it
+  read here, and it is the axis every measured peer still fails — see
+  [00_landscape.md](00_landscape.md#update-2026-09-12--what-hands-on-measurement-did-to-this-map).
 - **CLI-AI-first** — JSON by default; warm serve + MCP so an AI agent drives it natively
 - **graph-model** — nodes/edges with provenance (which root: package / tests / docs), canonical ids
 - **Python-focused** — one language done well (multi-language is a deferred door)
