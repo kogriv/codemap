@@ -5,6 +5,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.18] - 2026-09-12
+
+**Two passes at one habit: an answer must say how it was narrowed, and must answer the same way twice.**
+Schema unchanged (**0.13**, seventh release running) and no graph bytes move — a rebuild of the same tree
+is byte-identical in nodes and edges. The first item came from counting our own defects rather than from a
+report; the second came from a consumer the day after, and found the axis that count had missed.
+
 - **One graph, one rendering — whatever the hash seed** (R1-C54, [issue
   #20](https://github.com/kogriv/codemap/issues/20)). The lab raised their pin to 0.0.17, found the graph
   byte-identical as promised, and found the *printed cycle chains* different between runs — three
