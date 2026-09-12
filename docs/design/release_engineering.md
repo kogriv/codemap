@@ -532,6 +532,33 @@ facade fixture did not crash 0.0.18 at all, because that crash needs `@overload`
 over a name the runtime module only aliases. A verification tree that does not reproduce the defect
 verifies nothing, and it is easy to believe it does.
 
+**0.0.20 published 2026-09-12:** [`codmap` 0.0.20](https://pypi.org/project/codmap/0.0.20/), schema
+**0.13** (unchanged, ninth release running). Same procedure from the pushed commit `58bcb63`, CI green,
+`twine check` PASSED on both artifacts, tag `v0.0.20` written with `-F`.
+
+One item (R1-C58), and it **changes the shape of an answer consumers read**, so it shipped alone rather
+than folded in. Two fixtures, because the claim has two halves — the unit, and what the unit preserves:
+
+```
+                                   0.0.19 (published)        0.0.20 (published)
+
+7-module dense knot                ## Import cycles: 115     1 tangle(s), 7 module(s),
+(21 edges, every path a cycle)                               15 independent loop(s)
+
+two loops sharing one module       ## Import cycles: 2       1 tangle(s), 5 module(s),
+                                   both listed                2 independent loop(s)
+
+flat package (no subpackages)      ## Layers (6)             + "layer = module here:
+                                   no note                     …a statement that there is
+                                                               none to report"
+```
+
+**The second fixture is the one that matters**, and it is there because a guard demanded it. A knot of
+five modules with two loops is where "one tangle" could hide that there are two problems; the
+independent-loop count is what keeps the old number's meaning, and on small knots it *equals* the old
+number (2 → 2). Verifying only the dense fixture would have shown the explosion cured and said nothing
+about what the cure cost.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
