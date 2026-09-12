@@ -5,6 +5,14 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.17] - 2026-09-12
+
+**Three defects a consumer found while checking our own measurement.** Schema unchanged (**0.13**,
+sixth release running) and no graph bytes move — a rebuild of the same tree is byte-identical in nodes
+and edges, so bumping the pin re-extracts nothing. All three came from one message on
+[issue #19](https://github.com/kogriv/codemap/issues/19): the flow defect they filed, plus two they
+found on the way and reported rather than worked around.
+
 - **A library had no entry point, and the better tier answered emptier** (R1-C50, [issue
   #19](https://github.com/kogriv/codemap/issues/19)). `entry_points` asked for in-degree zero across
   the whole graph, so the one function a user enters a package through was disqualified by being
