@@ -497,6 +497,41 @@ the conclusion; the procedure did not tell them to. It does now: **when a releas
 text, compare it under a fixed `PYTHONHASHSEED` — or several — not once per version.** The suite carries
 that as a guard since R1-C54, so the procedure inherits it rather than relying on memory.
 
+**0.0.19 published 2026-09-12:** [`codmap` 0.0.19](https://pypi.org/project/codmap/0.0.19/), schema
+**0.13** (unchanged, eighth release running). Same procedure from the pushed commit `825355c`, CI green,
+`twine check` PASSED on both artifacts, tag `v0.0.19` written with `-F`.
+
+Three items, and every one of them came from **someone else's code**: the axis-B4 run over pytest, attrs
+and Pillow. So the verification tree had to carry three shapes at once — a private override of a called
+base, a `.pyi` closing a cycle with a `.py`, and a facade package whose stub carries `@overload`
+declarations over an alias into a sibling:
+
+```
+                     0.0.18 (published)                    0.0.19 (published)
+
+R1-C55  dead-code    JpegReader._open — high,               low, "overrides
+                     "no inbound calls, references,          verifypkg.base.Reader._open, which
+                      or decorators"                         has 1 inbound call(s) — reached by
+                                                             dispatch, not by name"
+
+R1-C56  architecture ## Import cycles: 1                    ## Import cycles: 0
+                     read 3 module-level                    read 2 module-level + 1 `.pyi`;
+                     (the cycle is a stub's import)         the cycle is in "closed only by an
+                                                            import that never runs": 1
+
+R1-C57  api-surface  error: Could not resolve alias         builds; "1 public symbols across 2
+        (facade)     facade.Reader pointing at              modules; 1 more re-exported from
+                     verifypkg.base.Reader                  outside this root" + "not judged here"
+                     → no graph at all
+```
+
+**The procedure rule that earned its keep this time.** Two of the three claims are about *text*, so the
+whole comparison ran under a fixed `PYTHONHASHSEED` — the rule 0.0.18 bought with R1-C54. And the
+**fixture** had to be built to carry the defect, which is where the work was: the first version of the
+facade fixture did not crash 0.0.18 at all, because that crash needs `@overload` declarations in the stub
+over a name the runtime module only aliases. A verification tree that does not reproduce the defect
+verifies nothing, and it is easy to believe it does.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
