@@ -5,6 +5,18 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.19] - 2026-09-12
+
+**Three packages written by other people, and three defects none of our own trees could show.**
+Schema unchanged (**0.13**, eighth release running). Until today codemap had been dogfooded on two
+trees, both written by the same person — so the *shape* of the input had never varied, only the
+angle we questioned it from. One afternoon pointed at pytest, attrs and Pillow produced a crash, a
+grade that was wrong 63 % of the time in its most confident band, and a fabricated cycle in the
+number this project advertises. Expectations for that run were written and committed **before** it
+(`gaps/third_shape_2026-09-12.md`): one of six controls failed, two of five predictions landed, and
+four findings were on no list at all.
+
+
 - **A package whose whole job is re-export broke three ways at once** (R1-C57, axis B4 —
   [`gaps/third_shape_2026-09-12.md`](gaps/third_shape_2026-09-12.md) §E1/§E10). The facade
   layout is what `pytest`/`_pytest` and `attrs`/`attr` use, and codemap **crashed on it**:

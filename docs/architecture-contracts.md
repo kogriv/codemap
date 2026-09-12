@@ -65,7 +65,8 @@ that import is the accepted way to break an import cycle — failing a build for
 the remedy would be worse than the disease. Neither does a cycle closed only by an import
 under `if TYPE_CHECKING:` — that import never runs at all, and it is the other standard
 idiom for the same problem. Both scopes are carried on the edge (`extras.scope`:
-`function` / `type_checking`) and both are counted in `import_map`, zero included. What is
+`function` / `type_checking`, and since R1-C56 also `stub`) and every one of them is counted
+in `import_map`, zero included. What is
 recognised is narrow on purpose: `if TYPE_CHECKING:`, `if typing.TYPE_CHECKING:`, their
 `not` form (which swaps the branches) and the `else` branch (which runs). A compound test
 such as `if TYPE_CHECKING or X:` is *not* read and stays eager — a condition the tool

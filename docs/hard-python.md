@@ -115,6 +115,10 @@ explosion without knowing what a symlink is.
   import. Those appear separately, as "dependency cycles closed only by a function-local
   import". A class-body import is treated as eager, because it runs at class-definition
   time; griffe records neither, so both are collected by codemap's own AST pass.
+- An import written in a `.pyi` is a **fourth** scope, `extras.scope = "stub"` (R1-C56):
+  Python does not execute a stub at all, so none of its imports run. It joins the third kind
+  of cycle, which is defined by that consequence rather than by the mechanism — measured on
+  Pillow, whose only "hard" cycle was a stub declaring the module that imports it.
 - An import under `if TYPE_CHECKING:` (or `typing.TYPE_CHECKING`, or the `else` of
   `if not TYPE_CHECKING:`) is a third scope, `extras.scope = "type_checking"`: written at
   module level, never run. It is a dependency (coupling, dependents, orphans) and is
