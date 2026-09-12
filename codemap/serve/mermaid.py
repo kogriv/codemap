@@ -117,4 +117,16 @@ def render_mermaid(query: Query, kind: str, scope: str | None = None,
         return render_call_graph(query, root, depth)
     if kind not in _KINDS:
         raise ValueError(f"unknown mermaid kind: {kind}")
-    return _KINDS[kind](query, scope)
+    out = _KINDS[kind](query, scope)
+    if scope:
+        # R1-C53: `--scope` cut this diagram from 144 lines to 47 on the dogfood tree with
+        # no marker of any kind, so the picture read as "the class diagram of this package".
+        # A diagram is an answer too. Mermaid ignores `%%` lines, so the note costs nothing
+        # rendered and is visible in the source a reader diffs or pastes.
+        hidden = len(_KINDS[kind](query, None).splitlines()) - len(out.splitlines())
+        note = (f"%% scope: {scope} — {hidden} further line(s) exist in the unscoped "
+                "diagram of this graph")
+        lines = out.splitlines()
+        at = 1 if lines and lines[0].startswith("```") else 0
+        out = "\n".join(lines[:at] + [note] + lines[at:]) + "\n"
+    return out

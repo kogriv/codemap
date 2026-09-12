@@ -5,6 +5,21 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **Every narrowing declares itself — the audit, not another instance** (R1-C53). Eight of the twelve
+  fixes R1-C41…R1-C52 turned out to be one defect (an answer narrower than it looks, silent about it),
+  and four of the last five were found by a consumer rather than by us — so the mechanism got closed
+  instead of the next instance. Seven classes of narrowing are now enumerated (`limit`, `filter`,
+  `scope`, `bound`, `tier`, `edge-class`, `definition`), all 31 ops are classified in a published matrix
+  (`docs/design/narrowing_audit.md`), and two guards read the ops' own source so a new narrowing cannot
+  join without declaring itself. Four undeclared ones were found by measuring and closed: `columns`
+  returned **331 of 1057** keys as a bare list (now a `filter` block with `basis`/`total`/`dropped`),
+  `communities` and the entry-point listing judged one provenance root in silence (new `scope` block:
+  `{root, judged, not_judged}`), and `export mermaid --scope` cut a diagram from 144 lines to 47 with no
+  marker (now a `%% scope:` line, ignored by mermaid's renderer, visible in the source). The
+  string-keyed column ops stopped borrowing the words "lower bound": they are an **over-set**, and
+  telling a caller to widen when it must verify is its own defect. Schema unchanged; `result` shapes
+  unchanged — the new blocks are additive to the envelope.
+
 ## [0.0.17] - 2026-09-12
 
 **Three defects a consumer found while checking our own measurement.** Schema unchanged (**0.13**,

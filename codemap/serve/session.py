@@ -50,6 +50,15 @@ _REPORTS = {
 #                     jedi sample (R1-C43).
 # `accessors` used to be in neither — it reads `accesses`, modelled best-effort, and
 # carried no `epistemic` at all (found by the R1-C44 measurement).
+# R1-C53 added the three column ops: they read `reads`/`writes`, which are an **over-set**
+# rather than a lower bound — a different partiality, so it gets its own reason below.
+#
+# `query` was considered here and deliberately left out. Its dossier *does* carry
+# call-derived fields, but most of it — where the symbol is defined, its signature, its
+# file — is exact, and one envelope-wide "this is a lower bound" would say the definition
+# is uncertain too. The rule this file already states is "absence of the label means
+# exact", so a **mixed** answer declares per field (see `_op_query`), not per envelope.
+# Over-claiming partiality is the same defect as hiding it, pointed the other way.
 _OP_EDGE_CLASSES = {
     "callers": frozenset({"calls"}),
     "callees": frozenset({"calls"}),
@@ -59,16 +68,34 @@ _OP_EDGE_CLASSES = {
     "accessors": frozenset({"accesses"}),
     "tests": frozenset({"calls", "references"}),
     "covers": frozenset({"calls", "references"}),
+    "column": frozenset({"reads", "writes"}),
+    "columns": frozenset({"reads", "writes"}),
+    "columns_of": frozenset({"reads", "writes"}),
 }
 _BEST_EFFORT_CLASSES = frozenset({"calls", "accesses"})
+#: Classes that are an over-set, not a lower bound: a literal subscript key cannot be told
+#: from a dict key, so the column set contains more than the DataFrame columns (F15/M12).
+#: The opposite error from `_BEST_EFFORT_CLASSES`, and it must not borrow its wording.
+_OVER_SET_CLASSES = frozenset({"reads", "writes"})
 _PARTIAL_OPS = frozenset(op for op, cls in _OP_EDGE_CLASSES.items()
-                         if cls & _BEST_EFFORT_CLASSES)
+                         if cls & (_BEST_EFFORT_CLASSES | _OVER_SET_CLASSES))
+_OVER_SET_OPS = frozenset(op for op, cls in _OP_EDGE_CLASSES.items()
+                          if cls & _OVER_SET_CLASSES)
 _SPLICE_OPS = frozenset(op for op, cls in _OP_EDGE_CLASSES.items()
                         if cls & _SPLICED_EDGE_TYPES)
 _EPISTEMIC_PARTIAL = {
     "epistemic": "partial",
     "reason": "leans on static resolution of calls and attribute accesses (partial "
               "for Python) — a lower bound; pair with grep/tests before acting.",
+}
+# R1-C53: the over-set is partial in the *other* direction, and saying "a lower bound"
+# about it would be worse than saying nothing. A caller that trims by this set would trim
+# too little, not too much.
+_EPISTEMIC_OVER_SET = {
+    "epistemic": "partial",
+    "reason": "string-keyed dataflow is an **over-set**, not a lower bound: a literal "
+              "subscript key cannot be told from a dict key, so this set contains more "
+              "than the DataFrame columns. Confirm a key before acting on it.",
 }
 # D4 — the second reason, named separately: "a lower bound by static resolution" and
 # "part of this graph was carried over, not recomputed" are different facts.
@@ -116,6 +143,24 @@ _UNLIMITED_BY_DESIGN = {
               "lives in _compact_impact and declares itself there (R1-C40)",
     "flows": "depth likewise bounds the walk, and the answer carries its own depth",
 }
+
+
+def _root_scope(query: Query, root: str, judged: list) -> dict:
+    """The `scope` block: which provenance root the answer covers, and what it leaves out.
+
+    R1-C53. `communities` judges the package and is silent about it; on a repo-scoped graph
+    a caller reads "9 subsystems" without learning that `tests` was never considered. Same
+    shape as `check`'s "not judged" line and `diff`'s root filter, now stated in one place.
+    """
+    others: dict[str, int] = {}
+    for n in query.graph.nodes.values():
+        if n.kind != "module":
+            continue
+        r = query.root_of(n.id)
+        if r != root:
+            others[r] = others.get(r, 0) + 1
+    return {"root": root, "judged": len(judged),
+            "not_judged": dict(sorted(others.items()))}
 
 
 def _grade_filter(min_confidence, every: list, kept: list, grades: dict) -> dict:
@@ -257,6 +302,17 @@ def build_query_result(q: Query, name: str) -> dict:
                     used_by[n.id] = by_root
         if used_by:
             result["used_by"] = used_by
+            # R1-C53: the dossier is *mixed* — `defined_at`, `matches` and the signatures
+            # are exact, while `used_by` comes from the same best-effort call/reference
+            # layer that makes `callers` a lower bound. An envelope-wide `epistemic` would
+            # have said the definition is uncertain too, and over-claiming partiality is
+            # the same defect as hiding it. So it is declared on the field, here — where
+            # the field is built — so the CLI dossier carries it as well as the op.
+            result["used_by_epistemic"] = (
+                "lower bound — `used_by` comes from statically resolved calls and "
+                "references (partial for Python); `defined_at` and the signatures are "
+                "exact. `callers`/`impact` carry the same caveat for a whole answer."
+            )
     col = q.column(name)
     if col and (col["writes"] or col["reads"]):
         result["column"] = col
@@ -334,6 +390,7 @@ class Session:
         self._resolution = None
         self._limit = None
         self._filter = None
+        self._scope = None
         try:
             env = {"ok": True, "result": fn(self, args)}
         except Exception as exc:  # a bad arg must not kill the resident process
@@ -359,6 +416,12 @@ class Session:
         # "this build does not report filtering".
         if self._filter is not None:
             env["filter"] = self._filter
+        # R1-C53: the third class. A `scope` narrowing is not a cut of a computed list and
+        # not a predicate over it — it is the answer covering **one provenance root** while
+        # the graph holds several, which is how `diff` came to count 40 test functions as
+        # API and how `communities` judges only the package while saying nothing.
+        if self._scope is not None:
+            env["scope"] = self._scope
         return env
 
     def _epistemic(self, op: str) -> dict:
@@ -368,7 +431,7 @@ class Session:
         sample, and only an op reading a spliced class reads it. On a full deep graph
         and on the fast tier the block is exactly the R1-C13 one.
         """
-        block = dict(_EPISTEMIC_PARTIAL)
+        block = dict(_EPISTEMIC_OVER_SET if op in _OVER_SET_OPS else _EPISTEMIC_PARTIAL)
         prov = self.graph.provenance or {}
         if op in _SPLICE_OPS and prov.get("tier") == "deep":
             if prov.get("incremental") is True:
@@ -467,7 +530,7 @@ class Session:
         result = build_query_result(self.query, args["name"])
         if not result["matches"]:  # R1-C44: an empty dossier says why it is empty
             self._resolution = _not_found(args["name"])
-        return result
+        return result  # the mixed-answer note rides on the field (see build_query_result)
 
     def _op_impact(self, args) -> dict:
         sym = args["symbol"]
@@ -512,7 +575,18 @@ class Session:
     def _op_columns(self, args) -> list:
         # F15: default to subscript-accessed keys (the real column-like set);
         # pass all=true for the full over-set incl. dict-literal payload keys.
-        return self.query.columns(subscripted_only=not args.get("all", False))
+        narrow = not args.get("all", False)
+        kept = self.query.columns(subscripted_only=narrow)
+        # R1-C53: the default hides the larger half and said nothing — measured on the
+        # dogfood tree, 331 of 1057. A deliberate narrowing still has to be declared, or
+        # the caller reads 331 as the answer to "which columns exist".
+        every = self.query.columns(subscripted_only=False) if narrow else kept
+        self._filter = {"basis": "subscripted_only" if narrow else None,
+                        "returned": len(kept), "total": len(every),
+                        "dropped": len(every) - len(kept),
+                        "note": "a key reached only through a dict literal is not a "
+                                "subscript access; pass all=true for the full over-set"}
+        return kept
 
     def _op_columns_of(self, args) -> dict:
         return self.query.columns_of(self._canon(args["symbol"]))
@@ -615,14 +689,38 @@ class Session:
         return build_check(self.query, contract, check_contract(self.query, contract))
 
     def _op_communities(self, args) -> list:
-        """R1-C18: data-driven module subsystems (greedy modularity)."""
-        return self.query.communities()
+        """R1-C18: data-driven module subsystems (greedy modularity).
+
+        R1-C53: subsystems are computed over the **package** only — a consumer root is not
+        a subsystem of it — and that was true in the code and absent from the answer.
+        """
+        out = self.query.communities()
+        self._scope = _root_scope(self.query, "core",
+                                  [m for c in out for m in c["modules"]])
+        return out
 
     def _op_flows(self, args) -> dict:
-        """R1-C18: forward call-flow from a symbol, or entry points if none given."""
+        """R1-C18: forward call-flow from a symbol, or entry points if none given.
+
+        R1-C53: the entry-point list is shaped by a *definition* — "calls out, and nothing
+        in its own root calls it" — which R1-C50 had to change after it disqualified a
+        library's public API for being used. A definition that can be wrong for a target
+        belongs in the answer, not only in a docstring.
+        """
         sym = args.get("symbol")
         if not sym:
-            return {"entry_points": self.query.entry_points()}
+            entries = self.query.entry_points()
+            self._scope = _root_scope(self.query, "core", entries)
+            return {
+                "entry_points": entries,
+                "definition": "a function that calls out and is called by nothing in its "
+                              "own provenance root; a call from `tests`/`examples` is a "
+                              "use, not an internal caller (R1-C50)",
+                "best_effort_both_ways": "an unresolved caller leaves a real internal "
+                                         "looking like an entry point, and resolving one "
+                                         "removes an entry point — so a more complete "
+                                         "graph can list fewer",
+            }
         return self.query.flow(self._canon(sym), max_depth=int(args.get("depth", 5)))
 
     def _op_semantic(self, args) -> dict:
