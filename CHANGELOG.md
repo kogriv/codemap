@@ -5,6 +5,24 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **An override is reached through its base, so it cannot be graded confidently dead**
+  (R1-C55, axis B4 — [`gaps/third_shape_2026-09-12.md`](gaps/third_shape_2026-09-12.md) §S2).
+  Found by pointing codemap at three packages written by other people. On Pillow, **40 of 63**
+  symbols graded `high` dead were `_open` implementations overriding
+  `ImageFile.ImageFile._open` — which the same graph records as called from
+  `ImageFile.__init__` (`self._open()`). The report's wording is a statement of fact, *"no
+  inbound calls, references, or decorators"*, and it was false: 63 % of the band a reader acts
+  on, on the most ordinary shape in object-oriented Python. The data was already there — 191
+  `inherits` edges in that graph. An override of a **called** base is now `low` ("reached by
+  dispatch, not by name"); an override of a base that is itself uncalled here is `medium`
+  ("dead only if the base is"); everything else keeps the old grade and the old wording.
+  Measured both ways on one tree each: Pillow `high` 63 → **15**, codemap **31 → 31**, the
+  second dogfood target **2 → 2** — neither of our own trees carries the shape, which is why a
+  month of dogfooding never produced it. The walk is transitive and prefers the ancestor that
+  is actually called; the first version stopped at the nearest declaration and graded a
+  dispatched method `medium`, which the guard caught. Schema unchanged (**0.13**); no graph
+  bytes move — grading lives in the answer layer.
+
 ## [0.0.18] - 2026-09-12
 
 **Two passes at one habit: an answer must say how it was narrowed, and must answer the same way twice.**

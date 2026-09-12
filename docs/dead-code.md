@@ -10,9 +10,27 @@ and say *why*, so you can tell a real corpse from a framework-wired function.
 
 | Level | Meaning | Typical reason |
 |---|---|---|
-| **high** | No inbound edge of any kind, no decorator, no registry | `no inbound calls, references, or decorators` |
-| **medium** | A decorator or registry membership could invoke it implicitly | `decorated by @route — may be invoked implicitly` · `registered as 'x' — may be dispatched` |
-| **low** | Something *references* it (re-export, a name in a list, a registration) → likely alive | `referenced (references) by tests×3` |
+| **high** | No inbound edge of any kind, no decorator, no registry — **and it overrides nothing** | `no inbound calls, references, or decorators` |
+| **medium** | A decorator or registry membership could invoke it implicitly; or it overrides a base method that is itself uncalled here | `decorated by @route — may be invoked implicitly` · `overrides Base._open, which is itself uncalled here — dead only if the base is` |
+| **low** | Something *references* it (re-export, a name in a list, a registration), or it **overrides a called base** → likely alive | `referenced (references) by tests×3` · `overrides PIL.ImageFile.ImageFile._open, which has 1 inbound call(s) — reached by dispatch, not by name` |
+
+### Overrides are reached through the base (R1-C55)
+
+A method that overrides an ancestor's method is not called by its own name — the base is
+called and dynamic dispatch lands in the override. So "no inbound calls" is a statement
+about the **name**, not about the body, and it cannot carry the strongest grade.
+
+Measured on Pillow, where the shape is the whole architecture: **40 of 63** `high`
+candidates were `_open` implementations overriding `ImageFile.ImageFile._open`, which the
+same graph records as called from `ImageFile.__init__` (`self._open()`). 63 % of the band a
+reader acts on, wrong — on the most ordinary shape in object-oriented Python. After the fix
+that package's `high` band is 15. On codemap's own tree and on the second dogfood target the
+band is **unchanged**, which is precisely why a month of dogfooding never produced it: neither
+tree has a private override of a called base.
+
+The walk is transitive and prefers the ancestor that is actually *called*: in a three-deep
+chain the middle link is an override too, so it has no inbound call of its own, and naming it
+would report "the base is itself uncalled" while the call sits one level further up.
 
 The **low** tier is the false-positive cut: a private helper that a test, a re-export,
 or a registry points at is *referenced*, so codemap says so and grades it down instead

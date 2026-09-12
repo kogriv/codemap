@@ -665,10 +665,57 @@ class Query:
             out = [c for c in out if _CONFIDENCE_RANK[c["confidence"]] >= floor]
         return out
 
+    def _overridden_base(self, n: Node) -> tuple[str, int] | None:
+        """The ancestor method ``n`` overrides, and that ancestor's inbound calls (R1-C55).
+
+        An override is not reached by its own name: the base is called and dynamic
+        dispatch lands here, so "no inbound calls" is a statement about the *name*, not
+        about the body. Measured on Pillow, where 40 of 63 ``high`` candidates were
+        ``_open`` implementations of a template method the graph itself records as
+        called from ``ImageFile.__init__`` — the strongest grade, on the most ordinary
+        shape in object-oriented Python.
+
+        Walks ``inherits`` transitively and weighs **every** ancestor that declares the
+        name, not just the nearest: in a three-deep chain the middle link is an override
+        too, so it has no inbound call of its own, and stopping there would report "the
+        base is itself uncalled" while the call sits one level further up. An ancestor
+        with inbound calls therefore wins; failing that, the nearest one is named.
+        """
+        cls, _, meth = n.id.rpartition(".")
+        if not cls or cls not in self._inherits:
+            return None
+        nearest: tuple[str, int] | None = None
+        seen, queue = {cls}, [cls]
+        while queue:  # breadth-first, so `nearest` is the closest declaration
+            for base in self.bases(queue.pop(0)):
+                if base in seen:
+                    continue
+                seen.add(base)
+                queue.append(base)
+                cand = f"{base}.{meth}"
+                if cand not in self.graph.nodes:
+                    continue
+                in_calls = self._calls.in_degree(cand) if cand in self._calls else 0
+                if in_calls:
+                    return cand, in_calls
+                nearest = nearest or (cand, 0)
+        return nearest
+
     def _grade_dead(self, n: Node) -> dict:
         """Score one uncalled-private candidate → {id, confidence, root, reasons}."""
         refs = self.references_to(n.id)  # inbound of every kind, across roots
         registry = n.extras.get("registry")
+        override = self._overridden_base(n)
+        if override and not refs:
+            # R1-C55: the name is uncalled; the body is reachable through the base.
+            base, in_calls = override
+            if in_calls:
+                return {"id": n.id, "confidence": "low", "root": self.root_of(n.id),
+                        "reasons": [f"overrides {base}, which has {in_calls} inbound "
+                                    f"call(s) — reached by dispatch, not by name"]}
+            return {"id": n.id, "confidence": "medium", "root": self.root_of(n.id),
+                    "reasons": [f"overrides {base}, which is itself uncalled here — "
+                                f"dead only if the base is"]}
         if refs:
             by: dict[tuple[str, str], int] = {}
             for r in refs:
