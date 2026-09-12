@@ -25,7 +25,7 @@ get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py)
 | **OntoIndex** | [card](tools/ontoindex.md) | ✅⁵ | ◐⁵ | ✅⁵ | ✖ | ◐⁵ | ◐⁵ | ✅ (60+ tools) | 14 (tree-sitter) | AGPL-3.0 |
 | Sentrux | ? | — | — | ? | ? | ✅ | ✅ | ✅ | 52 | ? |
 | cocoindex-code | [card](tools/cocoindex-code.md) | ◐³ | — | — | — | — | ◐³ | ✅ | multi (tree-sitter) | Apache-2.0 |
-| rag_for_git | ? | ✅ | ✅ | ◐ | ? | ? | ✖ | ✖ | ? | OSS |
+| **rag_for_git** | [card](tools/rag_for_git.md) | ◐⁶ | ✅⁶ | ✖⁶ | ✖⁶ | ✖⁶ | ◐⁶ | ✅ (PR-keyed) | Py | MIT |
 | Understand-Anything | ? | ? | ? | ? | ? | ? | ? | ? | multi | OSS |
 
 _Rows are seeded from R1/R1.5 (desk-level, hence `?`); each becomes measured as its card moves to
@@ -112,6 +112,22 @@ honesty where it holds:** every edge carries the resolution *method* and a grade
 0.95 · `import-resolved` 0.9 · `global` 0.5 · markdown-link imports 0.8), `report --help` declares its own
 lossiness and routes to the authoritative op (`isRankedDiscovery: true` in JSON), and the one file over the
 size cap is re-announced in every answer. See the [card](tools/ontoindex.md).
+
+⁶ rag_for_git / `rag-reviewer` (0.7.0), hands-on **Stages A only** on the R2 scope (`git clone` + `checkout
+cb89a24`, materialized, `scope_id` verified), library level: no docker, no embedding key, so every *product*
+answer is read from source rather than measured, and the card says so per row. The product is an **AI
+pull-request reviewer**, and every graph op is keyed by `(repo, pr)`. **T2** ✅ in the graph — 60 callers of
+`MACDZoneAnalyzer` on their SCIP backend, a strict superset of codemap's 58 (+2 intra-class calls we do not
+count as inbound). **T3** ✖ as a product (`get_impact(repo, pr)` is diff-scoped, no symbol), ◐ in the library
+(`expand(hops=2)`). **T4/T5** ✖: `CALLS`/`IMPLEMENTS`/`TESTED_BY` only, clustering is a directory rollup, and
+nothing answers a whole-graph question — **six tools, both whole-graph columns still empty**. **The finding:**
+two graph backends behind one surface, chosen by whether `scip-python` is on `PATH` — same 207 files, **9779
+`CALLS` (tree-sitter default) vs 4914 (SCIP)**, shared only 2671, and **98.3%** of the default's extra edges
+target a simple name that is ambiguous in the scope (`.get()` fans out to seven `get` methods). The answer
+never names the backend, and when the binary is simply absent nothing is logged at all — R1-C13 reproduced
+independently. **What we take:** graph-completeness regression detection across rebuilds (their PRI-252),
+filed as R1-C59; nested definitions as nodes, filed as R1-C60. **Determinism** ◐: construction byte-identical
+on two runs per backend; the artifact is Neo4j + ParadeDB. See the [card](tools/rag_for_git.md).
 
 ## Quality summary
 
