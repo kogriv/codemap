@@ -116,16 +116,23 @@ def test_an_eager_cycle_is_still_an_import_cycle(tmp_path):
     assert q.lazy_import_cycles() == [], "an eager cycle is not also a lazy one"
 
 
-def test_a_longer_cycle_whose_lazy_edge_closes_it_is_enumerated(tmp_path):
+def test_two_loops_sharing_a_module_are_two_loops(tmp_path):
     """Three modules, the lazy import at the far end — the shape both audit scripts lost.
 
     The reporter of #11 verified the fix on their tree and found codemap reporting **three**
     cycles where their issue had claimed two. Their scan collected DFS back-edges instead
     of enumerating simple cycles, so a 3-node cycle was swallowed once its nodes were
     coloured; ours mis-anchored relative imports. Two independent scripts written to audit
-    a tool, both less careful than the tool, on the same day. This test pins the property
-    that made codemap right here: every elementary cycle, not one representative per
-    strongly-connected blob.
+    a tool, both less careful than the tool, on the same day.
+
+    **R1-C58 reversed the decision this test used to pin** — "every elementary cycle, not
+    one representative per strongly-connected blob" — because enumerating them is
+    combinatorial: one 78-module group of a real package has 464 109 of them, and printing
+    twenty took ten seconds. What must survive the reversal is the property #11 was about:
+    *nothing is swallowed*. Two loops that share a module are still two, and every module
+    in a cycle is still named. That is now carried by the tangle's **cycle rank** (its
+    independent loops) and its membership, instead of by a list whose length is a
+    combinatorial artefact.
     """
     pkg = _pkg(tmp_path, {
         "a.py": "from pkg.b import beta\n\n\ndef alpha():\n    return 1\n",
@@ -141,11 +148,15 @@ def test_a_longer_cycle_whose_lazy_edge_closes_it_is_enumerated(tmp_path):
         "    from pkg.e import eps\n    return eps()\n")
     q = Query(extract(str(pkg)))
     assert q.import_cycles() == [], "every cycle here is closed by a lazy import"
-    found = {frozenset(c) for c in q.lazy_import_cycles()}
-    assert frozenset({"pkg.a", "pkg.b", "pkg.c"}) in found
-    assert frozenset({"pkg.a", "pkg.d", "pkg.e"}) in found, (
-        "a second cycle sharing a node was swallowed — this is back-edge collection, "
-        "not simple-cycle enumeration")
+    tangles = q.lazy_import_tangles()
+    assert len(tangles) == 1, "the two loops share pkg.a, so they are one inseparable group"
+    tangle = tangles[0]
+    assert tangle["modules"] == ["pkg.a", "pkg.b", "pkg.c", "pkg.d", "pkg.e"], (
+        "a module of a cycle was swallowed — the failure #11 was about")
+    assert tangle["loops"] == 2, (
+        "two loops sharing a module are two problems: breaking a → b does not free "
+        "a → d → e → a, and a single count of 'one tangle' would hide that")
+    assert len(q.lazy_import_cycles()) == 1, "one example cycle per tangle"
 
 
 def test_import_map_is_emitted_even_when_nothing_is_lazy(tmp_path):

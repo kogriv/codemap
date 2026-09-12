@@ -133,6 +133,20 @@ def _core_layer_edges(query) -> list[tuple[str, str, str, str]]:
     return out
 
 
+
+def _tangle_line(tangle: dict) -> str:
+    """One gate line per tangle: the example cycle, then the members (R1-C58).
+
+    The example comes first because it is what a reader acts on; the membership follows
+    because the tangle, not the cycle, is what has to be broken.
+    """
+    ex = tangle["example"]
+    head = " → ".join(ex) + " → " + ex[0]
+    if tangle["size"] <= len(ex):
+        return head
+    return f"{head} (tangle of {tangle['size']}: {', '.join(tangle['modules'])})"
+
+
 def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
     """Evaluate every rule against the graph; return the violations (empty = clean)."""
     if contract.is_empty():
@@ -192,13 +206,16 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
     # migrated into the gate. So: the gate stays eager, the *disclosure* is mandatory (see
     # `build_check`), and a contract that wants the coupling gated says so.
     if contract.no_cycles:
-        cycles = query.import_cycles()
-        if cycles:
-            worst = sorted(cycles, key=lambda c: (len(c), c))
+        tangles = query.import_tangles()
+        if tangles:
+            # R1-C58: one violation per **tangle**, not per simple cycle. A tangle of 19
+            # modules used to produce 1080 violations that were all the same problem, and
+            # the gate's own output then took a thousand lines to say it once.
             violations.append(Violation(
                 "no_cycles",
-                f"{len(cycles)} import cycle(s)",
-                modules=tuple(" → ".join(c) + " → " + c[0] for c in worst),
+                f"{len(tangles)} import tangle(s), "
+                f"{sum(t['size'] for t in tangles)} module(s)",
+                modules=tuple(_tangle_line(t) for t in tangles),
             ))
 
     # -- no_lazy_cycles: opt in to gating the coupling a lazy import hides -------
@@ -206,13 +223,13 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
     # not a gate, and a lazy import is the accepted way to break an import cycle — so this
     # is the contract owner's call to state, not a default to pick on their behalf.
     if contract.no_lazy_cycles:
-        lazy = query.lazy_import_cycles()
+        lazy = query.lazy_import_tangles()
         if lazy:
-            worst = sorted(lazy, key=lambda c: (len(c), c))
             violations.append(Violation(
                 "no_lazy_cycles",
-                f"{len(lazy)} dependency cycle(s) closed only by a function-local import",
-                modules=tuple(" → ".join(c) + " → " + c[0] for c in worst),
+                f"{len(lazy)} tangle(s) closed only by a function-local import, "
+                f"{sum(t['size'] for t in lazy)} module(s)",
+                modules=tuple(_tangle_line(t) for t in lazy),
             ))
 
     # -- no_type_only_cycles: the third kind, and the one with no runtime dependency ----
@@ -223,14 +240,14 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
     # against lazy imports used as a way around `no_cycles`, and the standard typing
     # idiom is not that.
     if contract.no_type_only_cycles:
-        type_only = query.type_only_import_cycles()
+        type_only = query.type_only_import_tangles()
         if type_only:
-            worst = sorted(type_only, key=lambda c: (len(c), c))
             violations.append(Violation(
                 "no_type_only_cycles",
-                f"{len(type_only)} dependency cycle(s) closed only by an import under "
-                f"`if TYPE_CHECKING:`",
-                modules=tuple(" → ".join(c) + " → " + c[0] for c in worst),
+                f"{len(type_only)} tangle(s) closed only by an import that never runs "
+                f"(`if TYPE_CHECKING:` or a `.pyi`), "
+                f"{sum(t['size'] for t in type_only)} module(s)",
+                modules=tuple(_tangle_line(t) for t in type_only),
             ))
 
     # -- exhaustive: every core module's layer must be declared -----------------

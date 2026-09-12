@@ -5,6 +5,26 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **Cycles were counted by the piece, and pieces are combinatorial** (R1-C58, axis B4 —
+  [`gaps/third_shape_2026-09-12.md`](gaps/third_shape_2026-09-12.md) §S3/§S4, design
+  [`docs/design/cycle_tangles.md`](docs/design/cycle_tangles.md)). On pytest's `_pytest` — 78
+  modules, the same size as the trees this project dogfoods on — the architecture report said
+  **1080 / 95 001 / 464 109** cycles and took **1632 lines and 10.3 s** to say it. Those are not
+  large numbers but combinatorial ones: two mutually dependent modules make one cycle, and a third
+  in the same knot multiplies the paths through it. The unit of the answer is now the **tangle** —
+  the group of modules that cannot be separated — with one example cycle each, the edge that holds
+  it together, and its **independent loops** (`E − V + 1`), which is what was worth keeping from the
+  old count: two loops sharing a module are still two problems. The same tree now reads **1 tangle,
+  19 modules, 57 independent loops**, in 137 lines and 0.40 s; the gate emits one violation per
+  tangle instead of 1080 lines of the same one. On small knots the new number equals the old one
+  exactly (the dogfood target's 9 lazy cycles are 1 tangle of 10 modules with 9 loops; attrs' 10
+  hard cycles are 1 tangle of 9 with 10), which is the property that makes the replacement a
+  refinement rather than a different metric. `cycles` / `lazy_cycles` / `type_only_cycles` keep
+  their place in the payload and now carry one example per tangle; `tangles` / `lazy_tangles` /
+  `type_only_tangles` carry the membership. Also: a flat package (no subpackages) now **says** that
+  its layer view is degenerate — "layer = module here" — instead of printing "Layers (105)" over 105
+  modules and letting it read as structure. Schema unchanged (**0.13**).
+
 ## [0.0.19] - 2026-09-12
 
 **Three packages written by other people, and three defects none of our own trees could show.**

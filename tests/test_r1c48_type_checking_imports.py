@@ -176,7 +176,7 @@ def test_the_type_only_rule_gates_the_coupling(tree):
     assert arch.check_contract(tree[2], arch.ArchitectureContract(no_lazy_cycles=True)) == []
     v = arch.check_contract(tree[2], arch.ArchitectureContract(no_type_only_cycles=True))
     assert [x.rule for x in v] == ["no_type_only_cycles"]
-    assert "under `if TYPE_CHECKING:`" in v[0].summary
+    assert "an import that never runs (`if TYPE_CHECKING:` or a `.pyi`)" in v[0].summary
 
 
 # -- the mutation ---------------------------------------------------------------------------

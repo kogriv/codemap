@@ -15,6 +15,36 @@ from codemap.diagnostics import render_lines
 from codemap.query import Query
 
 
+def _tangle_head(tangles: list[dict]) -> str:
+    """`N tangle(s) (M modules)` — the count that is stable under adding an edge.
+
+    R1-C58: the previous head counted **simple cycles**, which is combinatorial. A tangle
+    of three mutually-dependent modules has one head here and produced five entries there;
+    pytest's `_pytest` produced 1080, 95 001 and 464 109 for one tangle each.
+    """
+    if not tangles:
+        return "0"
+    return (f"{len(tangles)} tangle(s), {sum(t['size'] for t in tangles)} module(s), "
+            f"{sum(t['loops'] for t in tangles)} independent loop(s)")
+
+
+def _tangle_lines(tangles: list[dict]) -> list[str]:
+    """One block per tangle: its members, and one cycle through it as an example."""
+    out: list[str] = []
+    for tg in tangles:
+        if tg["size"] == 1:
+            out.append(f"- `{tg['modules'][0]}` — imports itself")
+            continue
+        out.append(f"- **{tg['size']} modules, {tg['loops']} independent loop(s):** "
+                   + ", ".join(f"`{m}`" for m in tg["modules"]))
+        ex = tg["example"]
+        line = f"  - e.g. {' → '.join(ex)} → {ex[0]}"
+        if tg.get("closed_by"):
+            line += f" — held together by `{tg['closed_by'][0]}` → `{tg['closed_by'][1]}`"
+        out.append(line)
+    return out
+
+
 def build_architecture(query: Query) -> dict:
     """Structured whole-system overview (cycles + layers + coupling + hotspots).
 
@@ -30,9 +60,16 @@ def build_architecture(query: Query) -> dict:
     """
     return {
         "target": query.graph.target,
+        # R1-C58: the unit is the tangle (a strongly connected group of modules). The
+        # `*_cycles` keys stay, carrying **one example per tangle** — they used to carry
+        # every simple cycle, a combinatorial quantity that reached 464 109 entries for a
+        # single tangle of 78 modules and said nothing the tangle does not.
         "cycles": query.import_cycles(),
         "lazy_cycles": query.lazy_import_cycles(),
         "type_only_cycles": query.type_only_import_cycles(),
+        "tangles": query.import_tangles(),
+        "lazy_tangles": query.lazy_import_tangles(),
+        "type_only_tangles": query.type_only_import_tangles(),
         "import_map": query.import_map(),
         "layers": query.layers(),
         "coupling": query.coupling(),
@@ -54,15 +91,27 @@ def render_architecture(query: Query) -> str:
 
     # -- layers -------------------------------------------------------------
     lay = a["layers"]
+    # R1-C58/D4: a layer is the first path segment under the root. A package with no
+    # subpackages therefore has one layer per module, and the section reads as an
+    # architectural overview while saying only "this package is flat". Measured on
+    # Pillow: "Layers (105)" over 105 modules. Say it instead of implying structure.
+    degenerate = bool(lay["layers"]) and all(len(m) == 1 for m in lay["layers"].values())
     out.append(f"## Layers ({len(lay['layers'])})")
     out.append("")
+    if degenerate:
+        out.append("_This package has no subpackages, so **layer = module** here: the "
+                   "grouping below is the module list, and the inter-layer view would "
+                   "repeat the import graph edge for edge. Not a statement about "
+                   "structure — a statement that there is none to report._")
+        out.append("")
     for name, mods in lay["layers"].items():
         out.append(f"- **{name}** — {len(mods)} module(s)")
     out.append("")
-    out.append("### Inter-layer dependencies")
-    out.append("")
-    out.extend([f"- {edge} ({n})" for edge, n in lay["edges"].items()] or ["_none._"])
-    out.append("")
+    if not degenerate:
+        out.append("### Inter-layer dependencies")
+        out.append("")
+        out.extend([f"- {edge} ({n})" for edge, n in lay["edges"].items()] or ["_none._"])
+        out.append("")
     if lay["violations"]:
         out.append("### ⚠ Layer violations (mutual dependency)")
         out.append("")
@@ -75,10 +124,15 @@ def render_architecture(query: Query) -> str:
     # R1-C29: never state acyclicity as a property. The map is only as complete as the
     # imports it read, and the reader cannot see which those were unless we say so.
     im = a["import_map"]
-    out.append(f"## Import cycles: {len(a['cycles'])}")
+    out.append(f"## Import cycles: {_tangle_head(a['tangles'])}")
     out.append("")
-    out.extend([f"- {' → '.join(c)} → {c[0]}" for c in
-                sorted(a["cycles"], key=lambda c: (len(c), c))]
+    out.append("_A **tangle** is a group of modules that cannot be separated — the unit you "
+               "would act on — and its **independent loops** are how many distinct ways it "
+               "closes (the cycle rank). The number of *simple* cycles is combinatorial (one "
+               "19-module tangle of a real package has 1080, and its 78-module tangle has "
+               "464 109) and is deliberately not reported; one example cycle per tangle is._")
+    out.append("")
+    out.extend(_tangle_lines(a["tangles"])
                or ["_none found in the eager import graph._"])
     out.append("")
     out.append(f"_Read {im['module_level']} module-level, {im['function_local']} "
@@ -89,33 +143,27 @@ def render_architecture(query: Query) -> str:
     out.append("")
     if a["lazy_cycles"]:
         out.append(f"### Dependency cycles closed only by a function-local import: "
-                   f"{len(a['lazy_cycles'])}")
+                   f"{_tangle_head(a['lazy_tangles'])}")
         out.append("")
         out.append("_These do **not** break at import time — the lazy import is what "
                    "prevents that, and is usually deliberate. They are listed because "
                    "the modules are still mutually dependent at run time: neither can be "
                    "extracted without the other._")
         out.append("")
-        out.extend(f"- {' → '.join(c)} → {c[0]}" for c in
-                   sorted(a["lazy_cycles"], key=lambda c: (len(c), c))[:20])
-        if len(a["lazy_cycles"]) > 20:
-            out.append(f"- _… {len(a['lazy_cycles']) - 20} more_")
+        out.extend(_tangle_lines(a["lazy_tangles"]))
         out.append("")
     if a["type_only_cycles"]:
         # R1-C49: the third kind, kept apart from the second because the difference is the
         # whole point — these modules have no runtime dependency on each other at all.
         out.append(f"### Dependency cycles closed only by an import that never runs "
-                   f"(`if TYPE_CHECKING:` or a `.pyi`): {len(a['type_only_cycles'])}")
+                   f"(`if TYPE_CHECKING:` or a `.pyi`): {_tangle_head(a['type_only_tangles'])}")
         out.append("")
         out.append("_Neither module pulls the other at any moment of execution — they name "
                    "each other's types. Not an import-time failure and not runtime coupling; "
                    "`no_type_only_cycles = true` gates them if the type layer must not close "
                    "a cycle either._")
         out.append("")
-        out.extend(f"- {' → '.join(c)} → {c[0]}" for c in
-                   sorted(a["type_only_cycles"], key=lambda c: (len(c), c))[:20])
-        if len(a["type_only_cycles"]) > 20:
-            out.append(f"- _… {len(a['type_only_cycles']) - 20} more_")
+        out.extend(_tangle_lines(a["type_only_tangles"]))
         out.append("")
 
     # -- coupling -----------------------------------------------------------

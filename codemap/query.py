@@ -1129,16 +1129,103 @@ class Query:
 
     # -- graph-wide ----------------------------------------------------------
 
+    def _tangle_sets(self, g) -> set[frozenset]:
+        """Strongly connected components of ``g`` that are cycles (R1-C58).
+
+        A tangle — not a cycle — is the unit a reader acts on: *these N modules cannot be
+        separated*. The number of **simple cycles** through them is combinatorial and says
+        nothing more; on pytest's `_pytest` it was 1080 / 95 001 / 464 109 for one tangle
+        of 78 modules, and enumerating them cost 10 s of a report that printed twenty.
+        """
+        out = {frozenset(c) for c in nx.strongly_connected_components(g) if len(c) > 1}
+        out |= {frozenset({n}) for n in g.nodes if g.has_edge(n, n)}
+        return out
+
+    def _example_cycle(self, g, modules: frozenset,
+                       via: set | None = None) -> tuple[list[str], tuple | None]:
+        """One cycle through ``modules``, chosen deterministically (R1-C58).
+
+        Deliberately **not** promised to be the shortest — promising it would buy a
+        narrowing we would then have to declare. It is an example, and it is chosen to
+        pass through an edge of the class that *defines* the tangle (``via``): a lazy
+        tangle must show a function-local edge, or the example reads like an eager cycle
+        in the section about lazy ones. Returns the cycle and that edge, so the answer can
+        name *which* import is the one holding the tangle together.
+        """
+        sub = g.subgraph(modules)
+        chosen = sorted(e for e in sub.edges if via is None or e in via)
+        edges = chosen or sorted(sub.edges)
+        if not edges:
+            return sorted(modules), None    # a self-loop: the module is the whole cycle
+        src, dst = edges[0]
+        edge = (src, dst) if chosen else None
+        if src == dst:
+            return [src], edge
+        try:
+            path = nx.shortest_path(sub, dst, src)
+        except nx.NetworkXNoPath:           # cannot happen inside an SCC; not asserted
+            return sorted(modules), edge
+        return _canonical_cycles([path])[0], edge
+
+    def _tangles(self, g, weaker: set[frozenset], via: set | None = None) -> list[dict]:
+        """Tangles of ``g`` that are not already reported in a stronger class."""
+        out = []
+        for tangle in self._tangle_sets(g) - weaker:
+            example, edge = self._example_cycle(g, tangle, via)
+            sub = g.subgraph(tangle)
+            row = {"modules": sorted(tangle), "size": len(tangle),
+                   # R1-C58: the cycle rank (first Betti number) of the tangle — how many
+                   # **independent** loops it holds. This is the part of the old count that
+                   # was worth keeping: two loops sharing one module are two problems, and
+                   # collapsing them to "one tangle" would hide that. Unlike the number of
+                   # simple cycles it is linear to compute and does not explode: the 19-module
+                   # tangle in pytest has 1080 simple cycles and 31 independent loops.
+                   "loops": sub.number_of_edges() - len(tangle) + 1,
+                   "example": example}
+            if edge:
+                row["closed_by"] = list(edge)
+            out.append(row)
+        return sorted(out, key=lambda r: (r["size"], r["modules"]))
+
+    def import_tangles(self) -> list[dict]:
+        """Mutually-dependent module groups in the **eager** import graph (R1-C58).
+
+        Each entry is ``{modules, size, example}``: the group that cannot be separated,
+        and one cycle through it. The count of simple cycles is not reported — see
+        :meth:`_tangle_sets`.
+        """
+        return self._tangles(self._imports_eager, set())
+
+    def lazy_import_tangles(self) -> list[dict]:
+        """Tangles that exist only once function-local imports are counted."""
+        return self._tangles(self._imports_runtime,
+                             self._tangle_sets(self._imports_eager),
+                             via={(e.source, e.target) for e in self.graph.edges
+                                  if e.type == "imports"
+                                  and e.extras.get("scope") == "function"})
+
+    def type_only_import_tangles(self) -> list[dict]:
+        """Tangles that exist only once imports that never execute are counted."""
+        return self._tangles(self._imports, self._tangle_sets(self._imports_runtime),
+                             via={(e.source, e.target) for e in self.graph.edges
+                                  if e.type == "imports"
+                                  and e.extras.get("scope") in ("type_checking", "stub")})
+
     def import_cycles(self) -> list[list[str]]:
-        """Cycles that exist in the **eager** import graph — the import-order landmines.
+        """One example cycle per **eager** tangle — the import-order landmines.
 
         R1-C29: deliberately *not* computed over every import edge. A function-local
         import does not run at import time, so a cycle closed only by one does not break
         on import — it is what a developer writes to stop it breaking. Counting it here
         would report someone's fix as their bug. Those cycles are still real coupling
         and are returned by :meth:`lazy_import_cycles`.
+
+        R1-C58 changed what one entry **means**: it used to be every simple cycle, which
+        is a combinatorial quantity (1080 entries for one tangle of 78 modules), and is
+        now one representative per tangle. :meth:`import_tangles` carries the group each
+        example stands for.
         """
-        return _canonical_cycles(nx.simple_cycles(self._imports_eager))
+        return _canonical_cycles(t["example"] for t in self.import_tangles())
 
     def lazy_import_cycles(self) -> list[list[str]]:
         """Dependency cycles that close **only** through a function-local import.
@@ -1155,9 +1242,7 @@ class Query:
         function-local import stays *lazy* however many type imports also run between
         them, or a tree could hide real coupling by adding one.
         """
-        eager = {frozenset(c) for c in nx.simple_cycles(self._imports_eager)}
-        return _canonical_cycles(c for c in nx.simple_cycles(self._imports_runtime)
-                                 if frozenset(c) not in eager)
+        return _canonical_cycles(t["example"] for t in self.lazy_import_tangles())
 
     def type_only_import_cycles(self) -> list[list[str]]:
         """Dependency cycles that close **only** with an import that never executes.
@@ -1174,9 +1259,7 @@ class Query:
         break — while the edge keeps the mechanism in ``extras.scope``. Measured on
         Pillow, whose *only* "hard" cycle was a stub declaring the module that imports it.
         """
-        runtime = {frozenset(c) for c in nx.simple_cycles(self._imports_runtime)}
-        return _canonical_cycles(c for c in nx.simple_cycles(self._imports)
-                                 if frozenset(c) not in runtime)
+        return _canonical_cycles(t["example"] for t in self.type_only_import_tangles())
 
     def import_map(self) -> dict:
         """How much of the import graph each scope contributed (R1-C29).

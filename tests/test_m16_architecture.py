@@ -80,7 +80,10 @@ def test_build_architecture_has_all_sections(q):
     # imports each scope contributed). R1-C49 added `type_only_cycles`, the third kind —
     # closed only by an import under `if TYPE_CHECKING:`, i.e. no runtime dependency at all —
     # imports of each scope the map was built from, always, zero included).
-    assert set(a) == {"target", "cycles", "lazy_cycles", "type_only_cycles", "import_map",
+    assert set(a) == {"target", "cycles", "lazy_cycles", "type_only_cycles",
+                      # R1-C58: the tangle is the unit; the `*_cycles` keys stay and carry
+                      # one example per tangle, because consumers parse them.
+                      "tangles", "lazy_tangles", "type_only_tangles", "import_map",
                       "layers", "coupling", "hotspots"}
     assert a["target"] == "dispatchpkg"
 

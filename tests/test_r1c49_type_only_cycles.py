@@ -195,7 +195,7 @@ def test_the_reports_carry_both_kinds_and_say_zero(both, tmp_path):
     assert ("Dependency cycles closed only by an import that never runs "
             "(`if TYPE_CHECKING:` or a `.pyi`): 1") in md
     dep = render_dependencies(both)
-    assert "1 further cycle(s) close through a function-local import" in dep
+    assert "1 further tangle(s) close through a function-local import" in dep
     assert "1 through an import that never runs" in dep
     assert _flat(build_dependencies(both)["type_only_import_cycles"]) == [["bp.typed_a", "bp.typed_b"]]
     docs = render_docs(both)

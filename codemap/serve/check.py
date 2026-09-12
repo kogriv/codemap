@@ -34,8 +34,8 @@ def _not_judged(query, contract: ArchitectureContract) -> list[dict]:
     # R1-C49: two kinds may be left out, and they are different things. Whichever of them
     # this contract does not gate is what the reader must be told about — reporting one
     # sum over both is the defect the third consumer filed.
-    lazy = [] if contract.no_lazy_cycles else query.lazy_import_cycles()
-    type_only = [] if contract.no_type_only_cycles else query.type_only_import_cycles()
+    lazy = [] if contract.no_lazy_cycles else query.lazy_import_tangles()
+    type_only = [] if contract.no_type_only_cycles else query.type_only_import_tangles()
     return [{
         "rule": "no_cycles",
         "judged": "the eager import graph — imports that run at import time",

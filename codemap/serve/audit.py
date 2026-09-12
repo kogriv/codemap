@@ -17,15 +17,19 @@ def render_dependencies(query: Query) -> str:
     # it; each check supplies its own consequence, or none (issue #8).
     lines.extend(render_lines(query.graph))
 
-    cycles = query.import_cycles()
-    lazy = query.lazy_import_cycles()
-    type_only = query.type_only_import_cycles()
+    tangles = query.import_tangles()
+    lazy = query.lazy_import_tangles()
+    type_only = query.type_only_import_tangles()
     im = query.import_map()
-    lines.append(f"## Import cycles: {len(cycles)}")
+    # R1-C58: tangles, not simple cycles — the count of the latter is combinatorial.
+    lines.append(f"## Import cycles: {len(tangles)} tangle(s)"
+                 + (f", {sum(t['size'] for t in tangles)} module(s)" if tangles else ""))
     lines.append("")
-    if cycles:
-        for cyc in sorted(cycles, key=lambda c: (len(c), c)):
-            lines.append(f"- {' → '.join(cyc)} → {cyc[0]}")
+    if tangles:
+        for tg in tangles:
+            ex = tg["example"]
+            lines.append(f"- **{tg['size']} modules** — e.g. "
+                         f"{' → '.join(ex)} → {ex[0]}")
     else:
         # R1-C29: "none found" is what was measured; "acyclic" is a property, and the
         # map that would have to be complete to support it demonstrably is not.
@@ -34,7 +38,7 @@ def render_dependencies(query: Query) -> str:
     lines.append(f"_Read {im['module_level']} module-level, {im['function_local']} "
                  f"function-local, {im['type_checking']} `TYPE_CHECKING` and {im['stub']} "
                  f"`.pyi` import(s); only the first run at import time. {len(lazy)} further "
-                 f"cycle(s) close through a function-local import (runtime coupling, not an "
+                 f"tangle(s) close through a function-local import (runtime coupling, not an "
                  f"import-time failure) and {len(type_only)} through an import that never "
                  f"runs — `if TYPE_CHECKING:` or a `.pyi` (no runtime dependency at all)._")
     lines.append("")

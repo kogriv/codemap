@@ -142,25 +142,26 @@ def render_docs(query: Query) -> str:
         out.append("")
 
     # -- architecture caveats (the honest health section) -------------------
-    cycles = query.import_cycles()
-    lazy = query.lazy_import_cycles()
-    type_only = query.type_only_import_cycles()
+    cycles = query.import_tangles()
+    lazy = query.lazy_import_tangles()
+    type_only = query.type_only_import_tangles()
     lay = query.layers()
     gods = query.hotspots()["god_classes"]
     out.append("## Architecture notes")
     out.append("")
     if cycles:
-        out.append(f"- **{len(cycles)} import cycle(s)** — e.g. "
-                   + "; ".join(" → ".join(c) for c in sorted(cycles, key=len)[:3]))
+        out.append(f"- **{len(cycles)} import tangle(s)**, {sum(c['size'] for c in cycles)} "
+                   f"module(s) that cannot be separated — e.g. "
+                   + "; ".join(" → ".join(c["example"]) for c in cycles[:3]))
     else:
         # R1-C29: no cycle *found*, over the imports that run at import time — not a
         # proof of acyclicity, which this map cannot support.
         out.append("- No import cycle found in the eager import graph.")
     if lazy:
-        out.append(f"- **{len(lazy)} dependency cycle(s) closed only by a function-local "
+        out.append(f"- **{len(lazy)} tangle(s) closed only by a function-local "
                    f"import** — deliberate, and still runtime coupling.")
     if type_only:
-        out.append(f"- **{len(type_only)} dependency cycle(s) closed only by an import that "
+        out.append(f"- **{len(type_only)} tangle(s) closed only by an import that "
                    f"never runs** (`if TYPE_CHECKING:` or a `.pyi`) — the modules name each "
                    f"other's types and have no runtime dependency.")
     if lay["violations"]:

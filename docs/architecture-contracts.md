@@ -80,6 +80,15 @@ target's one such import, and nothing short of rewriting correct code could turn
 A cycle is classified by the **weakest import scope that closes it**
 ([R1-C49](../gaps/type_only_cycles_2026-09-07.md), the second half of issue #18):
 
+**The unit is a tangle, not a cycle (R1-C58).** Each kind is reported as the groups of modules
+that cannot be separated — a strongly connected component — with **one example cycle** and the
+tangle's **independent loops** (`E − V + 1`, the cycle rank). The number of *simple* cycles is
+combinatorial and is deliberately not reported: one 19-module tangle of a real package has 1080,
+and its 78-module one has 464 109, which is a statement about path counting rather than about the
+package. On small knots the loop count equals the old cycle count exactly (9 → 9, 10 → 10); it
+stops matching where the old number stopped meaning anything. The gate emits **one violation per
+tangle**, listing its members.
+
 | kind | closes with | what it means | rule |
 |---|---|---|---|
 | eager | module-level imports alone | breaks at import time | `no_cycles` |
