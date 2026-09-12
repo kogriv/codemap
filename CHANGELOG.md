@@ -5,6 +5,15 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.20] - 2026-09-12
+
+**The last of the four findings from the third-shape run, and the one that was a metric rather than a
+bug.** Schema unchanged (**0.13**, ninth release running). Counting cycles by the piece is counting
+paths through a knot; the knot is what a reader acts on. This changes the shape of an answer that
+consumers read — `## Import cycles: N` now counts **tangles**, and the gate emits one violation per
+tangle — so it ships on its own rather than folded into a larger release.
+
+
 - **Cycles were counted by the piece, and pieces are combinatorial** (R1-C58, axis B4 —
   [`gaps/third_shape_2026-09-12.md`](gaps/third_shape_2026-09-12.md) §S3/§S4, design
   [`docs/design/cycle_tangles.md`](docs/design/cycle_tangles.md)). On pytest's `_pytest` — 78
