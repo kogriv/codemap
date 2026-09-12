@@ -82,6 +82,22 @@ jobs:
           fi
           echo "skipped: $(grep -c '^SKIPPED' /tmp/pytest.txt || true) (expected: the \
             optional interop CLIs, covered by the interop job)"
+      # Claim: README's "**N tests with no failures on Python 3.11-3.14**". It said 765 while
+      # the suite ran 918 — stale by 153, and nothing noticed, because the milestone rule
+      # ("a claim in the repository is either checked by CI or removed") had never been
+      # applied to this number. The count is the collected one: passed + skipped.
+      - name: The README's test count is a claim, so check it
+        run: |
+          claimed=$(grep -oE '\*\*[0-9]+ tests with no failures' README.md | grep -oE '[0-9]+')
+          passed=$(grep -oE '[0-9]+ passed' /tmp/pytest.txt | tail -1 | grep -oE '[0-9]+')
+          skipped=$(grep -oE '[0-9]+ skipped' /tmp/pytest.txt | tail -1 | grep -oE '[0-9]+' || echo 0)
+          collected=$((passed + skipped))
+          echo "README claims $claimed; this run collected $collected ($passed passed, $skipped skipped)"
+          if [ "$claimed" != "$collected" ]; then
+            echo "::error::README says $claimed tests, the suite has $collected — update the \
+              number in the same commit that changes the suite, or remove it"
+            exit 1
+          fi
 
   # Claim: README's "deterministic (canonical sorted JSON, no timestamps — diffable)".
   #
