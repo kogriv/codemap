@@ -22,13 +22,17 @@ One rule threads all of them: **measurements, not verdict.**
 | 6 | **I measured the 68,000-star competitor. It was faster than mine. That wasn't the finding.** — four rivals, and the same two columns empty in all of them. Point questions have a seed symbol; whole-graph questions don't. | [EN](06-two-empty-columns.md) | [RU](06-two-empty-columns.ru.md) |
 | 7 | **Two graphs that share no code agreed exactly. Then one of them disagreed with itself.** — 57 callers against 57, by two implementations with nothing in common. And a field named `truncated` reporting `false` while it dropped 27 of them. | [EN](07-two-graphs-agreed.md) | [RU](07-two-graphs-agreed.ru.md) |
 | 8 | **Eight of my last twelve bug fixes were the same bug.** — sorted by cause instead of by place, the backlog stopped looking like twelve bugs. The audit that followed was full, and missed the next one by a day. | [EN](08-eight-of-twelve.md) | [RU](08-eight-of-twelve.ru.md) |
+| 9 | **My tool reported 464,109 import cycles. Every one of them was real.** — and on the next package, the one cycle it reported did not exist. Measurement cannot tell a true number from a meaningful one. | [EN](09-true-and-worthless.md) | [RU](09-true-and-worthless.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
-readers can start at 0. Posts 4, 5, 6 and 8 are the ones where the method is turned on the author — 4 on a
+readers can start at 0. Posts 4, 5, 6, 8 and 9 are the ones where the method is turned on the author — 4 on a
 claim of his, 5 on the limits of how he was testing it, 6 on three differentiators he had to give up, 8 on
-twelve of his own closed bug reports. Post 7 is the one where an outside implementation agreed with his
-numbers exactly, which is the only external check in the series.
+twelve of his own closed bug reports, 9 on the limit of measuring at all. Post 7 is the one where an outside
+implementation agreed with his numbers exactly, which is the only external check in the series.
+
+Posts 5 and 9 are a pair, and read best together: 5 is *the target is a shape, not a sample* about defects,
+9 is the same sentence one level up, about the metrics.
 
 ---
 
@@ -82,15 +86,16 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P6 — two empty columns | ✅ EN + RU | [CodeGraph card](../tools/codegraph.md), [comparison](../comparison.md) matrix, [docs/whole-graph-questions.md](../../docs/whole-graph-questions.md); [positioning](../positioning.md) build-story #6 |
 | P7 — two graphs agreed (OntoIndex) | ✅ EN + RU | [OntoIndex card](../tools/ontoindex.md), [comparison](../comparison.md) matrix; [positioning](../positioning.md) build-story #7 |
 | P8 — eight of twelve (methods) | ✅ EN + RU | [narrowing_audit](../../docs/design/narrowing_audit.md), [deterministic_rendering](../../docs/design/deterministic_rendering.md), gaps [flow_entry_points](../../gaps/flow_entry_points_2026-09-10.md) + [cycle_rotation](../../gaps/cycle_rotation_nondeterminism_2026-09-12.md), issues #19 + #20; [positioning](../positioning.md) build-story #8 |
-| P9 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
-| P10 — next tool | 🔲 later | lands when the next R2 разбор does |
+| P9 — true and worthless (axis B4) | ✅ EN + RU | [third_shape_2026-09-12](../../gaps/third_shape_2026-09-12.md) §6 (pre-registration + reconciliation), [stub_files](../../docs/design/stub_files.md), [cycle_tangles](../../docs/design/cycle_tangles.md), BACKLOG R1-C55…R1-C58; [positioning](../positioning.md) build-story #9 |
+| P10 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
+| P11 — next tool | 🔲 later | lands when the next R2 разбор does |
 
 A post's number is its filename slot, assigned **on publication** — a planned post takes the next
 free number when it actually lands, not when it is sketched. Which is why the role-provenance story
-has now been P5, P6, P7 and P9 without a word of it being written: waiting costs it a number each time
+has now been P5, P6, P7, P9 and P10 without a word of it being written: waiting costs it a number each time
 a post that *did* have an episode goes out first. That is the rule working, not failing.
 
-**P9 is the only writing left, and it is deliberately not forced.** It needs an episode that
+**P10 is the only writing left, and it is deliberately not forced.** It needs an episode that
 actually *happened* — a provenance split that changed a real decision. Inventing one would break
 the single rule the series rests on. Capture it opportunistically while dogfooding, into `gaps/`,
 then promote to [positioning.md](../positioning.md) §Future stories, then write the post.
@@ -110,12 +115,14 @@ measuring the field's most-adopted tool and losing three differentiators in the 
 the sketch list held no entry for "a tool sharing no line of code returns the same 57 callers, and
 then the same 78." Nor P8, which came from sorting twelve closed backlog items by cause and finding
 eight of them were one defect — and whose last section exists because a consumer found the ninth
-instance twenty-four hours after the audit declared the mechanism closed. **Five published posts,
-none of them writable from its sketch** — which is the argument for not forcing P9.
+instance twenty-four hours after the audit declared the mechanism closed. Nor P9, which came from a
+pre-registered run against three third-party packages: the list held five predictions, two of them were
+refuted, and the four findings that mattered were not on it at all. **Six published posts,
+none of them writable from its sketch** — which is the argument for not forcing P10.
 
 Sketch for the one that remains:
 
-- **P9 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
+- **P10 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
   *"12 non-test references — 2 in core, 7 in docs — and 53 in tests."* Beats: multi-root
   provenance → dead-code without the dominant false-positive source → impact tagged by role
   → why an agent needs "what breaks in *core*" → the honest limit (one-hop by default).
@@ -128,7 +135,8 @@ Sketch for the one that remains:
 - [ ] Positioning line near the top; the standing invitation at the foot ("measured your
       tool and I got it wrong? open an issue").
 - [ ] Current facts, read off [`README.md`](../../README.md)'s status line at the time of writing and never
-      copied from an older post — at 2026-09-12: **schema 0.13 / 938 tests / 31 ops — 28 MCP tools**.
+      copied from an older post — at 2026-09-12 (after 0.0.20): **schema 0.13 / 972 tests / 31 ops — 28 MCP
+      tools**.
       This checklist line is itself a snapshot and **was stale for two weeks** (it still said 0.12 / 587
       tests after five releases). The README's count is guarded in CI; this one is not, so it gets re-read
       rather than trusted.

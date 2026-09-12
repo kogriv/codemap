@@ -907,6 +907,96 @@ Two smaller rules, each bought with a specific error:
 
 ---
 
+## Build-story #9 — "464,109 cycles, every one real" (ourselves, axis B4)
+
+Facts: [`gaps/third_shape_2026-09-12.md`](../gaps/third_shape_2026-09-12.md) (pre-registration §1–§5,
+reconciliation §6), [`docs/design/stub_files.md`](../docs/design/stub_files.md),
+[`docs/design/cycle_tangles.md`](../docs/design/cycle_tangles.md), BACKLOG R1-C55…R1-C58.
+Shipped 2026-09-12 in 0.0.19 + 0.0.20, schema 0.13 unchanged (ninth consecutive release). Suite 938 → 972.
+Published as blog post **[09 — true and worthless](blog/09-true-and-worthless.md)**
+([RU](blog/09-true-and-worthless.ru.md)).
+
+### The run
+
+Both existing dogfood trees are code written by the author, for consumers written by the author. Axis **B4** —
+*other people's idioms* — fed the same questions to three frozen third-party checkouts, each breaking a
+different assumption: **pytest** (façade and implementation as two top-level packages, 52 hooks nobody calls by
+name), **attrs** (9 `.pyi` describing the public API, classes finished at runtime), **Pillow** (compiled
+modules with no Python source, plugin registration as an import side effect).
+
+Pre-registered: six controls, five predictions, a stop rule. Score — **one control failed on the first target**
+(`build attrs/src/attrs` → exit 1, `Could not resolve alias attrs.field`), two predictions confirmed, **two
+refuted**, one inverted, and **four findings that were not on the list.** The two refuted ones matter most:
+they predicted the stubs would be *silently ignored* — the defect class of the previous month — and the stubs
+were instead read as full modules, which was worse.
+
+### The finding: correct and worthless
+
+| tree | modules | hard | lazy | type-only |
+|---|---|---|---|---|
+| codemap | 52 | 0 | 0 | 0 |
+| bquant | 92 | 0 | 9 | — |
+| **`_pytest`** | **78** | **1080** | **95 001** | **464 109** |
+
+Every one of those cycles is real. The numbers are not *large*, they are **combinatorial**: the report spent
+1632 lines and 10.3 s enumerating paths through one knot in order to print twenty of them. The reader's action
+in all 464,109 cases is the same one action. And E11 came back inverted in the same output: the two *less*
+severe lists truncate at 20 and declare it, while the **most** severe prints all 1080 lines.
+
+Beside it, the mirror image: `PIL` reported **one** hard cycle — the flagship number — and it was assembled
+out of `from . import ImageFont` in **`_imagingft.pyi`**, a file Python never executes, pointing at a C
+extension. **100% false positive on the one number that is unambiguously actionable.**
+
+### The guard that refused the fix
+
+Replacing the count with strongly connected components glues two loops that share a module into one blob — and
+a guard written two weeks earlier went red. That guard came from **our own worst reported defect**
+([#11](https://github.com/kogriv/codemap/issues/11), 2026-08-28): `report architecture` printed *"Import
+cycles: 0 — import graph is acyclic"* on a consumer tree with two real cycles, because the import map was
+module-level only and **26% of their intra-package import graph was invisible** — the invisible part being
+function-local imports, i.e. exactly what developers use to break a cycle. Both of their cycles ran through one
+shared module, so the repair pinned *two loops sharing a module are two problems*. Hence **cycle rank**,
+`E − V + 1`: linear, non-explosive, and equal to the old count where the old count meant something (bquant
+9 → 9, attr 10 → 10; `_pytest` 1080 → 57).
+
+**We were two weeks from swallowing a cycle for the second time, from the opposite end** — first by not seeing
+the edges, then by blurring the loops. Nothing in the second attempt resembled the first, and the only reason
+it failed loudly is that the first had been written down as a **property** rather than as a fix.
+
+### What the other three findings were
+
+- **R1-C55** — 40 of 63 `high` dead-code verdicts on `PIL` override a base method with an inbound call in the
+  same graph (191 `inherits` edges available). Template method, 63% of the most confident grade false.
+  `PIL` 63 → 15; codemap 31 → 31, bquant 2 → 2.
+- **R1-C56** — `.pyi` had three answers in one tool (extractor / manifest / dead-code), each a deliberate
+  decision made at a different time. Fourth import scope `stub`; `PIL` hard cycles 1 → 0; `_pytest` byte-identical.
+- **R1-C57** — the façade: `api-surface` printed "1 public symbols across 1 modules" over 90 lines of
+  re-export, and the build's warning never reached the report. Now 88 named as re-exported from outside the
+  root, and not judged there.
+
+### The lesson (reusable)
+
+**Measurement cannot tell a true number from a meaningful one.** *Measure, never assert* has no opinion about
+this class: 464,109 was measured, the assertions were green, the artifact was byte-stable, the schema was
+untouched, and the answer was garbage. Build-story #5 concluded *the target is a shape, not a sample* about
+defects; this is the same sentence one level up, about **definitions** — a metric is known to be meaningful
+only on the shapes it has been fed, and ours had been fed two, both written by us.
+
+The fourth verification rule, bought here: **a fixture is a claim too.** The guard for the façade crash passed
+with the fix mutated off, because reproducing it needs `@overload` in a stub over a name the runtime module
+merely aliases — what `attrs/__init__.pyi` has and a hand-written fixture did not.
+
+### What this bought
+- **Kept:** the pre-registration discipline, which earned its keep by being wrong in public — a list of
+  expectations is not a forecast to be proud of, it is what makes "I was surprised" unrevisable afterwards.
+- **Given up:** the simple-cycle count, deliberately, and any promise about which single edge breaks a knot
+  cheapest (minimum feedback arc set, NP-hard).
+- **Shipped:** 0.0.19 and 0.0.20 in one day, four findings closed, suite 938 → 972, schema **0.13** untouched
+  for the ninth consecutive release — which is why four repairs of this size were answer-layer changes rather
+  than a migration.
+
+---
+
 ## Article-ready sound bites (each backed by a card)
 
 - "We almost published that a competitor's impact analysis was broken. It was our `PATH`. The hour we spent
@@ -992,18 +1082,41 @@ Two smaller rules, each bought with a specific error:
   the printed cycle chains had three distinct md5s. The reporter nearly filed it as a behavioural change —
   and my own release procedure, which compares two published versions' output on one tree, would have been
   the next victim." → build-story #8
+- "My tool reported 464,109 import cycles and every one of them was real. Two mutually-dependent modules make
+  one cycle; a third in the same knot multiplies the paths. The report spent 1632 lines and 10.3 s enumerating
+  half a million of them to print twenty." → build-story #9
+- "On the next package it reported exactly one hard import cycle — the flagship number, the one that is
+  unambiguously actionable — and that cycle was assembled out of a `.pyi`, a file Python never executes,
+  pointing at a C extension. 100% false positive." → build-story #9
+- "Measurement cannot tell a true number from a meaningful one. The assertions were green, the artifact was
+  byte-stable, the schema was untouched, the guards were satisfied, and the answer was garbage." →
+  build-story #9
+- "I was two weeks from swallowing a cycle for the second time, from the opposite end: first I could not see
+  the function-local edges, then I would have blurred two loops into one blob. What stopped me was that the
+  first repair had been written down as a property rather than as a fix." → build-story #9
+- "40 of 63 'no inbound calls, references, or decorators' verdicts were overrides of a base method the same
+  graph records a call to. The template method, and 63% of my most confident grade was false." →
+  build-story #9
+- "Declaring a defect does not discharge it: the tool said 'read the input identity as unknown' in plain
+  words, and on every tree that ships stubs `--incremental` and `watch` silently degraded to 'I don't know'
+  anyway." → build-story #9
+- "My guard test passed with the fix mutated off, because my hand-written fixture did not carry the defect's
+  shape. A fixture is a claim too, and it has to be verified against the old version." → build-story #9
 
 ## Future stories (skeletons — fill on разбор)
 
-- **#9 …** next tool from R2.2 (rag_for_git / Understand-Anything / …). Same shape: setup → the surprising
+- **#10 …** next tool from R2.2 (rag_for_git / Understand-Anything / …). Same shape: setup → the surprising
   measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code,
-  #6 CodeGraph, #7 OntoIndex done; #4, #5, #8 are about ourselves.)
+  #6 CodeGraph, #7 OntoIndex done; #4, #5, #8, #9 are about ourselves.)
 - **The determinism story.** ✅ Told twice, neither time as sketched: #4 (a determinism *test* went red and
   the tool was fine) and #8 (the artifact was byte-stable and the *rendering* was not). The sketch asked for
   "graph diff caught X" and the episodes that happened were both sharper than that.
 - **The provenance story.** dead-code without false positives; impact that knows tests from core. Has the
   facts (M8–M12), still needs a narrative episode — the only sketch left, and it has now been outrun by
-  four posts that had one (P5, P6, P7, P8).
+  five posts that had one (P5, P6, P7, P8, P9). Note that P9 delivered a *piece* of it and did not unblock
+  it: R1-C55 is dead-code false positives measured on a third-party tree (63 → 15 on `PIL`), which is the
+  first beat of the sketch. What is still missing is the beat where a **provenance split changed a
+  decision** — role-tagged impact, not grading.
 
 _When a разбор produces a surprise worth telling, write it here **while it's hot** — the numbers are cheap to
 record now and expensive to reconstruct later._

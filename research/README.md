@@ -52,7 +52,7 @@ against codemap" gets answered with numbers, not adjectives.
 - **[positioning.md](positioning.md)** — the *publication layer*: article-ready build-story + positioning,
   distilled from the cards (realizes R1-C14). Story Zero (codemap + roadmap) + one build-story per notable
   разбор. Facts live in the cards; this narrates them.
-- **[blog/](blog/)** — the *published layer*: the build-story series itself, **nine** posts live in the
+- **[blog/](blog/)** — the *published layer*: the build-story series itself, **ten** posts live in the
   repo (EN + RU) as of 2026-09-12, plus the editorial plan and status for what remains. The index in
   [blog/README.md](blog/README.md) is authoritative for the count — this line said "four" for two weeks
   after it stopped being true. Narrates from `positioning.md` and introduces no new facts — if a post and
