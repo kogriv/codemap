@@ -5,6 +5,19 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **One graph, one rendering — whatever the hash seed** (R1-C54, [issue
+  #20](https://github.com/kogriv/codemap/issues/20)). The lab raised their pin to 0.0.17, found the graph
+  byte-identical as promised, and found the *printed cycle chains* different between runs — three
+  renderings of one graph. They nearly logged it as a behavioural change in the release, which is the
+  expensive part: the defect imitates one, and codemap's own release check compares the output of two
+  published versions on one tree. `nx.simple_cycles` enters a cycle wherever its traversal does (hash
+  order), and the sort in `arch.py` only looked like canonicalisation — the key moved with the rotation.
+  Cycles are now rotated to start at their smallest node and sorted, **at the source** in `query.py`:
+  measuring showed three consumers drifting, not one — `check`, `report architecture`, and the structured
+  `architecture` answer the MCP tool returns — so fixing it where the report pointed would have left the
+  machine-readable answer broken. Guarded across eight hash seeds in separate processes, over seven
+  surfaces including the three that were already stable. Schema and graph bytes unchanged.
+
 - **Every narrowing declares itself — the audit, not another instance** (R1-C53). Eight of the twelve
   fixes R1-C41…R1-C52 turned out to be one defect (an answer narrower than it looks, silent about it),
   and four of the last five were found by a consumer rather than by us — so the mechanism got closed

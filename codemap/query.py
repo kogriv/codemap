@@ -21,6 +21,25 @@ def _grade_rank(grade: str | None) -> int:
     return CONFIDENCE_ORDER.index(grade) if grade in CONFIDENCE_ORDER else len(CONFIDENCE_ORDER)
 
 
+def _canonical_cycles(cycles) -> list[list[str]]:
+    """Cycles in a stable form: each rotated to start at its smallest node, then sorted.
+
+    R1-C54, reported by the lab as [issue #20](https://github.com/kogriv/codemap/issues/20).
+    ``nx.simple_cycles`` yields a cycle starting wherever its traversal happened to enter
+    it, and that traversal follows set-iteration order, i.e. string hashes. The chain is
+    the *same cycle* either way — but three consumers print it, and they printed three
+    different texts for one graph across eight hash seeds.
+
+    The sort afterwards is the point of the rotation: ``arch.py`` already sorted cycles by
+    ``(len, c)`` and that looked like canonicalisation, except the key itself moved with
+    the rotation — ``["a","b"]`` and ``["b","a"]`` are one cycle and two keys. Rotating
+    first makes the existing sort mean what it appeared to mean.
+    """
+    out = [c[i:] + c[:i] for c in (list(x) for x in cycles)
+           if (i := c.index(min(c))) >= 0]
+    return sorted(out, key=lambda c: (len(c), c))
+
+
 def _check_grade(min_confidence: str | None) -> None:
     if min_confidence is not None and min_confidence not in CONFIDENCE_ORDER:
         raise ValueError(f"min_confidence must be one of {CONFIDENCE_ORDER}, "
@@ -1069,7 +1088,7 @@ class Query:
         would report someone's fix as their bug. Those cycles are still real coupling
         and are returned by :meth:`lazy_import_cycles`.
         """
-        return [c for c in nx.simple_cycles(self._imports_eager)]
+        return _canonical_cycles(nx.simple_cycles(self._imports_eager))
 
     def lazy_import_cycles(self) -> list[list[str]]:
         """Dependency cycles that close **only** through a function-local import.
@@ -1087,8 +1106,8 @@ class Query:
         them, or a tree could hide real coupling by adding one.
         """
         eager = {frozenset(c) for c in nx.simple_cycles(self._imports_eager)}
-        return [c for c in nx.simple_cycles(self._imports_runtime)
-                if frozenset(c) not in eager]
+        return _canonical_cycles(c for c in nx.simple_cycles(self._imports_runtime)
+                                 if frozenset(c) not in eager)
 
     def type_only_import_cycles(self) -> list[list[str]]:
         """Dependency cycles that close **only** with an import under ``if TYPE_CHECKING:``.
@@ -1100,7 +1119,8 @@ class Query:
         opt-in rule instead.
         """
         runtime = {frozenset(c) for c in nx.simple_cycles(self._imports_runtime)}
-        return [c for c in nx.simple_cycles(self._imports) if frozenset(c) not in runtime]
+        return _canonical_cycles(c for c in nx.simple_cycles(self._imports)
+                                 if frozenset(c) not in runtime)
 
     def import_map(self) -> dict:
         """How much of the import graph each scope contributed (R1-C29).
