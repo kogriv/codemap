@@ -444,6 +444,33 @@ after an upload answers *"there is no version X.Y.Z"* from uv's **cached** index
 glance, from an upload that failed. `--refresh` resolves it. Check the version's PyPI page before
 concluding anything about the upload.
 
+**0.0.17 published 2026-09-12:** [`codmap` 0.0.17](https://pypi.org/project/codmap/0.0.17/), schema
+**0.13** (unchanged, sixth release running). Same procedure from the pushed commit `985928e`, CI green,
+`twine check` PASSED on both artifacts, tag `v0.0.17` written with `-F`. Three defects, all from one
+consumer message on issue #19 — and the first release cut because a consumer was *blocked*: the `diff`
+defect made their release gate fire on test churn, and their gate installs from PyPI.
+
+Checked from PyPI with **both published versions on one four-module tree with a consumer root**, because
+all three claims are behavioural and one is about the artifact:
+
+```
+nodes identical, edges identical; schema 0.13 -> 0.13; only `provenance` differs
+
+R1-C50  report impact --symbol work      0.0.16: "Flows reached (0 of 0 entry point(s))"
+                                         0.0.17: "Flows reached (1 of 1 entry point(s))"
+R1-C52  diff, after a new PUBLIC         0.0.16: "1 added" -> usage.script.brand_new_test_helper
+        function added in the consumer   0.0.17: "0 added" + "Not judged: 3 public symbol(s) in `usage`"
+R1-C51  callers(min_confidence=exact)    0.0.16: envelope carries no filter block
+        over `serve`                     0.0.17: {"min_confidence": "exact", "returned": 1, "total": 1,
+                                                  "dropped": 0, "by_grade": {"exact": 1}}
+```
+
+**Procedure note, worth keeping:** 0.0.16 printed **"0 of 0 entry point(s)"** on that tree — not "1 of 1
+with nothing reached". The verification tree has to contain the *shape* of the defect (a public head
+called only from a consumer root), and building it revealed the released behaviour was a notch worse
+than the issue described. Same lesson as 0.0.15's, from the other end: the tree, not the command, is
+what decides whether a check can see anything.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
