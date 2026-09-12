@@ -5,6 +5,25 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A package whose whole job is re-export broke three ways at once** (R1-C57, axis B4 —
+  [`gaps/third_shape_2026-09-12.md`](gaps/third_shape_2026-09-12.md) §E1/§E10). The facade
+  layout is what `pytest`/`_pytest` and `attrs`/`attr` use, and codemap **crashed on it**:
+  `build attrs/src/attrs` exited 1 with `Could not resolve alias attrs.field pointing at
+  attr.field`, out of griffe's stub merge, which resolves aliases — and an alias into a
+  package nobody loaded raises. No graph at all, for six valid published files. The sibling
+  the alias names is now loaded into the same collection and the load retried (up to eight),
+  with a codemap error naming the package and the fix when it is genuinely absent; the
+  sibling is **not** extracted — `attrs` builds to 42 nodes, all of them under `attrs`.
+  Second, the surface: a public alias to an outside definition produced no edge, so the
+  `pytest` facade reported *"1 public symbols across 1 modules"* for a package that
+  re-exports 90. Such aliases are now `export` edges marked `external`, the report counts
+  them (**88** on that facade), lists where each is defined, and says those definitions are
+  **not judged here** — while a plain `import json` still produces nothing, because it is
+  not the package's API. Third, `api-surface` now carries the build's diagnostics like every
+  other report: "0 import edges … read them as unknown" is exactly what a facade produces,
+  and that was the one report not printing it. On codemap's own tree and the dogfood target:
+  **zero** external re-exports, not one new edge. Schema unchanged (**0.13**).
+
 - **A `.pyi` is a declaration Python never executes — and it was read as code that runs**
   (R1-C56, axis B4 — [`gaps/third_shape_2026-09-12.md`](gaps/third_shape_2026-09-12.md) §S1,
   design [`docs/design/stub_files.md`](docs/design/stub_files.md)). On Pillow the package's

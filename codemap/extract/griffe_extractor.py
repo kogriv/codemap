@@ -80,6 +80,63 @@ def _assert_is_the_target(loaded, pkg_dir: Path, module_name: str) -> None:
         )
 
 
+#: How many sibling packages one load may pull in before we stop trying (R1-C57).
+_MAX_SIBLING_LOADS = 8
+
+
+def _load_with_siblings(module_name: str, search_path: Path):
+    """``griffe.load`` the target, pulling in siblings its re-exports point at (R1-C57).
+
+    The facade shape — a public package whose whole job is to re-export a private one,
+    as ``pytest``/``_pytest`` and ``attrs``/``attr`` do — used to **crash the build**:
+    griffe merges a ``.pyi`` beside ``__init__.py``, that merge resolves aliases, and an
+    alias into a package nobody loaded raises ``AliasResolutionError``. Exit code 1, no
+    graph, for a six-file package that is valid and published.
+
+    An unresolvable re-export is partiality, not a crash. So: load the sibling the alias
+    names into the *same* collection and retry. The sibling has to be there — it sits on
+    the same search path, which is how Python finds it too — and loading it does not put
+    it in the graph: the walk starts from the target's own root, and targets outside it
+    stay external, exactly as they were before.
+
+    Returns ``(root, siblings)``; ``siblings`` is what had to be pulled in, and it is
+    recorded in the input report so a reader can see the load was not self-contained.
+    """
+    collection = griffe.ModulesCollection()
+    siblings: list[str] = []
+    for _ in range(_MAX_SIBLING_LOADS + 1):
+        try:
+            return griffe.load(module_name, search_paths=[str(search_path)],
+                               try_relative_path=False,
+                               modules_collection=collection), siblings
+        except griffe.AliasResolutionError as exc:
+            top = exc.alias.target_path.split(".")[0]
+            if top == module_name or top in siblings:
+                raise                      # retrying would loop on the same alias
+            if not _package_on_path(top, search_path):
+                raise ValueError(
+                    f"`{module_name}` re-exports `{exc.alias.target_path}`, and "
+                    f"`{top}` is not beside it in {search_path}. This is the facade "
+                    f"layout (a public package re-exporting a private one): build from "
+                    f"a tree that holds both, or point codemap at the implementation "
+                    f"package instead."
+                ) from exc
+            griffe.load(top, search_paths=[str(search_path)], try_relative_path=False,
+                        modules_collection=collection)
+            siblings.append(top)
+    raise ValueError(
+        f"`{module_name}` still had unresolved re-exports after loading "
+        f"{len(siblings)} sibling package(s): {', '.join(siblings)}."
+    )
+
+
+def _package_on_path(name: str, search_path: Path) -> bool:
+    """True when ``name`` is importable as a package/module from ``search_path``."""
+    d = search_path / name
+    return (d / "__init__.py").is_file() or (d / "__init__.pyi").is_file() \
+        or (search_path / f"{name}.py").is_file() or (search_path / f"{name}.pyi").is_file()
+
+
 def build_structural(package_path: str | Path):
     """The cheap, deterministic base: griffe load + definition nodes + structural
     edges (contains / imports / inherits / decorated_by / export). No behavioral
@@ -99,7 +156,7 @@ def build_structural(package_path: str | Path):
     # a repo whose root holds `pkg/`, `build /elsewhere/pkg` then silently analysed the
     # local `pkg` — same shape of answer, different code. We always know the directory we
     # were handed, so the name must resolve through `search_paths` and nowhere else.
-    root = griffe.load(module_name, search_paths=[str(search_path)], try_relative_path=False)
+    root, siblings = _load_with_siblings(module_name, search_path)
     # Defence in depth: whatever the finder does next (a .pth file, a namespace package,
     # a future default), a graph must describe the directory that was asked for. A wrong
     # answer here is invisible downstream — it is well-formed, complete and about the
@@ -511,7 +568,18 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
             # no edge at all. Same narrow gate as pass B: only when the head names a
             # module sitting beside the re-exporter, and labelled as the inference it is.
             if _flat_sibling(parent_module, target_path, known_modules) is None:
-                continue  # external re-export (e.g. `import numpy as np`) — out of scope
+                # R1-C57: `import numpy as np` is not this package's API and stays out.
+                # A **public** alias to an outside definition is the opposite case: it is
+                # exactly what the package exposes, and dropping it made the facade layout
+                # (`pytest` re-exporting 90 names from `_pytest`) report a public surface
+                # of one symbol. Kept, with the target left as written and marked external
+                # — the definition is outside this graph, and the edge says so rather than
+                # pretending to resolve it.
+                if not is_public:
+                    continue
+                extras["external"] = True
+                graph.add_edge(Edge("export", parent_module, target_path, extras=extras))
+                continue
             target_path = f"{parent_module.rsplit('.', 1)[0]}.{target_path}"
             extras["resolution"] = "flat"
         graph.add_edge(Edge("export", parent_module, target_path, extras=extras))
