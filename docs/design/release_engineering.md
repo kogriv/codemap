@@ -471,6 +471,32 @@ called only from a consumer root), and building it revealed the released behavio
 than the issue described. Same lesson as 0.0.15's, from the other end: the tree, not the command, is
 what decides whether a check can see anything.
 
+**0.0.18 published 2026-09-12:** [`codmap` 0.0.18](https://pypi.org/project/codmap/0.0.18/), schema
+**0.13** (unchanged, seventh release running). Same procedure from the pushed commit `7071b33`, CI green,
+`twine check` PASSED on both artifacts, tag `v0.0.18` written with `-F`.
+
+Two items, and the verification tree had to carry the **shape of both** — a three-module lazy cycle for
+R1-C54 and a subscript-plus-dict-literal column pair for R1-C53:
+
+```
+nodes identical, edges identical; schema 0.13 -> 0.13; only `provenance` differs
+
+R1-C54  check under 8 hash seeds   0.0.17: 3 distinct renderings (5 / 2 / 1)
+                                   0.0.18: 8 of 8 identical
+R1-C53  columns (serve)            0.0.17: bare list, no block
+                                   0.0.18: filter {basis: subscripted_only, returned 1,
+                                           total 2, dropped 1}
+        communities (serve)        0.0.17: bare list, no block
+                                   0.0.18: scope {root: core, judged 5, not_judged {}}
+```
+
+**This is the release whose own procedure was the defect's second victim.** R1-C54 arrived because the lab
+compared two versions' output on one tree — exactly what this section prescribes — and a rendering that
+moved with the hash seed read as a behavioural change. They re-measured within one version before drawing
+the conclusion; the procedure did not tell them to. It does now: **when a release claim is about output
+text, compare it under a fixed `PYTHONHASHSEED` — or several — not once per version.** The suite carries
+that as a guard since R1-C54, so the procedure inherits it rather than relying on memory.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
