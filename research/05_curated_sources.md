@@ -77,6 +77,12 @@ vocabularies (cycles / layer direction / naming / file-size / coupling) to model
 - **HippoRAG 2** (Ohio State, habr 1025812) — knowledge graph + **Personalized PageRank** for multi-hop
   retrieval. Second independent sighting of personalized PageRank (after aider) → strengthens **R1-C6**
   (relevance ranking).
+- **RepoAtlas** (arXiv [2609.16936v1](http://arxiv.org/abs/2609.16936v1), 2026-09-15; intake 2026-09-16) —
+  **third** independent sighting, and the first one that *measures* the selection end to end: PPR over a
+  tree-sitter code graph, a connected subgraph under a fixed 15-node/20-edge budget, projected into an
+  image **and** an aligned text index. Full разбор, with the caveats about how it was read and why its
+  metric is not ours, in [R1.6](06_multimodal_repo_views.md) — including the gap it exposes: our `pack`
+  has never been measured for usefulness (**R1-C61**).
 - **LightRAG** (HKUDS), **LLM Graph Builder** (neo4j-labs), **awesome-ai-memory** (topoteretes) — hybrid
   graph+vector RAG and a memory-landscape map. Tangential (general KG, not code), useful reference.
 - **Neo4j** recurs as the graph backend (rag_for_git, GitNexus) → validates codemap's deferred **M3.3 /
@@ -126,7 +132,10 @@ which means:
 3. **Three concrete backlog effects** (folded into [../BACKLOG.md](../BACKLOG.md)):
    - **R1-C3** (architecture `--check`) — reinforced by ArchUnitPython / AACT / Sentrux; adopt their rule
      vocabulary; consider Sentrux's before/after health-delta agent loop.
-   - **R1-C6** (relevance ranking) — reinforced by HippoRAG's personalized PageRank (2nd sighting).
+   - **R1-C6** (relevance ranking) — reinforced by HippoRAG's personalized PageRank (2nd sighting), and
+     again by RepoAtlas (3rd, 2026-09-16 — [R1.6](06_multimodal_repo_views.md)), which also exposed that
+     the shipped `pack` is measured for determinism and budget compliance and **not** for usefulness
+     (**R1-C61**, a priced door).
    - **R1-C13** — broaden from PyCG-only into a **grep-vs-graph harness benchmark** (replicate the
      superset study on codemap's own ops).
    - **R1-C15 (NEW)** — *living documentation from the graph* (self-updating, "unverified"-marked), as

@@ -33,9 +33,18 @@ Every tool below is placed against the stance codemap commits to:
 | R1.3 | [03_query_dataflow_engines.md](03_query_dataflow_engines.md) | Query / dataflow / structural-search (CodeQL, Semgrep, ast-grep, tree-sitter, PyCG) |
 | R1.4 | [04_python_graph_arch_peers.md](04_python_graph_arch_peers.md) | Python graph / dependency / architecture peers (pydeps, grimp, import-linter, vulture, radon) |
 | R1.5 | [05_curated_sources.md](05_curated_sources.md) | Field intake — curated Telegram posts (live competitor roster + grep-vs-graph benchmark) |
+| R1.6 | [06_multimodal_repo_views.md](06_multimodal_repo_views.md) | Multimodal / visual repository views for agents (RepoAtlas, SeeRepo, LocAgent) — a family the map did not have, measured as *agent outcome* rather than graph correctness |
 
 R1 method: per tool — what it does, data model, source-only vs needs-build, determinism, interface,
 license/maintenance, one-line verdict. Desk-level; grounded but not hands-on.
+
+**R1.6 is intake, not measurement**, and says so in its own first paragraph: the paper behind it was read
+through a fetch summary rather than line by line, nothing was run, and no number from it may travel into
+[positioning.md](positioning.md) or a post before a proper read. It is filed because it contributed a
+confirmation (personalized PageRank, third independent sighting), a recorded blind spot (no visual-view
+family in R1.0/R1.5), and one uncomfortable gap of ours — `pack` has never been measured for *usefulness*,
+only for determinism and budget compliance (R1-C61, filed as a **priced door**, because closing it puts a
+model in the loop and produces the first claim here a reader could not re-derive from a frozen tree).
 
 ## R2 — Deep-dive разбор (per-tool, hands-on)
 

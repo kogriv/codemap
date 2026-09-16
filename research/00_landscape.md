@@ -22,6 +22,14 @@ the whole field has converged on codemap's "code graph over MCP beats grep" thes
    import-linter, snakefood, code2flow, vulture, radon, Doxygen, Sourcetrail).
 5. **Doc / API-surface extraction** — griffe (codemap's own extractor), pydoctor, Sphinx autodoc.
 
+**A sixth family, added 2026-09-16 and not part of the original survey:** **multimodal / visual repository
+views** — agent scaffolds that render a selected repository subgraph as a *picture* alongside text and
+measure the result as an **agent outcome** (SWE-bench resolve rate) rather than as graph correctness:
+RepoAtlas, SeeRepo, LocAgent. Desk-only, discussed in
+[06_multimodal_repo_views.md](06_multimodal_repo_views.md). It is listed as a family because its premise is
+ours read from the other end — *linear text interfaces hide non-local structure* — and because none of the
+five families above has a place for it.
+
 ## Where codemap sits — three structural signals
 
 - **The AI-context frontier is drifting toward codemap's thesis.** Sourcegraph Cody is phasing out
@@ -227,3 +235,26 @@ have to be a takedown to be useful.
 - **Every number in the peer cards describes the version measured.** CodeGraph's four fixes are merged and
   **unreleased** (npm `latest` is still 1.6.0), so its figures stop being true at their next release; the
   re-measurement is logged as its own backlog item rather than left to rot here.
+
+### Update 2026-09-16 — a family the map had no row for
+
+One paper in the intake (RepoAtlas, arXiv [2609.16936v1](http://arxiv.org/abs/2609.16936v1), 2026-09-15)
+turned out to have, as its *strongest baseline*, another system of a kind this map does not contain: a
+scaffold that hands a coding agent a rendered image of a repository subgraph next to the text. Reading that
+paper's baselines produced a family — RepoAtlas, SeeRepo, LocAgent — and a sixth entry above.
+
+What it changes here, precisely and no further:
+
+- **The map's blind spot was a *measurement regime*, not a tool.** Every row in this file is judged on what
+  it answers about code; this family is judged on whether an agent resolves more issues. Both are legitimate
+  and neither substitutes for the other. The comparison hub stays on graph correctness, deliberately.
+- **One differentiator is reinforced, and it is not ours alone any more than it was.** Personalized PageRank
+  for choosing what an agent sees is now a **third** independent sighting (aider → HippoRAG 2 → RepoAtlas),
+  which is the most external support any design decision of ours has.
+- **One claim of ours is exposed as unmeasured.** `pack` ships a ranked, budgeted slice and we have never
+  measured that it *helps* — only that it is deterministic and fits. Filed as **R1-C61**, priced as a door
+  rather than a gap: the measurement needs a model in the loop, and would be the first number in this
+  project a reader could not re-derive from a frozen tree.
+- **Nothing was installed or run**, and the paper was read through a fetch summary rather than line by line.
+  The note carries that caveat in its own first paragraph, and no figure from it may enter
+  [positioning.md](positioning.md) or a post before a proper read.
