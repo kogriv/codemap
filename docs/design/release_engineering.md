@@ -571,6 +571,17 @@ uv build
 # backticks inside double quotes are command substitution to the shell)
 ```
 
+**The release note names two versions, not one (R1-C63, from 0.0.21).** `SCHEMA_VERSION` says whether
+the *artifact* moved; `ANSWER_FORMAT` says whether the *answer* did. 0.0.20 is the reason: the graph was
+byte-identical and the gate's output changed completely, which on a consumer's text diff is
+indistinguishable from the defect they had filed four days earlier — where the text moved between runs of
+one version and nobody had decided anything. The note said it, because I wrote it by hand. Now the answer
+says it. So: if `ANSWER_FORMAT` was bumped, the note says so **and** says what changed shape; if it was
+not, the note says the answer format is unchanged, which is the more common and more reassuring line. The
+suite's pinned hash over the rendered surfaces refuses to let the shape move silently, but it cannot tell a
+structural change from a reworded one — that judgement stays the releaser's, and it is the reason the pin
+prints both options in its failure message rather than a single instruction.
+
 At this cadence the automation would be scaffolding around an act performed a few times a year, and CI
 already covers what a release workflow would mostly be re-checking — the suite on four interpreters, and
 a wheel built, installed and run outside the source tree.

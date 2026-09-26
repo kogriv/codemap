@@ -14,7 +14,8 @@ from __future__ import annotations
 
 from collections import Counter
 
-from codemap.model import SCHEMA_VERSION, SPLICED_EDGE_TYPES as _SPLICED_EDGE_TYPES, Graph
+from codemap.model import (ANSWER_FORMAT, SCHEMA_VERSION,
+                           SPLICED_EDGE_TYPES as _SPLICED_EDGE_TYPES, Graph)
 from codemap.query import Query
 from codemap.serve.api_surface import render_api_surface
 from codemap.serve.architecture import build_architecture, render_architecture
@@ -397,7 +398,11 @@ class Session:
         self._filter = None
         self._scope = None
         try:
-            env = {"ok": True, "result": fn(self, args)}
+            env = {"ok": True, "result": fn(self, args),
+                   # R1-C63: the shape of this answer, versioned independently of the
+                   # graph's schema. Always present — a field that appears only when
+                   # something changed cannot be read by a machine (R1-C28).
+                   "answer_format": ANSWER_FORMAT}
         except Exception as exc:  # a bad arg must not kill the resident process
             return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
         r = self._resolution

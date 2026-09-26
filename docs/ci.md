@@ -73,6 +73,33 @@ failures in this project's history would all have sailed through:
 Each needed a person to look at a number and find it implausible. CI holds a different and narrower
 line: the regression, the interpreter nobody tried, the artifact nobody installed.
 
+## If you diff our output in your own CI
+
+Two versions travel with every answer, and they answer different questions:
+
+```
+_answer format 1 · schema 0.13_          ← the trailer on any markdown answer
+{"ok": true, "answer_format": 1, …}      ← the same fact in a serve/MCP envelope
+```
+
+- **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
+  moves, which is when a rebuild is needed.
+- **`answer_format`** versions the *shape of the answer you are diffing* — sections, counted units,
+  verdict lines, field semantics. It moves when we deliberately change how an answer is laid out,
+  and **not** when prose is reworded.
+
+Why both exist: in 0.0.20 the graph was byte-identical between releases and the architecture report
+and gate output changed completely, because the unit of a cycle answer became a tangle. On a text
+diff that is the same picture as a bug we had shipped days earlier, where the rendering moved
+between runs of *one* version (a hash-order defect, fixed in R1-C54). A consumer could not tell
+"they changed this on purpose" from "this is unstable" without being told by hand. Since 0.0.21 the
+answer says which it is.
+
+So: if a text diff surprises you, compare `answer_format` first. Unchanged means the shape was not
+supposed to move — that is a bug and we want the issue. Changed means look at the release note,
+which names what moved. And because the number is about structure and not wording, a changed word
+inside an unchanged shape is not a bump; pin behaviour, not paragraphs.
+
 ## Running the same checks locally
 
 ```bash

@@ -77,6 +77,24 @@ from typing import Any
 #       (they had ``lineno`` alone, so `search` answered a line number with no file).
 SCHEMA_VERSION = "0.13"
 
+# R1-C63: the *answer* has a shape too, and consumers diff it. `SCHEMA_VERSION` versions the
+# artifact; 0.0.20 left the graph byte-identical and changed the architecture report and the
+# gate's lines completely (a cycle answer became a tangle), which on a text diff is
+# indistinguishable from the #20 defect — where the text moved between runs of one version,
+# without anyone deciding it. The only thing that told the consumer apart was a message I
+# wrote by hand.
+#
+# Bump on a change to the **structure a consumer sees**: a block appears or vanishes, a
+# counted unit changes meaning, a verdict or heading changes shape, a field in a structured
+# answer changes type or semantics. Do **not** bump for wording, typos or added prose inside
+# an existing note — a version that ticks on whitespace stops being read, which is worse than
+# not having one. Independent of SCHEMA_VERSION by design: the graph can be identical while
+# this moves, and that is the case it exists for.
+#
+# Starts at 1 with 0.0.21 and makes no claim about earlier releases: the answer format changed
+# many times before it, and numbering that retroactively would be inventing a history.
+ANSWER_FORMAT = 1
+
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship
 # codemap emits is one of these, each with a fixed meaning. This is the machine-

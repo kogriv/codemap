@@ -5,6 +5,24 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **The artifact was versioned; the answer, which is what consumers diff, was not** (R1-C63, design
+  [`docs/design/answer_format_version.md`](docs/design/answer_format_version.md)). `SCHEMA_VERSION`
+  says whether `graph.json` moved. It said nothing in 0.0.20, correctly — the graph was byte-identical
+  — while the architecture report and the gate's lines changed completely, because a cycle answer
+  became a tangle. On a consumer's text diff that is the same picture as [#20](https://github.com/kogriv/codemap/issues/20),
+  shipped four days earlier, where the rendering moved between runs of *one* version and nobody had
+  decided anything. The only thing that told them apart was a message written by hand. Now there is
+  **`ANSWER_FORMAT`** (starts at **1**), independent of the schema by design and carried on both
+  surfaces: a one-line trailer on CLI markdown (`_answer format 1 · schema 0.13_`) and
+  `answer_format` in every serve/MCP envelope. Bumped when the structure a consumer sees changes — a
+  block appears or vanishes, a counted unit changes meaning, a verdict line changes shape — and **not**
+  for wording, because a version that ticks on whitespace stops being read. A pinned hash over six
+  rendered surfaces now refuses to let the shape move silently; it does not judge whether a change is
+  structural, and its failure message says so. **Cost, stated plainly: this release adds that trailer
+  line to every markdown answer, once.** The graph is untouched — verified byte-for-byte against
+  0.0.20 on one tree (nodes and edges identical; only `provenance.tool` differs).
+  [`docs/ci.md`](docs/ci.md) has the section for anyone diffing our output in their own CI.
+
 - **A contract rule with nothing to cover was counted as enforced** (R1-C62, design
   [`docs/design/vacuous_contract_rules.md`](docs/design/vacuous_contract_rules.md)). Rename a layer,
   forget `codemap.toml`, and the gate kept printing `✅ Contract satisfied. Rules enforced: layered

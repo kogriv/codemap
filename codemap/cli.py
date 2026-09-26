@@ -73,6 +73,23 @@ _REPORTS = {
 _REPORT_KINDS = sorted(_REPORTS) + ["impact", "communities", "flows"]  # extra args
 
 
+def _emit_answer(text: str) -> None:
+    """Print a markdown answer with the answer-format trailer (R1-C63).
+
+    One seam rather than a line in every renderer: the renderers stay pure functions of the
+    graph, and there is one place to forget rather than nine. The trailer is what a consumer
+    diffing our output sees when the *shape* of an answer changes deliberately — 0.0.20
+    changed the gate's lines while the graph stayed byte-identical, and on a text diff that
+    looked exactly like the #20 defect, where the text moved between runs of one version. The
+    only thing that told them apart was a message written by hand.
+    """
+    from codemap.model import ANSWER_FORMAT, SCHEMA_VERSION
+    print(text, end="")
+    if not text.endswith("\n"):
+        print()
+    print(f"_answer format {ANSWER_FORMAT} · schema {SCHEMA_VERSION}_")
+
+
 def _graph_from(args):
     if getattr(args, "build", None):
         return extract(args.build, deep=getattr(args, "deep", False))
@@ -507,28 +524,28 @@ def _cmd_report(args) -> int:
     if args.kind == "impact":
         if not args.symbol:
             raise SystemExit("error: report impact needs --symbol <name>")
-        print(render_impact(Query(graph), args.symbol, depth=args.depth,
-                            flow_depth=args.flow_depth), end="")
+        _emit_answer(render_impact(Query(graph), args.symbol, depth=args.depth,
+                        flow_depth=args.flow_depth))
         return 0
     if args.kind in ("communities", "flows"):
         from codemap.serve.subsystems import render_communities, render_flows
         q = Query(graph)
         out = (render_communities(q) if args.kind == "communities"
                else render_flows(q, args.symbol, depth=args.depth))
-        print(out, end="")
+        _emit_answer(out)
         return 0
     if args.kind == "dead-code":
         from codemap.serve.audit import load_dead_code_whitelist
         root = getattr(args, "source_root", None) or os.getcwd()
         whitelist, wl_error = load_dead_code_whitelist(root)
-        print(render_dead_code(Query(graph),
+        _emit_answer(render_dead_code(Query(graph),
                                whitelist=whitelist,
                                min_confidence=args.min_confidence,
-                               whitelist_error=wl_error), end="")
+                               whitelist_error=wl_error))
         return 0
     renderer = _REPORTS[args.kind]
     payload = renderer(graph) if args.kind == "api-surface" else renderer(Query(graph))
-    print(payload, end="")
+    _emit_answer(payload)
     return 0
 
 
@@ -755,13 +772,13 @@ def _cmd_check(args) -> int:
     # would sort an unreadable contract into the success branch of every `if rc == 2` that
     # already exists in someone's pipeline.
     if contract.error:
-        print(render_check(q, contract, []), end="")
+        _emit_answer(render_check(q, contract, []))
         return 2
     if contract.is_empty() and args.require_contract:
-        print(render_check(q, contract, []), end="")
+        _emit_answer(render_check(q, contract, []))
         raise SystemExit("error: no [architecture] contract found (--require-contract)")
     violations = check_contract(q, contract)
-    print(render_check(q, contract, violations), end="")
+    _emit_answer(render_check(q, contract, violations))
     return 2 if violations else 0
 
 
