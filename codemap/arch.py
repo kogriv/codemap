@@ -57,6 +57,11 @@ class ArchitectureContract:
     no_lazy_cycles: bool = False
     no_type_only_cycles: bool = False
     exhaustive: bool = False
+    # R1-C62: the mirror of `exhaustive`. That one asks "is every layer of the code
+    # declared?"; this asks "does every declared name exist?". Opt-in, because a contract
+    # written ahead of the code is a documented, legitimate use (see the module docstring)
+    # and failing on it by default would turn that practice red on somebody else's tree.
+    no_phantom_rules: bool = False
     error: str | None = None
     # R1-C35: the file this contract was looked for in. "No contract found" is only
     # actionable next to *where* we looked — a reader in the wrong directory cannot tell
@@ -66,7 +71,8 @@ class ArchitectureContract:
     def is_empty(self) -> bool:
         return not (self.layers or self.independent or self.forbidden
                     or self.no_cycles or self.no_lazy_cycles
-                    or self.no_type_only_cycles or self.exhaustive)
+                    or self.no_type_only_cycles or self.exhaustive
+                    or self.no_phantom_rules)
 
 
 @dataclass(frozen=True)
@@ -117,7 +123,44 @@ def parse_contract(section: dict) -> ArchitectureContract:
         no_lazy_cycles=bool(section.get("no_lazy_cycles", False)),
         no_type_only_cycles=bool(section.get("no_type_only_cycles", False)),
         exhaustive=bool(section.get("exhaustive", False)),
+        no_phantom_rules=bool(section.get("no_phantom_rules", False)),
     )
+
+
+def _graph_layers(query) -> set[str]:
+    """Layer names that exist in the core import graph."""
+    return {query._layer_of(m) for m in query.import_graph.nodes
+            if query.root_of(m) == "core"}
+
+
+def applicability(query, contract: ArchitectureContract) -> dict:
+    """Per-rule *declared* vs *applicable* counts, plus the names that do not exist (R1-C62).
+
+    A rule naming a layer the graph does not contain is **inert by design** — no module, no
+    edge, nothing to break — which is what lets a contract be written ahead of the code. The
+    defect that made this function necessary is not the inertness: it is that the gate
+    counted such a rule as *enforced*, so a renamed layer left a green tick over a rule that
+    could no longer fire.
+
+    Applicability is presence of the **name**, nothing cleverer: `layers` needs the layer,
+    `independent` needs at least two members of the group (one cannot import itself), and
+    `forbidden` needs both ends. Whether a violation is even possible between two existing
+    layers is not asked, and should not be.
+    """
+    present = _graph_layers(query)
+    named = set(contract.layers) | {m for grp in contract.independent for m in grp}
+    named |= {n for pair in contract.forbidden for n in pair}
+    return {
+        "layers": {"declared": len(contract.layers),
+                   "applicable": sum(1 for x in contract.layers if x in present)},
+        "independent": {"declared": len(contract.independent),
+                        "applicable": sum(1 for g in contract.independent
+                                          if len([x for x in g if x in present]) >= 2)},
+        "forbidden": {"declared": len(contract.forbidden),
+                      "applicable": sum(1 for (a, b) in contract.forbidden
+                                        if a in present and b in present)},
+        "absent_names": tuple(sorted(n for n in named if n not in present)),
+    }
 
 
 def _core_layer_edges(query) -> list[tuple[str, str, str, str]]:
@@ -264,6 +307,20 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
                 "exhaustive",
                 f"{len(undeclared)} undeclared layer(s) not in the contract",
                 modules=tuple(undeclared),
+            ))
+
+    # -- no_phantom_rules: every name the contract mentions must exist -----------
+    # R1-C62, the mirror of `exhaustive`. Off by default on purpose: inert rules are how a
+    # contract gets written ahead of the code. On, it catches the drift the count alone
+    # only *discloses* — a layer renamed while the contract kept guarding the old name.
+    if contract.no_phantom_rules:
+        absent = applicability(query, contract)["absent_names"]
+        if absent:
+            violations.append(Violation(
+                "no_phantom_rules",
+                f"{len(absent)} name(s) in the contract are absent from the graph, "
+                "so the rules naming them cannot apply",
+                modules=absent,
             ))
 
     return violations

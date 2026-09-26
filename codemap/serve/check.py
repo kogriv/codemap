@@ -8,7 +8,7 @@ mechanical.
 
 from __future__ import annotations
 
-from codemap.arch import ArchitectureContract, Violation
+from codemap.arch import ArchitectureContract, Violation, applicability
 
 _EDGE_CAP = 25   # offending edges listed per rule before "+N more"
 
@@ -54,6 +54,44 @@ def _not_judged(query, contract: ArchitectureContract) -> list[dict]:
     }]
 
 
+def _applicability_payload(query, contract: ArchitectureContract) -> dict:
+    """``applicability`` with its list of absent names as a plain list (JSON-friendly)."""
+    a = applicability(query, contract)
+    return {**{k: v for k, v in a.items() if k != "absent_names"},
+            "absent_names": list(a["absent_names"])}
+
+
+def _phantom_note(a: dict, contract: ArchitectureContract) -> str:
+    """Name the contract names the graph does not have (R1-C62), or say nothing.
+
+    Silent when there are none — a note on every clean run is noise, and this text is
+    diffed by consumers. Silent too when ``no_phantom_rules`` is enforced: then the
+    violation has already said it, and saying it twice reads as two findings.
+    """
+    absent = a["absent_names"]
+    if not absent or contract.no_phantom_rules:
+        return ""
+    names = ", ".join(f"`{n}`" for n in absent)
+    return (f"\n_{len(absent)} name(s) in this contract are absent from the graph — {names} — "
+            "so the rules naming them could not apply; they are counted as *declared*, not as "
+            "*applicable*, above. A contract may legitimately be written ahead of the code; "
+            "if a missing name means drift instead, `no_phantom_rules = true` makes it a "
+            "failure._\n")
+
+
+def _rule_count(name: str, a: dict) -> str:
+    """``layered (7)`` when every declared name exists, ``layered (7 declared, 5 applicable)``
+    when it does not (R1-C62).
+
+    The count only grows a second half where there is something to disclose. Printing both
+    numbers always would move the text of every green run on every tree for zero
+    information — and this line is diffed by consumers.
+    """
+    key = {"layered": "layers"}.get(name, name)
+    dec, app = a[key]["declared"], a[key]["applicable"]
+    return f"{name} ({dec})" if dec == app else f"{name} ({dec} declared, {app} applicable)"
+
+
 def build_check(query, contract: ArchitectureContract, violations: list[Violation]) -> dict:
     """Structured result: ok flag + violations with their concrete edges.
 
@@ -73,6 +111,11 @@ def build_check(query, contract: ArchitectureContract, violations: list[Violatio
         # has the same "absent or mislocated?" question a human does.
         "contract_path": contract.path,
         "ok": not violations and contract.error is None,
+        # R1-C62: declared vs applicable per rule, and the names that do not exist. Always
+        # present while a contract is readable — a consumer cannot tell "nothing phantom"
+        # from "this build does not report it" if the field comes and goes (R1-C28).
+        "applicability": (None if contract.is_empty() or contract.error
+                          else _applicability_payload(query, contract)),
         "violations": [
             {"rule": v.rule, "summary": v.summary,
              "edges": [list(e) for e in v.edges],
@@ -109,13 +152,14 @@ def render_check(query, contract: ArchitectureContract, violations: list[Violati
         # rule that ran and stayed silent is the R1-C30-f2 defect from the other side —
         # there the reader concluded more than was checked, here less. `tests/
         # test_r1c49_type_only_cycles.py` fails if a new rule is added and not listed.
+        appl = applicability(query, contract)
         rules = []
         if contract.layers:
-            rules.append(f"layered ({len(contract.layers)})")
+            rules.append(_rule_count("layered", appl))
         if contract.independent:
-            rules.append(f"independent ({len(contract.independent)})")
+            rules.append(_rule_count("independent", appl))
         if contract.forbidden:
-            rules.append(f"forbidden ({len(contract.forbidden)})")
+            rules.append(_rule_count("forbidden", appl))
         if contract.no_cycles:
             rules.append("no_cycles")
         if contract.no_lazy_cycles:
@@ -124,9 +168,11 @@ def render_check(query, contract: ArchitectureContract, violations: list[Violati
             rules.append("no_type_only_cycles")
         if contract.exhaustive:
             rules.append("exhaustive")
+        if contract.no_phantom_rules:
+            rules.append("no_phantom_rules")
         return (f"# Architecture check — `{target}`\n\n"
                 f"✅ **Contract satisfied.** Rules enforced: {', '.join(rules)}.\n"
-                + _render_scope(query, contract))
+                + _phantom_note(appl, contract) + _render_scope(query, contract))
 
     out = [f"# Architecture check — `{target}`", "",
            f"❌ **{len(violations)} rule(s) broken.**", ""]
@@ -141,7 +187,9 @@ def render_check(query, contract: ArchitectureContract, violations: list[Violati
         for m in v.modules:
             out.append(f"- {m}")
         out.append("")
-    return "\n".join(out).rstrip() + "\n" + _render_scope(query, contract)
+    return ("\n".join(out).rstrip() + "\n"
+            + _phantom_note(applicability(query, contract), contract)
+            + _render_scope(query, contract))
 
 
 def _render_scope(query, contract: ArchitectureContract) -> str:

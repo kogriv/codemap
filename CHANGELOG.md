@@ -5,6 +5,21 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A contract rule with nothing to cover was counted as enforced** (R1-C62, design
+  [`docs/design/vacuous_contract_rules.md`](docs/design/vacuous_contract_rules.md)). Rename a layer,
+  forget `codemap.toml`, and the gate kept printing `✅ Contract satisfied. Rules enforced: layered
+  (3), independent (1), forbidden (1)` over three layers that no longer exist. The inertness is
+  deliberate and stays — it is what lets a contract be written ahead of the code — but "enforced" was
+  a claim of fact and it was false. The count now carries both numbers **when they differ**
+  (`layered (3 declared, 0 applicable)`) and the absent names are listed; `applicability` is in the
+  structured answer always, so a machine reader can tell "nothing phantom" from "this version does
+  not report it". New opt-in **`no_phantom_rules = true`** makes an absent name a failure — the
+  mirror of `exhaustive`, off by default so the write-ahead use does not turn red on an upgrade.
+  **On a tree whose contract names only things that exist, the output does not change by a single
+  byte** — verified against 0.0.20 from PyPI on a fixture and on the consumer's live tree. The
+  question came from outside: a third-party repo about requirements that stop being true
+  ([`research/05_curated_sources.md`](research/05_curated_sources.md) §4a), run rather than read.
+
 ## [0.0.20] - 2026-09-12
 
 **The last of the four findings from the third-shape run, and the one that was a metric rather than a

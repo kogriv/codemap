@@ -51,11 +51,43 @@ exhaustive = false
 | `no_lazy_cycles` | a cycle is closed only by a function-local import | those cycles |
 | `no_type_only_cycles` | a cycle is closed only by an import under `if TYPE_CHECKING:` | those cycles |
 | `exhaustive` | a core module's layer isn't declared in `layers` | the undeclared layers |
+| `no_phantom_rules` | a name the contract mentions doesn't exist in the graph | the absent names |
 
 Rules that reference a layer not present in the graph are **inert** — you can write
 the contract ahead of the code. An absent or malformed `codemap.toml` yields an
 empty contract (a no-op success), so a broken file never wedges the gate; use
 `--require-contract` to make "no contract" a failure instead.
+
+### An inert rule says so, because "enforced" was a claim
+
+Inertness is useful and stays. What changed in **0.0.21** is that the gate no longer counts an
+inert rule as enforced. Rename a layer and forget `codemap.toml`, and the old output was:
+
+```
+✅ Contract satisfied. Rules enforced: layered (3), independent (1), forbidden (1), no_cycles.
+```
+
+— three layer rules "enforced" over layers that no longer exist. Now the count carries both
+numbers **when they differ**, and the absent names are listed:
+
+```
+✅ Contract satisfied. Rules enforced: layered (3 declared, 0 applicable), … no_cycles.
+
+_3 name(s) in this contract are absent from the graph — `frontend`, `middleware`,
+`persistence` — so the rules naming them could not apply…_
+```
+
+A rule is **applicable** when the names it mentions exist: the layer for `layers`, at least two
+members for an `independent` group, both ends for a `forbidden` pair. When every declared name
+exists, the output is unchanged down to the byte — the second half appears only where there is
+something to disclose, because this text is diffed in CI.
+
+`no_phantom_rules = true` turns an absent name into a failure. It is **off by default** and it is
+the mirror of `exhaustive`: that one asks whether every layer of the code is declared, this one
+whether every declared name exists. They are independent, so turn on whichever drift you care
+about. The structured answer carries `applicability` (declared/applicable per rule plus
+`absent_names`) **always**, so a machine consumer can tell "nothing phantom" from "this version
+does not report it".
 
 ## What `no_cycles` judges — and what it says it did not
 
