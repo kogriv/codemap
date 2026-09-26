@@ -559,6 +559,38 @@ independent-loop count is what keeps the old number's meaning, and on small knot
 number (2 → 2). Verifying only the dense fixture would have shown the explosion cured and said nothing
 about what the cure cost.
 
+**0.0.21 published 2026-09-26:** [`codmap` 0.0.21](https://pypi.org/project/codmap/0.0.21/), schema
+**0.13** (unchanged, tenth release running), **`ANSWER_FORMAT` 1** — introduced here. Same procedure from
+the pushed commit `9a9fc99`, CI green, `twine check` PASSED on both artifacts, tag `v0.0.21` written
+with `-F`.
+
+Two items (R1-C62, R1-C63), and they ship together because both change the gate's output and a consumer
+should read one notice rather than two. Verified from PyPI under a fixed `PYTHONHASHSEED`, on trees
+carrying the shape of each defect — a contract whose every name is fictional, and a contract whose names
+all exist:
+
+```
+                                   0.0.20 (published)        0.0.21 (published)
+
+phantom contract, 3 fictional      ✅ layered (3),            ✅ layered (3 declared,
+layers named in 3 rules            independent (1),             0 applicable), … + the
+                                   forbidden (1)                three names listed
+
+same file + no_phantom_rules       exit 0 (unknown key)      exit 2, the three names
+                                                              as the violation
+
+sound contract (fixture)           —                         one added line: the trailer
+consumer's live tree               exit 0                    exit 0, one added line
+graph on the same tree             —                         nodes and edges hash
+                                                              identical, 0.13 → 0.13
+```
+
+**The sound-contract rows are the ones worth having measured.** R1-C62's whole promise is that a contract
+naming only things that exist does not change at all, and 0.0.20 is why that promise needed a
+measurement rather than a claim: that release moved the text for everyone, and the consumer had to be
+told by hand. The only movement here is the R1-C63 trailer, which is the mechanism that replaces the
+hand-written note — and it is stated as a cost in the changelog rather than buried.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
