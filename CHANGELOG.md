@@ -5,6 +5,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.21] - 2026-09-26
+
+**Two gates that reported more confidence than they had, and the question for one of them came from
+outside the project.** Schema unchanged (**0.13**, tenth release running); **`ANSWER_FORMAT` starts at
+1** and this release is the one that introduces it, so every markdown answer gains a one-line trailer —
+once. On a tree whose contract names only things that exist, nothing else about the output moves.
+
 - **The artifact was versioned; the answer, which is what consumers diff, was not** (R1-C63, design
   [`docs/design/answer_format_version.md`](docs/design/answer_format_version.md)). `SCHEMA_VERSION`
   says whether `graph.json` moved. It said nothing in 0.0.20, correctly — the graph was byte-identical
