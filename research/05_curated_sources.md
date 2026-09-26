@@ -72,6 +72,62 @@ Three independent Python-world implementations of "architecture violations shoul
 **R1-C3** (architecture contracts + `--check`) is a real, wanted capability — and gives concrete rule
 vocabularies (cycles / layer direction / naming / file-size / coupling) to model.
 
+### 4a. intent-continuity — the step none of them has, and it found a defect in ours (2026-09-26)
+
+[Emmimal/intent-continuity](https://github.com/Emmimal/intent-continuity) · MIT · pure stdlib, zero
+dependencies, 51 KB · created 2026-09-10, HEAD `6eb2112` · companion code to a Towards Data Science piece.
+**Ran it** (one command, no keys) rather than reading it, per the разбор convention.
+
+Its subject is not code graphs: it is **requirements that stop being true**. A rule-based extractor turns an
+interaction history into intent records, retrieval proposes candidates, and then a **verification** step
+drops what is *superseded* or *out of scope* before any of it reaches the agent. Supersession is inferred,
+not declared — the same `(component, scope, effect_key)` reappearing with a different value replaces the
+earlier record — so the load-bearing assumption sits in the extractor's keyword tables (11 trigger phrases,
+8 component groups), not in the verifier.
+
+**Reproduced exactly, first run**, and checked the way we check our own claims:
+
+| condition | recall | irrelevant | stale used | violations | tokens | tasks |
+|---|---|---|---|---|---|---|
+| baseline | 0.00 | 0 | 0 | 14 | 0 | 0/8 |
+| semantic_naive | 0.57 | 17 | 1 | 7 | 155 | 4/8 |
+| intent_aware | **1.00** | 10 | 0 | **0** | **199** | **8/8** |
+
+Three things earn it a place here:
+
+1. **The headline costs them something.** The correct configuration spends **more** tokens (199 vs 155), and
+   the README says so in its second paragraph: *"correctness costs something that raw retrieval doesn't pay
+   for."* That is the opposite of the usual context-pack pitch, and it is direct outside evidence for how
+   **R1-C61** must be measured — tokens *and* calls *and* outcome, because a token-saving pack can be worse.
+2. **They found their own answer key and published it against their own number.** An earlier domain schema
+   declared component relationships *per task* — "an answer key dressed up as a retrieval rule"; removing it
+   dropped 8/8 → 6/8, failing exactly the two tasks it had been feeding. **Verified in the code, not just
+   the prose:** `domain_schema.py` is now one global 8-component map, and its docstring records the history.
+   That is our R1-C37 ("a check never fed the thing it must reject is not a check") and the fourth release
+   rule (*the fixture itself must be verified against the old version*) — arrived at independently.
+3. **Determinism verified our way:** byte-identical output under `PYTHONHASHSEED` 1 / 2 / 99, and there is no
+   `random`, no `numpy` and no `datetime.now()` anywhere in the package — the 70-interaction history is
+   hand-written, not sampled. The claim holds under the test that cost us R1-C54.
+
+**Honest boundary:** eight tasks over a hand-written history with 12 planted requirements and 3 traps.
+`recall 1.00` is recall against their own planting, and the generalisation risk is the extractor, not the
+verifier. It is a demonstration, and it says so.
+
+**What it exposed in us — measured, not inferred.** codemap's one persisted requirement is the
+`[architecture]` contract in `codemap.toml`, and it has **no verification that a rule is still about
+anything**. On a two-layer fixture (`api`, `core`), a contract naming three layers that do not exist —
+`layers = ["frontend", "middleware", "persistence"]`, plus an `independent` group and a `forbidden` rule
+over the same phantoms — produced:
+
+```
+✅ Contract satisfied. Rules enforced: layered (3), independent (1), forbidden (1), no_cycles.   exit 0
+```
+
+Six rules reported as enforced, none of which can fire. `exhaustive = true` catches this only from the other
+side (it reports the *code's* undeclared layers, exit 2) and is off by default. Filed as **R1-C62**. The
+defect class is ours and familiar — a rule that cannot be fed is not a rule — and it took someone else's
+repo about stale requirements to point the question at our own gate.
+
 ## 5. Ranking & graph technique (reinforces R1-C6)
 
 - **HippoRAG 2** (Ohio State, habr 1025812) — knowledge graph + **Personalized PageRank** for multi-hop
