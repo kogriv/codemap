@@ -143,6 +143,60 @@ honesty) as cards complete. See each card's Quality section for detail.
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
 | CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync, **0.33 s** save→answerable with its watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 on any reachable surface (no argument contract; no layers/violations at all, and the library-only cycle finder reports **136 where 41 are real**, sees a function-local import only when the symbol is *called*, and does not separate a cycle that breaks on import from one a lazy import already fixed — it walks name-resolved call edges, so `dict.get` becomes a call into an unrelated class; precision 10%, and its recall of 32% beat codemap's 2.4% until R1-C29 closed that same day); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639), **fixed by the author 2026-09-08 in PR #1772, not yet released**; the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
 
+## Beyond Python — what the `Langs` column is, and what it is not (desk, 2026-09-29)
+
+Recorded because the question was asked ("which of the разобранные tools can work with Go?") and the
+answer has to carry its own epistemic status, or it will be mistaken for measurement later. **Nothing in
+this section is measured.** All six hands-on cards were taken on one Python scope — that is the point of
+scope parity, and it is exactly why the `Langs` column above is the only column in the matrix filled from
+the tools' **own claims** rather than from a run of ours.
+
+Our own history says how that misleads, twice over: [post 01](blog/01-the-competitor-wasnt-broken.md) — a
+peer's impact analysis looked broken and the cause was a resolver missing from *our* `PATH`; and
+[rag_for_git](tools/rag_for_git.md) — with the exact indexer absent, its graph silently fell back to
+name resolution and produced **9779 call edges against 4914**, of which 98.3% of the extras pointed at an
+ambiguous simple name. Both are the same axis, and on Go **neither was exercised by us**.
+
+### Of the разобранные tools, four claim Go
+
+| tool | what it claims for Go | mechanism | license | the caveat we would check first |
+|---|---|---|---|---|
+| **graphlens** | typed graph | tree-sitter + a **per-language LSP resolver** — `gopls` for Go (`ty` for Python, `intelephense` for PHP) | MIT | `gopls` must be on `PATH`; absent, you get a weaker graph and no refusal. Its card says outright that the non-Python resolvers are **untested here** |
+| **CodeGraph** | symbol/call graph, 20 languages | Rust kernel, grammars compiled in; `src/resolution/frameworks/go.ts` exists in its source | MIT | our numbers describe **1.6.0**; four fixes sit unreleased in `main` (re-measure logged as its own backlog item) |
+| **GitNexus** | knowledge graph, 14 languages | tree-sitter + LadybugDB + local embeddings | **PolyForm NC** | non-commercial licence; the artifact is a 123 MB binary and does not diff |
+| **OntoIndex** | same, GitNexus fork for 10k+ files | tree-sitter, 14 languages | AGPL-3.0 | on our Python scope **the graph did not reproduce** (10 745/20 232 vs 10 747/20 227 nodes/edges) |
+| **cocoindex-code** | semantic search only | embeddings, multi via tree-sitter | Apache-2.0 | answers no structural question at all |
+| **rag_for_git** | **no Go** | its only grammar dep is `tree-sitter-python` | MIT | measured: Python-only |
+
+Ranked as a starting point and nothing more: **graphlens** first (the only one whose Go path is typed
+rather than name-based), **CodeGraph** second (MIT, broad, fast). GitNexus only if NC suits the use.
+OntoIndex not before its reproducibility is retested on Go.
+
+### Go-native tools outside our разборы
+
+- **`scip-go`** — Sourcegraph's own indexer; the grown-up path, and it has consumers already. Note where
+  codemap sits: it **exports** SCIP and does not read it, so we are not a link in that chain.
+- **CodeQL** — Go supported, and 2.27.1 (2026-09-25) improved Go dataflow models specifically. Cost: a
+  build, and licence terms for non-OSS use.
+- **Semgrep / ast-grep** — structural search over Go with no build; `ast-grep` is in the roster with a
+  **wrap** verdict.
+- **universal-ctags** — definitions only, and cheap.
+
+### codemap itself: Python, and not shortly otherwise
+
+`R1-C11` (tree-sitter as a multi-language backend) is an **XL** door and deferred. Even opened, it buys
+*structure* — definitions and imports — for another language, while the depth that is the moat (call
+graph, impact, call contracts) stays on jedi/griffe, i.e. on Python. Anyone who needs Go should not wait
+for us, and saying otherwise would be the kind of unchecked claim this whole track exists to avoid.
+
+### What an actual answer would cost, and why it is not being run now
+
+Our own task-set (T1–T5) on one Go repository against graphlens and CodeGraph, with pre-registered
+expectations — the shape the `rag_for_git` разбор used. That would produce the first Go numbers in the
+project and, more usefully, show whether the silent-fallback class reproduces on a Go toolchain.
+**Deliberately not done:** the axes register has been USE-DRIVEN since 2026-07-30, and there is no live
+Go use to trigger it. Filed nowhere as a task on purpose; this section is the understanding, not a plan.
+
 ## Where codemap is not closed
 
 Running list of gaps surfaced by the разбор — capabilities peers have that codemap lacks, each linked to a

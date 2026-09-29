@@ -54,6 +54,9 @@ producing one **card** per tool in [`tools/`](tools/) and a rolled-up [compariso
 against codemap" gets answered with numbers, not adjectives.
 
 - **[comparison.md](comparison.md)** — the hub: coverage matrix (tools × capabilities) + quality summary + verdicts.
+  Its last-but-one section, *Beyond Python*, is the exception to everything else in the file: every column of
+  the matrix is a measurement of ours except `Langs`, which is each tool's own claim, and that section says so
+  and lists what would have to be run to turn it into a number. Read it before quoting a language count.
 - **[tools/](tools/)** — one card per tool; template + rules in [tools/README.md](tools/README.md).
   Measured hands-on so far: [graphlens](tools/graphlens.md), [GitNexus](tools/gitnexus.md),
   [cocoindex-code](tools/cocoindex-code.md), [CodeGraph](tools/codegraph.md),
