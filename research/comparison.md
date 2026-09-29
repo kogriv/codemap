@@ -143,7 +143,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
 | CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync, **0.33 s** save→answerable with its watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 on any reachable surface (no argument contract; no layers/violations at all, and the library-only cycle finder reports **136 where 41 are real**, sees a function-local import only when the symbol is *called*, and does not separate a cycle that breaks on import from one a lazy import already fixed — it walks name-resolved call edges, so `dict.get` becomes a call into an unrelated class; precision 10%, and its recall of 32% beat codemap's 2.4% until R1-C29 closed that same day); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639), **fixed by the author 2026-09-08 in PR #1772, not yet released**; the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
 
-## Beyond Python — what the `Langs` column is, and what it is not (desk, 2026-09-29)
+## Beyond Python — what the `Langs` column is, and what it is not (desk: Go and Rust, 2026-09-29)
 
 Recorded because the question was asked ("which of the разобранные tools can work with Go?") and the
 answer has to carry its own epistemic status, or it will be mistaken for measurement later. **Nothing in
@@ -182,6 +182,36 @@ OntoIndex not before its reproducibility is retested on Go.
   **wrap** verdict.
 - **universal-ctags** — definitions only, and cheap.
 
+### Rust — and one confusion to clear first
+
+**Written in Rust is not the same as analyses Rust**, and three of the measured tools invite exactly that
+mix-up: CodeGraph's kernel is Rust, cocoindex-code's engine is Rust, and Sentrux (desk) is a Rust binary.
+That is an implementation fact about them and says nothing about what they can read.
+
+| tool | what it claims for Rust | how far our own note goes |
+|---|---|---|
+| **graphlens** | Rust is one of its five languages, resolved by a per-language LSP | its card names three resolvers explicitly — `ty`, `gopls`, `intelephense` — and **not** Rust's, so which one it drives is *not* established by us |
+| **CodeGraph** | Rust is in their README's language list (~34 logos today) | our card recorded **20** languages at the measured version **1.6.0**; npm `latest` was still 1.6.0 on 2026-09-26, so the longer list belongs to their `main`/marketing rather than to the release we measured |
+| **GitNexus** | Rust named explicitly in its 14 (`…C#/Go/Rust/PHP/Ruby/Swift/C/C++/Dart`) | from the card; PolyForm **NC** licence, non-diffable artifact |
+| **OntoIndex** | Rust named explicitly in the same 14 | from the card; and its graph did not reproduce on our Python scope |
+| **cocoindex-code** | tree-sitter chunking, so Rust files chunk | search only — no structural answer, for any language |
+| **rag_for_git** | **no** | `tree-sitter-python` is its only grammar dependency |
+
+**And here is the useful asymmetry: Rust is better served than Go by tools none of us wrote.**
+`rust-analyzer` **emits SCIP itself** — `rust-analyzer scip [--output index.scip] <path>` runs a batch
+analysis and writes definitions, references, hover docs and symbol monikers, with no language server
+running at query time ([CLI docs](https://rust-lang.github.io/rust-analyzer/rust_analyzer/cli/scip/index.html),
+[SCIP/LSIF indexing](https://deepwiki.com/rust-lang/rust-analyzer/9.2-scip-and-lsif-indexing); there is
+also [sourcegraph/scip-rust](https://github.com/sourcegraph/scip-rust)). That is compiler-grade semantics
+from the toolchain a Rust developer already has, which is a stronger starting point than any tree-sitter
+graph — and the same note applies as for Go: codemap **exports** SCIP and does not read it, so we are not
+a link in that chain.
+
+Around it: **CodeQL** works on Rust and is actively moving there (2.27.1, 2026-09-25, shipped Rust path
+resolution fixes and data-flow models); **ast-grep** / **Semgrep** give structural search with no build;
+**universal-ctags** gives definitions. From the crate ecosystem, `cargo tree` answers the dependency graph
+out of the box, and module-level visualisers exist — not checked by us, and named here as unchecked.
+
 ### codemap itself: Python, and not shortly otherwise
 
 `R1-C11` (tree-sitter as a multi-language backend) is an **XL** door and deferred. Even opened, it buys
@@ -191,11 +221,25 @@ for us, and saying otherwise would be the kind of unchecked claim this whole tra
 
 ### What an actual answer would cost, and why it is not being run now
 
-Our own task-set (T1–T5) on one Go repository against graphlens and CodeGraph, with pre-registered
-expectations — the shape the `rag_for_git` разбор used. That would produce the first Go numbers in the
-project and, more usefully, show whether the silent-fallback class reproduces on a Go toolchain.
-**Deliberately not done:** the axes register has been USE-DRIVEN since 2026-07-30, and there is no live
-Go use to trigger it. Filed nowhere as a task on purpose; this section is the understanding, not a plan.
+Our own task-set (T1–T5) on one repository of that language against graphlens and CodeGraph, with
+pre-registered expectations — the shape the `rag_for_git` разбор used. That would produce the first
+non-Python numbers in the project and, more usefully, show whether the silent-fallback class reproduces on
+another toolchain. For **Rust** the comparison would have to include the `rust-analyzer scip` route, not
+only the graph tools, because on that language the toolchain's own output is the strongest candidate and
+leaving it out would rig the answer.
+
+**Deliberately not done:** the axes register has been USE-DRIVEN since 2026-07-30, and there is no live Go
+or Rust use to trigger it. Filed nowhere as a task on purpose; this section is the understanding, not a
+plan.
+
+### The shape of both answers, in one line each
+
+- **Go:** the graph tools are plausible (graphlens typed via `gopls`, CodeGraph broad and MIT), the native
+  route is `scip-go`, and what we cannot tell you is whether their resolver actually starts.
+- **Rust:** ask the toolchain first — `rust-analyzer scip` is compiler-grade and already installed — and
+  treat the tree-sitter graphs as the fallback rather than the default.
+- **Both:** every language count in the matrix above is somebody's README, ours included in the sense that
+  we copied it. The only number in this file we stand behind is the one next to a command we ran.
 
 ## Where codemap is not closed
 
