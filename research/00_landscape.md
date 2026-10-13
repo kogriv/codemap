@@ -22,6 +22,16 @@ the whole field has converged on codemap's "code graph over MCP beats grep" thes
    import-linter, snakefood, code2flow, vulture, radon, Doxygen, Sourcetrail).
 5. **Doc / API-surface extraction** — griffe (codemap's own extractor), pydoctor, Sphinx autodoc.
 
+**A seventh family, added 2026-10-13 and measured the same week:** **index-free, model-judged retrieval**
+— no graph, no embeddings, no index: a walk over the tree where every decision is a **typed question to a
+classifier**, which returns a probability rather than text. [jevgrep](tools/jevgrep.md) (`@dzhng/jevgrep`,
+MIT, 2647★ in seventeen days) is the instance, and it is the closest thing in this file to a competitor for
+codemap's `pack`: same job — put the right code in front of an agent — opposite trade. It needs a provider
+key, uploads 2.3–3× the repository per search (measured), and is not reproducible unless requests are
+serialised; it needs no index, no build and no parser for most of its reach, and installs in three packages.
+Structure is simply absent: impact, call contracts and whole-graph properties are not expressible in its
+answer at all.
+
 **A sixth family, added 2026-09-16 and not part of the original survey:** **multimodal / visual repository
 views** — agent scaffolds that render a selected repository subgraph as a *picture* alongside text and
 measure the result as an **agent outcome** (SWE-bench resolve rate) rather than as graph correctness:
