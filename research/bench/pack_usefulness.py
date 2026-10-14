@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pack usefulness, V2: does a seeded `pack` point at the files a real change touched?
+"""pack usefulness, V2 + V3: does a seeded `pack` point at the files a real change touched?
 
 R1-C61. The ground truth is **git**, not codemap's graph: for a commit that modified a
 package file, the other files the same commit changed are the files a person working on
@@ -16,6 +16,10 @@ Methods (each excludes the seed file itself):
                 dotted module path, ranked by match count (desc), then path
   random        the candidate files shuffled with a per-commit seed
 
+V3 (R1-C66, research/pack_direction.md) adds four shapes of a seeded pack that also look
+at who *uses* the seed (see V3_METHODS), a held-out second repository (`--package`,
+`--roots`), paired bootstrap intervals in `report`, and `repro` (V2 still reproduces).
+
 Selection rule (fixed before the run; `select` prints the list and its hash):
   non-merge commits reachable from the given ref; at least one **modified** `.py` under
   `bquant/`; between 2 and 15 modified-or-deleted `.py` files under the code roots
@@ -27,7 +31,9 @@ Selection rule (fixed before the run; `select` prints the list and its hash):
 Usage:
   pack_usefulness.py select --repo ../bquant [--ref HEAD]
   pack_usefulness.py run    --repo ../bquant --out results.json [--ref HEAD] [--only N]
+  pack_usefulness.py run    --repo ../codemap --package codemap --roots tests,research --out …
   pack_usefulness.py report --results results.json
+  pack_usefulness.py repro  --old v2_results.json --new results.json
 """
 from __future__ import annotations
 
@@ -45,10 +51,28 @@ import time
 from io import BytesIO
 from pathlib import Path
 
+# The tree under measurement. V2 fixed these for bquant; V3 (R1-C66) adds a held-out
+# second repository, so they are set once from the command line (`_configure`).
 ROOTS = ("bquant", "tests", "examples", "scripts", "research")
+PACKAGE = ROOTS[0]
 CONSUMERS = ROOTS[1:]
-METHODS = ("pack", "pack_global", "impact", "impact+pack", "grep", "random")
+V2_METHODS = ("pack", "pack_global", "impact", "impact+pack", "grep", "random")
+# V3 (R1-C66): a seeded pack that also looks at who *uses* the seed. Four shapes, fixed
+# before the run (research/pack_direction.md §2):
+#   pack_rev     PPR on the reversed usage graph, cut to what reaches the seed
+#   pack_both    round-robin of pack_rev and pack, pack_rev first
+#   pack_bidir   PPR on the symmetric graph, cut to seed ∪ ancestors ∪ descendants
+#   pack_sym     PPR on the symmetric graph, cut to the seed's weak component
+V3_METHODS = ("pack_rev", "pack_both", "pack_bidir", "pack_sym")
+METHODS = V2_METHODS + V3_METHODS
 KS = (5, 10, 20)
+
+
+def _configure(package: str, roots: str | None) -> None:
+    """Point the harness at another tree. With no arguments it is V2's bquant layout."""
+    global ROOTS, PACKAGE, CONSUMERS
+    rest = tuple(r for r in (roots.split(",") if roots else ROOTS[1:]) if r and r != package)
+    PACKAGE, ROOTS, CONSUMERS = package, (package, *rest), rest
 
 
 def _git(repo: str, *args: str) -> str:
@@ -90,7 +114,7 @@ def select(repo: str, ref: str = "HEAD") -> list[dict]:
                 added.append(path)
             elif st in "MD":
                 truth_py.append(path)
-                if st == "M" and path.startswith("bquant/"):
+                if st == "M" and path.startswith(PACKAGE + "/"):
                     mod_pkg.append(path)
         if not mod_pkg or not 2 <= len(truth_py) <= 15:
             continue
@@ -109,14 +133,15 @@ def selection_hash(sel: list[dict]) -> str:
 # -- one commit ------------------------------------------------------------------------
 
 def _extract(repo: str, rev: str, dest: Path) -> None:
-    data = subprocess.run(["git", "-C", repo, "archive", rev, *[r for r in ROOTS]],
+    present = set(_git(repo, "ls-tree", "--name-only", rev).split())  # an early parent may lack a root
+    data = subprocess.run(["git", "-C", repo, "archive", rev, *[r for r in ROOTS if r in present]],
                           check=True, capture_output=True).stdout
     with tarfile.open(fileobj=BytesIO(data)) as tf:
         tf.extractall(dest, filter="data")
 
 
 def _build(tree: Path, out: Path) -> tuple[bool, str]:
-    args = [sys.executable, "-m", "codemap.cli", "build", str(tree / "bquant"), "-o", str(out)]
+    args = [sys.executable, "-m", "codemap.cli", "build", str(tree / PACKAGE), "-o", str(out)]
     for c in CONSUMERS:
         if (tree / c).is_dir():
             args += ["--consumer", str(tree / c)]
@@ -161,6 +186,32 @@ def _round_robin(a: list[str], b: list[str]) -> list[str]:
                 seen.add(lst[i])
                 out.append(lst[i])
     return out
+
+
+def _ranked_ids(pr: dict, keep: set[str]) -> list[str]:
+    """Rank desc, id tiebreak, rounded like `Query.rank` — the order `build_pack` uses."""
+    r = {n: round(v, 8) for n, v in pr.items() if n in keep}
+    return sorted(r, key=lambda n: (-r[n], n))
+
+
+def _directional(q, seed_ids: list[str]) -> dict[str, list[str]]:
+    """The V3 shapes, as ranked node ids. Built from the same rank graph and the same
+    PageRank as `pack`, so the only thing that differs is the direction of the walk."""
+    import networkx as nx
+    from codemap.query import _pagerank
+    g = q._rank_graph()
+    seeds = [s for s in seed_ids if s in g]
+    pers = {n: (1.0 if n in seeds else 0.0) for n in g}
+    down = set(seeds).union(*(nx.descendants(g, s) for s in seeds))
+    up = set(seeds).union(*(nx.ancestors(g, s) for s in seeds))
+    sym = nx.DiGraph(g)
+    sym.add_edges_from((b, a) for a, b in g.edges)
+    weak = set().union(*(nx.node_connected_component(g.to_undirected(as_view=True), s)
+                         for s in seeds))
+    pr_sym = _pagerank(sym, pers)
+    return {"pack_rev": _ranked_ids(_pagerank(g.reverse(copy=True), pers), up),
+            "pack_bidir": _ranked_ids(pr_sym, up | down),
+            "pack_sym": _ranked_ids(pr_sym, weak)}
 
 
 def evaluate(repo: str, c: dict, work: Path) -> dict:
@@ -210,6 +261,10 @@ def evaluate(repo: str, c: dict, work: Path) -> dict:
     rnd = list(candidates)
     random.Random(int(c["commit"][:16], 16)).shuffle(rnd)
     lists["random"] = rnd
+    seed_ids = p["seeds"]["requested"][0]["matched"]
+    for m, ids in _directional(q, seed_ids).items():
+        lists[m] = [f for f in _files_in_order(ids, graph) if f != seed]
+    lists["pack_both"] = _round_robin(lists["pack_rev"], lists["pack"])
 
     truth = set(rec["truth_in_parent"])
     rec["status"] = "ok"
@@ -232,27 +287,72 @@ def evaluate(repo: str, c: dict, work: Path) -> dict:
 
 # -- report ----------------------------------------------------------------------------
 
+def paired_ci(results: list[dict], a: str, b: str, *, k: int = 10, n: int = 10_000,
+              seed: int = 0) -> tuple[float, float, float]:
+    """Mean of recall@k(a) − recall@k(b) over scored commits, with a 95 % percentile
+    bootstrap interval resampling commits (paired). V2 had no interval and said so."""
+    ok = [r for r in results if r["status"] == "ok" and r["truth_in_parent"]]
+    d = [r["scores"][a][f"recall@{k}"] - r["scores"][b][f"recall@{k}"] for r in ok]
+    rng = random.Random(seed)
+    means = sorted(sum(rng.choice(d) for _ in d) / len(d) for _ in range(n))
+    return sum(d) / len(d), means[int(0.025 * n)], means[int(0.975 * n) - 1]
+
+
+V3_PAIRS = (("pack_rev", "pack"), ("pack_both", "pack"), ("pack_bidir", "pack"),
+            ("pack_sym", "pack"), ("pack_bidir", "pack_sym"))
+
+
 def report(results: list[dict]) -> str:
     ok = [r for r in results if r["status"] == "ok" and r["truth_in_parent"]]
+    methods = [m for m in METHODS if ok and m in ok[0]["scores"]]
     lines = [f"commits: {len(results)} · scored: {len(ok)} · "
              f"build_failed: {sum(r['status'] == 'build_failed' for r in results)} · "
              f"seed_unresolved: {sum(r['status'] == 'seed_unresolved' for r in results)} · "
              f"no truth in parent: {sum(r['status'] == 'ok' and not r['truth_in_parent'] for r in results)}",
              "", "| method | " + " | ".join(f"recall@{k}" for k in KS) + " | hit@10 | tests recall@10 |",
              "|---|" + "---|" * (len(KS) + 2)]
-    for m in METHODS:
+    for m in methods:
         means = [sum(r["scores"][m][f"recall@{k}"] for r in ok) / len(ok) for k in KS]
         hit10 = sum(1 for r in ok if (r["scores"][m]["first_hit_rank"] or 99) <= 10) / len(ok)
         tr = [r["tests_recall@10"][m] for r in ok if r["tests_recall@10"][m] is not None]
         lines.append(f"| {m} | " + " | ".join(f"{x:.3f}" for x in means)
-                     + f" | {hit10:.3f} | {sum(tr) / len(tr):.3f} (n={len(tr)}) |")
+                     + f" | {hit10:.3f} | {(sum(tr) / len(tr) if tr else float('nan')):.3f} (n={len(tr)}) |")
     lines.append("")
     for a, b in (("pack", "grep"), ("pack", "impact"), ("pack", "pack_global"),
                  ("impact+pack", "impact")):
         w = sum(1 for r in ok if r["scores"][a]["recall@10"] > r["scores"][b]["recall@10"])
         l = sum(1 for r in ok if r["scores"][a]["recall@10"] < r["scores"][b]["recall@10"])
         lines.append(f"{a} vs {b} at recall@10: {a} better on {w}, worse on {l}, tied on {len(ok) - w - l}")
+    if "pack_rev" in methods:
+        best = max(V3_METHODS, key=lambda m: (sum(r["scores"][m]["recall@10"] for r in ok),
+                                              -V3_METHODS.index(m)))
+        lines += ["", f"best V3 shape by mean recall@10 (ties → listed order): {best}",
+                  "", "paired recall@10 difference, mean [95 % bootstrap CI, commits resampled]:"]
+        for a, b in (*V3_PAIRS, (best, "grep"), (best, "impact+pack"), (best, "impact"),
+                     ("impact+pack", "grep")):
+            mean, lo, hi = paired_ci(results, a, b)
+            lines.append(f"  {a} − {b}: {mean:+.3f} [{lo:+.3f}, {hi:+.3f}]")
+        mean, lo, hi = paired_ci(results, best, "pack", k=5)
+        lines.append(f"  {best} − pack at recall@5: {mean:+.3f} [{lo:+.3f}, {hi:+.3f}]")
     return "\n".join(lines)
+
+
+def repro(old: list[dict], new: list[dict]) -> list[str]:
+    """Control C6: V2's six methods score byte-identically on a re-run. Returns the
+    commits where any V2 field differs (empty = reproduced)."""
+    by = {r["commit"]: r for r in old}
+    bad = []
+    for r in new:
+        o = by.get(r["commit"])
+        if o is None or o["status"] != r["status"]:
+            bad.append(r["commit"])
+            continue
+        if r["status"] != "ok":
+            continue
+        if any(o["scores"][m] != r["scores"][m] or o["top10"][m] != r["top10"][m]
+               or o["tests_recall@10"][m] != r["tests_recall@10"][m] for m in V2_METHODS):
+            bad.append(r["commit"])
+    return bad
 
 
 def main(argv=None) -> int:
@@ -263,8 +363,15 @@ def main(argv=None) -> int:
     r = sub.add_parser("run"); r.add_argument("--repo", required=True); r.add_argument("--ref", default="HEAD")
     r.add_argument("--out", required=True); r.add_argument("--only", type=int)
     r.add_argument("--work", help="scratch directory (default: a temp dir)")
+    for sp in (s, r):
+        sp.add_argument("--package", default="bquant", help="the package root (V2: bquant)")
+        sp.add_argument("--roots", help="comma-separated consumer roots (V2: tests,examples,scripts,research)")
     p = sub.add_parser("report"); p.add_argument("--results", required=True)
+    c6 = sub.add_parser("repro", help="control C6: V2 methods reproduce byte-identically")
+    c6.add_argument("--old", required=True); c6.add_argument("--new", required=True)
     a = ap.parse_args(argv)
+    if a.cmd in ("select", "run"):
+        _configure(a.package, a.roots)
     if a.cmd == "select":
         sel = select(a.repo, a.ref)
         if a.json:
@@ -285,8 +392,16 @@ def main(argv=None) -> int:
             print(f"[{i}/{len(sel)}] {c['commit'][:12]} {results[-1]['status']} "
                   f"{results[-1].get('build_s')}s", file=sys.stderr, flush=True)
             Path(a.out).write_text(json.dumps({"selection_sha256": selection_hash(sel),
+                                               "package": PACKAGE, "roots": list(ROOTS),
                                                "results": results}, indent=1))
         return 0
+    if a.cmd == "repro":
+        old = json.loads(Path(a.old).read_text())["results"]
+        new = json.loads(Path(a.new).read_text())["results"]
+        bad = repro(old, new)
+        print(f"C6: {len(new) - len(bad)} / {len(new)} commits reproduce V2 byte-identically"
+              + (f"; differ: {', '.join(b[:12] for b in bad)}" if bad else ""))
+        return 1 if bad else 0
     data = json.loads(Path(a.results).read_text())
     print(report(data["results"]))
     return 0
