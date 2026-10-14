@@ -5,9 +5,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
-Schema unchanged (**0.13**). **`ANSWER_FORMAT` 1 → 2, and only `pack` changed shape** (R1-C65, R1-C66);
-the three items before them change no existing answer's structure. **A seeded `pack` now walks both
-ways by default** — the same request returns different items than in 0.0.21 (R1-C66).
+## [0.0.22] - 2026-10-15
+
+**`pack` was measured against git history for the first time, lost to grep, and was changed until it
+did not.** Schema unchanged (**0.13**, eleventh release running). **`ANSWER_FORMAT` 1 → 2, and only
+`pack` changed shape** (R1-C65, R1-C66); every other answer changes by its trailer alone (`_answer
+format 2 · schema 0.13_`). **A seeded `pack` now walks both ways by default** — the same request returns
+different items than in 0.0.21. New command `codemap doctor`.
 
 - **Fewer edges on the same input is named** (R1-C59, design
   [`docs/design/completeness_drop.md`](docs/design/completeness_drop.md)). One frozen tree built by

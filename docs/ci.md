@@ -90,7 +90,7 @@ _answer format 2 · schema 0.13_          ← the trailer on any markdown answer
 {"ok": true, "answer_format": 2, …}      ← the same fact in a serve/MCP envelope
 ```
 
-What each format number changed: **1** — the first numbered format (0.0.21). **2** — `pack` says
+What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says
 what it did with its seeds (a `seeds` block, `unreachable_from_seeds`, a `coverage` block), and a seed
 set that resolves to nothing is a refusal instead of the global pack ([pack](pack.md)); and, before
 2 was first released, a seeded pack began walking both ways by default — what the seeds use and what
