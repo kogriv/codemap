@@ -13,3 +13,10 @@ graph.json
 # raw external inputs (Telegram exports, etc.) — never committed; processed into
 # research/ with personal info stripped instead.
 assets/
+# credentials — never committed; real keys live outside the repository entirely.
+# A rule here is only a backstop: `git add -f` defeats it, a path outside the worktree does not.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
