@@ -144,18 +144,24 @@ honesty) as cards complete. See each card's Quality section for detail.
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
 | CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync, **0.33 s** save→answerable with its watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 on any reachable surface (no argument contract; no layers/violations at all, and the library-only cycle finder reports **136 where 41 are real**, sees a function-local import only when the symbol is *called*, and does not separate a cycle that breaks on import from one a lazy import already fixed — it walks name-resolved call edges, so `dict.get` becomes a call into an unrelated class; precision 10%, and its recall of 32% beat codemap's 2.4% until R1-C29 closed that same day); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639), **fixed by the author 2026-09-08 in PR #1772, not yet released**; the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
 
-⁷ jevgrep / `@dzhng/jevgrep` (0.8.0), hands-on **Stages A–B** on the R2 scope (materialized staging,
-`scope_id` verified), with the judge replaced by a **local stand-in gateway** — so every row measures their
-**pipeline**, never Jev's relevance, and the card says so per row. Mechanism: index-free, no embeddings, no
+⁷ jevgrep / `@dzhng/jevgrep` (0.8.0), hands-on **Stages A, B and D** on the R2 scope (materialized staging,
+`scope_id` verified). Stages A–B used a **local stand-in gateway** and measure their **pipeline**; **Stage D
+is real Jev** through a provider, seventeen searches, $1.14. Against codemap's file-level truth: **T1 2/2 at
+ranks 1–2** (the same-named method is returned too and never called out), **T2 21/22** at precision
+0.78–0.81, **T3 25/29** and **T4 26/49** — code complete (tests 19/19 and 8/8, examples 9/9, research 6/6),
+**documents poor (3/7 and 2/24)**; T4 carries no argument shape. A search costs **$0.026–0.15** and takes
+18–75 s. Mechanism: index-free, no embeddings, no
 vector store; a four-stage tree walk where each decision is a typed question to a classifier (six verdicts
 per file — implementation/caller/test/fixture/helper/read-early). **T3/T4/T5 ✖ structurally**: declarations
 carry `name@start-end` and the answer has no cycle/layer/argument vocabulary at all — seven tools, both
 whole-graph columns still ours. **Determinism ✖, and the finding of the run:** with a provably
 deterministic judge, five runs at the default concurrency gave **254, 257, 257, 257, 254** relevant files
 while `--concurrency 1` gave **257 five times, byte-identical** — the variance is their request scheduling,
-not the model, and it is not the request ceiling (`--max-requests 5000` keeps the spread). **Cost measured
-from the wire:** 631 requests / 9 765 questions / **9.39 MiB uploaded** per cold search on a 4.13 MiB scope
-— 2.3× the repository, 38× the printed answer — against **5 requests warm**. Credit where it is due:
+not the model, and it is not the request ceiling (`--max-requests 5000` keeps the spread). **Upload measured
+from the wire — with the stub only:** 631 requests / **9.39 MiB** per cold search, 2.3× the repository; a
+selective real judge walks far less and its upload volume was **not observable**. **Real Jev is not
+byte-stable even serialised**, the warm repeat cost 47% of the cold one, and which files carry source
+changes between runs of one question. Credit where it is due:
 `jg files` makes **zero socket calls** (strace-verified, not trusted), truncation names the exact omitted
 byte count, roles are labelled estimates, and `doctor` refuses a backend that connects but judges a known
 question wrongly. See the [card](tools/jevgrep.md).

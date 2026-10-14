@@ -252,6 +252,72 @@ none can pass without a run.
 tree is a sample of the tool on this scope, not a ranking of judges. Nor the agent-level effect their
 headline reports (needs an agent in the loop), nor behaviour on any other tree, language or size.
 
+### 0.8 Reconciliation — Stage D (2026-10-14, real Jev through OpenRouter, `typesafe/jev-1.13`)
+
+Seventeen searches ran: the planned ten, the planned warm pair, and **five T5 runs added after D6 failed**
+(batch C, exploratory — not in §0.7). Cumulative spend by the provider's own meter: **$1.14** of a $5
+daily ceiling; the $3.50 stop rule never came near. Scorer and per-run files are in the scratch area, not
+the repository; the numbers below are the scorer's output.
+
+**Controls**
+
+| # | outcome | how |
+|---|---|---|
+| **DC1** | ✅ holds | same staging tree as Stages A–B, `scope_id` line verified before the first request |
+| **DC2** | ✅ holds | graph built in this session (`--deep --repeat 3`, 2 edges seen in < 3 runs, both declared by the tool); the file sets were frozen from that same graph before the first paid request — *not* re-derived by an independent second build |
+| **DC3** | ⚠ holds **for the total, not per run** | the provider's counter **lags by about one run**: between the end of batch A (0.250) and the start of batch B (0.325) $0.075 appeared that no run claimed, and the next run was credited $0.0008. Per-search figures below are therefore ranges; only the cumulative sum is a measurement |
+| **DC4** | ✅ holds | the credential string occurs in no output, no log and no tracked file (`grep` over the run directory and the repository) |
+
+**Predictions**
+
+| # | outcome | measurement |
+|---|---|---|
+| **D1** | ✅ holds | `zones/pipeline.py` at rank 1, `zones/analyzer.py` at rank 2 in all three T1 runs; **36 files returned** and no word about two definitions or which is meant. Both truth files found; precision 2/36 |
+| **D2** | ❌ **refuted — in their favour, and by a wide margin** | T2 returned **26–27 files**, not > 44: **recall 21/22 in all six runs, precision 0.78–0.81**. The one file never found is `tests/unit/test_sample_data.py`. I predicted a haystack; what came back was a list a person could act on |
+| **D3** | ✅ holds, and it is the pattern of the run | T3: tests **19/19**, scripts 2/2, examples 1/1, **docs 3/7**. T4: tests 8/8, examples 9/9, research 6/6 and **docs 2/24**. The role tag does not separate the kinds either: a markdown file that mentions the class is tagged `caller`, a test is `caller, test, fixture` |
+| **D4** | ✅ holds | T4 recall **26/49 = 0.53**, entirely the 22 documents it did not return (code roots complete); precision 0.50; no `posargs` / `kwargs` vocabulary anywhere in the answer. The question T4 actually asks — *what breaks if the signature changes* — is answered with a list of files, not with how each call is written |
+| **D5** | ✅ holds | T5 returned **156–163 files** with no cycle or layer vocabulary and no statement that the question is outside the tool: a different question answered silently |
+| **D6** | ❌ **refuted on the pre-registered test, supported by the exploratory one** | **T2 (26–27 files):** spread 1 at default, 1 serialised — no scheduling effect visible, and the three serial runs have three different hashes. **T5 (155–163 files, batch C):** default **156 / 163 / 160** (spread 7), serial **156 / 158 / 155** (spread 3); 146 files appear in all three serial runs and 5, 2 and 3 of them are missing from the three default runs. Suggestive of Stage B's effect; with three runs per arm and a model that itself moves by three files it is **not established** |
+| **D7** | ❌ **refuted, low side and warm side** | cold cost per search by the cumulative meter: T1 **$0.06–0.08**, T2 **≈ $0.037**, T3 ≈ $0.054, T4 ≈ $0.026, T5 **$0.10–0.15** — mostly *under* the $0.08 floor I wrote. A warm repeat did **not** fall below 5%: it cost **$0.037 against $0.078 cold (47%)** and took 52 s against 75 s |
+| **D8** | ✅ holds | no line in any of the seventeen answers names how many eligible files were not sent or which. The single regex hit for "skipped" is the file `tests/SKIPPED_TESTS.md` again |
+
+**Score:** four controls hold (DC3 with a caveat); of eight predictions **five hold, three are refuted — and
+all three refutations are the tool doing better than I expected on the thing it is for (D2), or the
+scheduling story being narrower than Stage B made it sound (D6), or money behaving differently (D7).**
+
+### Surprises — none of these were on the list
+
+**S7 — a selective judge makes the walk small, and that changes the whole cost story.** Stage B's
+permissive stub walked 257 of 280 files and uploaded 2.3× the repository. Real Jev returns **26–52** files
+for the four code-shaped questions. The upload volume was **not observable** in Stage D (no gateway of mine
+on the path), so "2.3× the repo" must not be quoted for Jev — it describes the stub's walk. What is
+measured is the bill: cents.
+
+**S8 — what is stable is the list; what the agent reads is not.** Same question, same set, same order — and
+the answer's size moved from 28 731 to 23 022 to 19 128 bytes, because **which files carry their source**
+changes: `source below` on 5, 3 and 4 of 36 files. Between two runs of the *cache pair* `analyzer.py` — a real
+definition of `analyze_zones` — went from `source below` to `locations only`. The cache did not replay the
+earlier answer (S5's byte-identical rerun was the stub). An agent that reads the first source block it is
+given receives a different one each time.
+
+**S9 — the rank-1 and rank-2 answer was perfectly stable, and nothing else was.** Across all runs of T1 and
+T2 the truth files sat where they sat; what flickers is the tail (T5: 37 of 177 distinct files appear in
+some runs and not others — tests 13, research 11, docs 8, examples 3, package 2).
+
+**S10 — the output cap is reached on the question that is not theirs.** Two of six T5 runs hit the 256 000
+byte cap and said so with the omitted count (*2007* and *340* bytes). The disclosure is exact; the cap is
+what a wide question runs into.
+
+### What Stage D settles, and for whom
+
+- **Recall of code that uses a symbol is very good** on this scope (T2 21/22 with one real miss; tests,
+  examples and scripts complete in T3 and T4) and **recall of documentation is poor** (docs 3/7 and 2/24). Anyone who treats the answer as the dependency set loses the documents, and the
+  answer does not say that it is a relevance list, not a dependency list.
+- **For "put the right files in front of an agent", it works**, for cents and in 20–60 s, with no index and
+  no build. That is *exactly* `pack`'s job and it is a better result than the stub-era card allowed.
+- **It is not a substitute for the structural questions**, and the run shows why in the cleanest form: T4 got
+  26 of 49 files and zero information about how any of them calls the function.
+
 ---
 
 ## Identity
@@ -315,9 +381,12 @@ whole repository** as `state` and spends 631–731 requests (measured, §0.5 P3)
 ## Hands-on measurements (target: bquant)
 
 **Scope:** `sha256:300e0a01…`, 280 files, bquant@cb89a24, materialized staging; `--exclude manifest.json`
-so the uploaded set is exactly our scope. **Every row below was produced with a stand-in judge** (§0.2
-Stage B) and therefore measures **their pipeline, not Jev's relevance**. Rows that need a real judge are
-marked and left for Stage C/D rather than filled with a number that would not mean what it says.
+so the uploaded set is exactly our scope. **The first table was produced with a stand-in judge** (§0.2
+Stage B) and measures **their pipeline, not Jev's relevance**; the second table is **real Jev** (Stage D,
+§0.7–0.8) and is the only one that describes the tool as shipped. Stage C (an OpenAI-backed judge) was not
+run: Stage D made it unnecessary, and a substitute judge would have measured a different tool.
+
+**Stage B — stand-in judge (pipeline only)**
 
 | Task | Answer shape | Cost (measured) | Latency | Deterministic? | Notes |
 |---|---|---|---|---|---|
@@ -327,16 +396,34 @@ marked and left for Stage C/D rather than filled with a number that would not me
 | T4 sig-change | **✖ structurally**: `Symbol.method@start-end` only | — | — | — | seven tools, still only codemap |
 | T5 architecture | **✖ structurally**: no cycle/layer vocabulary in a full untruncated answer | — | — | — | — |
 | upper bound (permissive judge) | 280 of 280 files "relevant" | 731 req / 12 364 questions / **12.27 MiB** | 25.5 s | — | the ceiling of exploration |
-| warm cache, same question | byte-identical to the cold answer | **5 req**, 2.6 MB on disk | 11.6 s | ✅ | 99.2% of requests removed |
+| warm cache, same question | byte-identical to the cold answer | **5 req**, 2.6 MB on disk | 11.6 s | ✅ | 99.2% of requests removed — **with the stub; not what Jev did, see below** |
+
+**Stage D — real Jev through OpenRouter (the tool as shipped)**, truth = codemap, file level, frozen in §0.7
+
+| Task | Returned | Found | Precision | Cost / latency | Notes |
+|---|---|---|---|---|---|
+| T1 where defined | 36 files | **2 / 2** at ranks 1 and 2 | 0.06 | $0.06–0.08, 65–75 s | the ambiguity (a method of the same name) is not mentioned |
+| T2 who calls the class | 26–27 | **21 / 22** in all six runs | 0.78–0.81 | ≈ $0.037, 20–30 s (94–125 s serial) | misses `tests/unit/test_sample_data.py` |
+| T3 blast radius | 48 | **25 / 29**: tests 19/19, scripts 2/2, examples 1/1, **docs 3/7** | 0.52 | ≈ $0.054, 33 s | the four missed are all documents |
+| T4 signature change | 52 | **26 / 49**: tests 8/8, examples 9/9, research 6/6, **docs 2/24** | 0.50 | ≈ $0.026, 24 s | file recall only; **no argument shape anywhere** |
+| T5 layers / cycles | 155–163 | not a file set | — | $0.10–0.15, 40–55 s (235–311 s serial) | a ranked file list, silently, no cycle or layer vocabulary |
+| warm repeat of T1 | 36, same set and order | — | — | $0.037 vs $0.078 cold (**47%**), 52 s vs 75 s | **not** a replay: three files change between `source below` and `locations only` |
 
 ## Quality (on the covered part)
 
-- **accuracy** — not measured (needs a real judge). What *is* measured: the walk reaches 257 of 280
-  eligible files and silently omits the rest.
-- **determinism** — ✖ by scheduling, not by model: see §0.5 P4. `--concurrency 1` is byte-stable.
-- **cost** — 631 requests and 9.39 MiB uploaded per cold search on 280 files; their own
+- **accuracy** — **measured with real Jev, five questions, one tree** (§0.8): code that uses a symbol is
+  found almost completely (T2 21/22, tests/examples/scripts complete in T3–T4); **documents are the weak
+  class** (3/7 and 2/24); precision 0.5–0.8 on the questions it can answer. A sample of the tool on this
+  scope, not a ranking of judges.
+- **determinism** — ✖ at the tail, ✅ at the head. Rank 1–2 of T1 never moved; the T5 tail flickers (37 of
+  177 distinct files appear in some runs and not others). With the **stub** the variance was provably
+  their scheduling (§0.5 P4); with **real Jev** serialised runs are no longer byte-identical either, and
+  the scheduling share is suggestive, not established (§0.8 D6).
+- **cost** — **real Jev: $0.026–0.15 per cold search**, $1.14 for the whole seventeen-search campaign. The
+  stub-era "631 requests / 9.39 MiB / 2.3× the repository" describes a permissive judge's walk and is
+  **not** what Jev uploads; the real upload volume was not observable. Their own
   [#38](https://github.com/dzhng/jevgrep/issues/38) reports ~5M tokens / 65 s / ~$0.2 on 2.7k files.
-- **speed** — 13.8–46.8 s cold, 11.6 s warm, on a 280-file tree.
+- **speed** — 18–75 s cold at default concurrency, 94–311 s serialised (3–6× slower), 52 s warm.
 - **setup friction** — lowest in the roster: three packages, 7 s, one `auth`. A provider key is the only
   real gate.
 - **language coverage** — Py/Go/Rust grammars + TS/JS via tsc; text fallback elsewhere.
@@ -371,15 +458,21 @@ marked and left for Stage C/D rather than filled with a number that would not me
   Also: that **six questions per file** (implementation/caller/test/fixture/helper/read-early) buys a
   role-tagged file list without a graph, with an honest `role uncertain` for the cases the questions do not
   settle.
-- **What we did NOT check** (§0.6 plus what the run added):
-  - **Relevance quality — the thing the tool is for.** Every number here comes from a stand-in judge.
-    Stages C and D are not run: Stage C needs an OpenAI key (a declared substitution; measures their
-    pipeline with a different judge, never Jev), Stage D needs a Jev-capable provider key and is the only
-    configuration that describes jevgrep as shipped.
+- **What we did NOT check** (§0.6 plus what the runs added):
+  - **Relevance quality beyond five questions on one tree.** Stage D measures the tool as shipped, but on
+    one 280-file Python scope, one symbol of each kind and one seed per cell. It says nothing about other
+    trees, languages or sizes, and nothing about whether an agent given this list does better — that is
+    their headline metric and needs an agent in the loop.
+  - **What was uploaded under real Jev.** No gateway of ours sat on that path, so the byte volume and the
+    request count are unknown; only the provider's bill is.
+  - **The mechanism behind S8.** Why source blocks move between runs of one question — model variance in
+    the per-file stage, ordering, or a budget shared between files — is not read from their code.
+  - **Whether documents are a design choice or a limit.** Docs recall of 3/7 and 2/24 is measured; whether
+    it comes from the questions asked of a `.md` file, the preview a document yields, or Jev is not.
   - **Their SWE-bench results**, agent-level cost and task success, and their speed study — theirs, quoted
     as theirs, not re-run.
-  - **The scheduling variance against a real judge**: with a model in the loop the same experiment would be
-    inconclusive, which is why it was done with a stub. Whether Jev's own variance adds to it is unknown.
+  - **The scheduling effect under a real judge is not established.** Three runs per arm; the serial arm
+    itself moves by three files on T5. Stage B's stub is what settles that scheduling is the source *there*.
   - **Why the parallel walk drops files.** Diagnosed to scheduling and excluded as a request-ceiling
     effect (`--max-requests 5000` keeps the spread); the mechanism inside their code is not read.
   - **Languages other than Python** on this scope, Windows/macOS, the agent skill's effect on an agent,
@@ -394,8 +487,10 @@ marked and left for Stage C/D rather than filled with a number that would not me
 T3, T4 and T5 are absent *by construction*, and seven measured tools later both whole-graph columns are
 still codemap's alone. It is a real competitor for the one job codemap's `pack` also does — put the right
 code in front of an agent — and it does that job with no index, no build, no graph and a 7 MB install, at
-the price of a key, money per search, 2.3–3× the repository uploaded, and an answer that is not reproducible
-unless you serialise it.
+the price of a key, cents per search, a source of context that moves between runs, and documents it largely
+does not find. **Stage D changed the reading:** on the code-shaped questions it is *better* than this card's
+own first prediction (T2 21/22 at precision 0.8, not a haystack) — which makes it the closest thing to a
+competitor `pack` has met, not a curiosity.
 
 - **R1-C61 reinforced, not closed.** Third external sighting of a usefulness measurement with a cost axis
   (after intent-continuity and RepoAtlas), and the first measuring an **agent's** cost. The door stays
@@ -410,5 +505,7 @@ unless you serialise it.
   offline) that the measurement above makes concrete.
 - **One defect worth reporting to the author**, with the reproducer this card already contains: a
   deterministic judge shows the default concurrency dropping files from the answer, and `--concurrency 1`
-  fixing it. Not filed — reporting someone's defect is the owner's call, and the convention is to show the
+  fixing it. **Stage D qualifies it rather than retracting it:** on a selective real judge the effect is
+  small and tangled with model noise (T5: default spread 7 vs serial 3, three runs each), so the report
+  should say *"reproduces with a deterministic judge; suggestive with Jev"*, not more. Not filed — reporting someone's defect is the owner's call, and the convention is to show the
   author before publishing.

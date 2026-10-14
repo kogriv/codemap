@@ -27,8 +27,10 @@ the whole field has converged on codemap's "code graph over MCP beats grep" thes
 classifier**, which returns a probability rather than text. [jevgrep](tools/jevgrep.md) (`@dzhng/jevgrep`,
 MIT, 2647★ in seventeen days) is the instance, and it is the closest thing in this file to a competitor for
 codemap's `pack`: same job — put the right code in front of an agent — opposite trade. It needs a provider
-key, uploads 2.3–3× the repository per search (measured), and is not reproducible unless requests are
-serialised; it needs no index, no build and no parser for most of its reach, and installs in three packages.
+key, costs cents per search ($0.026–0.15 measured with real Jev) and is not byte-stable even serialised; it
+needs no index, no build and no parser for most of its reach, and installs in three packages. Measured
+against our truth it **finds code that uses a symbol almost completely (T2 21/22 at precision 0.8) and
+documents poorly (3/7, 2/24)** — better than this paragraph's first draft expected.
 Structure is simply absent: impact, call contracts and whole-graph properties are not expressible in its
 answer at all.
 
