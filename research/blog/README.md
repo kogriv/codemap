@@ -23,8 +23,9 @@ One rule threads all of them: **measurements, not verdict.**
 | 7 | **Two graphs that share no code agreed exactly. Then one of them disagreed with itself.** — 57 callers against 57, by two implementations with nothing in common. And a field named `truncated` reporting `false` while it dropped 27 of them. | [EN](07-two-graphs-agreed.md) | [RU](07-two-graphs-agreed.ru.md) |
 | 8 | **Eight of my last twelve bug fixes were the same bug.** — sorted by cause instead of by place, the backlog stopped looking like twelve bugs. The audit that followed was full, and missed the next one by a day. | [EN](08-eight-of-twelve.md) | [RU](08-eight-of-twelve.ru.md) |
 | 9 | **My tool reported 464,109 import cycles. Every one of them was real.** — and on the next package, the one cycle it reported did not exist. Measurement cannot tell a true number from a meaningful one. | [EN](09-true-and-worthless.md) | [RU](09-true-and-worthless.ru.md) |
+| 10 | **I measured a tool that asks a model about every file. On my scope, mine won — and the scope is the caveat.** — a model-judged search against a graph, five questions, real Jev, $1.14. What it found, what it cannot see, and when you would pick it instead. | [EN](10-asks-a-model-about-every-file.md) | [RU](10-asks-a-model-about-every-file.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
 readers can start at 0. Posts 4, 5, 6, 8 and 9 are the ones where the method is turned on the author — 4 on a
 claim of his, 5 on the limits of how he was testing it, 6 on three differentiators he had to give up, 8 on
