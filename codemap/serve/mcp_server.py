@@ -311,10 +311,15 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
 
     @server.tool()
     def pack(budget: int = 2000, seeds: list[str] | None = None) -> dict:
-        """Token-budgeted context pack: the most relevant slice of the graph under `budget`
-        tokens, ranked by PageRank importance — or by relevance to `seeds` (symbol / file
-        ids you're working on). Returns {budget, used_tokens, included, truncated,
-        items:[{id, kind, rank, tokens, text}]}, top hubs first."""
+        """Token-budgeted context pack: the highest-ranked modules, classes and functions
+        under `budget` tokens, by PageRank importance — or by relevance to `seeds` (symbol
+        / file ids you're working on). Returns {budget, used_tokens, included, truncated,
+        items:[{id, kind, rank, tokens, text}], seeds, unreachable_from_seeds, coverage},
+        top hubs first. With seeds the walk runs from the seeds to what they *use*: their
+        callers are never in the pack. Read `seeds.unresolved` and each seed's `ambiguous`;
+        if no seed resolves the answer is {error, seeds, coverage} — a refusal, not a
+        global pack. `coverage.never_in_pack` counts node kinds (docs, attributes,
+        columns) that can never appear."""
         return op("pack", {"budget": budget, "seeds": seeds or []})
 
     return server

@@ -5,7 +5,8 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
-Schema unchanged (**0.13**); `ANSWER_FORMAT` unchanged (**1**).
+Schema unchanged (**0.13**). **`ANSWER_FORMAT` 1 → 2, and only `pack` changed shape** (R1-C65); the
+three items before it change no existing answer's structure.
 
 - **Fewer edges on the same input is named** (R1-C59, design
   [`docs/design/completeness_drop.md`](docs/design/completeness_drop.md)). One frozen tree built by
@@ -31,7 +32,7 @@ Schema unchanged (**0.13**); `ANSWER_FORMAT` unchanged (**1**).
   [`docs/dead-code.md`](docs/dead-code.md) explains what is kept (calls *from* the nested body, on the
   enclosing function) and what is lost (the definition, calls *to* it). Graph bytes and the structured
   answer are unchanged; the markdown changes by that one line, so the answer-format pin was updated as
-  wording and **`ANSWER_FORMAT` stays 1**. Emitting them as nodes is left as an open option.
+  wording and **`ANSWER_FORMAT` is not bumped for it**. Emitting them as nodes is left as an open option.
 
 - **New: `codemap doctor` — a dependency that answers wrongly is not one that is absent** (R1-C64,
   design [`docs/design/dependency_probe.md`](docs/design/dependency_probe.md)). griffe and jedi were only
@@ -43,6 +44,19 @@ Schema unchanged (**0.13**); `ANSWER_FORMAT` unchanged (**1**).
   `error` / `not-run`, with the installed version; exit 1 unless both are `ok`; `--json` for machines.
   The same probe is a suite test, which CI runs against freshly resolved dependencies on every push.
   One fact per dependency, deliberately not a benchmark. No existing answer changes.
+
+- **`pack` says what it did with the seed, and what it can never contain** (R1-C65, design
+  [`docs/design/pack_honesty.md`](docs/design/pack_honesty.md)). Measured on 0.0.21: `--seed` with an
+  unknown name, a `.md` path or an attribute id returned the **global pack byte for byte**, exit 0, under
+  a header naming the seed; an ambiguous name was spread over every definition silently; a seeded budget
+  was topped up with symbols the seed cannot reach. Now every pack answer carries a **`seeds`** block
+  (`via`, `matched`, `ambiguous`, `unrankable`, and `unresolved`), **`unreachable_from_seeds`**, and a
+  **`coverage`** block naming the node kinds that are never ranked — documents, attributes, columns — and
+  the direction of the walk: **with seeds, a pack holds what the seeds use; their callers are never in
+  it.** If no seed resolves, the answer is a **refusal** (`{error, budget, seeds, coverage}`, CLI exit 1),
+  not a global pack. Unreachable symbols are left out by walking the graph, not by reading a zero rank
+  (ranks are rounded). The global pack's items are unchanged byte for byte; the seeded pack on
+  `analyze_zones` lost one unreachable filler item. Usefulness is still not measured (R1-C61).
 
 ## [0.0.21] - 2026-09-26
 
