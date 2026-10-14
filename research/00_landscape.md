@@ -267,6 +267,11 @@ What it changes here, precisely and no further:
   measured that it *helps* — only that it is deterministic and fits. Filed as **R1-C61**, priced as a door
   rather than a gap: the measurement needs a model in the loop, and would be the first number in this
   project a reader could not re-derive from a frozen tree.
+  *Update 2026-10-15:* the cheap step before that door is done, $0 and re-derivable — against git
+  history rather than an agent ([V2](pack_usefulness.md), [V3](pack_direction.md)). The one-way seeded
+  pack lost to grep by names; walking both ways (now the default) put 42 % and 60 % of co-changed files
+  in its first ten on two repositories. Whether it helps an agent is still unmeasured, and by a rule
+  written before V3 the agent A/B is not opened.
 - **Nothing was installed or run**, and the paper was read through a fetch summary rather than line by line.
   The note carries that caveat in its own first paragraph, and no figure from it may enter
   [positioning.md](positioning.md) or a post before a proper read.
