@@ -741,15 +741,17 @@ def _cmd_semantic(args) -> int:
 
 def _cmd_pack(args) -> int:
     """Token-budgeted context pack — most relevant graph slice under N tokens (R1-C6)."""
-    from codemap.serve.pack import build_pack, render_pack
+    from codemap.serve.pack import build_pack, render_payload
     q = Query(_graph_from(args))
     seeds = tuple(args.seed or ())
+    p = build_pack(q, budget=args.budget, seeds=seeds)
     if args.format == "json":
-        print(json.dumps(build_pack(q, budget=args.budget, seeds=seeds),
-                         ensure_ascii=False, indent=2, sort_keys=True))
+        print(json.dumps(p, ensure_ascii=False, indent=2, sort_keys=True))
     else:
-        print(render_pack(q, budget=args.budget, seeds=seeds), end="")
-    return 0
+        print(render_payload(p, target=q.graph.target, seeds=seeds), end="")
+    # No seed resolved → a refusal, not an empty pack: exit 1, as `query` does on an
+    # unknown name (pack honesty).
+    return 1 if "error" in p else 0
 
 
 def _cmd_check(args) -> int:

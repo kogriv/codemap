@@ -93,7 +93,13 @@ SCHEMA_VERSION = "0.13"
 #
 # Starts at 1 with 0.0.21 and makes no claim about earlier releases: the answer format changed
 # many times before it, and numbering that retroactively would be inventing a history.
-ANSWER_FORMAT = 1
+#
+# History:
+#   1 — 0.0.21: first numbered format.
+#   2 — pack honesty: `pack` carries `seeds`, `unreachable_from_seeds` and `coverage`
+#       blocks, and a seed set that resolves to nothing is a refusal instead of the
+#       global pack (docs/design/pack_honesty.md).
+ANSWER_FORMAT = 2
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship

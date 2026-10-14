@@ -185,8 +185,11 @@ codemap serve --graph graph.json --watch
 - **Dataflow** — producers/consumers of a string-keyed DataFrame column.
 - **Semantic search** (opt-in) — a concept query routed to an external adapter, with each fuzzy hit
   resolved to the exact codemap symbol at its location (`codemap semantic`). See [docs/integrations.md](docs/integrations.md).
-- **Context pack** — the most relevant slice of the graph under a token budget, ranked by importance or
-  by relevance to seed symbols (`codemap pack --budget N [--seed X]`). See [docs/pack.md](docs/pack.md).
+- **Context pack** — the highest-ranked modules, classes and functions under a token budget, by
+  importance or by relevance to seed symbols (`codemap pack --budget N [--seed X]`). With a seed it is
+  what the seed *uses* — never its callers — and documents are never in it; the answer says both, and
+  a seed that resolves to nothing is refused rather than silently answered globally. Deterministic and
+  budget-tested; **whether it helps an agent is not measured yet.** See [docs/pack.md](docs/pack.md).
 - **Interop** — export the graph as a [SCIP](https://scip-code.org/) index (definitions + symbol
   info + inherits/implements relationships) so Sourcegraph, Glean and other SCIP consumers can drive
   go-to-definition, symbol search and type hierarchy over it. See [docs/export.md](docs/export.md).

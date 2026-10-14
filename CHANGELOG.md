@@ -5,6 +5,21 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+**`ANSWER_FORMAT` 1 → 2 — only `pack` changed shape.** Schema unchanged (0.13).
+
+- **`pack` says what it did with the seed, and what it can never contain** (R1-C65, design
+  [`docs/design/pack_honesty.md`](docs/design/pack_honesty.md)). Measured on 0.0.21: `--seed` with an
+  unknown name, a `.md` path or an attribute id returned the **global pack byte for byte**, exit 0, under
+  a header naming the seed; an ambiguous name was spread over every definition silently; a seeded budget
+  was topped up with symbols the seed cannot reach. Now every pack answer carries a **`seeds`** block
+  (`via`, `matched`, `ambiguous`, `unrankable`, and `unresolved`), **`unreachable_from_seeds`**, and a
+  **`coverage`** block naming the node kinds that are never ranked — documents, attributes, columns — and
+  the direction of the walk: **with seeds, a pack holds what the seeds use; their callers are never in
+  it.** If no seed resolves, the answer is a **refusal** (`{error, budget, seeds, coverage}`, CLI exit 1),
+  not a global pack. Unreachable symbols are left out by walking the graph, not by reading a zero rank
+  (ranks are rounded). The global pack's items are unchanged byte for byte; the seeded pack on
+  `analyze_zones` lost one unreachable filler item. Usefulness is still not measured (R1-C61).
+
 ## [0.0.21] - 2026-09-26
 
 **Two gates that reported more confidence than they had, and the question for one of them came from

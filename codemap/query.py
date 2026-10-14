@@ -74,6 +74,11 @@ _IMPACT_EDGES = ("calls", "references", "inherits", "imports", "decorated_by",
 # is excluded on purpose (structural, would just inflate big modules).
 _RANK_EDGE_TYPES = ("calls", "imports", "references", "inherits", "implements")
 
+# Node kinds `rank` walks (R1-C6). Everything else — documents, attributes, columns — can
+# never be ranked, so never enters a pack; `pack` declares that rather than implying a
+# "most relevant slice" of the whole graph (pack honesty).
+RANKED_KINDS = ("module", "class", "function")
+
 # Test-mapping walk (R1-C24). Execution and naming relations only: `imports` is
 # module→module and would spread the answer across the package without saying anything
 # about what a *test* runs; `inherits` is kept because exercising a subclass does exercise
@@ -1063,17 +1068,75 @@ class Query:
 
     # -- relevance ranking (R1-C6) -------------------------------------------
 
+    def _expand_seed(self, seed: str) -> tuple[str, set[str]]:
+        """One seed → ``(via, node ids)``: how it was read and what it matched.
+
+        ``via`` is ``id`` | ``file`` | ``name`` | ``none``. The ids are *all* matches,
+        rankable or not — whether they can bias a rank is the caller's question.
+        """
+        if seed in self.graph.nodes:
+            return "id", {seed}
+        in_file = {n.id for n in self.graph.nodes.values() if n.file == seed}
+        if in_file:
+            return "file", in_file
+        by_name = {n.id for n in self.find(seed)}  # short name → matches
+        return ("name", by_name) if by_name else ("none", set())
+
     def _expand_seeds(self, seeds) -> set[str]:
         """Map each seed (node id / short name / file path) to concrete node ids."""
         out: set[str] = set()
-        files = {n.file for n in self.graph.nodes.values() if n.file}
         for s in seeds:
-            if s in self.graph.nodes:
-                out.add(s)
-            elif s in files:
-                out.update(n.id for n in self.graph.nodes.values() if n.file == s)
+            out |= self._expand_seed(s)[1]
+        return out
+
+    def _rank_graph(self, edge_types=_RANK_EDGE_TYPES,
+                    root: str | None = None) -> "nx.DiGraph":
+        """The graph `rank` walks: rankable kinds only, usage edges user→used."""
+        g = nx.DiGraph()
+        for nid, n in self.graph.nodes.items():
+            if n.kind in RANKED_KINDS and (root is None or self.root_of(nid) == root):
+                g.add_node(nid)
+        ets = set(edge_types)
+        for e in self.graph.edges:
+            if e.type in ets and e.source in g and e.target in g:
+                g.add_edge(e.source, e.target)
+        return g
+
+    def seed_resolution(self, seeds, *, root: str | None = None) -> dict:
+        """What each seed became — the answer to "did my seed count?" (pack honesty).
+
+        A seed that matched only nodes `rank` does not walk (a document, an attribute,
+        a column) biases nothing, so it is **unresolved**, and ``unrankable`` says what
+        it did match. Before this, all three shapes fell through to the global rank
+        under a header naming the seed.
+        """
+        from collections import Counter
+        g = self._rank_graph(root=root)
+        per, unresolved, ids = [], [], set()
+        for s in seeds:
+            via, matched = self._expand_seed(s)
+            rankable = sorted(m for m in matched if m in g)
+            other = Counter(self.graph.nodes[m].kind for m in matched if m not in g)
+            per.append({"input": s, "via": via, "matched": rankable,
+                        "ambiguous": via == "name" and len(rankable) > 1,
+                        "unrankable": dict(sorted(other.items()))})
+            if rankable:
+                ids.update(rankable)
             else:
-                out.update(n.id for n in self.find(s))  # short name → matches
+                unresolved.append(s)
+        return {"seeds": per, "unresolved": unresolved, "ids": sorted(ids)}
+
+    def reachable_from(self, ids, *, root: str | None = None) -> set[str]:
+        """Rankable nodes reachable from ``ids`` along usage edges (user→used).
+
+        Exactly the set a seeded rank can make non-zero: dangling mass returns to the
+        seeds, so nothing else ever receives any. Decided by walking, never by
+        ``rank == 0`` — ranks are rounded, and a far reachable node can round to zero.
+        """
+        g = self._rank_graph(root=root)
+        out = {i for i in ids if i in g}
+        for i in list(out):
+            out |= nx.descendants(g, i)
         return out
 
     def rank(self, *, seeds=(), edge_types=_RANK_EDGE_TYPES,
@@ -1087,15 +1150,7 @@ class Query:
         Deterministic: PageRank is a fixed power-iteration; scores rounded, ties broken
         by id at the call sites that order them.
         """
-        g = nx.DiGraph()
-        for nid, n in self.graph.nodes.items():
-            if n.kind in ("module", "class", "function") and (
-                    root is None or self.root_of(nid) == root):
-                g.add_node(nid)
-        ets = set(edge_types)
-        for e in self.graph.edges:
-            if e.type in ets and e.source in g and e.target in g:
-                g.add_edge(e.source, e.target)
+        g = self._rank_graph(edge_types, root)
         if g.number_of_nodes() == 0:
             return {}
         personalization = None
