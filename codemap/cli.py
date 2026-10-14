@@ -32,7 +32,7 @@
         codemap.toml [integrations].enabled + the tool installed)
     codemap semantic <query> (--graph g.json | --build <path>) [--root DIR] [--limit N]
         semantic search via an opt-in adapter, enriched to codemap symbols (R1-C16)
-    codemap pack (--graph g.json | --build <path>) [--budget N] [--seed X …]
+    codemap pack (--graph g.json | --build <path>) [--budget N] [--seed X …] [--direction both|uses]
         token-budgeted context pack: most relevant graph slice under N tokens (R1-C6)
 """
 
@@ -791,9 +791,13 @@ def _cmd_semantic(args) -> int:
 def _cmd_pack(args) -> int:
     """Token-budgeted context pack — most relevant graph slice under N tokens (R1-C6)."""
     from codemap.serve.pack import build_pack, render_payload
-    q = Query(_graph_from(args))
     seeds = tuple(args.seed or ())
-    p = build_pack(q, budget=args.budget, seeds=seeds)
+    if args.direction and not seeds:  # before any build: a usage error costs nothing
+        print("codemap pack: --direction needs --seed — the global rank walks from no "
+              "seed", file=sys.stderr)
+        return 2
+    q = Query(_graph_from(args))
+    p = build_pack(q, budget=args.budget, seeds=seeds, direction=args.direction)
     if args.format == "json":
         print(json.dumps(p, ensure_ascii=False, indent=2, sort_keys=True))
     else:
@@ -1150,6 +1154,9 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("--seed", action="append", metavar="X",
                     help="Bias relevance to this symbol / file (repeatable). "
                          "Omit for global importance.")
+    pk.add_argument("--direction", choices=["both", "uses"],
+                    help="Which way a seeded walk runs: both (default) — what the seeds "
+                         "use and what uses them; uses — only what they use.")
     pk.add_argument("--format", choices=["markdown", "json"], default="markdown")
     pk.set_defaults(func=_cmd_pack)
 

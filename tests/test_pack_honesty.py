@@ -7,6 +7,10 @@ seeded budget was topped up with symbols the seed cannot reach; and nothing said
 seed's callers are never in its pack.
 
 Each guard below was run against the defect it names (the fix reverted) and went red.
+
+Since R1-C66 a seeded pack walks both ways by default; the reachability guards here are
+about the one-way walk and ask for it (`direction="uses"`). The two-way walk has its own
+guards in `test_r1c66_pack_direction.py`.
 """
 
 from __future__ import annotations
@@ -135,7 +139,7 @@ def test_unambiguous_name_is_not_flagged(q):
 # -- D3: a seeded pack holds only what the seed reaches, decided by walking ---------
 
 def test_seeded_pack_holds_only_what_the_seed_reaches(q):
-    p = build_pack(q, budget=BIG, seeds=("seed",))
+    p = build_pack(q, budget=BIG, seeds=("seed",), direction="uses")
     ids = {it["id"] for it in p["items"]}
     assert {"pkg.seed", "pkg.mid", "pkg.far"} <= ids
     assert "pkg.caller" not in ids, "a caller of the seed is in its pack"
@@ -149,7 +153,7 @@ def test_reachability_is_walked_not_read_off_a_rounded_rank(q):
     """The far end of the chain is reachable and its rounded rank is exactly 0.0. A cut
     by `rank == 0` would drop it; the walk keeps it."""
     tail = f"pkg.chain{CHAIN - 1}"
-    p = build_pack(q, budget=BIG, seeds=("seed",))
+    p = build_pack(q, budget=BIG, seeds=("seed",), direction="uses")
     got = {it["id"]: it["rank"] for it in p["items"]}
     assert tail in got, "a reachable symbol was cut"
     assert got[tail] == 0.0, "fixture no longer exercises rounding — lengthen CHAIN"
@@ -168,7 +172,7 @@ def test_coverage_names_what_can_never_be_in_a_pack(q):
 
 def test_direction_is_stated_and_differs_with_seeds(q):
     glob = build_pack(q, budget=BIG)["coverage"]["direction"]
-    seeded = build_pack(q, budget=BIG, seeds=("seed",))["coverage"]["direction"]
+    seeded = build_pack(q, budget=BIG, seeds=("seed",), direction="uses")["coverage"]["direction"]
     assert "callers of a seed are never" in seeded
     assert glob != seeded
 
@@ -204,7 +208,12 @@ def test_json_is_deterministic(q):
 # of its answer could change without anyone deciding it. Bump together with
 # ANSWER_FORMAT when a change of structure is intended; checked under PYTHONHASHSEED
 # 0, 1, 7, 42 and 99 before pinning.
-PACK_RENDERED_SHA = "9115930a019c15189137437cbfbf375eb38a188c7437f6e8ab4eaf095c60c9fc"
+#
+# Re-pinned for R1-C66 (a seeded pack walks both ways by default; the header names the
+# walk). A change of meaning, not only of wording — but ANSWER_FORMAT stays 2: format 2
+# has never been released (0.0.21 answers format 1), so it describes 0.0.22's answer
+# whole (docs/design/pack_direction.md D3). Checked under the same five hash seeds.
+PACK_RENDERED_SHA = "5d4dc2677ad10fab35ae427ae28551132bdcb09dcacf7112f13d592547f157e1"
 
 
 def test_rendered_pack_matches_the_pin(q):

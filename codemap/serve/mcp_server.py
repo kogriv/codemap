@@ -310,17 +310,23 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("semantic", {"query": query, "limit": limit})
 
     @server.tool()
-    def pack(budget: int = 2000, seeds: list[str] | None = None) -> dict:
+    def pack(budget: int = 2000, seeds: list[str] | None = None,
+             direction: str | None = None) -> dict:
         """Token-budgeted context pack: the highest-ranked modules, classes and functions
         under `budget` tokens, by PageRank importance — or by relevance to `seeds` (symbol
         / file ids you're working on). Returns {budget, used_tokens, included, truncated,
         items:[{id, kind, rank, tokens, text}], seeds, unreachable_from_seeds, coverage},
-        top hubs first. With seeds the walk runs from the seeds to what they *use*: their
-        callers are never in the pack. Read `seeds.unresolved` and each seed's `ambiguous`;
+        top hubs first. With seeds the walk runs both ways by default — what the seeds use
+        and what uses them (their callers, tests); `direction="uses"` keeps only what they
+        use. `coverage.walk` names the walk taken; `direction` without seeds is an error.
+        Read `seeds.unresolved` and each seed's `ambiguous`;
         if no seed resolves the answer is {error, seeds, coverage} — a refusal, not a
         global pack. `coverage.never_in_pack` counts node kinds (docs, attributes,
         columns) that can never appear."""
-        return op("pack", {"budget": budget, "seeds": seeds or []})
+        args = {"budget": budget, "seeds": seeds or []}
+        if direction is not None:
+            args["direction"] = direction
+        return op("pack", args)
 
     return server
 

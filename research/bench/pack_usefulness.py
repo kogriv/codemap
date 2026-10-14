@@ -195,14 +195,16 @@ def _ranked_ids(pr: dict, keep: set[str]) -> list[str]:
 
 
 def _directional(q, seed_ids: list[str]) -> dict[str, list[str]]:
-    """The V3 shapes, as ranked node ids. Built from the same rank graph and the same
-    PageRank as `pack`, so the only thing that differs is the direction of the walk."""
+    """The V3 shapes that did not go into the product, as ranked node ids. Built from the
+    same rank graph and the same PageRank as `pack`, so the only thing that differs is the
+    direction of the walk. `pack_bidir` was computed here too until it shipped as
+    `build_pack(direction="both")`; control C7 found the two orders identical on all 191
+    commits, and the harness now asks the product (docs/design/pack_direction.md D5)."""
     import networkx as nx
     from codemap.query import _pagerank
     g = q._rank_graph()
     seeds = [s for s in seed_ids if s in g]
     pers = {n: (1.0 if n in seeds else 0.0) for n in g}
-    down = set(seeds).union(*(nx.descendants(g, s) for s in seeds))
     up = set(seeds).union(*(nx.ancestors(g, s) for s in seeds))
     sym = nx.DiGraph(g)
     sym.add_edges_from((b, a) for a, b in g.edges)
@@ -210,7 +212,6 @@ def _directional(q, seed_ids: list[str]) -> dict[str, list[str]]:
                          for s in seeds))
     pr_sym = _pagerank(sym, pers)
     return {"pack_rev": _ranked_ids(_pagerank(g.reverse(copy=True), pers), up),
-            "pack_bidir": _ranked_ids(pr_sym, up | down),
             "pack_sym": _ranked_ids(pr_sym, weak)}
 
 
@@ -240,7 +241,8 @@ def evaluate(repo: str, c: dict, work: Path) -> dict:
     rec["candidates"] = len(candidates)
     rec["truth_in_parent"] = [t for t in c["truth"] if (tree / t).is_file()]
 
-    p = build_pack(q, budget=10 ** 9, seeds=(seed,))
+    # V2's pack is the one-way walk; since R1-C66 that is no longer the default.
+    p = build_pack(q, budget=10 ** 9, seeds=(seed,), direction="uses")
     if "error" in p:
         rec["status"] = "seed_unresolved"
         rec["seeds"] = p["seeds"]
@@ -264,6 +266,9 @@ def evaluate(repo: str, c: dict, work: Path) -> dict:
     seed_ids = p["seeds"]["requested"][0]["matched"]
     for m, ids in _directional(q, seed_ids).items():
         lists[m] = [f for f in _files_in_order(ids, graph) if f != seed]
+    pb = build_pack(q, budget=10 ** 9, seeds=(seed,), direction="both")
+    lists["pack_bidir"] = [f for f in _files_in_order([i["id"] for i in pb["items"]], graph)
+                           if f != seed]
     lists["pack_both"] = _round_robin(lists["pack_rev"], lists["pack"])
 
     truth = set(rec["truth_in_parent"])

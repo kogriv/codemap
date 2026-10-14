@@ -5,8 +5,9 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
-Schema unchanged (**0.13**). **`ANSWER_FORMAT` 1 → 2, and only `pack` changed shape** (R1-C65); the
-three items before it change no existing answer's structure.
+Schema unchanged (**0.13**). **`ANSWER_FORMAT` 1 → 2, and only `pack` changed shape** (R1-C65, R1-C66);
+the three items before them change no existing answer's structure. **A seeded `pack` now walks both
+ways by default** — the same request returns different items than in 0.0.21 (R1-C66).
 
 - **Fewer edges on the same input is named** (R1-C59, design
   [`docs/design/completeness_drop.md`](docs/design/completeness_drop.md)). One frozen tree built by
@@ -57,6 +58,24 @@ three items before it change no existing answer's structure.
   not a global pack. Unreachable symbols are left out by walking the graph, not by reading a zero rank
   (ranks are rounded). The global pack's items are unchanged byte for byte; the seeded pack on
   `analyze_zones` lost one unreachable filler item. Usefulness is still not measured (R1-C61).
+
+- **A seeded `pack` walks both ways by default: what the seeds use, and what uses them** (R1-C66,
+  design [`docs/design/pack_direction.md`](docs/design/pack_direction.md), measurement
+  [`research/pack_direction.md`](research/pack_direction.md)). Measured against git history — seed the
+  pack with a changed package file on the parent's graph, count the other files that commit changed in
+  its first ten — the one-way pack found **18.9 %** on 108 commits of bquant, below grep by names
+  (35.4 %), and **0 %** of the co-changed tests: tests use the seed, and the walk only went the other
+  way. Four two-way shapes were compared on bquant under rules written down before the run, and the
+  winner checked unchanged on 83 commits of codemap's own history: **41.6 %** and **59.9 %** (one-way:
+  18.9 % and 20.2 %), tests 42.6 % and 46.6 %, and the first five no worse. It is personalized PageRank
+  on the usage graph with edges both ways, cut to the seed's ancestors and descendants — a *sibling*
+  that only shares a dependency is not in it. New **`direction`** parameter (`both` default, `uses` —
+  the old walk) on the CLI (`--direction`), serve and MCP; it is an error without seeds. The answer
+  names the walk in **`coverage.walk`**, in `coverage.direction` and in the markdown header. The global
+  pack is unchanged. Against grep the two-way pack is ahead on both repositories, but on bquant the
+  95 % interval of the difference includes zero, so the pre-registered condition for an agent A/B
+  (V4) is **not** met. `ANSWER_FORMAT` stays **2**: format 2 has never been released, and it now
+  describes 0.0.22's answer whole.
 
 ## [0.0.21] - 2026-09-26
 

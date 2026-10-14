@@ -14,23 +14,35 @@ top hubs land before leaves (the acceptance).
 The answer also says what it did with the question (pack honesty,
 ``docs/design/pack_honesty.md``): what each seed became, that a seed which resolved to
 nothing is a refusal rather than a silent global pack, which kinds of node can never be
-in a pack, and — with seeds — that the walk runs from the seeds to what they *use*, so
-their callers are never in it.
+in a pack, and — with seeds — which way the walk from the seeds ran.
+
+A seeded pack walks **both ways** by default (R1-C66): what the seeds use, and what uses
+them. ``direction="uses"`` keeps the one-way walk, for "what does this need". The default
+was decided by a rule written before the measurement (``research/pack_direction.md``):
+against git history, the one-way pack never found a co-changed test and lost to a grep
+over names; the two-way pack doubled recall on both repositories measured.
 """
 
 from __future__ import annotations
 
 from collections import Counter
 
-from codemap.query import RANKED_KINDS, Query
+from codemap.query import RANKED_KINDS, SEED_DIRECTIONS, Query
 
 # The signals a context consumer wants per symbol, compact. Kept deterministic.
 _KIND_TAG = {"module": "mod", "class": "class", "function": "fn"}
 
 _DIRECTION_GLOBAL = ("global importance: a symbol ranks by how much of the graph uses it "
                      "(usage edges, user→used)")
-_DIRECTION_SEEDED = ("from the seeds to what they use, directly or transitively; callers "
-                     "of a seed are never reached, so never in this pack")
+_DIRECTION_SEEDED = {
+    "uses": ("from the seeds to what they use, directly or transitively; callers of a "
+             "seed are never reached, so never in this pack"),
+    "both": ("from the seeds both ways — what they use and what uses them, directly or "
+             "transitively; a symbol that only shares a dependency with a seed is not "
+             "reached, so not in this pack"),
+}
+#: The walk a seeded pack takes when none is asked for (R1-C66).
+DEFAULT_DIRECTION = "both"
 
 
 def estimate_tokens(text: str) -> int:
@@ -51,7 +63,7 @@ def _item_text(node) -> str:
     return f"{node.id} ({tag}){sig}{dep}{doc}"
 
 
-def _coverage(query: Query, *, seeded: bool, root: str | None) -> dict:
+def _coverage(query: Query, *, direction: str | None, root: str | None) -> dict:
     """What a pack can never contain, said every time (R1-C28: a field that appears
     only when something is wrong cannot be read by a machine)."""
     never = Counter(n.kind for nid, n in query.graph.nodes.items()
@@ -59,10 +71,12 @@ def _coverage(query: Query, *, seeded: bool, root: str | None) -> dict:
                     and (root is None or query.root_of(nid) == root))
     return {"ranked_kinds": sorted(RANKED_KINDS),
             "never_in_pack": dict(sorted(never.items())),
-            "direction": _DIRECTION_SEEDED if seeded else _DIRECTION_GLOBAL}
+            "walk": direction,
+            "direction": _DIRECTION_SEEDED[direction] if direction else _DIRECTION_GLOBAL}
 
 
-def build_pack(query: Query, *, budget: int, seeds=(), root: str | None = None) -> dict:
+def build_pack(query: Query, *, budget: int, seeds=(), root: str | None = None,
+               direction: str | None = None) -> dict:
     """Rank symbols and greedily pack the most relevant under ``budget`` tokens.
 
     Returns ``{budget, used_tokens, total_ranked, included, truncated, items, seeds,
@@ -76,9 +90,22 @@ def build_pack(query: Query, *, budget: int, seeds=(), root: str | None = None) 
     If **no** seed resolves to a rankable symbol the answer is a refusal —
     ``{error, budget, seeds, coverage}`` and no items — never the global pack, which
     answers a different question under the same header.
+
+    ``direction`` — which way a seeded walk runs, ``both`` (default) or ``uses``; named
+    in ``coverage.walk`` and in words in ``coverage.direction`` (``walk`` is ``None``
+    without seeds). Asking for a direction without seeds is an error: a global rank has
+    no seeds to walk from.
     """
     seeds = tuple(seeds or ())
-    coverage = _coverage(query, seeded=bool(seeds), root=root)
+    if direction is not None and not seeds:
+        raise ValueError("direction applies only to a seeded pack; the global rank "
+                         "walks from no seed")
+    if seeds:
+        direction = direction or DEFAULT_DIRECTION
+        if direction not in SEED_DIRECTIONS:
+            raise ValueError(f"unknown direction {direction!r}; expected one of "
+                             f"{', '.join(SEED_DIRECTIONS)}")
+    coverage = _coverage(query, direction=direction if seeds else None, root=root)
     seed_block = None
     reach = None
     if seeds:
@@ -93,8 +120,8 @@ def build_pack(query: Query, *, budget: int, seeds=(), root: str | None = None) 
                 "seeds": seed_block,
                 "coverage": coverage,
             }
-        reach = query.reachable_from(res["ids"], root=root)
-    ranked = query.rank(seeds=seeds, root=root)
+        reach = query.reachable_from(res["ids"], root=root, direction=direction)
+    ranked = query.rank(seeds=seeds, root=root, direction=direction or "uses")
     order = sorted(ranked, key=lambda n: (-ranked[n], n))  # rank desc, id tiebreak
     unreachable = None
     if reach is not None:
@@ -152,7 +179,7 @@ def _coverage_line(cov: dict, unreachable: int | None) -> str:
     line = (f"_Never in a pack: {never} nodes (only {', '.join(cov['ranked_kinds'])} are "
             f"ranked). Direction: {cov['direction']}")
     if unreachable is not None:
-        line += f"; {unreachable} symbols unreachable from the seeds were left out"
+        line += f"; {unreachable} symbols this walk does not reach were left out"
     return line + "._"
 
 
@@ -169,7 +196,8 @@ def render_payload(p: dict, *, target: str, seeds=()) -> str:
             lines += [note, ""]
         lines += [_coverage_line(p["coverage"], None)]
         return "\n".join(lines).rstrip() + "\n"
-    seed_note = f" · seeds: {', '.join(seeds)}" if seeds else " · global importance"
+    seed_note = (f" · seeds: {', '.join(seeds)} · walk: {p['coverage']['walk']}" if seeds
+                 else " · global importance")
     lines = [
         f"# Context pack — `{target}`{seed_note}",
         "",
@@ -189,7 +217,8 @@ def render_payload(p: dict, *, target: str, seeds=()) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_pack(query: Query, *, budget: int, seeds=(), root: str | None = None) -> str:
+def render_pack(query: Query, *, budget: int, seeds=(), root: str | None = None,
+                direction: str | None = None) -> str:
     """Human/agent-readable markdown for a budgeted context pack."""
-    p = build_pack(query, budget=budget, seeds=seeds, root=root)
+    p = build_pack(query, budget=budget, seeds=seeds, root=root, direction=direction)
     return render_payload(p, target=query.graph.target, seeds=seeds)

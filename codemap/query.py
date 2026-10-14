@@ -79,6 +79,18 @@ _RANK_EDGE_TYPES = ("calls", "imports", "references", "inherits", "implements")
 # "most relevant slice" of the whole graph (pack honesty).
 RANKED_KINDS = ("module", "class", "function")
 
+#: Which way a *seeded* rank walks (R1-C66). ``uses``: from the seeds to what they use —
+#: their callers are never reached. ``both``: that, and everything that uses the seeds.
+#: The default for a seeded `pack` is ``both``, decided by a pre-registered rule
+#: (research/pack_direction.md §5); ``uses`` stays available for "what does this need".
+SEED_DIRECTIONS = ("uses", "both")
+
+
+def _check_direction(direction: str) -> None:
+    if direction not in SEED_DIRECTIONS:
+        raise ValueError(f"unknown direction {direction!r}; expected one of "
+                         f"{', '.join(SEED_DIRECTIONS)}")
+
 # Test-mapping walk (R1-C24). Execution and naming relations only: `imports` is
 # module→module and would spread the answer across the package without saying anything
 # about what a *test* runs; `inherits` is kept because exercising a subclass does exercise
@@ -1126,21 +1138,29 @@ class Query:
                 unresolved.append(s)
         return {"seeds": per, "unresolved": unresolved, "ids": sorted(ids)}
 
-    def reachable_from(self, ids, *, root: str | None = None) -> set[str]:
-        """Rankable nodes reachable from ``ids`` along usage edges (user→used).
+    def reachable_from(self, ids, *, root: str | None = None,
+                       direction: str = "uses") -> set[str]:
+        """Rankable nodes a seeded walk reaches from ``ids``.
 
-        Exactly the set a seeded rank can make non-zero: dangling mass returns to the
-        seeds, so nothing else ever receives any. Decided by walking, never by
-        ``rank == 0`` — ranks are rounded, and a far reachable node can round to zero.
+        ``direction`` (R1-C66): ``uses`` — along usage edges, what the seeds use;
+        ``both`` — that, plus everything that uses the seeds, directly or transitively
+        (ancestors ∪ descendants; a *sibling* that only shares a dependency is not
+        reached). Exactly the set a seeded rank of that direction may surface. Decided by
+        walking, never by ``rank == 0`` — ranks are rounded, and a far reachable node can
+        round to zero.
         """
+        _check_direction(direction)
         g = self._rank_graph(root=root)
-        out = {i for i in ids if i in g}
-        for i in list(out):
+        seeds = [i for i in ids if i in g]
+        out = set(seeds)
+        for i in seeds:
             out |= nx.descendants(g, i)
+            if direction == "both":
+                out |= nx.ancestors(g, i)
         return out
 
     def rank(self, *, seeds=(), edge_types=_RANK_EDGE_TYPES,
-             root: str | None = None) -> dict[str, float]:
+             root: str | None = None, direction: str = "uses") -> dict[str, float]:
         """Importance rank over usage edges via PageRank (R1-C6).
 
         Without ``seeds``: global importance — heavily-depended-upon symbols (imports
@@ -1149,7 +1169,14 @@ class Query:
         context (aider's repo-map trick). ``root`` restricts to one provenance root.
         Deterministic: PageRank is a fixed power-iteration; scores rounded, ties broken
         by id at the call sites that order them.
+
+        ``direction`` applies only with seeds. ``both`` (R1-C66) walks the usage edges in
+        both directions — the restart is still the seeds, so the rank is closeness to them
+        whichever way the edge points. Measured against git history on two repositories
+        (``research/pack_direction.md``): recall@10 of the co-changed files 0.19 → 0.42
+        and 0.20 → 0.60.
         """
+        _check_direction(direction)
         g = self._rank_graph(edge_types, root)
         if g.number_of_nodes() == 0:
             return {}
@@ -1158,6 +1185,9 @@ class Query:
             seed_ids = {s for s in self._expand_seeds(seeds) if s in g}
             if seed_ids:  # restart biased to seeds (normalized inside _pagerank)
                 personalization = {n: (1.0 if n in seed_ids else 0.0) for n in g}
+                if direction == "both":
+                    g = nx.DiGraph(g)
+                    g.add_edges_from([(b, a) for a, b in g.edges])
         pr = _pagerank(g, personalization)
         return {n: round(v, 8) for n, v in pr.items()}
 

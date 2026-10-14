@@ -755,7 +755,8 @@ class Session:
         """R1-C6: token-budgeted context pack — most relevant graph slice under N tokens."""
         from codemap.serve.pack import build_pack
         return build_pack(self.query, budget=int(args.get("budget", 2000)),
-                          seeds=tuple(args.get("seeds") or ()))
+                          seeds=tuple(args.get("seeds") or ()),
+                          direction=args.get("direction"))
 
     def _op_source(self, args) -> dict:
         """Return the source span of a symbol (F12): {file, lines, code?}.

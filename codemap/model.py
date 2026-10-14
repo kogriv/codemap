@@ -98,7 +98,11 @@ SCHEMA_VERSION = "0.13"
 #   1 — 0.0.21: first numbered format.
 #   2 — pack honesty: `pack` carries `seeds`, `unreachable_from_seeds` and `coverage`
 #       blocks, and a seed set that resolves to nothing is a refusal instead of the
-#       global pack (docs/design/pack_honesty.md).
+#       global pack (docs/design/pack_honesty.md). Before 2 was released, a seeded
+#       pack also began walking both ways by default — what the seeds use and what
+#       uses them — with `coverage.walk` naming the walk (R1-C66,
+#       docs/design/pack_direction.md). Not a separate number: no release ever
+#       answered 2 without it.
 ANSWER_FORMAT = 2
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set

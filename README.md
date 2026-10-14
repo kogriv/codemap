@@ -8,7 +8,7 @@ and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1039 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1054 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -186,12 +186,13 @@ codemap serve --graph graph.json --watch
 - **Semantic search** (opt-in) — a concept query routed to an external adapter, with each fuzzy hit
   resolved to the exact codemap symbol at its location (`codemap semantic`). See [docs/integrations.md](docs/integrations.md).
 - **Context pack** — the highest-ranked modules, classes and functions under a token budget, by
-  importance or by relevance to seed symbols (`codemap pack --budget N [--seed X]`). With a seed it is
-  what the seed *uses* — never its callers — and documents are never in it; the answer says both, and
-  a seed that resolves to nothing is refused rather than silently answered globally. Deterministic and
-  budget-tested. Against git history it finds the package files a change touched about as well as
-  `impact`, never the tests, and loses to plain grep overall; **whether it helps an agent is not
-  measured.** See [docs/pack.md](docs/pack.md).
+  importance or by relevance to seed symbols (`codemap pack --budget N [--seed X]`). With a seed it
+  walks both ways — what the seed uses and what uses it (`--direction uses` for one way) — documents are
+  never in it, the answer says which walk it took, and a seed that resolves to nothing is refused rather
+  than silently answered globally. Deterministic and budget-tested. Against git history, seeded with a
+  changed file, it puts 42 % and 60 % of the co-changed files in its first ten on two repositories —
+  ahead of `impact` and of grep by names, though on one of the two not beyond the noise; grep still
+  finds tests best. **Whether it helps an agent is not measured.** See [docs/pack.md](docs/pack.md).
 - **Interop** — export the graph as a [SCIP](https://scip-code.org/) index (definitions + symbol
   info + inherits/implements relationships) so Sourcegraph, Glean and other SCIP consumers can drive
   go-to-definition, symbol search and type hierarchy over it. See [docs/export.md](docs/export.md).
