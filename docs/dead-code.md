@@ -2,7 +2,8 @@
 
 `codemap report dead-code` flags **private functions with no incoming resolved call**
 — triage, never proof (call resolution is partial by design; dynamic dispatch, CLI
-entry points and test targets are blind spots). What sets codemap apart from a
+entry points, test targets and [nested definitions](#nested-definitions-are-not-judged-r1-c60)
+are blind spots). What sets codemap apart from a
 call-only tool (vulture) is that its cross-root graph lets it **grade** each candidate
 and say *why*, so you can tell a real corpse from a framework-wired function.
 
@@ -75,6 +76,26 @@ still yields an edge from its enclosing function).
 codemap report dead-code --build ./pkg                 # all tiers, grouped
 codemap report dead-code --build ./pkg --min-confidence high   # only the strongest signals
 ```
+
+### Nested definitions are not judged (R1-C60)
+
+A function or class defined **inside a function body in the package** — a closure's
+`wrapper`, a `decorator` returned by a registering method, a class built inside a
+factory — is **not a node**: the package is read by griffe, which does not enter function
+bodies. Such a definition can never be a candidate, and it is in no list at all — neither
+dead nor alive. The report says so in its blind-spot line.
+
+What the graph keeps: calls made **from** inside the nested body, attributed to the
+enclosing function (`extras.via="nested"`, the closure row above). What it loses: the
+definition itself (`search`/`query` do not find it) and calls **to** it, which are counted
+unresolved rather than pointed at a node that does not exist.
+
+The narrowing is **per root**, not per graph: consumer roots built with `--mode full`
+(`--consumer tests …`) are read by codemap's own AST scanner and **do** carry nested
+definitions as nodes (`tests.test_x.test_it._local_helper`). Measured on one real scope
+(`bquant@cb89a24`, package + four consumer roots): 49 nested definitions in the package,
+none of them nodes; 35 in the consumer roots, all 35 nodes. Design:
+[design/nested_definitions.md](design/nested_definitions.md).
 
 ## Shadowed definitions — certain, not graded
 

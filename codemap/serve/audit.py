@@ -157,10 +157,15 @@ def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
     consumer = {r: v for r, v in by_root.items() if r != "core"}
     dead = query.dead_code(whitelist=whitelist, min_confidence=min_confidence)
     lines = [f"# Dead-code candidates — `{query.graph.target}`", ""]
+    # R1-C60: the package's definitions nested inside a function body are not nodes (griffe
+    # does not enter function bodies), so they can never be candidates — a decorator defined
+    # inside a registering method is the usual case. Named here, among the other blind spots,
+    # because this is the answer that would otherwise let the omission read as "not dead".
     lines.append(
-        "_Static heuristics only — dynamic imports, CLI entry points, test targets "
-        "and partial call resolution (~1/4 of sites, gaps/ CM-09) are blind spots. "
-        "**Candidates, not proof.**_"
+        "_Static heuristics only — dynamic imports, CLI entry points, test targets, "
+        "partial call resolution (~1/4 of sites, gaps/ CM-09) and the package's "
+        "definitions nested inside a function body (not nodes, so never judged) are "
+        "blind spots. **Candidates, not proof.**_"
     )
     lines.append("")
     # R1-C27: an unreadable codemap.toml suppresses nothing, and a list below that is

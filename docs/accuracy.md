@@ -246,6 +246,10 @@ ops' own source and fails when a new op learns a limit without declaring it. Gap
   `epistemic: partial`.
 - Use the graph where it wins — **impact / blast-radius / signature-change** — and don't bother reaching for
   it to *locate* a well-named symbol; `grep` is fine there.
+- A definition **nested inside a function body in the package** is not a node at all (R1-C60): the
+  calls it makes are kept on its enclosing function, the calls *to* it are unresolved, and `search` does
+  not find it. Consumer roots built with `--mode full` do carry such definitions — the narrowing is per
+  root. See [dead-code.md](dead-code.md#nested-definitions-are-not-judged-r1-c60).
 - Read the **`limit` block** before concluding a list is complete. `epistemic: partial` says the resolution
   was a lower bound; `limit.truncated` says the delivery was. An answer can be either, both, or neither.
 
