@@ -591,6 +591,37 @@ measurement rather than a claim: that release moved the text for everyone, and t
 told by hand. The only movement here is the R1-C63 trailer, which is the mechanism that replaces the
 hand-written note — and it is stated as a cost in the changelog rather than buried.
 
+**0.0.22 published 2026-10-15:** [`codmap` 0.0.22](https://pypi.org/project/codmap/0.0.22/), schema
+**0.13** (unchanged, eleventh release running), **`ANSWER_FORMAT` 2** — only `pack` changed shape. Same
+procedure from the pushed commit `695e8f0`, CI green, `twine check` PASSED on both artifacts, tag
+`v0.0.22` written with `-F`.
+
+Five items (R1-C59, R1-C60, R1-C64, R1-C65, R1-C66). The two `pack` items are the reason for the
+format bump and for shipping together: one changed what the answer says about its seed, the other what
+a seeded pack contains, and a consumer should see one format number move once. Verified from PyPI
+against 0.0.21 under `PYTHONHASHSEED=7`, on a tree carrying every defect — checked on 0.0.21 first, as
+the fourth rule asks:
+
+```
+                                   0.0.21 (published)        0.0.22 (published)
+
+pack --seed seed                   caller rank 0.0 — in the  caller rank 0.117, tests
+(caller → seed → helper, a test)   pack only as filler        reached, `walk: both`
+pack --seed no_such_symbol         exit 0, the global pack   exit 1, refused
+pack --direction uses              unknown argument          exit 0, no caller, no test
+doctor                             unknown command           exit 0, griffe OK, jedi OK
+diff, 7 of 38 `calls` cut          silent                    calls 38 → 31 (−18.4 %) named
+dead-code, one nested def          no line                   the blind-spot line names it
+graph on the same tree             —                         nodes and edges hash identical
+consumer's live tree, check        exit 0                    exit 0, one line: format 1 → 2
+build -o over a 0.0.21 graph       —                         silent (nothing was lost)
+```
+
+**The first row needed a better question than the one first asked.** "Is the caller in the pack?" is
+*yes* on 0.0.21 too: with no cut by reachability, an unlimited budget topped the pack up with every
+symbol at rank 0, the caller among them. The defect is visible in the rank, not in the presence — which
+is R1-C65's fourth defect showing up in its own release check.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
