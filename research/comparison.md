@@ -154,17 +154,16 @@ ranks 1–2** (the same-named method is returned too and never called out), **T2
 vector store; a four-stage tree walk where each decision is a typed question to a classifier (six verdicts
 per file — implementation/caller/test/fixture/helper/read-early). **T3/T4/T5 ✖ structurally**: declarations
 carry `name@start-end` and the answer has no cycle/layer/argument vocabulary at all — seven tools, both
-whole-graph columns still ours. **Determinism ✖, and the finding of the run:** with a provably
-deterministic judge, five runs at the default concurrency gave **254, 257, 257, 257, 254** relevant files
-while `--concurrency 1` gave **257 five times, byte-identical** — the variance is their request scheduling,
-not the model, and it is not the request ceiling (`--max-requests 5000` keeps the spread). **Upload measured
+whole-graph columns still ours. **Determinism:** the pipeline is byte-identical under a **per-question** judge (200 files, 12 of 12
+runs at default concurrency). A scheduling effect recorded here on 2026-10-13 was **my stand-in judge
+answering per request**, and is retracted in the card's §0.9. **Upload measured
 from the wire — with the stub only:** 631 requests / **9.39 MiB** per cold search, 2.3× the repository; a
 selective real judge walks far less and its upload volume was **not observable**. **Real Jev is not
-byte-stable even serialised**, the warm repeat cost 47% of the cold one, and which files carry source
+byte-stable even serialised** (the model, not the client), the warm repeat cost 47% of the cold one, and which files carry source
 changes between runs of one question. Credit where it is due:
 `jg files` makes **zero socket calls** (strace-verified, not trusted), truncation names the exact omitted
-byte count, roles are labelled estimates, and `doctor` refuses a backend that connects but judges a known
-question wrongly. See the [card](tools/jevgrep.md).
+byte count, roles are labelled estimates, `doctor` refuses a backend that connects but judges a known
+question wrongly, and a run with failed requests says `discovery incomplete` with the provider's message. See the [card](tools/jevgrep.md).
 
 ## Beyond Python — what the `Langs` column is, and what it is not (desk: Go and Rust, 2026-09-29)
 

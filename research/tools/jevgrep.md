@@ -127,11 +127,11 @@ must fail if the tool is behaving as its documentation claims.
 | **P1** | ❌ **refuted, and the refutation is the better finding** | The role tags are **real per-file verdicts**. On the wire each file gets **six questions in one request**: *"…directly executes or controls the CURRENT behavior…"* (implementation), *"Calls, integrates, or configures that implementation."* (caller), *"Contains executable tests…"* (test), *"Provides data, example classes, or test helpers…"* (fixture), *"Provides supporting behavior or abstractions…"* (helper), and *"Should this file be read early as primary evidence…"*. With a judge that answers those five **differentially by path**, the rendered tags follow exactly: `test`, `caller`, `implementation, helper`, … and, where no role question came back positive, an explicit **`relevant; role uncertain`**. Their committed example looked constant because in it every role answer was positive. The output also labels the whole column up front: *"Roles are estimates"* |
 | **P2** | ✅ holds | 280 files eligible, **257 sent and reported**, and **no line anywhere** states that 23 were not. `grep -icE 'skip\|prun\|not visited\|considered\|eligible'` over the answer: **1**, and that one is a filename (`tests/SKIPPED_TESTS.md`). A reader cannot tell "the rest were judged irrelevant" from "the walk did not reach them", and cannot learn there is a rest |
 | **P3** | ✅ holds, by **5×** more than predicted | With the judge logging every upload: **9.39 MiB of `state` sent** for a 4.13 MiB scope — **2.3× the entire repository** — against a 256 KB printed answer, i.e. **38×**. The permissive judge (everything relevant) sent **12.27 MiB / 2.97× the repo**, 50× the answer. 631–731 requests carrying **9 765–12 364 questions** |
-| **P4** | ✅ **and it is the finding of the run** | With a provably deterministic judge, five runs at the default concurrency returned **254, 257, 257, 257, 254** relevant files; five runs with `--concurrency 1` returned **257 five times and were byte-identical**. So the variance is **jevgrep's own request scheduling, not Jev**. It is not the request ceiling either: at `--max-requests 5000` the spread persists (257, 254, 254, 257, 254), and nothing in the output mentions a ceiling. The serialised answer is the *complete* one — parallelism **drops** three files about 40% of the time. A real key could never separate this from model variance; a stand-in judge settles it in ten runs |
+| **P4** | ❌ **retracted 2026-10-14 (§0.9) — it was my stand-in, not their scheduler** | As first recorded: with a judge I believed deterministic, five runs at default concurrency returned 254, 257, 257, 257, 254 and five with `--concurrency 1` returned 257 five times. **That judge answered each request as a whole**, while the client puts a different number of files into a batch from run to run; a judge that answers each *question* about its own file gave **200 files, 12 runs, 12 byte-identical answers at default concurrency**. The variance lived in my judge, and the pipeline is deterministic given a per-question judge |
 | **P5** | ✅ holds, and **structurally**, so the stub settles it | The answer schema is fixed by their renderer: summary → `Symbols use name@start-end. Roles are estimates…` → file list with roles and `source below` / `locations only` / `source omitted` → `Declaration locations:` with `Symbol.method@start-end` → source blocks → `End context.` There is **no slot** for per-call-site arguments (T4) or for a whole-graph property (T5): declarations carry a name and a line span, nothing else, and `cycle`/`layer` appear nowhere in a full untruncated answer. **Seven tools, seven cards, both columns still ours** |
 | **P6** | ✅ holds | `jg files` names an upper bound **before** the search (281 eligible / 4.2 MiB, including the one `manifest.json` my own harness writes into the staging root — my artifact, not their defect; excluded from the runs). Nothing **after** the search names what actually left the machine. The 257 uploaded paths are knowable here only because I was the gateway |
 
-**Score:** five controls hold; of six predictions five hold — one of them (P4) decisively — and the refuted one (P1) replaced a suspicion with a better fact about their design.
+**Score (as first written):** five controls hold; of six predictions five held — P4 "decisively" — and the refuted one (P1) replaced a suspicion with a better fact about their design. **P4 is retracted in §0.9**: of six predictions, four hold, one (P1) is refuted in the tool's favour, and one (P4) was a defect of my own apparatus.
 
 ### Surprises — none of these were on the list
 
@@ -162,9 +162,8 @@ parallel typed-question feature is used as intended rather than as one call per 
 
 **S5 — the cache is excellent, and it masks S6.** Cold run: **631 requests, 46.8 s**. Immediate rerun of
 the same question: **5 requests, 11.6 s**, byte-identical answer, 2.6 MB on disk — 99.2% of the requests
-gone. Which means the scheduling variance of P4 is invisible in ordinary repeated use and shows on a
-**fresh** question or under `--no-cache`. Both halves have to be said together: the cache makes repeats
-stable, and it is not a fix for the variance.
+gone — with the stand-in judge. (With real Jev the warm repeat was **not** a replay: §0.8 S8.) The earlier
+claim here that the cache "masks" a scheduling variance is retracted with P4, §0.9.
 
 **S6 — `relevant; role uncertain` is a third state, and a good one.** A file can be selected while no role
 question came back positive, and the answer says precisely that rather than guessing a role or dropping
@@ -277,7 +276,7 @@ the repository; the numbers below are the scorer's output.
 | **D3** | ✅ holds, and it is the pattern of the run | T3: tests **19/19**, scripts 2/2, examples 1/1, **docs 3/7**. T4: tests 8/8, examples 9/9, research 6/6 and **docs 2/24**. The role tag does not separate the kinds either: a markdown file that mentions the class is tagged `caller`, a test is `caller, test, fixture` |
 | **D4** | ✅ holds | T4 recall **26/49 = 0.53**, entirely the 22 documents it did not return (code roots complete); precision 0.50; no `posargs` / `kwargs` vocabulary anywhere in the answer. The question T4 actually asks — *what breaks if the signature changes* — is answered with a list of files, not with how each call is written |
 | **D5** | ✅ holds | T5 returned **156–163 files** with no cycle or layer vocabulary and no statement that the question is outside the tool: a different question answered silently |
-| **D6** | ❌ **refuted on the pre-registered test, supported by the exploratory one** | **T2 (26–27 files):** spread 1 at default, 1 serialised — no scheduling effect visible, and the three serial runs have three different hashes. **T5 (155–163 files, batch C):** default **156 / 163 / 160** (spread 7), serial **156 / 158 / 155** (spread 3); 146 files appear in all three serial runs and 5, 2 and 3 of them are missing from the three default runs. Suggestive of Stage B's effect; with three runs per arm and a model that itself moves by three files it is **not established** |
+| **D6** | ❌ **refuted on the pre-registered test; the exploratory one is unattributed (§0.9)** | **T2 (26–27 files):** spread 1 at default, 1 serialised, and the three serial runs have three different hashes. **T5 (155–163 files, batch C):** default **156 / 163 / 160** (spread 7), serial **156 / 158 / 155** (spread 3). Read at the time as "suggestive of Stage B's effect"; Stage B's effect has since been shown to be my judge's (§0.9), so this spread has **no attributed cause**: the model moves by about three files on its own, and whether batch composition adds to it under a real judge is not measured |
 | **D7** | ❌ **refuted, low side and warm side** | cold cost per search by the cumulative meter: T1 **$0.06–0.08**, T2 **≈ $0.037**, T3 ≈ $0.054, T4 ≈ $0.026, T5 **$0.10–0.15** — mostly *under* the $0.08 floor I wrote. A warm repeat did **not** fall below 5%: it cost **$0.037 against $0.078 cold (47%)** and took 52 s against 75 s |
 | **D8** | ✅ holds | no line in any of the seventeen answers names how many eligible files were not sent or which. The single regex hit for "skipped" is the file `tests/SKIPPED_TESTS.md` again |
 
@@ -317,6 +316,52 @@ what a wide question runs into.
   no build. That is *exactly* `pack`'s job and it is a better result than the stub-era card allowed.
 - **It is not a substitute for the structural questions**, and the run shows why in the cleanest form: T4 got
   26 of 49 files and zero information about how any of them calls the function.
+
+### 0.9 Retraction — the Stage B "finding of the run" was my apparatus (2026-10-14)
+
+**What was recorded.** §0.5 P4: five runs at default concurrency returned 254 / 257 / 257 / 257 / 254 with
+a "provably deterministic" judge, five with `--concurrency 1` returned 257; conclusion, *"the variance is
+jevgrep's own request scheduling, not Jev"*. It went into the commit message, the comparison footnote, and
+the verdict as "one defect worth reporting".
+
+**How it came apart**, in the order the evidence arrived, each step run before the next was believed:
+
+1. I wrote a **self-contained minimal judge** (40 lines, a pure function of the request) so that the author
+   could reproduce. On it: **240 files, ten runs, all byte-identical, in both arms.** No effect at all.
+2. The old judge ("roles") still reproduced it (254 ×3, 257 ×2, and one run that printed
+   `discovery incomplete` with `Provider error: Network request failed (connection unavailable or reset)`,
+   13 requests). That run named a **cause of mine**: the standard-library server's accept queue is 5 and
+   the client keeps up to 32 connections open.
+3. Raising the queue to 256 and then 1024 did **not** remove it — at 1024, **10 of 16** runs gave 254, with
+   no provider error. So connection resets were a second, separate thing, and the silent 254 was not them.
+4. The server log said exactly what the client had not sent: in the ten 254-runs the file stage never
+   judged `research/notebooks/02_ind_{calculators,factory,library}.py` (judged 6 times in 16 runs, every
+   other file 16). The same three files each time.
+5. The **items stage** that precedes it lists those three files in all 16 runs — in a batch of **three**
+   in ten runs and in a batch of **four**, with other files, in six. The client's batch composition varies
+   from run to run (sizes 2–17 across a campaign). My judge decided each question by whether the keyword
+   occurred **anywhere in the request**, so a batch of three with no keyword in it answered 0.0 to all
+   three, and the same three files in a different batch got 1.0 from their neighbours.
+6. The request tells the judge which file each question is about (`q<k>` names the path in its text). A
+   judge that answers `q<k>` from `items[k]` alone gave **200 relevant files in 12 of 12 runs at default
+   concurrency, one hash**, with batch sizes from 2 to 17 in the same runs.
+
+**Verdict.** The pipeline is deterministic under a per-question judge. The effect was **a stand-in judge
+that answered per request**, and the bytes it moved were mine. The serial arm (`--concurrency 1`) looked
+clean for a mundane reason: serial execution batches the same way every time.
+
+**What survives.** (1) The client does vary its batching between runs — real, benign, and only visible
+because the apparatus was wrong. (2) A run that has a request failure **says so**: `discovery incomplete`,
+the provider's message, and the count. That is better disclosure than I credited when I wrote P2/P6 about
+the same tool. (3) Everything measured with **real Jev** in §0.8 is unaffected: it never used my judge.
+(4) The stand-in's own claim to measure "their pipeline" needs a second condition: **the stand-in must
+answer the question that was asked, about the thing it was asked about.** A stub that answers a request is
+not a stub of a question-answering model.
+
+**Why this was caught.** Not by suspicion. By building the reproducer the author would need: the first
+self-contained version showed no effect, and an effect that disappears in the minimal case is a statement
+about the harness. The report that was about to go out would have asserted a defect in someone else's
+client that was in mine. Nothing was filed, and nothing was published on the claim.
 
 ---
 
@@ -369,7 +414,7 @@ whole repository** as `state` and spends 631–731 requests (measured, §0.5 P3)
 | impact / blast-radius (T3) | ✅ symbol-scoped, by root, with distance | ✖ not expressible: the unit is "files worth reading for this question" |
 | signature-change surface (T4) | ✅ per-caller `posargs`/`kwargs`/`splat` | ✖ **structural**: declarations carry `name@start-end` and nothing else |
 | architecture / layers (T5) | ✅ | ✖ **structural**: no cycle, layer or coupling vocabulary anywhere in a full answer |
-| determinism | ✅ artifact byte-identical (fast tier) | ✖ **measured**: 254/257/257/257/254 at default concurrency with a deterministic judge; byte-identical only at `--concurrency 1`; the cache masks it on repeats |
+| determinism | ✅ artifact byte-identical (fast tier) | ✅ with a per-question judge: 12 runs at default concurrency byte-identical (§0.9). **With real Jev** not byte-stable even serialised — model variance, §0.8 |
 | declared partiality | ✅ limit/filter/scope/epistemic blocks | ✅ **strong**: exact omitted-byte count on truncation, `locations only`, `source omitted`, `relevant; role uncertain`, "Roles are estimates" |
 | what it did **not** judge | ✅ (gate and reports name it) | ✖ 23 of 280 eligible files were never sent and the answer never says so |
 | offline / no account | ✅ | ✖ a provider key is required and **2.3–3× the repository is uploaded per search** |
@@ -390,7 +435,7 @@ run: Stage D made it unnecessary, and a substitute judge would have measured a d
 
 | Task | Answer shape | Cost (measured) | Latency | Deterministic? | Notes |
 |---|---|---|---|---|---|
-| T1 where defined | 257 files with roles + `Declaration locations` + source blocks, capped at 256 KB with the omitted count named | 631 req / 9 765 questions / **9.39 MiB uploaded** | 13.8 s serialised, 46.8 s cold at 32 | ✖ at default, ✅ at `--concurrency 1` | relevance **not measured** |
+| T1 where defined | 257 files with roles + `Declaration locations` + source blocks, capped at 256 KB with the omitted count named | 631 req / 9 765 questions / **9.39 MiB uploaded** | 13.8 s serialised, 46.8 s cold at 32 | ✅ with a per-question judge (§0.9); the first reading here was an artifact of my stand-in | relevance **not measured** |
 | T2 callers | `caller` is a per-file verdict; no edges, no call sites | same pipeline | — | as above | shape measured, content needs a judge |
 | T3 impact | not expressible | — | — | — | the unit is files-to-read |
 | T4 sig-change | **✖ structurally**: `Symbol.method@start-end` only | — | — | — | seven tools, still only codemap |
@@ -417,8 +462,9 @@ run: Stage D made it unnecessary, and a substitute judge would have measured a d
   scope, not a ranking of judges.
 - **determinism** — ✖ at the tail, ✅ at the head. Rank 1–2 of T1 never moved; the T5 tail flickers (37 of
   177 distinct files appear in some runs and not others). With the **stub** the variance was provably
-  their scheduling (§0.5 P4); with **real Jev** serialised runs are no longer byte-identical either, and
-  the scheduling share is suggestive, not established (§0.8 D6).
+  their scheduling — **retracted, §0.9**: with a per-question judge the pipeline was byte-identical in 12 of
+  12 runs at default concurrency. With **real Jev** even serialised runs are not byte-identical, which is
+  the model, and nothing here attributes any of it to the client.
 - **cost** — **real Jev: $0.026–0.15 per cold search**, $1.14 for the whole seventeen-search campaign. The
   stub-era "631 requests / 9.39 MiB / 2.3× the repository" describes a permissive judge's walk and is
   **not** what Jev uploads; the real upload volume was not observable. Their own
@@ -433,7 +479,7 @@ run: Stage D made it unnecessary, and a substitute judge would have measured a d
   calls, truncation names the omitted bytes, roles are labelled estimates, three kinds of partial answer
   are distinguished, `doctor` refuses a judge that answers a known question wrongly, and the README states
   the filters are not a guarantee. The gaps are the two things only a gateway can see — the uploaded set
-  and the unvisited remainder — plus the scheduling variance.
+  and the unvisited remainder.
 
 ## Разбор
 
@@ -471,10 +517,10 @@ run: Stage D made it unnecessary, and a substitute judge would have measured a d
     it comes from the questions asked of a `.md` file, the preview a document yields, or Jev is not.
   - **Their SWE-bench results**, agent-level cost and task success, and their speed study — theirs, quoted
     as theirs, not re-run.
-  - **The scheduling effect under a real judge is not established.** Three runs per arm; the serial arm
-    itself moves by three files on T5. Stage B's stub is what settles that scheduling is the source *there*.
-  - **Why the parallel walk drops files.** Diagnosed to scheduling and excluded as a request-ceiling
-    effect (`--max-requests 5000` keeps the spread); the mechanism inside their code is not read.
+  - **Whether a batch's composition changes what *real Jev* answers about one file.** The client's batch
+    sizes vary from run to run (2–17 items); a per-question stand-in is indifferent to that, a model that
+    reads the whole request may not be. The T5 spread under real Jev (default 7, serial 3) is therefore
+    **unattributed** — model, batching, or both — and §0.9 withdraws the scheduling reading.
   - **Languages other than Python** on this scope, Windows/macOS, the agent skill's effect on an agent,
     provider-side caching, and whether the 23 unvisited files were pruned deliberately or missed.
   - **`--include-sensitive` and the credential filter's coverage**: bquant is public and carries no
@@ -503,9 +549,9 @@ competitor `pack` has met, not a curiosity.
 - **Nothing to integrate.** The capability overlaps `pack`; the mechanism is remote and paid; our thesis is
   the opposite trade. Adopting any part of it would cost the differentiator (local, free, deterministic,
   offline) that the measurement above makes concrete.
-- **One defect worth reporting to the author**, with the reproducer this card already contains: a
-  deterministic judge shows the default concurrency dropping files from the answer, and `--concurrency 1`
-  fixing it. **Stage D qualifies it rather than retracting it:** on a selective real judge the effect is
-  small and tangled with model noise (T5: default spread 7 vs serial 3, three runs each), so the report
-  should say *"reproduces with a deterministic judge; suggestive with Jev"*, not more. Not filed — reporting someone's defect is the owner's call, and the convention is to show the
-  author before publishing.
+- **No defect to report.** This bullet used to propose reporting a scheduling defect to the author. It is
+  **withdrawn** (§0.9): the effect was my stand-in judge answering per request instead of per question, and
+  with a per-question judge their pipeline returned the same 200 files, byte for byte, in 12 of 12 runs.
+  Nothing was filed. What the investigation did find on their side is creditable: when requests *do* fail,
+  the answer says so — `discovery incomplete` with the provider error and the count, on a run where my
+  server reset 13 connections.
