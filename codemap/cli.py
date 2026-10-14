@@ -2,6 +2,8 @@
 
     codemap build  <path> [-o graph.json] [--deep]
                    [--consumer PATH ...] [--docs PATH ...] [--mode thin|full]
+    codemap doctor [--json]
+        probe griffe and jedi with a question whose answer is known (R1-C64)
     codemap scope  <path> [--consumer PATH ...] [--docs PATH ...] [--no-git] [--json]
                    | --diff A.meta.json B.meta.json   → input scope manifest (M19.A)
     codemap query  <name> (--graph g.json | --build <path>) [--format json|text]
@@ -362,6 +364,22 @@ def _cmd_watch(args) -> int:
     except KeyboardInterrupt:
         print("\n[watch] stopped", file=sys.stderr)
     return 0
+
+
+def _cmd_doctor(args) -> int:
+    """Probe each dependency with a question whose answer is known (R1-C64).
+
+    Exit 0 when every probe answers as expected, 1 otherwise. A dependency that imports
+    and answers wrongly is the case this exists for: it never breaks a build, it makes the
+    graph poorer while the graph still declares its tier.
+    """
+    from codemap.extract.probe import render, run_probes
+    report = run_probes()
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False))
+    else:
+        print(render(report), end="")
+    return 0 if report["ok"] else 1
 
 
 def _cmd_scope(args) -> int:
@@ -977,6 +995,11 @@ def build_parser() -> argparse.ArgumentParser:
                         "jedi time, in parallel. With --incremental N becomes a property "
                         "of the chain: a different N restarts it from a full build.")
     b.set_defaults(func=_cmd_build)
+
+    dr = sub.add_parser("doctor", help="Probe griffe and jedi with a question whose answer is "
+                                       "known; exit 1 if one is absent or answers wrongly.")
+    dr.add_argument("--json", action="store_true", help="Structured report instead of text.")
+    dr.set_defaults(func=_cmd_doctor)
 
     sc = sub.add_parser("scope", help="Resolve the input scope manifest (scope_id + profile), or --diff two.")
     sc.add_argument("path", nargs="?", help="Package/dir to scope (like build's path).")

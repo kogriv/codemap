@@ -33,6 +33,17 @@ Schema unchanged (**0.13**); `ANSWER_FORMAT` unchanged (**1**).
   answer are unchanged; the markdown changes by that one line, so the answer-format pin was updated as
   wording and **`ANSWER_FORMAT` stays 1**. Emitting them as nodes is left as an open option.
 
+- **New: `codemap doctor` — a dependency that answers wrongly is not one that is absent** (R1-C64,
+  design [`docs/design/dependency_probe.md`](docs/design/dependency_probe.md)). griffe and jedi were only
+  ever checked by `import` succeeding, and a jedi that stops resolving does not fail a build: measured
+  on a real tree with jedi answering nothing, `build --deep` exits 0, declares `tier: deep`, and its
+  `calls`/`accesses` equal the fast tier's to the edge. `doctor` asks each dependency one question with
+  a known answer, through the real pipeline — a re-export resolved to its definition (griffe), a method
+  call on a local `Engine()` resolved to `Engine.run` (jedi) — and grades it `ok` / `wrong` / `absent` /
+  `error` / `not-run`, with the installed version; exit 1 unless both are `ok`; `--json` for machines.
+  The same probe is a suite test, which CI runs against freshly resolved dependencies on every push.
+  One fact per dependency, deliberately not a benchmark. No existing answer changes.
+
 ## [0.0.21] - 2026-09-26
 
 **Two gates that reported more confidence than they had, and the question for one of them came from
