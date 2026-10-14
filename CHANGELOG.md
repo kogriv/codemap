@@ -5,6 +5,22 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+Schema unchanged (**0.13**); `ANSWER_FORMAT` unchanged (**1**).
+
+- **Fewer edges on the same input is named** (R1-C59, design
+  [`docs/design/completeness_drop.md`](docs/design/completeness_drop.md)). One frozen tree built by
+  codmap 0.0.3 and by 0.0.21 records the **same `scope_id`** and differs by −25 `imports`,
+  −28 `references`, −26 `calls`; `diff` said *that* the tool changed, never *what it lost*, and `build`
+  said nothing. Now, when two graphs share a `scope_id` and a tier, an edge class that lost **≥ 3 edges
+  and ≥ 1 %** is named — in `diff` among the existing differences (`completeness fell on the same
+  input: calls 899 → 873 (−2.9 %), …`), and by `build -o FILE`, which reads the graph it is about to
+  overwrite and warns on stderr (exit code unchanged, the build still writes). A previous graph that
+  cannot be read is said to be unreadable, not treated as a first build. The counts are derived at
+  comparison time; nothing is stored, so neither the schema nor the answer format moves. Measured on
+  the deep tier: three builds of one tree differ by one `accesses` edge and stay silent; a deep build
+  whose jedi answers nothing loses `calls 1430 → 899` and is named. Different inputs and different
+  tiers are not compared — silence there means *not compared*.
+
 ## [0.0.21] - 2026-09-26
 
 **Two gates that reported more confidence than they had, and the question for one of them came from

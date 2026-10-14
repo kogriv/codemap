@@ -269,13 +269,79 @@ def _samples_str(prov: dict) -> str:
     return f"{runs} sample{'s' if runs != 1 else ''}"
 
 
-def comparability(old: dict | None, new: dict | None) -> dict:
+# -- completeness of two builds of one input (R1-C59) -------------------------
+
+#: A class of edges has *dropped* when it lost at least this many edges **and** at least
+#: this share of its previous count. Above the measured noise, not tuned to a case: the
+#: fast tier is byte-stable (any drop there is another builder), and the deep tier's
+#: sampling noise was measured at single edges — ten builds of one tree differed by no
+#: edge at all, a larger tree lost one real edge in 9524 once in seven builds (R1-C42).
+#: The share keeps a large graph from flagging a handful of edges out of tens of thousands.
+COMPLETENESS_MIN_EDGES = 3
+COMPLETENESS_MIN_SHARE = 0.01
+
+
+def same_input(old: dict | None, new: dict | None) -> bool:
+    """Do two provenance blocks describe one input, read on one tier? (R1-C59 / D2)
+
+    Needs a recorded ``scope_id`` on both sides: a graph without one (pre-0.12, or built
+    by ``extract()`` without a manifest) has an *unknown* input, which is not an equal one.
+    """
+    if not old or not new or not old.get("scope_id"):
+        return False
+    return (old.get("scope_id") == new.get("scope_id")
+            and old.get("tier") == new.get("tier")
+            and old.get("roots") == new.get("roots"))
+
+
+def edge_counts(graph) -> dict[str, int]:
+    """Edges per type — derived from the graph, never stored beside it (D1)."""
+    counts: dict[str, int] = {}
+    for e in graph.edges:
+        counts[e.type] = counts.get(e.type, 0) + 1
+    return counts
+
+
+def completeness_drops(old_graph, new_graph) -> list[dict] | None:
+    """Edge classes the newer build of the **same input** holds fewer of (R1-C59).
+
+    ``None`` when the pair is not comparable this way — another input, another tier, or an
+    input nobody recorded; that is "not compared", and it must stay distinguishable from
+    ``[]``, "compared, nothing fell" (R1-C44). Measured on one frozen tree: codmap 0.0.3
+    and the current code read the same ``scope_id`` and differed by −25 ``imports``,
+    −28 ``references`` and −26 ``calls``, and nothing said so — ``diff`` named the other
+    tool, never what it had lost.
+    """
+    if not same_input(old_graph.provenance, new_graph.provenance):
+        return None
+    before, after = edge_counts(old_graph), edge_counts(new_graph)
+    drops = []
+    for etype in sorted(before):
+        lost = before[etype] - after.get(etype, 0)
+        if lost >= COMPLETENESS_MIN_EDGES and lost >= COMPLETENESS_MIN_SHARE * before[etype]:
+            drops.append({"type": etype, "old": before[etype], "new": after.get(etype, 0)})
+    return drops
+
+
+def describe_drops(drops: list[dict]) -> str:
+    """``completeness fell on the same input: calls 899 → 873 (−2.9 %), …``"""
+    parts = [f"{d['type']} {d['old']} → {d['new']} "
+             f"(−{(d['old'] - d['new']) * 100 / d['old']:.1f} %)" for d in drops]
+    return "completeness fell on the same input: " + ", ".join(parts)
+
+
+def comparability(old: dict | None, new: dict | None, *,
+                  old_graph=None, new_graph=None) -> dict:
     """Are two graphs a before/after of the *code*, or of the *tool*? (D4)
 
     Never a refusal — comparing across an upgrade is a legitimate thing to want. What
     was missing is being told: on the R1-C25 evidence pair, ``diff`` said "no breaking
     changes" (true, and useless) about two graphs that disagreed on which functions
     were dead.
+
+    With both graphs passed, a completeness drop on the same input is one more
+    difference (R1-C59): on one input, everything the two graphs disagree on came from
+    the builder, and a class that shrank is the part a reader most needs named.
     """
     differences: list[str] = []
     caveats: list[str] = []
@@ -304,6 +370,10 @@ def comparability(old: dict | None, new: dict | None) -> dict:
                            "builds of an unchanged tree can differ by a few jedi-resolved "
                            "edges, so read a small delta as possible tool noise "
                            f"(old: {_samples_str(old)}, new: {_samples_str(new)})")
+    if old_graph is not None and new_graph is not None:
+        drops = completeness_drops(old_graph, new_graph)
+        if drops:
+            differences.append(describe_drops(drops))
     return {
         "comparable": not differences,
         "differences": differences,

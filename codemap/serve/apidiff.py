@@ -24,7 +24,10 @@ def build_apidiff(old: Graph, new: Graph) -> dict:
     d["ok"] = d["summary"]["breaking_total"] == 0
     # R1-C25/D4: the envelope says whether the pair is a before/after of the code at all.
     from codemap.provenance import comparability
-    d["provenance"] = comparability(old.provenance, new.provenance)
+    # R1-C59: the graphs themselves go in too — on one input, a class of edges that shrank is
+    # the builder's doing, and it is named among the differences.
+    d["provenance"] = comparability(old.provenance, new.provenance,
+                                    old_graph=old, new_graph=new)
     return d
 
 

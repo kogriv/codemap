@@ -155,6 +155,7 @@ def _cmd_build(args) -> int:
         text = " ".join(p for p in (d["message"], d.get("consequence")) if p)
         print(f"[{d.get('severity', 'warning')}] {text}", file=sys.stderr)
     if args.out:
+        _report_completeness_drop(args.out, graph)
         store.save(graph, args.out)
         # M18: record the build recipe beside the graph so `codemap refresh` can
         # rebuild it, and so the graph's age is meaningful to `serve`/stats.
@@ -173,6 +174,36 @@ def _cmd_build(args) -> int:
     else:
         print(store.dumps(graph))
     return 0
+
+
+def _report_completeness_drop(out: str, graph) -> None:
+    """Compare a fresh build with the graph it is about to overwrite (R1-C59).
+
+    The one moment both builds of an input are in hand without anyone asking: the previous
+    graph is still on disk at ``-o``. Read it before the write and say when an edge class
+    shrank on the **same** input — on one input that is the builder (tool, dependency,
+    sampling), never the code. A warning, not a refusal: rebuilding with a new tool is
+    legitimate, and the build still succeeds.
+
+    A file that exists and cannot be read is not a file that is absent (R1-C27), so it is
+    named; a missing file is the first build, and there is nothing to say.
+    """
+    from codemap.provenance import completeness_drops, describe_drops
+    if not Path(out).exists():
+        return
+    try:
+        previous = store.load(out)
+    except Exception as exc:  # any unreadable previous graph — never fatal to a build
+        print(f"[note] the graph already at {out} could not be read "
+              f"({type(exc).__name__}); completeness against it not compared",
+              file=sys.stderr)
+        return
+    drops = completeness_drops(previous, graph)
+    if drops:
+        print(f"[warning] {describe_drops(drops)} — against the graph this build replaces. "
+              "Same input, fewer edges: the difference is the builder (the tool, a "
+              "dependency, or the deep tier's sampling), not the code; whatever reads "
+              "those edges now answers from less than before.", file=sys.stderr)
 
 
 def _inputs_with_membership(graph, scope, args):
@@ -795,7 +826,7 @@ def _cmd_diff(args) -> int:
     # R1-C25/D4: two graphs built by different tools are a before/after of the *tool*,
     # not of the code. Never a refusal — comparing across an upgrade is legitimate; what
     # was missing is being told, since a clean "no breaking changes" reads as proof.
-    cmp = comparability(old.provenance, new.provenance)
+    cmp = comparability(old.provenance, new.provenance, old_graph=old, new_graph=new)
     if not cmp["comparable"]:
         for line in cmp["differences"]:
             print(f"[warning] {line}", file=sys.stderr)
