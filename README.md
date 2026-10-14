@@ -189,7 +189,9 @@ codemap serve --graph graph.json --watch
   importance or by relevance to seed symbols (`codemap pack --budget N [--seed X]`). With a seed it is
   what the seed *uses* — never its callers — and documents are never in it; the answer says both, and
   a seed that resolves to nothing is refused rather than silently answered globally. Deterministic and
-  budget-tested; **whether it helps an agent is not measured yet.** See [docs/pack.md](docs/pack.md).
+  budget-tested. Against git history it finds the package files a change touched about as well as
+  `impact`, never the tests, and loses to plain grep overall; **whether it helps an agent is not
+  measured.** See [docs/pack.md](docs/pack.md).
 - **Interop** — export the graph as a [SCIP](https://scip-code.org/) index (definitions + symbol
   info + inherits/implements relationships) so Sourcegraph, Glean and other SCIP consumers can drive
   go-to-definition, symbol search and type hierarchy over it. See [docs/export.md](docs/export.md).

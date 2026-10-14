@@ -69,8 +69,13 @@ $ echo $?
 1
 ```
 
-**Not measured:** whether a pack helps an agent. Determinism and the budget are tested; usefulness is
-an open question (R1-C61), and a measurement against an independent ground truth is the next step.
+**Measured against git history, not against an agent** ([research](../research/pack_usefulness.md)):
+on 108 commits of the benchmark repository, with the graph built on each parent, a pack seeded with the
+changed package file put **18.9 %** of the other files that commit changed into its first 10 files —
+below grep by names (35.4 %) and `impact` (33.2 %), and **0 %** of the co-changed tests, by the
+direction above. Restricted to the package's own files it is level with `impact` (0.31 vs 0.32) and
+finds files neither `impact` nor grep finds; interleaved with `impact` it is the best method measured
+(36.6 %). Whether a pack helps an agent solve a task is **not** measured.
 
 **MCP / serve:** the `pack` tool (and serve op) takes `budget` and optional `seeds`, so
 an agent can pull a budgeted context slice natively — codemap as a first-class context
