@@ -186,6 +186,72 @@ answer in one output — the discipline this project spent two months building, 
 - **The agent skill's effect on an agent's behaviour**: the skill is read and quoted, not A/B-tested.
 - **Cache behaviour across versions** and the provider-side caching we cannot observe.
 
+### 0.7 Stage D — jevgrep as shipped (pre-registered 2026-10-14, **before the first paid request**)
+
+**Configuration.** `@dzhng/jevgrep` 0.8.0 unmodified, provider **OpenRouter**, model `typesafe/jev-1.13`
+(response model `typesafe/jev-1.13-20260917`), authenticated with the owner's key kept outside every
+repository. This is the only configuration in the card that describes the tool as it ships: no stand-in
+anywhere. One environmental fact is declared rather than hidden — the client does not read proxy variables
+and direct egress to this provider is refused by the provider's own policy (`403 Access denied by security
+policy`), so every run sets `NODE_USE_ENV_PROXY=1`. That changes the route, not the request: the body and
+headers `jg doctor` sends were replayed byte for byte and answered 200.
+
+**Observed before this section was written, and therefore not a prediction.** Eight probe requests with
+identical input returned `noul` of 0.98 and 0.97, and 0.96 / 0.95 / 0.96 — the live judge is **not**
+bit-stable at a fixed input, with a spread of about 0.01–0.02. `doctor` passes; a direct call costs
+`$0.000012` for 292 input tokens, which is exactly the list price of $0.042 per million.
+
+**Ground truth, frozen now, re-run on this tree** (codemap 0.0.21, repo scope, `--deep --repeat 3`,
+consumers `tests` `examples` `scripts` `research`, docs `docs`; file-level, own file excluded):
+
+| task | question as asked | truth | n | sha256 (sorted paths, `\n`-joined) |
+|---|---|---|---|---|
+| T1 | *Where is analyze_zones defined?* | `defined_at`: `zones/pipeline.py` (the function) and `zones/analyzer.py` (a same-named method) | 2 | `1de27ea2…` |
+| T2 | *Which files call MACDZoneAnalyzer?* | files with a `calls` edge into the class or its members: tests 19, scripts 2, examples 1 | 22 | `0ae71b44…` |
+| T3 | *What is the blast radius of changing MACDZoneAnalyzer: which files depend on it?* | `calls` ∪ `references` ∪ `accesses` ∪ `imports`: tests 19, docs 7, scripts 2, examples 1 | 29 | `12e14288…` |
+| T4 | *What breaks if the signature of analyze_zones changes?* | `calls` ∪ `references`: docs 24, examples 9, tests 8, research 6, bquant 2 | 49 | `c4783414…` |
+| T5 | *What are the architectural layers of the package, and are there import cycles?* | a whole-graph property, not a file set — scored present / absent | — | — |
+
+The five questions are fixed here; no wording is changed after seeing an answer. Every truth path exists in
+the 281-path staging tree (280 scope files plus the harness manifest, excluded with `--exclude`).
+
+**Runs.** Ten cold searches (`--no-cache`), one question per run, in this order:
+**A** — T1…T5 once each at default concurrency (5). **B** — T2 twice more at default concurrency, and T2
+three times with `--concurrency 1` (5). Then one repeat of T1 *with* the cache, to price a warm search. At
+$0.12–0.15 per cold search by my own byte count the plan is about $1.5 against a $5-per-day ceiling on the
+key. **Stop rule:** the key's cumulative `usage` is read from the provider before and after every batch;
+if it reaches **$3.50** the run stops and says so, and nothing further is run that day.
+
+**Controls.**
+
+| # | control | refuted by |
+|---|---|---|
+| **DC1** | the same staging tree as Stages A–B: `scope_id` line and `verify: staging scope_id == canonical ✓` printed before the first request | any other id |
+| **DC2** | the table above is recomputed from a graph built in this session, hashes included | a different hash |
+| **DC3** | spend is a measurement: provider `usage` before and after each batch, reconciled with the sum of per-request `cost` where the client exposes it | an unexplained gap larger than the rounding of the provider's own counter |
+| **DC4** | the credential never appears in an output, a log or a diff | any occurrence — the run is void and the key rotated |
+
+**Predictions — written to be wrong somewhere.**
+
+| # | prediction | refuted by |
+|---|---|---|
+| **D1** | **T1 is hit and left unresolved.** `zones/pipeline.py` is in the answer; so is `zones/analyzer.py`; and nothing in the output says the name has two definitions or which one is meant | `pipeline.py` absent, or an explicit statement that `analyze_zones` is ambiguous |
+| **D2** | **T2: found, with the haystack.** Recall ≥ 0.9 of the 22 call sites (≥ 20), **precision < 0.5** — the answer lists more than 44 files. A tool that asks "does this file relate to the query" cannot answer "which files call it" | recall < 0.9, or ≤ 44 files returned |
+| **D3** | **The role tag does not separate call sites from mentions.** Of the T3 files, the seven `docs/*.md` ones are returned with a role no different from the tests'. Recall on the 7 docs files is **lower** than on the 19 tests | docs recall ≥ tests recall |
+| **D4** | **T4 is half answered.** Recall of the 49 users ≥ 0.8 is *not* reached because 30 of them are docs and research notebooks, and — independently of recall — no per-call-site argument shape appears anywhere | recall ≥ 0.8; or any posargs/kwargs vocabulary in the answer |
+| **D5** | **T5 is answered anyway.** The question has no file-set answer; I expect a list of files ranked by relevance rather than a statement that the question is outside the tool, and no cycle or layer vocabulary | an explicit refusal / "cannot answer", or a cycle or layer set |
+| **D6** | **The scheduling effect survives a real judge, partly drowned by the model.** At default concurrency the spread (max − min of returned files over three T2 runs) is **larger** than at `--concurrency 1`; and the serialised runs are **not** all byte-identical, because the judge is not bit-stable | spread at default ≤ spread serialised; or three byte-identical serial runs |
+| **D7** | **Cost is where the bytes said.** A cold search costs **$0.08–0.25** by the provider's own meter, and a warm repeat under 5% of it | outside that band |
+| **D8** | **The remainder is still not named.** As in Stage B, no line states which eligible files were not sent or how many | any statement of the unvisited remainder |
+
+D1, D2, D3, D4 and D8 are written to fail if the tool is better than the stub-era reading suggested; D6 and
+D7 fail if the model is quieter or cheaper than I expect. If nothing was done, every one of them fails —
+none can pass without a run.
+
+**What Stage D will still not say.** Whether Jev *as a model* is good: five questions on one 280-file Python
+tree is a sample of the tool on this scope, not a ranking of judges. Nor the agent-level effect their
+headline reports (needs an agent in the loop), nor behaviour on any other tree, language or size.
+
 ---
 
 ## Identity
