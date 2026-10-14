@@ -54,6 +54,14 @@ that have nothing to do with codemap, which is the *moving input* that cost this
 produced [provenance.md](provenance.md). Freeze the input, then compare. The pin goes stale by design;
 bumping it is a deliberate act with a diff to read.
 
+**A dependency that answers wrongly is caught by a test, not a job.** CI installs codemap without a
+lock file, so every run resolves the newest griffe and jedi that `pyproject.toml` allows.
+`tests/test_r1c64_dependency_probe.py` asks each of them one question whose answer is known (the same
+probe as `codemap doctor`) and fails when one imports, answers, and answers wrongly — a failure that
+otherwise never surfaces, because a jedi that resolves nothing leaves the deep build green and the
+graph merely poorer (R1-C64). Read the versions in the failure before anything else: the probe cannot
+tell their regression from ours.
+
 **`interop` refuses to pass by skipping.** `tests/test_r1c2_ctags.py` and `tests/test_scip_export.py`
 skip when `readtags` / `scip` are not on `PATH`, which on a development machine is always — so they
 had never executed at all. The job installs both and asserts they are present before running pytest,

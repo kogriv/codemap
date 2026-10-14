@@ -39,7 +39,9 @@ from codemap.serve.session import Session
 # The fixture is owned by this test on purpose: pinned against the live dogfood tree the hash
 # would move whenever somebody edits that tree, and the test would be measuring the target
 # instead of the tool (R1-C25 — the mistake `tests/frozen.py` exists to prevent).
-RENDERED_SHA = "980ee1b8a07b8b0f8d6f08d707035f4af9b3b568a1526493719c0e57d9c28ba0"
+# Re-pinned without a bump by R1-C60 (2026-10-14): one more item in dead-code's existing
+# blind-spot line — wording inside an existing note, not a change of structure.
+RENDERED_SHA = "ec16c7653608b27a030682eeb9c90ef9bde10564907de00c0eb35c5299618702"
 
 FILES = {
     "__init__.py": "",

@@ -123,6 +123,37 @@ Without it, a clean `✅ No breaking changes` reads as proof. On the pair that m
 this work — one frozen tree, two codemap versions four commits apart — that verdict was
 true at the API level while the two graphs disagreed about which functions were dead.
 
+## Fewer edges on the same input is named
+
+"Different tool" says *that* the builder changed, not *what it lost*. When both graphs
+record the **same `scope_id`** and the same tier, codemap also counts edges per class and
+names any class that shrank:
+
+```
+[warning] completeness fell on the same input: calls 899 → 873 (−2.9 %), imports 266 → 241 (−9.4 %), references 322 → 294 (−8.7 %)
+```
+
+That line is a real pair: one frozen tree, built by codmap 0.0.3 and by 0.0.21. It appears
+in two places:
+
+- **`codemap diff`** — among the differences, in the `⚠️ not directly comparable` block and
+  on stderr. On one input, everything two graphs disagree on came from the builder.
+- **`codemap build -o FILE`** when `FILE` already holds a graph — read before it is
+  overwritten. A warning, never a refusal; the build exits 0 and writes the new graph. A
+  `FILE` that exists but cannot be read is said to be unreadable (`[note] … completeness
+  against it not compared`), not treated as a first build.
+
+A class counts as dropped at **≥ 3 edges and ≥ 1 %** of its previous count — above the deep
+tier's measured noise (single edges between builds of one tree). The counts are derived
+from the two graphs at comparison time; nothing is stored, so the schema does not change.
+
+**Not compared**, and therefore silent: two different inputs (a drop there may be deleted
+code), two different tiers (deep → fast loses jedi edges by construction, and the tier
+difference is already printed), or a graph with no recorded `scope_id`. Silence in those
+cases means *not compared*, not *nothing fell*. A drop below the threshold, or edges that
+moved between resolutions inside one class, is not reported either.
+Design: [design/completeness_drop.md](design/completeness_drop.md).
+
 ## `build --incremental` checks the builder too
 
 An incremental rebuild used to decide from the source tree alone: no `.py` changed, so

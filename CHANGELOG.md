@@ -5,6 +5,45 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+Schema unchanged (**0.13**); `ANSWER_FORMAT` unchanged (**1**).
+
+- **Fewer edges on the same input is named** (R1-C59, design
+  [`docs/design/completeness_drop.md`](docs/design/completeness_drop.md)). One frozen tree built by
+  codmap 0.0.3 and by 0.0.21 records the **same `scope_id`** and differs by −25 `imports`,
+  −28 `references`, −26 `calls`; `diff` said *that* the tool changed, never *what it lost*, and `build`
+  said nothing. Now, when two graphs share a `scope_id` and a tier, an edge class that lost **≥ 3 edges
+  and ≥ 1 %** is named — in `diff` among the existing differences (`completeness fell on the same
+  input: calls 899 → 873 (−2.9 %), …`), and by `build -o FILE`, which reads the graph it is about to
+  overwrite and warns on stderr (exit code unchanged, the build still writes). A previous graph that
+  cannot be read is said to be unreadable, not treated as a first build. The counts are derived at
+  comparison time; nothing is stored, so neither the schema nor the answer format moves. Measured on
+  the deep tier: three builds of one tree differ by one `accesses` edge and stay silent; a deep build
+  whose jedi answers nothing loses `calls 1430 → 899` and is named. Different inputs and different
+  tiers are not compared — silence there means *not compared*.
+
+- **Nested definitions are not nodes, and `dead-code` now says so** (R1-C60, design
+  [`docs/design/nested_definitions.md`](docs/design/nested_definitions.md)). Mapping our ids to another
+  tool's graph found 50 symbols we did not have. Re-measured with an independent AST scan on the same
+  scope: **49** functions/classes defined inside a function body in the package, **none** of them nodes
+  (griffe does not enter function bodies) — while consumer roots built with `--mode full` carry all
+  **35** of theirs. A decorator defined inside a registering method is the usual case, and `dead-code`
+  could never judge it nor said so. Declared, not changed: the report's blind-spot line names it, and
+  [`docs/dead-code.md`](docs/dead-code.md) explains what is kept (calls *from* the nested body, on the
+  enclosing function) and what is lost (the definition, calls *to* it). Graph bytes and the structured
+  answer are unchanged; the markdown changes by that one line, so the answer-format pin was updated as
+  wording and **`ANSWER_FORMAT` stays 1**. Emitting them as nodes is left as an open option.
+
+- **New: `codemap doctor` — a dependency that answers wrongly is not one that is absent** (R1-C64,
+  design [`docs/design/dependency_probe.md`](docs/design/dependency_probe.md)). griffe and jedi were only
+  ever checked by `import` succeeding, and a jedi that stops resolving does not fail a build: measured
+  on a real tree with jedi answering nothing, `build --deep` exits 0, declares `tier: deep`, and its
+  `calls`/`accesses` equal the fast tier's to the edge. `doctor` asks each dependency one question with
+  a known answer, through the real pipeline — a re-export resolved to its definition (griffe), a method
+  call on a local `Engine()` resolved to `Engine.run` (jedi) — and grades it `ok` / `wrong` / `absent` /
+  `error` / `not-run`, with the installed version; exit 1 unless both are `ok`; `--json` for machines.
+  The same probe is a suite test, which CI runs against freshly resolved dependencies on every push.
+  One fact per dependency, deliberately not a benchmark. No existing answer changes.
+
 ## [0.0.21] - 2026-09-26
 
 **Two gates that reported more confidence than they had, and the question for one of them came from

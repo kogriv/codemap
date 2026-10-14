@@ -246,6 +246,18 @@ ops' own source and fails when a new op learns a limit without declaring it. Gap
   `epistemic: partial`.
 - Use the graph where it wins — **impact / blast-radius / signature-change** — and don't bother reaching for
   it to *locate* a well-named symbol; `grep` is fine there.
+- A definition **nested inside a function body in the package** is not a node at all (R1-C60): the
+  calls it makes are kept on its enclosing function, the calls *to* it are unresolved, and `search` does
+  not find it. Consumer roots built with `--mode full` do carry such definitions — the narrowing is per
+  root. See [dead-code.md](dead-code.md#nested-definitions-are-not-judged-r1-c60).
+- Check the **dependencies** when a graph looks poorer than it should: `codemap doctor` (R1-C64) asks
+  griffe and jedi one question each whose answer is known — a re-export resolved to its definition, a
+  method call on a local `Engine()` resolved to `Engine.run` — through the real pipeline, and grades each
+  `ok` / `wrong` / `absent` / `error` / `not-run`, with versions; exit 1 unless both are `ok`. `wrong` is
+  the case that matters: a jedi that answers nothing does **not** break a deep build — measured, the
+  build exits 0, declares `tier: deep`, and its `calls`/`accesses` equal the fast tier's to the edge. One
+  fact per dependency, deliberately not a benchmark: a partial regression that keeps this one case
+  working passes. Design: [design/dependency_probe.md](design/dependency_probe.md).
 - Read the **`limit` block** before concluding a list is complete. `epistemic: partial` says the resolution
   was a lower bound; `limit.truncated` says the delivery was. An answer can be either, both, or neither.
 

@@ -109,6 +109,12 @@ graph.json; the session graph is the *after*), returning
 `{ok, added, removed, changes:[{symbol, kind, severity, detail}], summary}` — the
 structured "did this change break the API?" check an agent runs after an edit.
 
+Every surface also carries `provenance` — whether the pair is a before/after of the
+*code* at all (`comparable`, `differences`, `caveats`). When both graphs were built from
+the **same input** (`scope_id`) on the same tier, an edge class that shrank is one of the
+differences (`completeness fell on the same input: calls 899 → 873 (−2.9 %), …`) — see
+[provenance.md](provenance.md#fewer-edges-on-the-same-input-is-named).
+
 ## CI example
 
 ```yaml

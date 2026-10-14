@@ -8,7 +8,7 @@ and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **990 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1022 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -229,6 +229,13 @@ So a deep graph is one sample of a slightly fuzzy function, not a function of it
 build says so in its own diagnostics, and `codemap diff` says so when both sides are deep — read a
 delta of a few call edges as possible tool noise before reading it as a change in the code. Anything
 that must be reproducible byte-for-byte — a gate, a two-release comparison — belongs on the fast tier.
+
+**A deep build does not check jedi.** With jedi answering nothing, a deep build still exits 0 and
+declares `tier: deep` — and its call edges equal the fast tier's. `codemap doctor` asks griffe and jedi
+one question each with a known answer and exits 1 when one is absent or answers wrongly
+([accuracy.md](docs/accuracy.md#what-this-means-for-trust)); rebuilding over the previous graph of the
+same tree (`build -o` on the existing file) names the classes of edges that shrank
+([provenance.md](docs/provenance.md#fewer-edges-on-the-same-input-is-named)).
 
 **How many times to build.** A consumer measured 175 full deep builds of one tree and found a real
 edge present in **75 %** of them; eight builds here agreed (5 of 8, the same edge, and nothing else
