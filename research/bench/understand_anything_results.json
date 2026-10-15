@@ -1,0 +1,203 @@
+{
+ "determinism": {
+  "digest": "ecba5607469bb571fd65017a1260bf28af7d3a52cfb9965c486a621fd7c16ced",
+  "distinct_digests": 1,
+  "runs": 4
+ },
+ "import_map_stats": {
+  "filesScanned": 281,
+  "filesWithImports": 189,
+  "totalEdges": 553
+ },
+ "scan": {
+  "filteredByIgnore": 0,
+  "languages": {
+   "json": 1,
+   "markdown": 73,
+   "python": 207
+  },
+  "totalFiles": 281
+ },
+ "structure": {
+  "counts": {
+   "class": 126,
+   "function": 206,
+   "method": 628
+  },
+  "files_analyzed": 89,
+  "files_skipped": [],
+  "result_keys": [
+   "fileCategory",
+   "language",
+   "metrics",
+   "nonEmptyLines",
+   "path",
+   "totalLines"
+  ],
+  "symbols": {
+   "MACDZoneAnalyzer": [
+    [
+     "bquant/indicators/macd.py",
+     "class",
+     null
+    ]
+   ],
+   "analyze_zones": [
+    [
+     "bquant/analysis/zones/analyzer.py",
+     "method of UniversalZoneAnalyzer",
+     null
+    ],
+    [
+     "bquant/analysis/zones/pipeline.py",
+     "function",
+     null
+    ]
+   ]
+  }
+ },
+ "truth": {
+  "cycles": 45,
+  "cycles_module_only": 0,
+  "cycles_module_tc": 1,
+  "edge_scopes": {
+   "function": 25,
+   "module": 240,
+   "type_checking": 1
+  },
+  "edges": 266,
+  "modules": 89
+ },
+ "ua": {
+  "cycles": 0,
+  "cycles_in_truth": 0,
+  "edges": 216,
+  "false_edges": [
+   [
+    "bquant.cli",
+    "bquant.visualization"
+   ]
+  ],
+  "found_by_scope": {
+   "module": 215
+  },
+  "found_only_function": [],
+  "found_only_type_checking": [],
+  "in_truth": 215,
+  "missed_module": [
+   [
+    "bquant.analysis.candlestick",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.chart",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.statistical",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.hypothesis_testing"
+   ],
+   [
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.regression"
+   ],
+   [
+    "bquant.analysis.statistical.hypothesis_testing",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.statistical.regression",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.technical",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.timeseries",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.detection"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.models"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.pipeline"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.presets"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.sequence_analysis"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis.zones.sequence_analysis",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.analysis.zones.zone_features",
+    "bquant.analysis"
+   ],
+   [
+    "bquant.indicators.custom",
+    "bquant.indicators.base"
+   ],
+   [
+    "bquant.indicators.preloaded",
+    "bquant.indicators.base"
+   ],
+   [
+    "bquant.visualization",
+    "bquant.visualization.charts"
+   ],
+   [
+    "bquant.visualization",
+    "bquant.visualization.statistical"
+   ],
+   [
+    "bquant.visualization",
+    "bquant.visualization.themes"
+   ],
+   [
+    "bquant.visualization",
+    "bquant.visualization.zones"
+   ]
+  ],
+  "precision": 0.9954,
+  "relative_bare_into_analysis": {
+   "bquant.analysis.candlestick": false,
+   "bquant.analysis.chart": false,
+   "bquant.analysis.statistical": false,
+   "bquant.analysis.statistical.hypothesis_testing": false,
+   "bquant.analysis.statistical.regression": false,
+   "bquant.analysis.technical": false,
+   "bquant.analysis.timeseries": false,
+   "bquant.analysis.zones": false,
+   "bquant.analysis.zones.sequence_analysis": false,
+   "bquant.analysis.zones.zone_features": false
+  }
+ }
+}

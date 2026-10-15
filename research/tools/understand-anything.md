@@ -1,9 +1,193 @@
 # Understand-Anything
 
-**Verdict:** _pending — filled after §2_  ·  **Feeds:** R1-C…  ·  **Card status:** hands-on (deterministic layer only; see §0.4)
+**Verdict:** learn-only · **Feeds:** R1-C43 / R1-C47 (symbol-loss gate), R1-C61 (the LLM door) ·
+**Card status:** hands-on (deterministic layer only; the LLM layer is a door, §0.5 R4)
 
-**Scope:** `sha256:300e0a01…5e47d2` (R2 benchmark `bquant.scope.json` — 280 files, 207 .py / 73 .md,
-bquant@cb89a24) · run mode: materialized
+**Scope:** `sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2` (R2 benchmark
+`bquant.scope.json` — 280 files, 207 .py / 73 .md, bquant@cb89a24) · run mode: **materialized** from a
+fresh `git archive cb89a24` extract (staging verified `== canonical ✓`)
+
+> The most-starred tool in the field so far, at **86 314 ★**. It is a different kind of thing from
+> everything else in this folder: an agent skill whose graph is mostly **written by the model**. Its
+> deterministic layer does what it says. It is byte-identical across runs, and 215 of its 216 edges are
+> real. But it reads only the imports that sit directly at module top level. On bquant that is every
+> one of the 45 import cycles gone, and the file-analyzer agent is told not to look again.
+
+## Identity
+
+- **Repo:** [Egonex-AI/Understand-Anything](https://github.com/Egonex-AI/Understand-Anything)
+  (redirected from `Lum1104/Understand-Anything`, created 2026-03-15) — 86 314 ★ / 7 279 forks /
+  323 open issues (2026-10-15).
+- **License:** MIT.
+- **Version measured:** `main` at **f2d0164** (2026-10-12). The plugin installs from the default
+  branch; the last tag is v2.9.0 (2026-07-10).
+- **Stack:** TypeScript (pnpm workspace). `@understand-anything/core` handles tree-sitter extraction
+  through wasm grammars. The skill orchestration lives in Markdown (`skills/*/SKILL.md`,
+  `agents/*.md`), and the scripts are Node `.mjs` plus two Python mergers. The dashboard is a separate
+  package.
+- **Install:** the official route is a plugin or marketplace install into an agent. For this card:
+  `git clone` → `pnpm install --frozen-lockfile && pnpm --filter @understand-anything/core build`.
+  This is what the skill's own Phase 0 runs on a fresh install. **Reproduced: yes**, first try
+  (install 2 m 54 s).
+
+## What it is
+
+`/understand` is a seven-phase script **for an agent to follow**:
+- scan → batch → analyze (up to 5 concurrent file-analyzer subagents) → assemble review →
+  architecture → tour → review → save.
+- The authors moved the rule-lookup parts out of the model and into scripts, and the source says why:
+  "runtime LLMs produced inconsistent, regex-only scripts with sparse coverage". These parts are file
+  inventory, the import map, structure extraction, batching, fingerprints and the incremental plan.
+- What the model still writes: `calls`, `depends_on`, `related`, `tested_by` and every non-code edge,
+  plus layers, tours, summaries and the domain graph.
+- Output is a `knowledge-graph.json` under `.ua/` plus an interactive dashboard. There is no MCP
+  server: the agent reads the JSON through further skills (`/understand-chat`, `-explain`, `-diff`,
+  `-onboard`).
+
+## 1. Hands-on — the deterministic layer on the R2 tree
+
+Harness: [`research/bench/understand_anything.py`](../bench/understand_anything.py). Raw results:
+[`understand_anything_results.json`](../bench/understand_anything_results.json). Wall time is 28 s for
+four full scan + import-map runs plus the truth build and one structure pass. No LLM is called.
+
+| measure | result |
+|---|---|
+| files scanned | 281 = the 280 of the scope + `manifest.json`, which `materialize.py` writes into the staging root |
+| UA import edges, bquant→bquant (module level, self-edges dropped) | **216** |
+| … of them in codemap's truth | **215** (99.5 %) |
+| truth edges found, by scope | module **215 / 240** · function **0 / 25** · type_checking **0 / 1** |
+| cycles in UA's import graph | **0** (truth: 45) |
+| determinism, 4 runs | **1 distinct digest** of `importMap` |
+| T1 `analyze_zones` | `pipeline.py` function + `UniversalZoneAnalyzer.analyze_zones` method — both ✅ |
+| T1 `MACDZoneAnalyzer` | `indicators/macd.py` class ✅ |
+| classes / top-level functions / methods | 126 / 206 / 628 |
+
+**The 25 module-level misses, every one classified** by statement position (with `ast`, against
+the source):
+
+| cause | edges | example |
+|---|---|---|
+| `from .. import Name`, where `Name` is defined in the package `__init__` | **10** | `regression.py:16 from .. import BaseAnalyzer` → no edge to `bquant/analysis/__init__.py` |
+| import inside a module-level `try:` | **15** | `analysis/zones/__init__.py:522`, inside `try:`: `from .analyzer import UniversalZoneAnalyzer` |
+
+Both causes were read from source before the run (§0.1), and C3 shows both on three files. No third
+cause exists on this tree.
+
+**The one edge outside the truth** is `bquant.cli → bquant.visualization`, from
+`cli.py:15 from .visualization import charts`. Python does execute `bquant/visualization/__init__.py`
+there. UA emits the package and the submodule; codemap's truth records only the deepest module. The
+truth's convention is what makes this edge "false". It is not UA's error.
+
+**Definition counts agree with Python's `ast` exactly** (206 + 628). codemap's 863 function nodes
+differ by convention only:
+- `@property` methods become attributes (5);
+- dataclass-synthesized `__init__` methods are added (35);
+- a property setter shares its getter's id (1).
+
+834 − 5 + 35 − 1 = 863. Neither side has a defect here.
+
+## 2. Reconciliation with the pre-registration
+
+| | expected | measured | |
+|---|---|---|---|
+| C1 | `== canonical ✓`, `sha256:300e0a01…5e47d2` | as expected | ✅ |
+| C2 | 240 / 25 / 1 = 266 edges; 45 cycles; module-only 0; +tc 1 | identical | ✅ |
+| C3 | top-level edge yes; function-local no; `from . import NAME` → no `__init__` | `pkg/a.py → [pkg/b.py]` only | ✅ |
+| P1 | 0 cycles | 0 | ✅ |
+| P2 | precision ≥ 95 % | 99.5 % (215/216) | ✅ |
+| P3 | 0 / 25 function, 0 / 1 type_checking | 0, 0 | ✅ |
+| P4 | < 100 % of module edges; ≥ 8 of the 10 named `from ..` edges missing | 215 / 240; **10 of 10** missing | ✅ |
+| P5 | 4 runs byte-identical | 1 digest | ✅ |
+| P6 | the three T1 definitions | all three | ✅ |
+
+**Decision rules.**
+- **R1** applies. The deterministic layer cannot see any of the 45 cycles. T5 as UA answers it, through
+  LLM-assigned layers, is not measured here.
+- **R2** applies. The `from .. import Name` miss is confirmed with a three-file repro. **Not filed —
+  reporting it is the owner's call.** The `try:` miss belongs to the same report, since it comes from
+  the same loop over `rootNode.child(i)`.
+- **R3** does not apply (P2 held). The one false edge was classified anyway, above.
+- **R4** stands: the `/understand` run with a model is not part of this card.
+
+### Surprises
+
+- **S1 — the misses are locked in by instruction.** `agents/file-analyzer.md` tells the model: "use
+  `batchImportData[filePath]` directly … Do NOT attempt to re-resolve imports from source", and
+  requires the count of `imports` edges to equal the map's length. The model therefore cannot repair
+  the 25 misses even when it reads the file. It can only add `depends_on` edges ("dynamic requires,
+  lazy loads", weight 0.6), and only if it decides to.
+- **S2 — the structural layer does what the README promises.** "Same input → same output, every run":
+  4 / 4 here. "The same code always yields the same edges": yes, for the edges it extracts.
+- **S3 — the first false edge in the R2 series that is the truth's fault.** The package-import
+  convention (`from .pkg import sub` also imports `pkg`) is a real Python dependency that codemap's
+  module graph leaves implicit. It is recorded here, not changed: every earlier card was scored under
+  the same convention, and one edge does not move any figure.
+
+### What this card does not establish
+
+- Anything the LLM layer produces: `calls` edges, layers, tours, summaries, chat answers. That covers
+  T2–T5 as UA would actually answer them, and their cost and stability.
+- Whether, in a real `/understand` run, the model's `depends_on` edges recover some of the 25 misses
+  or the 26 function / TYPE_CHECKING edges.
+- Other languages, incremental updates (`prepare-incremental.mjs`, the symbol-loss gate), the
+  dashboard, speed at scale.
+
+## Coverage vs codemap
+
+| Capability | codemap | Understand-Anything |
+|---|---|---|
+| symbol lookup (T1) | ✅ | ✅ (deterministic structure; measured) |
+| callers/callees (T2) | ✅ | ◐ LLM-written `calls` edges — not measured |
+| impact (T3) | ✅ | ◐ `/understand-diff` over the LLM graph — not measured |
+| signature-change surface (T4) | ✅ | ✖ no per-call argument data |
+| architecture (T5) | ✅ | ◐ LLM-assigned layers — not measured; **import cycles: 0 of 45 visible** to its import graph |
+| determinism | ✅ | ◐ structural layer ✅ (4/4); graph as a whole ✖ by construction |
+| MCP | ✅ | ✖ (skills read a JSON file) |
+| languages | Python | many (tree-sitter wasm) + non-code (config, docs, IaC, SQL, Figma) |
+| license | MIT | MIT |
+
+## Разбор
+
+- **What we'd take.**
+  - **The symbol-loss gate on incremental updates** (`validate-incremental-symbols.mjs`). Before an
+    incremental graph is published, every function, class and method that disappeared is classified
+    against base and current source. Only confirmed deletions pass; "still present" and "unknown"
+    block publication. Our splice (R1-C43) discloses that it may be carrying an old miss. Theirs
+    refuses to publish a loss it cannot explain. Read from source, not measured. The idea fits our
+    absent-answer work (R1-C44), and it is worth a look when incremental is next touched.
+  - **"Move rule lookup out of the model" stated as a reason.** Their source comments name the failure
+    that forced each script ("inconsistent, regex-only scripts with sparse coverage"; "billed at LLM
+    rates"). That is a trace of measurement inside the code, the same habit as our `devref/gaps/`.
+- **What we'd do differently, and why.**
+  - Read imports wherever they occur and label them with a scope (module / function / type_checking),
+    rather than reading only the top level. On bquant every cycle lives in the non-top-level part. A
+    graph that drops those imports does not merely shrink: it reports "acyclic" about a tree with 45
+    cycles.
+  - Never forbid the consumer from checking the producer. S1 is a design choice that turns a
+    resolver's blind spot into the whole system's blind spot.
+- **What the author knows that we didn't.**
+  - **Demand.** 86k stars for "graphs that teach": onboarding tours, plain-English summaries,
+    business-domain mapping, non-code files (Dockerfiles, Terraform, SQL) in the same graph. None of
+    it is a query answer, and all of it is what a newcomer asks first. codemap answers questions; this
+    tool explains a codebase. That is a different product, and the stars say which one more people
+    want.
+  - **Graphs for non-code.** `configures`, `deploys`, `migrates`, `documents` edges put the repo's
+    operational files on the same map. codemap stops at Python.
+- **What we did NOT check.** See *What this card does not establish* above. The LLM layer is the
+    product, and we measured its foundation, not the product.
+
+## Verdict & backlog effect
+
+**learn-only.** The deterministic layer is honest and reproducible, but too shallow for Python import
+structure, and by design it cannot be corrected downstream. The rest is model output and out of this
+card's reach.
+- **Confirms R1-C29.** Cycles need non-top-level imports; this tree is the cleanest demonstration yet,
+  with 0 module-level cycles against 45 in total.
+- **Adds a read-only pointer for R1-C43** (the symbol-loss gate).
+- **Adds a second instance to R1-C61's door:** measuring this tool's real output means putting a model
+  in the loop, with the same price.
+- **Open owner decision:** whether to report the `from .. import Name` / `try:` miss upstream (R2).
+
 
 ## 0. Pre-registration (committed before any run on the R2 tree)
 

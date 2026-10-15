@@ -27,7 +27,7 @@ get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py)
 | cocoindex-code | [card](tools/cocoindex-code.md) | ◐³ | — | — | — | — | ◐³ | ✅ | multi (tree-sitter) | Apache-2.0 |
 | **rag_for_git** | [card](tools/rag_for_git.md) | ◐⁶ | ✅⁶ | ✖⁶ | ✖⁶ | ✖⁶ | ◐⁶ | ✅ (PR-keyed) | Py | MIT |
 | **jevgrep** | [card](tools/jevgrep.md) | ◐⁷ | ◐⁷ | ✖⁷ | ✖⁷ | ✖⁷ | ✖⁷ | ✖ (CLI + skill) | Py/TS/JS/Go/Rust | MIT |
-| Understand-Anything | ? | ? | ? | ? | ? | ? | ? | ? | multi | OSS |
+| **Understand-Anything** | [card](tools/understand-anything.md) | ✅⁸ | ◐⁸ | ◐⁸ | ✖⁸ | ◐⁸ | ◐⁸ | ✖ (skills + JSON) | many + non-code | MIT |
 
 _Rows are seeded from R1/R1.5 (desk-level, hence `?`); each becomes measured as its card moves to
 `hands-on`. `codemap` is the ground-truth reference for T1–T5._
@@ -145,7 +145,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 | OntoIndex | **per-edge resolution *reason* + graded confidence** (`same-file` 0.95 · `import-resolved` 0.9 · `global` 0.5) — the finest epistemic model measured; `impact` set-**identical** to codemap on both probes (57 = 57, 78 = 78) from an unrelated engine; native `status: "ambiguous"`; `report --help` declares its own lossiness and routes to the authoritative op; skipped input re-announced in every answer; `suggestedNextCalls` fills the next tool call for the agent; 60+ MCP tools, `audit`/`check`/`packs`/`review` surface | **AGPL-3.0** closes wrap and integrate; `context` caps callers at **30 while reporting `truncated: false`** (30 of 78) and keeps a **different** subset per build; the **graph itself is not reproducible** from identical input; `report hubs`/`surprising-connections` return "no hubs found" on a 10 745-node graph (**Cypher parse error**, exit 0); "Import Cycles" mixes doc-link rings and call cycles, rendered by basename; coupling keyed by community name with `Ca 0` throughout; no T4; 489 MB install and a documented `npm install` path that **404s** | **learn (strong)** | R1-C13, R1-C28, R1-C14 (+2 new candidates) |
 | PyCG | academic reference for Python call-graph accuracy; hand-labeled micro/macro benchmark corpus (the ~99%P/~70%R ceiling citation) | **does not run on Python 3.12** (import-hook surgery collides with stdlib; fails on a 3-line file); batch CLI, not a service; unmaintained (0.0.8, 2021) | learn (methodology only — spike-negative as a live oracle) | R1-C13 |
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
-| CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync, **0.33 s** save→answerable with its watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 on any reachable surface (no argument contract; no layers/violations at all, and the library-only cycle finder reports **136 where 41 are real**, sees a function-local import only when the symbol is *called*, and does not separate a cycle that breaks on import from one a lazy import already fixed — it walks name-resolved call edges, so `dict.get` becomes a call into an unrelated class; precision 10%, and its recall of 32% beat codemap's 2.4% until R1-C29 closed that same day); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639), **fixed by the author 2026-09-08 in PR #1772, not yet released**; the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
+| CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync, **0.33 s** save→answerable with its watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 on any reachable surface (no argument contract; no layers/violations at all, and the library-only cycle finder reports **136 where 41 are real** *(corrected 2026-10-15: 45 real on the measured tree, so recall 29% and codemap's 2.2%; 1.6.2 reports 25, 16 real — footnote ⁴)*, sees a function-local import only when the symbol is *called*, and does not separate a cycle that breaks on import from one a lazy import already fixed — it walks name-resolved call edges, so `dict.get` becomes a call into an unrelated class; precision 10%, and its recall of 32% beat codemap's 2.4% until R1-C29 closed that same day); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639), **fixed by the author 2026-09-08 in PR #1772, not yet released**; the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
 
 ⁷ jevgrep / `@dzhng/jevgrep` (0.8.0), hands-on **Stages A, B and D** on the R2 scope (materialized staging,
 `scope_id` verified). Stages A–B used a **local stand-in gateway** and measure their **pipeline**; **Stage D
@@ -167,6 +167,21 @@ changes between runs of one question. Credit where it is due:
 `jg files` makes **zero socket calls** (strace-verified, not trusted), truncation names the exact omitted
 byte count, roles are labelled estimates, `doctor` refuses a backend that connects but judges a known
 question wrongly, and a run with failed requests says `discovery incomplete` with the provider's message. See the [card](tools/jevgrep.md).
+
+⁸ Understand-Anything (`main` f2d0164), hands-on on the **deterministic layer only**, on the R2 scope
+(materialized from `git archive cb89a24`, `scope_id` verified). It is an agent skill: LLM subagents write
+`calls`, layers, tours and summaries, so **T2/T3/T5 as it answers them are not measured** (◐ = the
+capability exists in the LLM layer). The scripts underneath behave as follows:
+- **Determinism:** 4 runs give byte-identical import maps.
+- **T1** ✅: all three definitions found.
+- **Import edges:** 216, of which 215 are in the truth. The one outside is a package import the truth's
+  convention leaves implicit.
+- **Recall by import position:** 215 of 240 module-level edges, **0 of 25** function-local, 0 of 1
+  `TYPE_CHECKING`.
+- **0 of the 45 import cycles** are visible to its import graph. The extractor reads module-top-level
+  statements only, so imports under `try:` and `from .. import Name` into a package `__init__` are lost
+  too, and the file-analyzer agent is instructed not to re-resolve imports from source. See the
+  [card](tools/understand-anything.md).
 
 ## Beyond Python — what the `Langs` column is, and what it is not (desk: Go and Rust, 2026-09-29)
 
