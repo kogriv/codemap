@@ -301,3 +301,77 @@ Two properties read from the source can be checked directly on bquant:
 - Anything the LLM layer produces: `calls` edges, layers, tours, summaries, chat answers. That excludes
   T2–T5 as UA would actually answer them.
 - Speed at scale, incremental update, the dashboard, other languages.
+
+## 3. Pilot: the LLM layer with a model in the loop — pre-registration
+
+*Committed 2026-10-15 before the run. The owner chose the model, Sonnet 5.5, after reading the cost
+estimate. The pilot replaces that estimate with a measurement on a small slice; whether to do the
+full tree is decided after it.*
+
+### 3.1 Setup
+
+- **Host and model:**
+  - Claude Code 2.1.300 headless:
+    `claude -p "/understand --full" --model claude-sonnet-5-5 --output-format stream-json --verbose`.
+  - Plugin loaded for this session only with `--plugin-dir`, from the same f2d0164 checkout as §1.
+  - `--strict-mcp-config` with no servers.
+  - `--no-session-persistence`.
+  - `--max-budget-usd 10` as a hard cap. Hitting it ends the pilot, and that is a result too.
+- **Auth:** subscription (OAuth). `total_cost_usd` is therefore the API-price equivalent the host
+  reports, not money charged. It is the figure extrapolated below.
+- **Isolation:** `bwrap`. The whole filesystem is read-only except the pilot directory and the host's
+  own state directory, which auth refresh needs. `--dangerously-skip-permissions` is used *inside*
+  that sandbox, because the skill's agents run shell commands and write files.
+- **Slice:** `bquant/core/` from the R2 tree: 9 files, 142 023 bytes, 4 019 lines, and nothing
+  else. It is copied into a fresh git repo with one commit, because the skill reads `git rev-parse
+  HEAD`. In the §1 batching of the full tree, these 9 files spread over 2 of the 19 batches. Alone,
+  they are expected to form 1 batch.
+- **Truth for the slice:**
+  - `imports` = `extract-import-map.mjs` on the same slice (the deterministic map of §1);
+  - `calls` = codemap on the same slice, module-level pairs of `calls` edges.
+
+### 3.2 Expectations
+
+- **Q1 — completion.** The run ends with `.ua/knowledge-graph.json` written, under the cap. If the
+  sandbox blocks a write the skill needs, the error is reported as a surprise; it is not worked around
+  mid-run.
+- **Q2 — imports 1:1.** File-level `imports` edges in the final graph equal the deterministic map's
+  pairs for the slice. The file-analyzer is instructed to emit them 1:1, and the merger recovers any
+  it drops. Prediction: identical sets.
+- **Q3 — `calls` edges.** At least one cross-file `calls` edge. Precision of the file-level pairs
+  against codemap's module-level `calls` pairs is **≥ 80 %**. Recall is measured, not predicted.
+- **Q4 — cost of the pilot** (this is the estimate under test):
+
+  | | expected |
+  |---|---|
+  | input tokens, incl. cache reads | 3–12 M |
+  | output tokens | 30–150 k |
+  | `total_cost_usd` | 0.5–5 |
+  | wall time | 10–40 min |
+
+- **Q5 — attribution.** Usage can be split by agent through the `parent_tool_use_id` of
+  `stream-json` events into:
+  - the orchestrator;
+  - each file-analyzer;
+  - the fixed phases (scanner, assemble-reviewer, architecture, tour).
+
+  If it cannot be split, the extrapolation below is not attempted, and only the pilot's total is
+  reported.
+
+### 3.3 Extrapolation rule (fixed now)
+
+`full ≈ fixed + 19 × analyzer`, where:
+- `fixed` = everything except file-analyzers in the pilot;
+- `analyzer` = the mean cost of one file-analyzer in the pilot, scaled by bytes per batch (the mean
+  §1 batch is 231 kB; this slice is 142 kB).
+
+**Known bias, named in advance.** The fixed phases read the assembled graph, which is ~31× larger on
+the full tree. The rule therefore understates them. The extrapolated figure is reported as a lower
+bound for those phases.
+
+### 3.4 What the pilot will not establish
+
+- Quality on the full tree.
+- Run-to-run variance (one run).
+- How the LLM layer handles the embedded sample-data modules, which are not in the slice.
+- Any model other than Sonnet 5.5.
