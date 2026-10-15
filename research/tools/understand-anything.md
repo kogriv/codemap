@@ -106,6 +106,12 @@ differ by convention only:
 - **R2** applies. The `from .. import Name` miss is confirmed with a three-file repro. **Not filed —
   reporting it is the owner's call.** The `try:` miss belongs to the same report, since it comes from
   the same loop over `rootNode.child(i)`.
+  *Filed 2026-10-15 on the owner's decision: [#727](https://github.com/Egonex-AI/Understand-Anything/issues/727).*
+  The `try:` / function-local / `TYPE_CHECKING` half was already upstream as #692, with a patch in a
+  comment. It was not re-filed. Instead it was measured: patched `main` on this tree recovers all 25
+  function-local edges, the 15 under `try:` and the one under `TYPE_CHECKING` (256 of 266 edges), and
+  sees **13 of 45** cycles, all real. The only edges still missing are the 10 `from .. import Name`
+  lines. Adding exactly those 10 to the patched graph gives **45 of 45**. #727 carries that table.
 - **R3** does not apply (P2 held). The one false edge was classified anyway, above.
 - **R4** stands: the `/understand` run with a model is not part of this card.
 
@@ -116,6 +122,11 @@ differ by convention only:
   requires the count of `imports` edges to equal the map's length. The model therefore cannot repair
   the 25 misses even when it reads the file. It can only add `depends_on` edges ("dynamic requires,
   lazy loads", weight 0.6), and only if it decides to.
+  *Narrowed 2026-10-15: "cannot" was too strong.* By instruction, no agent repairs these misses: the
+  assemble-reviewer is bound to the same map ("only add edges that are backed by `$IMPORT_MAP`
+  data"). But upstream #692 reports a real run where agents went past that, recovered 5 076 Python
+  edges with their own AST pass, and injected them. So recovery can happen, against the design rather
+  than by it, and it is not something a reader can count on.
 - **S2 — the structural layer does what the README promises.** "Same input → same output, every run":
   4 / 4 here. "The same code always yields the same edges": yes, for the edges it extracts.
 - **S3 — the first false edge in the R2 series that is the truth's fault.** The package-import
@@ -179,14 +190,14 @@ differ by convention only:
 ## Verdict & backlog effect
 
 **learn-only.** The deterministic layer is honest and reproducible, but too shallow for Python import
-structure, and by design it cannot be corrected downstream. The rest is model output and out of this
+structure, and by design it is not corrected downstream (agents may still do it on their own, as #692 shows). The rest is model output and out of this
 card's reach.
 - **Confirms R1-C29.** Cycles need non-top-level imports; this tree is the cleanest demonstration yet,
   with 0 module-level cycles against 45 in total.
 - **Adds a read-only pointer for R1-C43** (the symbol-loss gate).
 - **Adds a second instance to R1-C61's door:** measuring this tool's real output means putting a model
   in the loop, with the same price.
-- **Open owner decision:** whether to report the `from .. import Name` / `try:` miss upstream (R2).
+- **Reported upstream:** [#727](https://github.com/Egonex-AI/Understand-Anything/issues/727) for `from .. import Name`. The `try:` / nested half is their #692.
 
 
 ## 0. Pre-registration (committed before any run on the R2 tree)
