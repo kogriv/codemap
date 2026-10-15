@@ -136,6 +136,13 @@ inside a function — that tree has **9** cycles, not 1:
 | mine | 1 | 1 | 100% | **2.4%** |
 | theirs | 136 | 13 | 10% | 32% |
 
+> **Update, 2026-10-15.** Two things changed after this post, one on each side. **Mine:** the 41 were
+> counted on a later commit of the same repository than the tree both tools ran on; on that tree there
+> are **45**, so the rows should read 1/45 (2.2%) and 13/45 (29%). The direction of every conclusion
+> stands; the recall figures did not. **Theirs:** the call-edge fix shipped in 1.6.1, and on 1.6.2 the
+> same library call reports **25** cycles, **16** of them real — precision 64%, recall 36%. The truncation
+> below is fixed too. [The re-measure, pre-registered.](../codegraph_remeasure.md)
+
 My import map is module-level only. A `from x import y` inside a function is invisible to it — and that
 is exactly the import a developer writes **to break a cycle**, so the blind spot is anti-correlated with
 the question. Worse than the recall: with an empty cycle list my report printed *"import graph is

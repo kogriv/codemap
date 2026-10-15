@@ -17,7 +17,8 @@
 - **Repo / site:** [colbymchenry/codegraph](https://github.com/colbymchenry/codegraph) ·
   [docs](https://colbymchenry.github.io/codegraph/) · npm `@colbymchenry/codegraph`
 - **License:** MIT
-- **Version measured:** **1.6.0** (npm, released 2026-08-26). Repo created 2026-01-18;
+- **Version measured:** **1.6.0** (npm, released 2026-08-26); cycles, truncation and the #1566 repro
+  **re-measured on 1.6.2** (2026-10-15) — see [*Re-measured on 1.6.2*](#re-measured-on-162-2026-10-15). Repo created 2026-01-18;
   68 420 ★ / 4 362 forks / 445 open issues at time of measurement (2026-08-28).
 - **Stack:** native **Rust kernel** with tree-sitter grammars compiled in (20 languages), Node CLI/MCP
   wrapper with a bundled runtime, **SQLite + FTS5** store. (GitHub reports the repo language as `C` —
@@ -60,7 +61,7 @@ Source-only: yes, it never builds or runs the target. Deterministic: see below �
 | callers/callees (T2) | ✅ | ✅ symbol-level |
 | impact / blast-radius (T3) | ✅ | ✅ (more nodes, untagged) |
 | signature-change surface (T4) | ✅ | ✖ blast radius, not an argument contract |
-| architecture / layers (T5) | ✅ (recall was 2.4%; 100% since R1-C29) | ✖ on CLI/MCP. **Library-only** `findCircularDependencies()` — 136 reported, 6 of 9 real: precision 4%, recall 67% (see below); no layers, no violations |
+| architecture / layers (T5) | ✅ (recall was 2.2%; 100% since R1-C29) | ✖ on CLI/MCP. **Library-only** `findCircularDependencies()` — 1.6.0: 136 reported, 13 of 45 real (precision 10%, recall 29%); **1.6.2: 25 reported, 16 real (64% / 36%)**; no layers, no violations |
 | determinism | ✅ answer **and** artifact | ◐ answers stable except one timestamp field; artifact binary |
 | provenance by root role | ✅ declared roots | ✖ heuristic, and it misfires (see T3) |
 | docs as first-class refs | ✅ | ✖ `.md` not indexed at all |
@@ -178,6 +179,8 @@ truncation"* — merged five minutes after the reply, rebased from an earlier at
 stalled, with closeout tracked under #1674. **Not released**: npm `latest` is still 1.6.0, so the
 measurements in this section describe the tool a reader installs today, and stop describing it at the
 next release. Nothing here is claimed about the fix's shape — the PR was not read, only its state.
+**Released in 1.6.1; on 1.6.2** the same five queries return the same 20 rows with `total` and
+`truncated: true` in the JSON, and the header reads `Callers of "MACDZoneAnalyzer" (20 of 79)`.
 
 ### The library surface — the third interface, and nobody is using it
 
@@ -218,6 +221,13 @@ function-local**), there are **9** cycles on this tree:
 | codemap, as measured that morning | 1 | 1 | **100%** | **2.4%** |
 | CodeGraph (library API) | 136 | 13 | **10%** | **32%** |
 | codemap, after R1-C29 (same day) | 41 | 41 | **100%** | **100%** |
+
+**Corrected 2026-10-15 — this table mixed two trees.** The 41 were enumerated on the live bquant of that
+day (f4992d7); CodeGraph's 136 came from this card's staging, cb89a24, 54 commits earlier, where the same
+enumeration gives **45** (codmap 0.0.4 reports 1 eager + 44 lazy, set-equal). On the measured tree the rows
+are 1/45 (2.2%), 136 → 13/45 (precision 9.6%, recall **28.9%**) and 45/45. Kept as written and corrected by
+this note rather than edited, the same way the card handles its other wrong lines. Found by C3 of the
+[re-measure](../codegraph_remeasure.md).
 
 codemap's import map was module-level only, so a `from x import y` written inside a function was
 invisible to it — and that is precisely the import a developer writes *to break a cycle*. (Fixed the same
@@ -365,6 +375,8 @@ table, nine new negative regression cases that failed before the fix, and 920 + 
 native and wasm engines. The author evaluated the community patch (#1691) and did **not** use it; the
 `this.<field>.method()` family stays open under #1496/#1691.
 
+**Superseded 2026-10-15:** 1.6.1 shipped all four PRs, and the figures they affect were re-measured on
+1.6.2 — see the section below. The paragraph is kept as the record of what was true on 2026-09-08.
 **Every number in this card still describes npm `latest` 1.6.0** (published 2026-08-26) — all four PRs
 are merged to `main` and **none is released**, which the author says himself: *"re-index after upgrading
 once it is released."* So the figures are not stale yet, and the condition under which they become stale
@@ -387,6 +399,34 @@ it need not cost the true edges: jedi types the receiver, a built-in resolves to
 emitted only when its target is a node we extracted. The fast tier buys the same safety with recall
 instead — it drops two real calls their resolver would find. Two prices for the same refusal to guess,
 and the second one is ours.
+
+### Re-measured on 1.6.2 (2026-10-15)
+
+Pre-registered before the run ([`codegraph_remeasure.md`](../codegraph_remeasure.md), commit `6f38c07`);
+1.6.0 run first through the same harness as the control, and it reproduced this card to the row.
+
+| on the same staging | 1.6.0 | 1.6.2 |
+|---|---:|---:|
+| nodes / edges | 5 113 / 15 247 | 5 113 / **14 801** |
+| `findCircularDependencies()` | 136 | **25** |
+| of them real (45 on this tree) | 13 | **16** — none of the 13 lost |
+| precision / recall | 9.6% / 28.9% | **64% / 35.6%** |
+| `calls` config.py → `MemoryCache::get` | 6 | **0** |
+| the two-file repro from #1566 | `[["cache.py","settings.py"]]` | **`[]`** |
+| `callers MACDZoneAnalyzer`, default | 20, no total | 20, **`total: 79`, `truncated: true`** |
+
+**The nine false cycles that remain, one by one:** five run through `research/notebooks/02_ind_types.py`,
+because `from scipy import stats` in five package modules is bound to a module-level `stats = …` in that
+notebook — an external import resolved to a same-named project symbol, the Python sibling of their
+closed #2101 (TypeScript) and open #2491; we found no Python report of it, and **did not file one**. Two
+run through `zone.to_dict()` on a `ZoneFeatures` bound to `Zone::to_dict` — two project classes matched by
+name. And two are **real** runtime dependencies our import-statement truth cannot see (an
+`import_module` + `getattr`, and a lazy import attributed to the defining module rather than the
+re-exporting package) — scored false by the pre-registered rule and left so.
+
+What was **not** re-run, and still describes 1.6.0: speed, T1, T3, T4, determinism, the watcher, MCP.
+Also new on `callers`: `variable` rows (24 for `analyze_zones`, 56 for `get_logger`) and an explicit
+`ambiguous: true` — "2 distinct definitions (narrow with --file)" — for `analyze_zones`.
 
 ### Determinism — split the way GitNexus's was
 
@@ -611,7 +651,7 @@ Backlog effect:
 
 ---
 
-*Measured 2026-08-28 (first pass: CLI; **second pass same day**: the importable library, the watcher
+*Re-measured 2026-10-15 on 1.6.2 (cycles, truncation, repro). Measured 2026-08-28 (first pass: CLI; **second pass same day**: the importable library, the watcher
 end to end, and the resolver's behaviour on polymorphic names — the first pass had measured two of three
 interfaces and compared our end-to-end loop against their manual sync) · CodeGraph 1.6.0 · bquant@cb89a24 ·
 `scope_id sha256:300e0a01…5e47d2` · every command and number above reproduces from a clean staging.*

@@ -1,0 +1,2691 @@
+{
+ "results": {
+  "1.6.0": {
+   "callers": {
+    "MACDZoneAnalyzer": {
+     "default": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "file": 20
+      },
+      "rows": 20,
+      "scalars": {
+       "symbol": "MACDZoneAnalyzer"
+      }
+     },
+     "header": "Callers of \"MACDZoneAnalyzer\" (20):",
+     "limit500": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "file": 21,
+       "function": 3,
+       "method": 55
+      },
+      "rows": 79,
+      "scalars": {
+       "symbol": "MACDZoneAnalyzer"
+      }
+     }
+    },
+    "ZoneFeaturesAnalyzer": {
+     "default": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "file": 9,
+       "function": 2,
+       "method": 9
+      },
+      "rows": 20,
+      "scalars": {
+       "symbol": "ZoneFeaturesAnalyzer"
+      }
+     },
+     "header": "Callers of \"ZoneFeaturesAnalyzer\" (20):",
+     "limit500": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "file": 9,
+       "function": 2,
+       "method": 40
+      },
+      "rows": 51,
+      "scalars": {
+       "symbol": "ZoneFeaturesAnalyzer"
+      }
+     }
+    },
+    "ZoneInfo": {
+     "default": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "file": 20
+      },
+      "rows": 20,
+      "scalars": {
+       "symbol": "ZoneInfo"
+      }
+     },
+     "header": "Callers of \"ZoneInfo\" (20):",
+     "limit500": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "file": 29,
+       "function": 12,
+       "method": 21
+      },
+      "rows": 62,
+      "scalars": {
+       "symbol": "ZoneInfo"
+      }
+     }
+    },
+    "analyze_zones": {
+     "default": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "function": 17,
+       "method": 3
+      },
+      "rows": 20,
+      "scalars": {
+       "symbol": "analyze_zones"
+      }
+     },
+     "header": "Callers of \"analyze_zones\" (20):",
+     "limit500": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "file": 23,
+       "function": 19,
+       "method": 30
+      },
+      "rows": 72,
+      "scalars": {
+       "symbol": "analyze_zones"
+      }
+     }
+    },
+    "get_logger": {
+     "default": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "function": 2,
+       "method": 18
+      },
+      "rows": 20,
+      "scalars": {
+       "symbol": "get_logger"
+      }
+     },
+     "header": "Callers of \"get_logger\" (20):",
+     "limit500": {
+      "keys": [
+       "callers",
+       "symbol"
+      ],
+      "kinds": {
+       "file": 64,
+       "function": 9,
+       "method": 31
+      },
+      "rows": 104,
+      "scalars": {
+       "symbol": "get_logger"
+      }
+     }
+    }
+   },
+   "config_cache_cycle": true,
+   "cycles": {
+    "precision": 0.0956,
+    "recall": 0.2889,
+    "reported": 136,
+    "true_reported": 13,
+    "truth": 45,
+    "truth_hit": 13
+   },
+   "cycles_outside_package": 112,
+   "m4": {
+    "edges": 6,
+    "rows": [
+     [
+      "bquant/core/config.py",
+      315,
+      "MemoryCache::get"
+     ],
+     [
+      "bquant/core/config.py",
+      615,
+      "MemoryCache::get"
+     ],
+     [
+      "bquant/core/config.py",
+      657,
+      "MemoryCache::get"
+     ],
+     [
+      "bquant/core/config.py",
+      699,
+      "MemoryCache::get"
+     ],
+     [
+      "bquant/core/config.py",
+      741,
+      "MemoryCache::get"
+     ],
+     [
+      "bquant/core/config.py",
+      785,
+      "MemoryCache::get"
+     ]
+    ]
+   },
+   "raw_cycles": [
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/candlestick/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/chart/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/technical/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/timeseries/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py",
+     "research/notebooks/03_analysis_statistical.py",
+     "bquant/analysis/statistical/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py",
+     "research/notebooks/03_analysis_statistical.py",
+     "bquant/analysis/statistical/__init__.py",
+     "bquant/analysis/statistical/regression.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/validation/suite.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py"
+    ],
+    [
+     "bquant/analysis/statistical/hypothesis_testing.py",
+     "research/notebooks/03_analysis_statistical.py"
+    ],
+    [
+     "bquant/analysis/statistical/hypothesis_testing.py",
+     "research/notebooks/03_analysis_statistical.py",
+     "bquant/analysis/statistical/__init__.py"
+    ],
+    [
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/presets.py"
+    ],
+    [
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py"
+    ],
+    [
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/combined.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/line_crossing.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/line_crossing.py",
+     "bquant/analysis/zones/detection/base.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/preloaded.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/threshold.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/zero_crossing.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/presets.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py",
+     "bquant/analysis/zones/strategies/base.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py"
+    ],
+    [
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/cache.py"
+    ],
+    [
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py"
+    ],
+    [
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/presets.py"
+    ],
+    [
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py"
+    ],
+    [
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py"
+    ],
+    [
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py"
+    ],
+    [
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/cache.py"
+    ],
+    [
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py"
+    ],
+    [
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py",
+     "research/notebooks/03_analysis_statistical.py",
+     "bquant/analysis/statistical/__init__.py"
+    ],
+    [
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py"
+    ],
+    [
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py"
+    ],
+    [
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/visualization/__init__.py",
+     "bquant/visualization/statistical.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/core/cache.py",
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py",
+     "bquant/core/utils.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/core/exceptions.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/bollinger.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/ema.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/cache.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/detection/registry.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/registry.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/find_peaks.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/pivot_points.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/candlestick/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/chart/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/technical/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/timeseries/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py",
+     "research/notebooks/03_analysis_statistical.py",
+     "bquant/analysis/statistical/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py",
+     "research/notebooks/03_analysis_statistical.py",
+     "bquant/analysis/statistical/__init__.py",
+     "bquant/analysis/statistical/regression.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/validation/suite.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/combined.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/line_crossing.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/preloaded.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/threshold.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/zero_crossing.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/utils.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/utils.py",
+     "bquant/data/samples/datasets.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/custom/macd.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/library/talib.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py",
+     "bquant/core/utils.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/visualization/__init__.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/visualization/__init__.py",
+     "bquant/visualization/charts.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/visualization/__init__.py",
+     "bquant/visualization/statistical.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/visualization/themes.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/zigzag.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/data/processor.py"
+    ],
+    [
+     "bquant/core/logging_config.py",
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/preloaded/macd.py"
+    ],
+    [
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/utils.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/bollinger.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/ema.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/custom/macd.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/library/talib.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/indicators/preloaded/__init__.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/preloaded/macd.py"
+    ],
+    [
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py"
+    ],
+    [
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py"
+    ],
+    [
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py"
+    ],
+    [
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/core/nb.py"
+    ],
+    [
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py"
+    ],
+    [
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/indicators/__init__.py"
+    ],
+    [
+     "bquant/visualization/zones.py",
+     "bquant/visualization/__init__.py"
+    ],
+    [
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py"
+    ],
+    [
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py"
+    ],
+    [
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/core/nb.py"
+    ],
+    [
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py"
+    ],
+    [
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/generator.py",
+     "bquant/data/loader.py",
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/detection/combined.py"
+    ],
+    [
+     "research/notebooks/02_ind_library.py",
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py",
+     "bquant/data/samples/__init__.py",
+     "bquant/data/samples/utils.py",
+     "bquant/data/samples/datasets.py"
+    ],
+    [
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/indicators/library/manager.py",
+     "bquant/indicators/library/pandas_ta.py",
+     "research/notebooks/02_ind_factory.py"
+    ],
+    [
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/strategies/swing/thresholds.py",
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py",
+     "bquant/visualization/utils.py"
+    ],
+    [
+     "research/notebooks/02_ind_types.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/data/processor.py"
+    ]
+   ],
+   "repro": [
+    [
+     "cache.py",
+     "settings.py"
+    ]
+   ],
+   "status": {
+    "backend": "node-sqlite",
+    "dbSizeBytes": 16211968,
+    "edgeCount": 15247,
+    "fileCount": 207,
+    "index": {
+     "builtWithExtractionVersion": 25,
+     "builtWithVersion": "1.6.0",
+     "currentExtractionVersion": 25,
+     "pendingRefs": 0,
+     "reindexRecommended": false,
+     "state": "complete"
+    },
+    "initialized": true,
+    "journalMode": "wal",
+    "languages": [
+     "python"
+    ],
+    "nodeCount": 5113,
+    "nodesByKind": {
+     "class": 292,
+     "file": 207,
+     "function": 537,
+     "import": 1422,
+     "method": 1527,
+     "variable": 1128
+    },
+    "pendingChanges": {
+     "added": 0,
+     "modified": 0,
+     "removed": 0
+    },
+    "version": "1.6.0",
+    "walSizeBytes": 0
+   },
+   "telemetry": [
+    "Telemetry: disabled (DO_NOT_TRACK environment variable)"
+   ],
+   "version": "1.6.0"
+  },
+  "1.6.2": {
+   "callers": {
+    "MACDZoneAnalyzer": {
+     "default": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "file": 20
+      },
+      "rows": 20,
+      "scalars": {
+       "aggregation": "definition",
+       "ambiguous": false,
+       "filteredOut": false,
+       "limit": 20,
+       "symbol": "MACDZoneAnalyzer",
+       "total": 79,
+       "truncated": true
+      }
+     },
+     "header": "Callers of \"MACDZoneAnalyzer\" (20 of 79):",
+     "limit500": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "file": 21,
+       "function": 3,
+       "method": 55
+      },
+      "rows": 79,
+      "scalars": {
+       "aggregation": "definition",
+       "ambiguous": false,
+       "filteredOut": false,
+       "limit": 500,
+       "symbol": "MACDZoneAnalyzer",
+       "total": 79,
+       "truncated": false
+      }
+     }
+    },
+    "ZoneFeaturesAnalyzer": {
+     "default": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "file": 9,
+       "function": 2,
+       "method": 9
+      },
+      "rows": 20,
+      "scalars": {
+       "aggregation": "definition",
+       "ambiguous": false,
+       "filteredOut": false,
+       "limit": 20,
+       "symbol": "ZoneFeaturesAnalyzer",
+       "total": 51,
+       "truncated": true
+      }
+     },
+     "header": "Callers of \"ZoneFeaturesAnalyzer\" (20 of 51):",
+     "limit500": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "file": 9,
+       "function": 2,
+       "method": 40
+      },
+      "rows": 51,
+      "scalars": {
+       "aggregation": "definition",
+       "ambiguous": false,
+       "filteredOut": false,
+       "limit": 500,
+       "symbol": "ZoneFeaturesAnalyzer",
+       "total": 51,
+       "truncated": false
+      }
+     }
+    },
+    "ZoneInfo": {
+     "default": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "file": 20
+      },
+      "rows": 20,
+      "scalars": {
+       "aggregation": "definition",
+       "ambiguous": false,
+       "filteredOut": false,
+       "limit": 20,
+       "symbol": "ZoneInfo",
+       "total": 62,
+       "truncated": true
+      }
+     },
+     "header": "Callers of \"ZoneInfo\" (20 of 62):",
+     "limit500": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "file": 29,
+       "function": 12,
+       "method": 21
+      },
+      "rows": 62,
+      "scalars": {
+       "aggregation": "definition",
+       "ambiguous": false,
+       "filteredOut": false,
+       "limit": 500,
+       "symbol": "ZoneInfo",
+       "total": 62,
+       "truncated": false
+      }
+     }
+    },
+    "analyze_zones": {
+     "default": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "function": 14,
+       "method": 6
+      },
+      "rows": 20,
+      "scalars": {
+       "aggregation": "union",
+       "ambiguous": true,
+       "filteredOut": false,
+       "limit": 20,
+       "symbol": "analyze_zones",
+       "total": 95,
+       "truncated": true
+      }
+     },
+     "header": "Callers of \"analyze_zones\" — 2 distinct definitions (narrow with --file):",
+     "limit500": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "file": 23,
+       "function": 19,
+       "method": 29,
+       "variable": 24
+      },
+      "rows": 95,
+      "scalars": {
+       "aggregation": "union",
+       "ambiguous": true,
+       "filteredOut": false,
+       "limit": 500,
+       "symbol": "analyze_zones",
+       "total": 95,
+       "truncated": false
+      }
+     }
+    },
+    "get_logger": {
+     "default": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "function": 9,
+       "method": 11
+      },
+      "rows": 20,
+      "scalars": {
+       "aggregation": "definition",
+       "ambiguous": false,
+       "filteredOut": false,
+       "limit": 20,
+       "symbol": "get_logger",
+       "total": 160,
+       "truncated": true
+      }
+     },
+     "header": "Callers of \"get_logger\" (20 of 160):",
+     "limit500": {
+      "keys": [
+       "aggregation",
+       "ambiguous",
+       "callers",
+       "definitions",
+       "filteredOut",
+       "limit",
+       "symbol",
+       "targets",
+       "total",
+       "truncated"
+      ],
+      "kinds": {
+       "file": 64,
+       "function": 9,
+       "method": 31,
+       "variable": 56
+      },
+      "rows": 160,
+      "scalars": {
+       "aggregation": "definition",
+       "ambiguous": false,
+       "filteredOut": false,
+       "limit": 500,
+       "symbol": "get_logger",
+       "total": 160,
+       "truncated": false
+      }
+     }
+    }
+   },
+   "config_cache_cycle": false,
+   "cycles": {
+    "precision": 0.64,
+    "recall": 0.3556,
+    "reported": 25,
+    "true_reported": 16,
+    "truth": 45,
+    "truth_hit": 16
+   },
+   "cycles_outside_package": 5,
+   "m4": {
+    "edges": 0,
+    "rows": []
+   },
+   "raw_cycles": [
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/candlestick/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/chart/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/statistical/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/technical/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/timeseries/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py"
+    ],
+    [
+     "bquant/analysis/__init__.py",
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/regression.py"
+    ],
+    [
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py"
+    ],
+    [
+     "bquant/analysis/zones/__init__.py",
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py"
+    ],
+    [
+     "bquant/analysis/zones/models.py",
+     "bquant/visualization/zones.py"
+    ],
+    [
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/cache.py"
+    ],
+    [
+     "bquant/analysis/zones/sequence_analysis.py",
+     "bquant/analysis/zones/zone_features.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/analyzer.py"
+    ],
+    [
+     "bquant/analysis/zones/zone_features.py",
+     "research/notebooks/02_ind_types.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/analyzer.py"
+    ],
+    [
+     "bquant/core/config.py",
+     "bquant/analysis/zones/strategies/registry.py",
+     "bquant/core/logging_config.py"
+    ],
+    [
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py",
+     "bquant/analysis/zones/pipeline.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/bollinger.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/ema.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/macd.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/custom/rsi.py"
+    ],
+    [
+     "bquant/indicators/base.py",
+     "bquant/indicators/preloaded/macd.py"
+    ],
+    [
+     "bquant/indicators/custom/sma.py",
+     "bquant/indicators/base.py"
+    ],
+    [
+     "research/notebooks/02_ind_types.py",
+     "bquant/indicators/__init__.py",
+     "bquant/indicators/macd.py",
+     "bquant/analysis/zones/pipeline.py",
+     "bquant/analysis/zones/analyzer.py",
+     "bquant/analysis/statistical/hypothesis_testing.py"
+    ]
+   ],
+   "repro": [],
+   "status": {
+    "backend": "node-sqlite",
+    "dbSizeBytes": 17879040,
+    "edgeCount": 14801,
+    "fileCount": 207,
+    "index": {
+     "builtWithExtractionVersion": 27,
+     "builtWithVersion": "1.6.2",
+     "currentExtractionVersion": 27,
+     "pendingRefs": 0,
+     "reindexRecommended": false,
+     "state": "complete"
+    },
+    "initialized": true,
+    "journalMode": "wal",
+    "languages": [
+     "python"
+    ],
+    "nodeCount": 5113,
+    "nodesByKind": {
+     "class": 292,
+     "file": 207,
+     "function": 537,
+     "import": 1422,
+     "method": 1527,
+     "variable": 1128
+    },
+    "pendingChanges": {
+     "added": 0,
+     "modified": 0,
+     "removed": 0
+    },
+    "version": "1.6.2",
+    "walSizeBytes": 0
+   },
+   "telemetry": [
+    "Telemetry: disabled (DO_NOT_TRACK environment variable)"
+   ],
+   "version": "1.6.2"
+  }
+ },
+ "scope_id": "sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2",
+ "tree": "bquant@cb89a24",
+ "truth": {
+  "cycles": [
+   [
+    "bquant.analysis",
+    "bquant.analysis.candlestick"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.chart"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.hypothesis_testing"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.hypothesis_testing",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.hypothesis_testing",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.hypothesis_testing",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.regression"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.regression",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.regression",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.regression",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.technical"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.timeseries"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.timeseries",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.timeseries",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.timeseries",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets",
+    "bquant.analysis.zones.sequence_analysis"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets",
+    "bquant.analysis.zones.sequence_analysis",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.sequence_analysis"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.sequence_analysis",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.sequence_analysis"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.sequence_analysis",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.sequence_analysis"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.sequence_analysis",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.zone_features"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets",
+    "bquant.analysis.zones.strategies.swing",
+    "bquant.analysis.zones.strategies.swing.zigzag",
+    "bquant.indicators",
+    "bquant.indicators.macd"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.presets",
+    "bquant.indicators",
+    "bquant.indicators.macd"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.strategies.swing",
+    "bquant.analysis.zones.strategies.swing.zigzag",
+    "bquant.indicators",
+    "bquant.indicators.macd"
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.pipeline",
+    "bquant.indicators",
+    "bquant.indicators.macd"
+   ],
+   [
+    "bquant.analysis.zones.cache",
+    "bquant.analysis.zones.pipeline"
+   ],
+   [
+    "bquant.analysis.zones.strategies.registry",
+    "bquant.core.config",
+    "bquant.core.logging_config"
+   ],
+   [
+    "bquant.indicators.base",
+    "bquant.indicators.custom.bollinger"
+   ],
+   [
+    "bquant.indicators.base",
+    "bquant.indicators.custom.ema"
+   ],
+   [
+    "bquant.indicators.base",
+    "bquant.indicators.custom.macd"
+   ],
+   [
+    "bquant.indicators.base",
+    "bquant.indicators.custom.rsi"
+   ],
+   [
+    "bquant.indicators.base",
+    "bquant.indicators.custom.sma"
+   ],
+   [
+    "bquant.indicators.base",
+    "bquant.indicators.library.talib"
+   ],
+   [
+    "bquant.indicators.base",
+    "bquant.indicators.preloaded.macd"
+   ]
+  ],
+  "distinct_sets": 45,
+  "import_edges": 266,
+  "modules": 89
+ }
+}

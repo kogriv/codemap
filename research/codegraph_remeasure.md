@@ -1,6 +1,6 @@
 # CodeGraph after its release — re-measuring the published figures
 
-**Status:** pre-registered (2026-10-15), before any run of 1.6.x on the tree. §7 is the reconciliation.
+**Status:** ✅ measured (2026-10-15). §0–§6 pre-registered in `6f38c07` before any run of 1.6.x on the tree; §7 is the reconciliation.
 **Backlog:** R2-codegraph. **Card:** [`tools/codegraph.md`](tools/codegraph.md).
 **Harness:** [`bench/codegraph_remeasure.py`](bench/codegraph_remeasure.py).
 
@@ -97,3 +97,98 @@ tree. Those figures stay labelled 1.6.0.
 ## 6. Surprises
 
 Anything not listed above is reported in §7 as a surprise, not folded into a prediction.
+
+## 7. Reconciliation (2026-10-15)
+
+Raw results: [`bench/codegraph_remeasure_results.json`](bench/codegraph_remeasure_results.json) (truth
+set, both versions, every reported cycle). Pre-registration commit: `6f38c07`.
+
+| | 1.6.0 (control) | 1.6.2 |
+|---|---:|---:|
+| files / nodes / edges | 207 / 5 113 / 15 247 | 207 / 5 113 / **14 801** |
+| cycles reported | 136 | **25** |
+| of them true (set equal to a truth cycle) | 13 | **16** |
+| truth sets hit, of 45 | 13 | **16** |
+| precision | 9.6 % | **64 %** |
+| recall | 28.9 % | **35.6 %** |
+| `config.py ⇄ cache.py` reported | yes | **no** |
+| M4: `calls` config.py → `MemoryCache::get` | 6 | **0** |
+| M3: two-file repro | `[["cache.py","settings.py"]]` | **`[]`** |
+| `callers MACDZoneAnalyzer`, default | 20, no total | **20, `total: 79`, `truncated: true`** |
+| human header | `Callers of "MACDZoneAnalyzer" (20):` | **`(20 of 79):`** |
+
+### Controls
+
+- **C1 — held.** Staging `== canonical ✓`; both work trees are copies of it.
+- **C2 — held, to the row.** 1.6.0 through this harness: 5 113 / 15 247; 136 cycles, 13 true; the five
+  truncation rows of the card exactly (20 → 79, 20 → 62, 20 → 51, 20 → 72, 20 → 104), JSON `{symbol,
+  callers}` with no total.
+- **C3 — failed, and the failure is ours, in published figures.** The truth set on the scope tree has
+  **45** cycles, not 41. Traced: codmap **0.0.4** from PyPI (the first release with R1-C29) on the same
+  staging gives the same 266 import edges and 1 eager + 44 lazy = **45**, set-equal to the enumeration;
+  the edge set of 0.0.22 differs from 0.0.4's by one edge's scope (`zones.cache → zones.pipeline` is now
+  `type_checking`), not by an edge. **41 was counted on bquant@f4992d7** — the live tree on 2026-08-28,
+  54 commits after the scope commit cb89a24 (88 modules, 276 import edges, 41 cycles: reproduced). The
+  R1-C29 gap measured the live tree; the CodeGraph card then scored a cycle list from **cb89a24** against
+  it. So the published 1.6.0 recall was **28.9 %, not 32 %**; precision 9.6 % rounds to the 10 % that
+  was published; codemap's own "before" row is 1 of 45 (2.2 %), not 1 of 41 (2.4 %); and the "after
+  R1-C29" row on this tree is 45 of 45.
+- **C4 — held.** 1.6.0 reports `[["cache.py","settings.py"]]` on the repro.
+- **C5 — held.** Both versions: `Telemetry: disabled (DO_NOT_TRACK environment variable)`.
+
+### Predictions
+
+- **P1 — held.** 136 → 25.
+- **P2 — held.** 9.6 % → 64 %.
+- **P3 — held.** The `core/config ⇄ core/cache` cycle is gone.
+- **P4 — held, both halves.** All six edges are gone, the subscript receiver (`MAPPING[k].get(…)`,
+  config.py:315) as well as the call-result ones. The weak half was wrong to be weak.
+- **P5 — held.** The two-file repro reports no cycle.
+- **P6 — held.** All five cut answers carry `total` and `truncated: true`, plus `limit`, `ambiguous`,
+  `aggregation`; the human header prints `20 of 79`.
+- **Recall (no prediction):** 13 → 16 of 45. **No truth set lost**; three gained
+  (`analysis ⇄ analysis.statistical`; `zones.strategies.registry → core.config → core.logging_config`;
+  `indicators.base ⇄ indicators.custom.macd`).
+
+Decision rules: C2 held → **R2** applies (every quote site gets the version and the 1.6.2 figure).
+P1 and P5 held → **R3** applies (one comment on #1566, with the correction owed). No prediction failed.
+
+### Surprises
+
+- **S1 — C3 above.** The largest finding of the run is about us: a truth set from a different commit,
+  published in the README, `docs/whole-graph-questions.md`, the card, the R1-C29 gap, post 06 (both
+  languages), `positioning.md` and `00_landscape.md`. Nothing in any of them named the commit the 41
+  came from, which is why it survived seven weeks: the tables looked like one measurement.
+- **S2 — the nine false cycles of 1.6.2, classified one by one** (the 1.6.0 card sampled six edges):
+  - **5** route through `research/notebooks/02_ind_types.py`: `from scipy import stats` in five package
+    modules is bound to a module-level variable `stats = …` in that notebook — an **external import
+    resolved to a same-named project symbol**. 4 such edges in 1.6.0, 5 in 1.6.2. This is the Python
+    sibling of their closed **#2101** (TypeScript: `import { app } from "electron"` → local `App`) and of
+    the open #2491 (`node:` built-ins); no Python report of it was found in their tracker. **Not filed** —
+    reporting it is the owner's call.
+  - **2** route through `zone.to_dict()` in `sequence_analysis.py`, where `zone` is a `ZoneFeatures`
+    (guarded by `isinstance`), bound to `Zone::to_dict` in `zones/__init__.py` — a name match between
+    two **project** classes, which the built-in guard of #1790 is not meant to catch.
+  - **2 are real runtime dependencies the truth cannot see.** `zones.models → visualization.zones` goes
+    through `import_module(...)` + `getattr(…, 'ZoneVisualizer')` — no import statement exists, and
+    `visualization.zones` imports `models` back. `indicators.macd → zones.pipeline` is a lazy
+    `from bquant.analysis.zones import analyze_zones`: the truth has the cycle through the package
+    `analysis.zones`, CodeGraph attributes it to the defining module `pipeline`, so the node sets differ.
+    Scored false by the pre-registered rule and left so (R4); read as "runtime dependency cycles",
+    precision would be 18 / 25.
+- **S3 — the answer gained a kind of caller.** `analyze_zones` and `get_logger` now list `variable`
+  callers (24 and 56), so their totals grew (72 → 95, 104 → 160); the three class symbols are unchanged
+  (79, 62, 51). `analyze_zones` reports `ambiguous: true` with "2 distinct definitions (narrow with
+  --file)". The card's T1 line "ambiguity is never flagged" was about `query`, which was not re-run, so
+  it stays labelled 1.6.0 — but on `callers` it is now flagged.
+- **S4 — our own harness double-counted rows on the first run.** 1.6.2 repeats the top-level `callers`
+  inside `definitions[].callers`; counting both gave 40 for 20. Fixed before this reconciliation (the
+  top-level list wins); the scalars (`total`, `truncated`) and the M1 scoring were never affected.
+- **S5 — release watch.** The re-measure obligation sat in the backlog for 12 days past the release
+  because nothing checks npm. Recorded, not fixed: a watcher for one peer is not worth a mechanism.
+
+### What this does not establish
+
+Everything in §5, plus: 1.6.1 alone; whether the 2 project-class `to_dict` edges are a pattern beyond
+this tree; precision of `findDeadCode()`; T2's symbol-level caller set for `MACDZoneAnalyzer` beyond its
+count (79, same as 1.6.0 — not compared row by row).

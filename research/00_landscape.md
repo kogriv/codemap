@@ -197,7 +197,7 @@ competitors, not the canonical infrastructure the matrix catalogues:
 
 | Tool | Mechanism | Artifact | Verdict (measured) | Card |
 |---|---|---|---|---|
-| CodeGraph | tree-sitter + Rust kernel, SQLite+FTS5, 20 languages | 15.5 MB SQLite, **different md5 across builds** | learn-only (strong) — fastest peer measured; its cycle finder reported 136 where 41 were real | [codegraph](tools/codegraph.md) |
+| CodeGraph | tree-sitter + Rust kernel, SQLite+FTS5, 20 languages | 15.5 MB SQLite, **different md5 across builds** | learn-only (strong) — fastest peer measured; its cycle finder reported 136 where 45 were real (1.6.0; 25 reported, 16 real in 1.6.2) | [codegraph](tools/codegraph.md) |
 | GitNexus | graph DB + embeddings + RRF, LLM-free indexing | 123 MB binary DB, not diffable | learn (strong peer, different niche) — transitive import-closure impact richer than ours, file-level and provenance-blind | [gitnexus](tools/gitnexus.md) |
 | OntoIndex | tree-sitter, 14 languages, vendored Cypher store | not reproducible build-to-build | learn — **the closest epistemic model in the field**: per-edge resolution reason with a graded confidence | [ontoindex](tools/ontoindex.md) |
 | graphlens | LSP-backed (`ty`), watch mode | 31 MB SQLite, not diffable | learn (competent peer; overlaps our thesis) — cross-boundary resolution *into* dependencies, which we lack | [graphlens](tools/graphlens.md) |
@@ -219,7 +219,8 @@ survived measurement only because it was made smaller while being tested.
   implemented the idea we found in a competitor, and the entry we had written for it turned out to describe
   our own tool wrongly.
 - **Our recall was worse than a peer's, and we phrased the gap as a property.** CodeGraph's library cycle
-  finder scored precision 10% / recall 32%; codemap scored 100% / **2.4%** — and reported the result as
+  finder scored precision 10% / recall 29% (1.6.0; 64% / 36% in 1.6.2); codemap scored 100% / **2.2%**
+  (*corrected 2026-10-15* from 32% / 2.4%, a truth set from a later commit) — and reported the result as
   *"import graph is acyclic"*. Fixed the same day (R1-C29), but the lesson outlives it: a whole-graph answer
   inherits every flaw of the graph it is computed from, **including the edges that graph never read**.
 
@@ -233,8 +234,8 @@ then turn the question inward* — produced more than the ten candidates did.
 
 It also runs outward. One issue and one comment were filed upstream on CodeGraph; **both were fixed by the
 author** ([#1639](https://github.com/colbymchenry/codegraph/issues/1639) → PR #1772,
-[#1566](https://github.com/colbymchenry/codegraph/issues/1566) → PR #1790, both 2026-09-08, neither
-released). A measured report with a minimal repro gets acted on; a verdict about someone's tool does not
+[#1566](https://github.com/colbymchenry/codegraph/issues/1566) → PR #1790, both 2026-09-08, released in
+1.6.1 and re-measured on 1.6.2: [re-measure](codegraph_remeasure.md)). A measured report with a minimal repro gets acted on; a verdict about someone's tool does not
 have to be a takedown to be useful.
 
 ### Where this map is still desk-level
@@ -244,9 +245,9 @@ have to be a takedown to be useful.
 - **The five families predate the live roster.** Four of the five tools in the table above do not fit the
   families cleanly — they are all "AI-context + code-graph + MCP" at once, which is the category the field
   actually converged on, and the taxonomy has not been redrawn to match.
-- **Every number in the peer cards describes the version measured.** CodeGraph's four fixes are merged and
-  **unreleased** (npm `latest` is still 1.6.0), so its figures stop being true at their next release; the
-  re-measurement is logged as its own backlog item rather than left to rot here.
+- **Every number in the peer cards describes the version measured.** CodeGraph's four fixes shipped in 1.6.1
+  (2026-09-29); the cycle, truncation and repro figures were re-measured on 1.6.2 on 2026-10-15
+  ([re-measure](codegraph_remeasure.md)). Its other figures (speed, T1–T4, watcher) still describe 1.6.0.
 
 ### Update 2026-09-16 — a family the map had no row for
 

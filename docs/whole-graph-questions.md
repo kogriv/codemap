@@ -256,7 +256,7 @@ cards: [research/comparison.md](../research/comparison.md).
 | | symbol lookup | callers | impact | **argument contract** | **layers / cycles** |
 |---|---|---|---|---|---|
 | **codemap** | ✅ | ✅ | ✅ | **✅** | **✅** |
-| [CodeGraph](../research/tools/codegraph.md) (68k ★) | ✅ | ✅ | ✅ | ✖ | ✖ CLI/MCP · ◐ library-only cycles, **136 vs 1**¹ |
+| [CodeGraph](../research/tools/codegraph.md) (68k ★) | ✅ | ✅ | ✅ | ✖ | ✖ CLI/MCP · ◐ library-only cycles, **136 vs 1** (1.6.0; 25 in 1.6.2)¹ |
 | [GitNexus](../research/tools/gitnexus.md) | ✅ | ◐ | ✅ | ✖ | ◐ cycles + clusters, no layers/coupling |
 | [graphlens](../research/tools/graphlens.md) | ✅ | ✅ | ✅ | ✖ | ✖ |
 | [cocoindex-code](../research/tools/cocoindex-code.md) | ◐ | — | — | — | — |
@@ -272,23 +272,31 @@ to a `MemoryCache::get` in another file, and six of six sampled edges into that 
 [card](../research/tools/codegraph.md) shows the source lines.
 
 **And then the same probe came back at us, within the day.** Scored against every intra-package import
-rather than against codemap's own output, there are **41** cycles on that tree, not 1: codemap's import
+rather than against codemap's own output, there are **45** cycles on that tree, not 1: codemap's import
 map was module-level only, so a `from x import y` inside a function was invisible to it — and that is
-exactly the import a developer writes *to break a cycle*. Precision 100%, recall **2.4%**, against the
-peer's 10% and 32%. Their much-criticised mechanism is what bought them the recall, because the call tier
+exactly the import a developer writes *to break a cycle*. Precision 100%, recall **2.2%**, against the
+peer's 10% and 29%. *(Corrected 2026-10-15: this paragraph said 41, 2.4% and 32% — the 41 came from a
+later commit than the measured tree; see the [re-measure](../research/codegraph_remeasure.md) §7.)* Their much-criticised mechanism is what bought them the recall, because the call tier
 does see those imports.
 
 Fixed the same day ([R1-C29](../gaps/import_map_module_level_2026-08-28.md), from
 [issue #11](https://github.com/kogriv/codemap/issues/11)): function-local imports are in the map, tagged;
 import cycles stay the *eager* ones, because a lazy import is how that failure is prevented and reporting
 it as a cycle would call someone's fix a bug; the cycles that close only through a lazy import get their
-own section. The tool's 41 are now set-identical to an independent AST scan's 41. A third scope
+own section. The tool's cycles are now set-identical to an independent enumeration (41 on the tree the
+gap measured, 45 on the scope tree). A third scope
 joined them later ([R1-C48](../gaps/type_checking_imports_2026-09-06.md), issue #18): an import under
 `if TYPE_CHECKING:` never runs, so it is not eager either — the gate had been red on the dogfood
 target's one such import. Two things stayed
 learned rather than fixed: the affirmative sentence *"import graph is acyclic"* is gone from all three
 renderers that carried it, and **a tool cannot be the judge of its own recall** — the truth set has to
 come from outside it.
+
+**Re-measured on the peer's 1.6.2 (2026-10-15).** The fixes for the edges we reported shipped in 1.6.1:
+on the same staging the library now reports **25** cycles, 16 of them real — precision **64%**, recall
+**36%** of 45, no real cycle lost. Five of the nine false ones still come from one edge class (an
+external `from scipy import stats` bound to a notebook variable named `stats`). The surface is
+unchanged: still library-only. [Re-measure](../research/codegraph_remeasure.md).
 
 So the accurate statement is narrower and holds up better under checking: two of the five columns are
 unfilled by every peer **on any surface a caller can actually reach**, and the single implementation that

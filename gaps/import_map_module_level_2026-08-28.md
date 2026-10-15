@@ -103,6 +103,13 @@ The comparison is not wrong in a way that flatters us by accident, either — th
 call edges, and the call tier *does* see function-local imports (§2). That is precisely why it finds
 13 of 41 where we found 1. The mechanism we criticised is the mechanism that gave it recall.
 
+**Correction, 2026-10-15** ([re-measure](../research/codegraph_remeasure.md) §7, C3). §3 measured the live
+bquant of that day (**f4992d7**: 88 modules, 276 import edges, 41 cycles — reproduced). The CodeGraph row
+above is CodeGraph's output on the **R2 scope tree, cb89a24**, 54 commits earlier, where the same
+enumeration gives **45** (and codmap 0.0.4 reports 1 + 44, set-equal). So the table mixed two trees: on
+cb89a24 the rows are 1/45 (2.2%), 136 → 13/45 (precision 9.6%, recall 28.9%), and 45/45. The direction of
+every conclusion stands; the recall figures were wrong. CodeGraph 1.6.2 on cb89a24: 25 reported, 16 real.
+
 ## 5. Decision
 
 Three levels, and the first two ship together because they are the same commitment as R1-C28 —

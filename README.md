@@ -71,18 +71,24 @@ answer.
 
 That sentence used to end at "None answers these", and a second pass over the 68k-star tool made it
 narrower: its *importable library* does carry a cycle finder, reachable from neither its CLI nor its MCP
-tools and called nowhere in its own source. Measured on the same tree it reports **136 cycles**; codemap
-reports **1**. Scoring both against the truth set — every intra-package import, function-local ones
-included — is less flattering than that sounds:
+tools and called nowhere in its own source. Measured on the same tree (its 1.6.0) it reported **136
+cycles**; codemap reported **1**. Scoring both against the truth set — every intra-package import,
+function-local ones included — is less flattering than that sounds:
 
-| | reported | of the 41 real ones | precision | recall |
+| | reported | of the 45 real ones | precision | recall |
 |---|---:|---:|---:|---:|
-| codemap, that morning | 1 | 1 | 100% | **2.4%** |
-| the peer's library API | 136 | 13 | 10% | 32% |
-| codemap, after R1-C29 | 41 | 41 | 100% | 100% |
+| codemap, before R1-C29 | 1 | 1 | 100% | **2.2%** |
+| the peer's library API, 1.6.0 | 136 | 13 | 10% | 29% |
+| the peer's library API, **1.6.2** (re-measured 2026-10-15) | 25 | 16 | **64%** | 36% |
+| codemap, after R1-C29 (0.0.4) | 45 | 45 | 100% | 100% |
 
-Theirs over-reports because it walks name-resolved call edges — a `dict.get` becomes a call into an
-unrelated class. **Ours under-reported because its import map was module-level only**, and it phrased
+*Corrected 2026-10-15.* This table first said **41** real cycles, recall 32% and 2.4%. The 41 were counted
+on a later commit of the same repository than the one both tools were measured on; on the measured tree
+there are 45 ([re-measure](research/codegraph_remeasure.md) §7, C3). The peer fixed the call edges we
+reported and its 1.6.2 row is the current one.
+
+Theirs over-reported because it walks name-resolved call edges — a `dict.get` became a call into an
+unrelated class (fixed upstream in 1.6.1). **Ours under-reported because its import map was module-level only**, and it phrased
 that as *"import graph is acyclic"* — a property claim over a partial map, which is the worse of the two
 errors even though it was the smaller one. Both halves of that came from
 [#11](https://github.com/kogriv/codemap/issues/11), filed off a different target and fixed the same day

@@ -131,18 +131,18 @@ def _callers(prefix: Path, tree: Path, sym: str, limit: int | None) -> dict:
 
 
 def _rows(js) -> list[dict]:
-    """Caller rows, whatever the envelope — flat ``callers`` or per-definition groups."""
+    """Caller rows, whatever the envelope.
+
+    1.6.0 returns ``{symbol, callers}``. 1.6.2 returns the same top-level ``callers`` **and**
+    repeats them per definition under ``definitions[].callers``; counting both doubles every row,
+    so the top-level list wins whenever it exists.
+    """
     if isinstance(js, list):
         return [r for r in js if isinstance(r, dict)]
-    out = []
-    for k, v in js.items():
-        if k == "callers" and isinstance(v, list):
-            out += [r for r in v if isinstance(r, dict) and "filePath" in r]
-        elif isinstance(v, list):
-            for d in v:
-                if isinstance(d, dict) and isinstance(d.get("callers"), list):
-                    out += d["callers"]
-    return out
+    if isinstance(js.get("callers"), list):
+        return [r for r in js["callers"] if isinstance(r, dict)]
+    return [r for d in js.get("definitions") or [] if isinstance(d, dict)
+            for r in d.get("callers") or [] if isinstance(r, dict)]
 
 
 def _header(prefix: Path, tree: Path, sym: str) -> str:
@@ -183,13 +183,14 @@ def run(a) -> None:
     tree = work / "tree"
     shutil.copytree(a.stage, tree)
     version = json.loads((_sdk(prefix) / "package.json").read_text())["version"]
-    tele = _run([_cli(prefix), "telemetry"]).stdout.strip().splitlines()
+    tele = [ln.strip() for ln in _run([_cli(prefix), "telemetry"]).stdout.splitlines()
+            if "disabled" in ln.lower() or "enabled" in ln.lower()]
     status = _index(prefix, tree)
     cycles = [[p.replace(str(tree) + "/", "") for p in c] for c in _cycles(prefix, tree)]
     truth = [frozenset(c) for c in json.loads(Path(a.truth).read_text())["cycles"]]
     pair = frozenset({"bquant.core.config", "bquant.core.cache"})
     res = {
-        "version": version, "telemetry": tele[-1] if tele else "",
+        "version": version, "telemetry": tele,
         "status": status,
         "cycles": score(cycles, truth),
         "config_cache_cycle": any(frozenset(filter(None, map(_module, c))) == pair

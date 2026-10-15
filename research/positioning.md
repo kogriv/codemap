@@ -619,7 +619,8 @@ Every post in this series ends on the same standing line: *measured your tool an
 issue.* Two of ours were open in CodeGraph's tracker when post 6 went out — [#1639](https://github.com/colbymchenry/codegraph/issues/1639)
 (`callers`/`callees`/`query` truncating at `--limit 20` with nothing in the response saying so) and a
 comment on [#1566](https://github.com/colbymchenry/codegraph/issues/1566) (name-matched receivers
-fabricating call edges, hence **136 reported cycles where the package has 1**).
+fabricating call edges, hence **136 reported cycles where the package has 1** — as we then believed; the
+all-imports truth on that tree is 45, see below).
 
 **Both were answered and fixed on the same day, eleven days in.** #1639 closed as completed by
 [PR #1772](https://github.com/colbymchenry/codegraph/pull/1772) in the morning; #1566 itself at 19:01,
@@ -643,6 +644,10 @@ Three things there are worth keeping, and only one of them is about them.
    still describes shipping behaviour. Backlog item **R2-codegraph** holds the obligation: when a release
    ships, re-measure before quoting 136-vs-41 or the truncation behaviour again. Publishing a fixed defect's
    numbers is the same offence as an unmarked truncation.
+   **Done 2026-10-15, on 1.6.2** ([re-measure](codegraph_remeasure.md)) — twelve days after the release,
+   because nothing watched for it. 136 → 25 reported cycles, precision 10% → 64%, the truncation marked,
+   the two-file repro clean. And the re-measure found our own error first: the "41" was counted on a later
+   commit than the measured tree, which has **45** — so "136 vs 41" was never the right pair either.
 3. **One line of ours was wrong, in this series' characteristic direction.** An earlier revision of the card
    read *"still zero comments, eleven days on, while the author closed two other issues that morning"* —
    written at midday and already false by the afternoon. The waiting was real; the shape read into it was

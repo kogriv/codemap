@@ -84,7 +84,10 @@ byte-size), the artifact does not (different md5), and `query` carries a wall-cl
 **one answer changes when nothing about the code did**. **Trap:** `--limit` defaults to **20**, the
 file-kind rows sort first, and there is **no `truncated` flag** — the default answer reads as a file-import
 model when the real one is symbol-level. Also ships the **debounced file watcher** codemap deferred
-(**121 ms** incremental sync). See the [card](tools/codegraph.md).
+(**121 ms** incremental sync). See the [card](tools/codegraph.md). **1.6.2 (re-measured 2026-10-15):** the
+trap is fixed — a cut answer carries `total` and `truncated`, the header reads `20 of 79` — and the
+library cycle finder went from 136 reported to 25 (16 of 45 real); the rest of this footnote is 1.6.0
+([re-measure](codegraph_remeasure.md)).
 
 ⁵ OntoIndex (2.2.0), hands-on on the R2 scope (materialized staging from `git archive cb89a24`, `scope_id`
 verified; second staging for the clean-room A/B). A GitNexus descendant under **AGPL-3.0**, far past its
@@ -184,7 +187,7 @@ ambiguous simple name. Both are the same axis, and on Go **neither was exercised
 | tool | what it claims for Go | mechanism | license | the caveat we would check first |
 |---|---|---|---|---|
 | **graphlens** | typed graph | tree-sitter + a **per-language LSP resolver** — `gopls` for Go (`ty` for Python, `intelephense` for PHP) | MIT | `gopls` must be on `PATH`; absent, you get a weaker graph and no refusal. Its card says outright that the non-Python resolvers are **untested here** |
-| **CodeGraph** | symbol/call graph, 20 languages | Rust kernel, grammars compiled in; `src/resolution/frameworks/go.ts` exists in its source | MIT | our numbers describe **1.6.0**; four fixes sit unreleased in `main` (re-measure logged as its own backlog item) |
+| **CodeGraph** | symbol/call graph, 20 languages | Rust kernel, grammars compiled in; `src/resolution/frameworks/go.ts` exists in its source | MIT | our numbers describe **1.6.0**, except cycles, truncation and the repro — re-measured on **1.6.2** ([re-measure](codegraph_remeasure.md)) |
 | **GitNexus** | knowledge graph, 14 languages | tree-sitter + LadybugDB + local embeddings | **PolyForm NC** | non-commercial licence; the artifact is a 123 MB binary and does not diff |
 | **OntoIndex** | same, GitNexus fork for 10k+ files | tree-sitter, 14 languages | AGPL-3.0 | on our Python scope **the graph did not reproduce** (10 745/20 232 vs 10 747/20 227 nodes/edges) |
 | **cocoindex-code** | semantic search only | embeddings, multi via tree-sitter | Apache-2.0 | answers no structural question at all |
