@@ -88,8 +88,11 @@ so the build falls back to it (reported as `mode: full`).
   This is structural rather than an oversight — `unresolved` means *we do not know where
   the edge went*, so that set cannot be indexed by the changed module, which is exactly
   what the rule needs. What the tool does about it today is **say so**: such a graph
-  carries `provenance.incremental: true` and a `note` wherever it is presented. The doors
-  that would actually close it are BACKLOG R1-C43.
+  carries `provenance.incremental: true` and a `note` wherever it is presented, and every
+  op that reads an edge class the splice copies adds a second reason to its `epistemic`
+  block naming the splice. `--repeat N` (above) narrows the misses that come from single
+  sampling; nothing narrows the skipped module itself, and that is where BACKLOG R1-C43
+  closed (2026-10-15).
   [Measurement](../gaps/incremental_noise_persistence_2026-09-02.md).
 
   **So:** if you need a deep graph to reason about *absence* — "nothing calls this", "this
