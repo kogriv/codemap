@@ -167,7 +167,15 @@ No prediction failed.
     resolved to a same-named project symbol**. 4 such edges in 1.6.0, 5 in 1.6.2. This is the Python
     sibling of their closed **#2101** (TypeScript: `import { app } from "electron"` → local `App`) and of
     the open #2491 (`node:` built-ins); no Python report of it was found in their tracker. **Not filed** —
-    reporting it is the owner's call.
+    reporting it is the owner's call. *Filed 2026-10-15 on the owner's decision: [#2566](https://github.com/colbymchenry/codegraph/issues/2566).*
+    Checked before filing: two files reproduce it on 1.6.2 and on their `main` (eec9288a); so does
+    `from os import path`, so it is the `from <external> import name` form, not scipy;
+    `import scipy.stats as stats` does not, and a renamed variable (control) does not. The open PR #1921
+    (head b9840f6c, a Python resolver rework whose description covers only the file-suffix case of
+    #2409) removes the edge in every form. On this tree its build reports 22 cycles: the 5 through the
+    notebook are gone, true sets hit stay 16 of 45, and the 2 sets it reports that `main` does not are
+    walks over edges `main` already has (the re-export attribution of `analyzer → statistical`), not new
+    edges.
   - **2** route through `zone.to_dict()` in `sequence_analysis.py`, where `zone` is a `ZoneFeatures`
     (guarded by `isinstance`), bound to `Zone::to_dict` in `zones/__init__.py` — a name match between
     two **project** classes, which the built-in guard of #1790 is not meant to catch.
