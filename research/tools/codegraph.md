@@ -424,6 +424,9 @@ name. And two are **real** runtime dependencies our import-statement truth canno
 `import_module` + `getattr`, and a lazy import attributed to the defining module rather than the
 re-exporting package) — scored false by the pre-registered rule and left so.
 
+Reported back on #1566 ([comment](https://github.com/colbymchenry/codegraph/issues/1566#issuecomment-6182481340)), with the correction owed there: our first comment called the
+tree's cycle count "1 (a genuine one)" — that is the eager count; all imports give 45.
+
 What was **not** re-run, and still describes 1.6.0: speed, T1, T3, T4, determinism, the watcher, MCP.
 Also new on `callers`: `variable` rows (24 for `analyze_zones`, 56 for `get_logger`) and an explicit
 `ambiguous: true` — "2 distinct definitions (narrow with --file)" — for `analyze_zones`.

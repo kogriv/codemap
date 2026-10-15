@@ -151,7 +151,9 @@ set, both versions, every reported cycle). Pre-registration commit: `6f38c07`.
   `indicators.base ⇄ indicators.custom.macd`).
 
 Decision rules: C2 held → **R2** applies (every quote site gets the version and the 1.6.2 figure).
-P1 and P5 held → **R3** applies (one comment on #1566, with the correction owed). No prediction failed.
+P1 and P5 held → **R3** applies (one comment on #1566, with the correction owed — [posted](https://github.com/colbymchenry/codegraph/issues/1566#issuecomment-6182481340) the same
+day: before/after, and "1 genuine cycle" corrected to 1 eager of 45; the `scipy.stats` finding not included).
+No prediction failed.
 
 ### Surprises
 
