@@ -644,6 +644,28 @@ gate is run on a copy of their tree at `1c34925`, with both published versions a
   counting as enforced. If their contract names a layer the graph lacks, 0.0.22 says so, and that would
   be the one change in substance.
 
+Reconciled after the run. The tree is `1c34925`, both versions come from PyPI, `PYTHONHASHSEED=7`.
+
+```
+                         0.0.17                       0.0.22
+clean tree, check        exit 0                       exit 0, + `_answer format 2 · schema 0.13_`
+mutation, check          exit 2, two chains listed    exit 2, one chain + "tangle of 3" naming zcast
+graph, clean / mutation  3044 nodes, 7814 / 7815 edges    identical node and edge sets
+`imports` edges          233 / 234                    identical
+```
+
+E1, E2 and E4 hold. On E4 the result is stronger than predicted: the whole graph is identical, not only
+its `imports` edges. R1-C62 is silent. Their contract carries no layer rules, only the three cycle
+rules, so it has nothing to name. **E3 holds on the exit code but not word for word.** Their recipe
+asks for "exit 2, both chains named". 0.0.22 lists one example chain and names `zcast` as a member of
+the tangle. That is the 0.0.20 unit of a cycle (R1-C58), and it was announced to bquant. The lab was
+never told, and their check is written against the old wording. The notice says so.
+
+**A surprise in my own harness.** The first pass printed `exit=0` for the mutation, beside a report
+saying the rule was broken. The cause: `echo "… $(basename $T) exit=$?"` runs a command substitution
+before `$?` is read, so the substitution reset it to 0. The report and the exit code disagreed, and the
+report was right. Exit codes now come from `rc=$?` on the line right after the command.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
