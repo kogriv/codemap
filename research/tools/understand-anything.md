@@ -375,3 +375,94 @@ bound for those phases.
 - Run-to-run variance (one run).
 - How the LLM layer handles the embedded sample-data modules, which are not in the slice.
 - Any model other than Sonnet 5.5.
+
+## 4. Pilot — what happened, reconciled
+
+Harness: [`research/bench/understand_anything_pilot.py`](../bench/understand_anything_pilot.py). Results:
+[`understand_anything_pilot_results.json`](../bench/understand_anything_pilot_results.json).
+
+**Attempt 1 stopped at a human gate, as designed.**
+- Phase 0.5 generates `.understandignore` and **waits for the user's confirmation**. Headless, the run
+  ended there: "success", 4 turns, **$0.17**, nothing analyzed.
+- The run also listed a stray empty file, `ok`. That was my sandbox write probe left in the slice; it
+  was removed before attempt 2.
+- Attempt 2 started from a clean `.ua/`. The prompt answered the gate in advance, as a user would:
+  "the generated `.understandignore` is reviewed and accepted as is — continue through all phases
+  without waiting". That is the **one deviation** from an interactive run. No other gate was hit.
+
+**Attempt 2 completed: 108 s wall, $0.708 API-equivalent, all on `claude-sonnet-5-5`.**
+
+| | tokens |
+|---|---|
+| cache reads | 1 253 916 |
+| cache writes | 123 014 |
+| plain input | 60 |
+| output | 19 064 (523 of them thinking) |
+
+The graph has:
+- **nodes:** 102 — 9 file, 32 class, 61 function;
+- **edges:** 198 — imports 12 · contains 93 · exports 93;
+- **layers:** 4;
+- **tour:** 7 steps.
+
+| | expected | measured | |
+|---|---|---|---|
+| Q1 completion under the cap | graph written | written, on attempt 2 (attempt 1 stopped at the Phase 0.5 gate) | ✅ with the gate noted |
+| Q2 imports 1:1 | identical sets | 12 = 12, identical | ✅ |
+| Q3 `calls` | ≥ 1 cross-file edge, precision ≥ 80 % | **0 `calls` edges** (also 0 `inherits`, 0 `depends_on`); codemap has 4 cross-file call pairs on the slice | ❌ |
+| Q4 cost | 3–12 M input · 30–150 k output · $0.5–5 · 10–40 min | 1.38 M · 19 k · **$0.71** · **108 s** | input, output and time below the range; cost inside it |
+| Q5 attribution | splittable by agent | splittable, with one defect (below) | ◐ |
+
+**Usage by agent.** The cost split uses price-ratio weights; see the harness docstring.
+
+| agent | messages | input incl. cache | cost share |
+|---|---|---|---|
+| orchestrator | 16 | 934 k | $0.44 |
+| file-analyzer, batch 1 (33 kB) | 5 | 159 k | $0.13 |
+| file-analyzer, batch 2 (69 kB) | 4 | 126 k | $0.07 |
+| file-analyzer, batch 3 (40 kB) | 5 | 158 k | $0.08 |
+
+### Surprises
+
+- **S4 — the orchestrator shortened the pipeline on its own.** Its final report says so: it "built the
+  layers and tour directly … instead of dispatching the architecture-analyzer, tour-builder and
+  assemble-reviewer agents", and "replaced the review with an inline structural check". It also
+  reports that some file and class summaries were "written from names and line ranges, not source"
+  (`exceptions.py`, `nb.py`, `numpy_fix.py`, `NotebookSimulator`), and that no analyzer ran its edge
+  validation pass. Three of the seven phases' agents were never dispatched. **The skill's design was
+  not what ran.** The model decided what the run would be, and its report says so.
+- **S5 — no semantic edges at all.** Everything in the graph beyond `imports` is `contains`/`exports`,
+  which mirror the deterministic structure. The model contributed summaries, 4 layer names and a 7-step
+  tour. It contributed not a single relationship. codemap's 4 cross-file call pairs on the slice:
+  - `cache → config`
+  - `cache → logging_config`
+  - `performance → cache`
+  - `performance → logging_config`
+
+  None of them appears.
+- **S6 — 3 batches, not 1.** The 9 files went to three file-analyzers, not the single one §3.1
+  expected.
+- **S7 — the harness under-counts output per message.** The per-message `usage` in `stream-json`
+  sums to ~2 k output tokens against the session's 19 064, so the per-agent split carries that
+  error. Totals come from the session's `modelUsage`, which is the host's own figure.
+
+### Extrapolation (rule §3.3, applied as fixed)
+
+- **Analyzer cost per kB of source:** $0.27 for 142 kB of slice, about **$0.0019/kB**.
+- **Full tree:** 4 388 kB → **$8.4** across the analyzers, plus the orchestrator's $0.44.
+- **Result: ≈ $8.8.** Putting all the unattributed output on the analyzers (S7) gives **≈ $11.8**.
+- **Read it as a lower bound of ~$9–12 API-equivalent per full run on Sonnet 5.5.** Three reasons:
+  - the skipped phases (S4) cost nothing here;
+  - the orchestrator's context grows with 19 batches, which the rule cannot see;
+  - the 0.74 MB of embedded sample-data modules are priced at the slice's per-kB rate.
+- **Wall time:** with 5 analyzers at a time, the pilot's ~1-minute analyzers suggest **tens of
+  minutes, not hours**. That is not measured.
+
+**What the pilot changes in the card's verdict:** nothing for T2–T5. On this slice, Sonnet 5.5 added
+no `calls`, `inherits` or `depends_on` edge, so the LLM layer answered none of the structural
+questions codemap is measured on. Its contribution is prose: summaries, layers, a tour. That prose is
+what a newcomer reads first, and it is outside this benchmark's tasks.
+
+**Not established:** behaviour on the full tree (the orchestrator might not skip phases there);
+run-to-run variance; any other model; summary quality. Summaries were not scored, beyond the model's
+own admission that some were written without reading source.

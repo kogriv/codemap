@@ -1,0 +1,120 @@
+{
+ "calls": {
+  "false": [],
+  "missed": [
+   [
+    "bquant/core/cache.py",
+    "bquant/core/config.py"
+   ],
+   [
+    "bquant/core/cache.py",
+    "bquant/core/logging_config.py"
+   ],
+   [
+    "bquant/core/performance.py",
+    "bquant/core/cache.py"
+   ],
+   [
+    "bquant/core/performance.py",
+    "bquant/core/logging_config.py"
+   ]
+  ],
+  "precision": null,
+  "recall": 0.0,
+  "true": 0,
+  "truth_pairs": 4,
+  "ua_pairs": 0
+ },
+ "graph": {
+  "edge_types": {
+   "contains": 93,
+   "exports": 93,
+   "imports": 12
+  },
+  "edges": 198,
+  "layers": 4,
+  "node_types": {
+   "class": 32,
+   "file": 9,
+   "function": 61
+  },
+  "nodes": 102,
+  "present": true,
+  "tour_steps": 7
+ },
+ "imports": {
+  "equal": true,
+  "truth": 12,
+  "truth_only": [],
+  "ua": 12,
+  "ua_only": []
+ },
+ "usage": {
+  "agents": {
+   "orchestrator": {
+    "cache_read_input_tokens": 877938,
+    "cost_share_usd": 0.4368,
+    "cw_1h": 56089,
+    "cw_5m": 0,
+    "input_all": 934059,
+    "input_tokens": 32,
+    "messages": 16,
+    "output_tokens": 984
+   },
+   "understand-anything:file-analyzer: Analyze batch 1": {
+    "cache_read_input_tokens": 123394,
+    "cost_share_usd": 0.1258,
+    "cw_1h": 0,
+    "cw_5m": 35423,
+    "input_all": 158827,
+    "input_tokens": 10,
+    "messages": 5,
+    "output_tokens": 475
+   },
+   "understand-anything:file-analyzer: Analyze batch 2": {
+    "cache_read_input_tokens": 110358,
+    "cost_share_usd": 0.0692,
+    "cw_1h": 0,
+    "cw_5m": 15850,
+    "input_all": 126216,
+    "input_tokens": 8,
+    "messages": 4,
+    "output_tokens": 320
+   },
+   "understand-anything:file-analyzer: Analyze batch 3": {
+    "cache_read_input_tokens": 142226,
+    "cost_share_usd": 0.0761,
+    "cw_1h": 0,
+    "cw_5m": 15652,
+    "input_all": 157888,
+    "input_tokens": 10,
+    "messages": 5,
+    "output_tokens": 376
+   }
+  },
+  "result": {
+   "duration_ms": 31989,
+   "is_error": false,
+   "modelUsage": {
+    "claude-sonnet-5-5": {
+     "cacheCreationInputTokens": 123014,
+     "cacheReadInputTokens": 1253916,
+     "canonicalModel": "claude-sonnet-5-5",
+     "contextWindow": 1000000,
+     "costBasis": "list",
+     "costUSD": 0.7078201000000001,
+     "inputTokens": 60,
+     "maxOutputTokens": 128000,
+     "outputTokens": 19064,
+     "provider": "firstParty",
+     "thinkingTokens": 523,
+     "webSearchRequests": 0
+    }
+   },
+   "num_turns": 5,
+   "subtype": "success",
+   "total_cost_usd": 0.7078201000000001
+  }
+ },
+ "wall_seconds": 108
+}
