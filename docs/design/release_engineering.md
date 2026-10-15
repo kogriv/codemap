@@ -622,6 +622,28 @@ build -o over a 0.0.21 graph       —                         silent (nothing w
 symbol at rank 0, the caller among them. The defect is visible in the rank, not in the presence — which
 is R1-C65's fourth defect showing up in its own release check.
 
+**The second consumer was never told (found 2026-10-15).** bquearch calls `codemap` from its own gate
+(`scripts/codemap_gate.sh`, `uv run --with codmap==X`, the version on one line) and pins **0.0.17**.
+0.0.18–0.0.22 were announced to bquant only: a note of ours said the lab did not depend on `codmap`,
+because the grep read their `pyproject.toml` and the pin lives in a script. Before telling them, their
+gate is run on a copy of their tree at `1c34925`, with both published versions and
+`PYTHONHASHSEED=7`. The expectations below are written before the run:
+
+- **E1, clean tree.** exit 0 on 0.0.17 and on 0.0.22, so the verdict does not move.
+- **E2, text.** The diff of `check` adds the trailer `_answer format 2 · schema 0.13_`. If the lab has
+  function-local cycles, the cycle line is also reworded as tangles (0.0.20). Nothing else changes. If
+  the two outputs are byte-identical, the run did not reach two versions. That is the
+  nothing-was-done control.
+- **E3, mutation.** Their own recipe: a lazy `scenario_scoring` import inside
+  `state_calib.open_leg_outcome_label`, on a copy named `shared`. It gives exit 2 on both versions,
+  with both chains named.
+- **E4, graph.** The `imports` edge sets are identical across the two versions. The full graph may
+  differ only through 0.0.19's re-export and override changes; `.pyi` files under `research/shared`: 0.
+  Any difference is named.
+- **Where a refusal could be heard: R1-C62** (0.0.21). A contract rule that covers nothing stops
+  counting as enforced. If their contract names a layer the graph lacks, 0.0.22 says so, and that would
+  be the one change in substance.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
