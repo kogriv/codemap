@@ -182,6 +182,11 @@ capability exists in the LLM layer). The scripts underneath behave as follows:
   statements only, so imports under `try:` and `from .. import Name` into a package `__init__` are lost
   too, and the file-analyzer agent is instructed not to re-resolve imports from source. See the
   [card](tools/understand-anything.md).
+- **LLM layer, one-run pilot** (Sonnet 5.5, 9-file slice `bquant/core`, $0.71 API-equivalent,
+  108 s): imports equal the deterministic map, and the model wrote **no** `calls`, `inherits` or
+  `depends_on` edge (codemap: 4 cross-file call pairs). The orchestrator skipped the architecture, tour
+  and review agents on its own. A full run extrapolates to ≥ ~$9–12. That is why T2 is ◐ here: the
+  capability exists by design, and on the pilot it produced nothing.
 
 ## Beyond Python — what the `Langs` column is, and what it is not (desk: Go and Rust, 2026-09-29)
 
