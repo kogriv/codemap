@@ -266,3 +266,5 @@ project classes, 2 are runtime dependencies the truth cannot see, and 2 are thos
 
 **Not established:** a release. As of today the fix is only on `main`; 1.6.2 is the latest npm
 version. The card's numbers move when a release carries it, and they are measured again then.
+
+Posted to #2566 on 2026-10-30, on the owner's decision: [comment](https://github.com/colbymchenry/codegraph/issues/2566#issuecomment-6525566909).
