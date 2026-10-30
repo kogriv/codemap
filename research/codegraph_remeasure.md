@@ -202,3 +202,31 @@ No prediction failed.
 Everything in §5, plus: 1.6.1 alone; whether the 2 project-class `to_dict` edges are a pattern beyond
 this tree; precision of `findDeadCode()`; T2's symbol-level caller set for `MACDZoneAnalyzer` beyond its
 count (79, same as 1.6.0 — not compared row by row).
+
+## 8. #2566 after the merge — pre-registration (2026-10-30)
+
+#2566 was closed by the maintainer on 2026-10-20 when PR #1921 merged. The PR body says it "also
+fixes #2566"; a third party reported, before the merge, that it removes both edges. Neither is our
+measurement, and the branch I checked (b9840f6c) is not what merged: four commits followed, among
+them `7c843e24` "keep function-local imports out of the file's mappings". No release carries the
+fix yet (1.6.2 is still the latest). Measured: their `main` at `de0a4eb3`, built from source,
+against 1.6.2 from npm, on the same two inputs as §7.
+
+Expectations, written before the run:
+
+- **F1 — the repro.** The three variants of the issue (`from scipy import stats` against a variable,
+  against a function, `from os import path` against a variable): an `exact-match` edge and a reported
+  cycle on 1.6.2, **no edge and no cycle** on `main`. If 1.6.2 does not show them, the control failed and
+  nothing below is read.
+- **F2 — negative controls.** `import scipy.stats as stats`, and the variable renamed: no edge and no
+  cycle on either build.
+- **F3 — a project import still binds.** In the same repro `report.py → analysis.summary` stays an
+  `imports` edge on both builds. A fix that removed every Python import edge would pass F1 too.
+- **F4 — the tree.** The truth on cb89a24 reproduces: 266 edges, 45 cycles. 1.6.2 reproduces §7:
+  25 reported, 16 true. On `main` the 5 cycles through `02_ind_types.py` are gone.
+- **F5 — the open question, stated as one.** The truth has no cycle of module-level edges only: all 45
+  need a function-local or `TYPE_CHECKING` edge. So the 16 true sets 1.6.2 finds depend on
+  function-local imports being read. If `7c843e24` stops reading them as file-level `imports`, the
+  true hits can fall, possibly to 0. That would be a deliberate choice of theirs, not a regression of
+  #2566. I do not predict which way it goes. Whatever the number is, it is reported, with the edges it
+  turns on.
