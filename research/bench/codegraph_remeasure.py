@@ -178,6 +178,60 @@ def _repro(prefix: Path, work: Path) -> list:
     return _cycles(prefix, d)
 
 
+# #2566 (§8): `from <external> import name` against a same-named project symbol. The first three
+# rows must bind on 1.6.2 (F1); the last two are negative controls (F2). `report.py → summary` is
+# a project import every row must keep (F3).
+ISSUE_2566 = {
+    "scipy_vs_variable": ("from scipy import stats", "stats", "stats = summary([1, 2, 3])\n"),
+    "scipy_vs_function": ("from scipy import stats", "stats",
+                          "def stats():\n    return summary([1, 2, 3])\n"),
+    "os_vs_variable": ("from os import path", "path", "path = summary([1, 2, 3])\n"),
+    "control_import_as": ("import scipy.stats as stats", "stats", "stats = summary([1, 2, 3])\n"),
+    "control_renamed": ("from scipy import stats", "stats", "result = summary([1, 2, 3])\n"),
+}
+
+
+def _file_edges(tree: Path) -> list[list]:
+    db = tree / ".codegraph" / "codegraph.db"
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    q = """SELECT s.file_path, t.file_path, t.kind, t.name, e.kind, e.metadata FROM edges e
+           JOIN nodes s ON s.id = e.source JOIN nodes t ON t.id = e.target
+           WHERE e.kind = 'imports' AND s.file_path != t.file_path"""
+    try:
+        rows = list(con.execute(q))
+    except sqlite3.Error:  # no metadata column
+        rows = [(*r, None) for r in con.execute(q.replace(", e.metadata", ""))]
+    out = []
+    for src, dst, kind, name, ekind, meta in rows:
+        m = json.loads(meta) if meta else {}
+        out.append([Path(src).name, Path(dst).name, f"{kind} {name}", m.get("resolvedBy")])
+    return sorted(out)
+
+
+def issue2566(a) -> None:
+    prefix, work = Path(a.prefix).resolve(), Path(a.work).resolve()
+    res = {"version": json.loads((_sdk(prefix) / "package.json").read_text())["version"]}
+    for case, (imp, name, report_body) in ISSUE_2566.items():
+        d = work / case
+        shutil.rmtree(d, ignore_errors=True)
+        d.mkdir(parents=True)
+        (d / "analysis.py").write_text(f"{imp}\n\n\ndef summary(values):\n"
+                                       f"    return {name}.describe(values)\n")
+        (d / "report.py").write_text(f"from analysis import summary\n\n{report_body}")
+        _index(prefix, d)
+        edges = _file_edges(d)
+        res[case] = {
+            "cycles": _cycles(prefix, d),
+            "external_bound": [e for e in edges if e[0] == "analysis.py" and e[1] == "report.py"],
+            "project_import_kept": any(e[0] == "report.py" and e[1] == "analysis.py" for e in edges),
+        }
+    Path(a.out).write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
+    for case in ISSUE_2566:
+        r = res[case]
+        print(f"{res['version']} {case}: cycles={len(r['cycles'])} "
+              f"bound={len(r['external_bound'])} project_import_kept={r['project_import_kept']}")
+
+
 def run(a) -> None:
     prefix, work = Path(a.prefix).resolve(), Path(a.work).resolve()
     tree = work / "tree"
@@ -244,8 +298,11 @@ def main() -> None:
     t = sub.add_parser("truth")
     t.add_argument("--stage", required=True)
     t.add_argument("--out", required=True)
+    i = sub.add_parser("issue2566")
+    for f in ("--prefix", "--work", "--out"):
+        i.add_argument(f, required=True)
     a = p.parse_args()
-    {"run": run, "truth": truth}[a.cmd](a)
+    {"run": run, "truth": truth, "issue2566": issue2566}[a.cmd](a)
 
 
 if __name__ == "__main__":

@@ -230,3 +230,39 @@ Expectations, written before the run:
   true hits can fall, possibly to 0. That would be a deliberate choice of theirs, not a regression of
   #2566. I do not predict which way it goes. Whatever the number is, it is reported, with the edges it
   turns on.
+
+### 8.1 Reconciled (2026-10-30)
+
+Run with `codegraph_remeasure.py issue2566` and `run`. Raw results, with paths removed, are in
+[`bench/codegraph_issue2566_results.json`](bench/codegraph_issue2566_results.json). `main` still
+calls itself 1.6.2 in its `package.json`, so the two builds are told apart by directory and commit,
+not by the version field.
+
+```
+                                    1.6.2 (npm)             main de0a4eb3 (source)
+from scipy import stats  vs  stats = …       edge + cycle            none
+from scipy import stats  vs  def stats()     edge + cycle            none
+from os import path      vs  path = …        edge + cycle            none
+import scipy.stats as stats (control)        none                    none
+variable renamed (control)                   none                    none
+report.py → analysis.summary kept            yes, every row          yes, every row
+tree cb89a24: cycles reported / true         25 / 16                 22 / 16
+  of them through 02_ind_types.py            5                       0
+truth hit                                    16 of 45                16 of 45
+```
+
+- **F1, F2, F3 hold.** The defect is gone on `main` in all three forms, the controls are clean on
+  both builds, and the project import is kept on both.
+- **F4 holds.** The truth reproduces (266 edges, 45 cycles, scope verified canonical). 1.6.2 reproduces
+  §7 exactly. All 5 cycles through the notebook are gone on `main`.
+- **F5 answered.** True hits stay at 16. `7c843e24` did not stop function-local imports from counting
+  toward cycles, so the 16 sets that need them are still found.
+
+`main` gives the same picture as the PR branch I checked on 2026-10-15 (b9840f6c): 22 cycles, the same
+16 true. The 2 cycles `main` reports and 1.6.2 does not are the same walks over the re-export
+attribution of `analysis → statistical` named in §7. They are new paths through edges 1.6.2 already
+had, not new edges. Of the 6 false cycles left on `main`, 2 are the `to_dict` name match between
+project classes, 2 are runtime dependencies the truth cannot see, and 2 are those walks.
+
+**Not established:** a release. As of today the fix is only on `main`; 1.6.2 is the latest npm
+version. The card's numbers move when a release carries it, and they are measured again then.

@@ -1,0 +1,438 @@
+{
+ "_comment": "§8 of research/codegraph_remeasure.md. cg162 = @colbymchenry/codegraph 1.6.2 from npm; cgmain = their main at de0a4eb362bbe4deb412f79aedcce11ee036dfbc built from source (its package.json still says 1.6.2). Stage: bquant@cb89a24, scope_id verified canonical. Paths removed.",
+ "cg162": {
+  "cycles": {
+   "precision": 0.64,
+   "recall": 0.3556,
+   "reported": 25,
+   "true_reported": 16,
+   "truth": 45,
+   "truth_hit": 16
+  },
+  "cycles_outside_package": 5,
+  "issue2566": {
+   "control_import_as": {
+    "cycles": [],
+    "external_bound": [],
+    "project_import_kept": true
+   },
+   "control_renamed": {
+    "cycles": [],
+    "external_bound": [],
+    "project_import_kept": true
+   },
+   "os_vs_variable": {
+    "cycles": [
+     [
+      "analysis.py",
+      "report.py"
+     ]
+    ],
+    "external_bound": [
+     [
+      "analysis.py",
+      "report.py",
+      "variable path",
+      "exact-match"
+     ]
+    ],
+    "project_import_kept": true
+   },
+   "scipy_vs_function": {
+    "cycles": [
+     [
+      "analysis.py",
+      "report.py"
+     ]
+    ],
+    "external_bound": [
+     [
+      "analysis.py",
+      "report.py",
+      "function stats",
+      "exact-match"
+     ]
+    ],
+    "project_import_kept": true
+   },
+   "scipy_vs_variable": {
+    "cycles": [
+     [
+      "analysis.py",
+      "report.py"
+     ]
+    ],
+    "external_bound": [
+     [
+      "analysis.py",
+      "report.py",
+      "variable stats",
+      "exact-match"
+     ]
+    ],
+    "project_import_kept": true
+   },
+   "version": "1.6.2"
+  },
+  "raw_cycles": [
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/candlestick/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/chart/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/statistical/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/technical/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/timeseries/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py",
+    "bquant/analysis/zones/zone_features.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py",
+    "bquant/analysis/zones/zone_features.py",
+    "research/notebooks/02_ind_types.py",
+    "bquant/indicators/__init__.py",
+    "bquant/indicators/macd.py",
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/analyzer.py",
+    "bquant/analysis/statistical/hypothesis_testing.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py",
+    "bquant/analysis/zones/zone_features.py",
+    "research/notebooks/02_ind_types.py",
+    "bquant/indicators/__init__.py",
+    "bquant/indicators/macd.py",
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/analyzer.py",
+    "bquant/analysis/statistical/regression.py"
+   ],
+   [
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py"
+   ],
+   [
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py",
+    "bquant/analysis/zones/zone_features.py"
+   ],
+   [
+    "bquant/analysis/zones/models.py",
+    "bquant/visualization/zones.py"
+   ],
+   [
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/cache.py"
+   ],
+   [
+    "bquant/analysis/zones/sequence_analysis.py",
+    "bquant/analysis/zones/zone_features.py",
+    "research/notebooks/02_ind_types.py",
+    "bquant/indicators/__init__.py",
+    "bquant/indicators/macd.py",
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/analyzer.py"
+   ],
+   [
+    "bquant/analysis/zones/zone_features.py",
+    "research/notebooks/02_ind_types.py",
+    "bquant/indicators/__init__.py",
+    "bquant/indicators/macd.py",
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/analyzer.py"
+   ],
+   [
+    "bquant/core/config.py",
+    "bquant/analysis/zones/strategies/registry.py",
+    "bquant/core/logging_config.py"
+   ],
+   [
+    "bquant/indicators/__init__.py",
+    "bquant/indicators/macd.py",
+    "bquant/analysis/zones/pipeline.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/bollinger.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/ema.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/macd.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/rsi.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/preloaded/macd.py"
+   ],
+   [
+    "bquant/indicators/custom/sma.py",
+    "bquant/indicators/base.py"
+   ],
+   [
+    "research/notebooks/02_ind_types.py",
+    "bquant/indicators/__init__.py",
+    "bquant/indicators/macd.py",
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/analyzer.py",
+    "bquant/analysis/statistical/hypothesis_testing.py"
+   ]
+  ],
+  "status": {
+   "backend": "node-sqlite",
+   "dbSizeBytes": 17879040,
+   "edgeCount": 14801,
+   "fileCount": 207,
+   "index": {
+    "builtWithExtractionVersion": 27,
+    "builtWithVersion": "1.6.2",
+    "currentExtractionVersion": 27,
+    "pendingRefs": 0,
+    "reindexRecommended": false,
+    "state": "complete"
+   },
+   "indexPath": "<work>/tree/.codegraph",
+   "initialized": true,
+   "journalMode": "wal",
+   "languages": [
+    "python"
+   ],
+   "lastIndexed": "2026-10-30T14:20:02.270Z",
+   "nodeCount": 5113,
+   "nodesByKind": {
+    "class": 292,
+    "file": 207,
+    "function": 537,
+    "import": 1422,
+    "method": 1527,
+    "variable": 1128
+   },
+   "pendingChanges": {
+    "added": 0,
+    "modified": 0,
+    "removed": 0
+   },
+   "projectPath": "<work>/tree",
+   "version": "1.6.2",
+   "walSizeBytes": 0,
+   "worktreeMismatch": null
+  }
+ },
+ "cgmain": {
+  "cycles": {
+   "precision": 0.7273,
+   "recall": 0.3556,
+   "reported": 22,
+   "true_reported": 16,
+   "truth": 45,
+   "truth_hit": 16
+  },
+  "cycles_outside_package": 0,
+  "issue2566": {
+   "control_import_as": {
+    "cycles": [],
+    "external_bound": [],
+    "project_import_kept": true
+   },
+   "control_renamed": {
+    "cycles": [],
+    "external_bound": [],
+    "project_import_kept": true
+   },
+   "os_vs_variable": {
+    "cycles": [],
+    "external_bound": [],
+    "project_import_kept": true
+   },
+   "scipy_vs_function": {
+    "cycles": [],
+    "external_bound": [],
+    "project_import_kept": true
+   },
+   "scipy_vs_variable": {
+    "cycles": [],
+    "external_bound": [],
+    "project_import_kept": true
+   },
+   "version": "1.6.2"
+  },
+  "raw_cycles": [
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/candlestick/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/chart/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/statistical/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/technical/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/timeseries/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/analyzer.py",
+    "bquant/analysis/statistical/hypothesis_testing.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/analyzer.py",
+    "bquant/analysis/statistical/regression.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py"
+   ],
+   [
+    "bquant/analysis/__init__.py",
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py",
+    "bquant/analysis/zones/zone_features.py"
+   ],
+   [
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py"
+   ],
+   [
+    "bquant/analysis/zones/__init__.py",
+    "bquant/analysis/zones/sequence_analysis.py",
+    "bquant/analysis/zones/zone_features.py"
+   ],
+   [
+    "bquant/analysis/zones/models.py",
+    "bquant/visualization/zones.py"
+   ],
+   [
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/analysis/zones/cache.py"
+   ],
+   [
+    "bquant/analysis/zones/pipeline.py",
+    "bquant/indicators/__init__.py",
+    "bquant/indicators/macd.py"
+   ],
+   [
+    "bquant/core/config.py",
+    "bquant/analysis/zones/strategies/registry.py",
+    "bquant/core/logging_config.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/bollinger.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/ema.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/macd.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/rsi.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/custom/sma.py"
+   ],
+   [
+    "bquant/indicators/base.py",
+    "bquant/indicators/preloaded/macd.py"
+   ]
+  ],
+  "status": {
+   "backend": "node-sqlite",
+   "dbSizeBytes": 18145280,
+   "edgeCount": 15089,
+   "fileCount": 207,
+   "index": {
+    "builtWithExtractionVersion": 28,
+    "builtWithVersion": "1.6.2",
+    "currentExtractionVersion": 28,
+    "filesNeedingReindex": 0,
+    "filesWithParseErrors": 0,
+    "frameworksChangedSinceIndex": null,
+    "pendingRefs": 0,
+    "reindexRecommended": false,
+    "state": "complete"
+   },
+   "indexPath": "<work>/tree/.codegraph",
+   "initialized": true,
+   "journalMode": "wal",
+   "languages": [
+    "python"
+   ],
+   "lastIndexed": "2026-10-30T14:20:40.276Z",
+   "nodeCount": 5113,
+   "nodesByKind": {
+    "class": 292,
+    "file": 207,
+    "function": 537,
+    "import": 1422,
+    "method": 1527,
+    "variable": 1128
+   },
+   "pendingChanges": {
+    "added": 0,
+    "modified": 0,
+    "removed": 0
+   },
+   "projectPath": "<work>/tree",
+   "rebuildInProgress": false,
+   "version": "1.6.2",
+   "walSizeBytes": 0,
+   "worktreeMismatch": null
+  }
+ }
+}

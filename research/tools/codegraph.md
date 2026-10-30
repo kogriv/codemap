@@ -418,7 +418,7 @@ Pre-registered before the run ([`codegraph_remeasure.md`](../codegraph_remeasure
 **The nine false cycles that remain, one by one:** five run through `research/notebooks/02_ind_types.py`,
 because `from scipy import stats` in five package modules is bound to a module-level `stats = …` in that
 notebook — an external import resolved to a same-named project symbol, the Python sibling of their
-closed #2101 (TypeScript) and open #2491; we found no Python report of it, and **did not file one** *(filed 2026-10-15 on the owner's decision: [#2566](https://github.com/colbymchenry/codegraph/issues/2566); their open PR #1921 removes the edge — checked on its head b9840f6c)*. Two
+closed #2101 (TypeScript) and open #2491; we found no Python report of it, and **did not file one** *(filed 2026-10-15 on the owner's decision: [#2566](https://github.com/colbymchenry/codegraph/issues/2566); their open PR #1921 removes the edge — checked on its head b9840f6c)*. *Fixed upstream 2026-10-20: PR #1921 merged and #2566 closed by the maintainer. On their `main` (de0a4eb3), measured 2026-10-30: none of the three forms binds, and the tree gives 22 cycles / 16 true, with 0 through the notebook ([remeasure §8](../codegraph_remeasure.md)). Not in a release yet; 1.6.2 is still the latest.* Two
 run through `zone.to_dict()` on a `ZoneFeatures` bound to `Zone::to_dict` — two project classes matched by
 name. And two are **real** runtime dependencies our import-statement truth cannot see (an
 `import_module` + `getattr`, and a lazy import attributed to the defining module rather than the
