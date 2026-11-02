@@ -397,3 +397,36 @@ a namesake, all while reporting success. The licence (FSL) rules out `wrap` and 
   not only in the build output.
 - **Feeds R1-C39 / R1-C13:** a second independent tool that labels resolution per site.
 - **Upstream:** three defects with minimal reproductions (A, B, quickstart). Filing is the owner's call.
+
+## 5. Re-verification before filing — pre-registration (2026-11-02)
+
+The owner decided to file the three defects, after one more check that we have them right. This
+section is written before that check. What is new compared with §1:
+- **Python itself is the reference**, not codemap: `sys.modules` after an import, and `py_compile`.
+- **Every run uses a fresh `HOME`** and a fresh directory, so no cached analyzer or database survives.
+- **A positive control stands next to every defect,** in the same tree.
+
+Read from source before the check: in `main`, Python imports still go through `python-resolve`, and its
+`resolveRelativeImport` is unchanged. The derive builtin `relative_import_resolve` (`builtin.rs`) is
+documented as "the exact port" of that function and is used by no pack yet. The conversion mismatch is
+the Rust serializer (`python_parser.rs`, `"s"`/`"a"`/`"r"`) against the Haskell field
+(`peFvConversion :: !Int`), identical on both refs. The tracker has 13 issues, none about Python.
+
+Expectations:
+
+- **V-A1.** `pkg/sub/__init__.py: from .m import x`. Python loads `pkg.sub.m` (`'pkg.sub.m' in
+  sys.modules`). grafema has no `DEPENDS_ON pkg.sub → pkg.sub.m`.
+- **V-A2, control.** `pkg/sub/a.py: from .m import x` in the same tree. grafema has `pkg.sub.a →
+  pkg.sub.m`.
+- **V-A3.** With `pkg/m.py` also defining `x`, Python still does not load `pkg.m`. grafema has
+  `pkg.sub → pkg.m`.
+- **V-B1.** `!r`, `!s` and `!a` each drop their file. `f"{y}"` and `f"{y:>8}"` keep theirs. All five
+  files compile under `py_compile`. `analyze` exits 0, and without `--verbose` it prints no line that
+  names a dropped file.
+- **V-Q1.** With a fresh `HOME`, `analyze --quickstart` on a Python-only project writes a brace glob,
+  downloads no Python analyzer and yields 0 `MODULE` nodes. Its output contains no warning about
+  missing Python binaries.
+- **V-Q2, control.** The same fresh `HOME` and project with `include: ["**/*.py"]` yields every
+  `MODULE`.
+
+If any control fails, the matching issue is not filed until it is understood.
