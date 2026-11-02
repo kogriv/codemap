@@ -325,9 +325,9 @@ The last three cycles need the two edges that are not defects (the broken import
   It was caught because the result contradicted the toy run. The clean probe uses a fresh `HOME`.
 - **S3 — a broken import in bquant itself.** `analysis/zones/analyzer.py:99` imports
   `ZoneRegressionAnalyzer` from `bquant.analysis.timeseries`, a stub that does not define it. It sits
-  inside a function, so it fails only when that path runs. This is the tree at cb89a24 and may be
-  long fixed: the bquant session was not asked about it, and nothing here is a claim about current
-  bquant.
+  inside a function, so it fails only when that path runs. It is fixed in current bquant: at `8efa112` the import reads
+  `from bquant.analysis.statistical.regression import ZoneRegressionAnalyzer`, where the class is
+  defined. Checked by reading, 2026-11-02.
 - **S4 — silent empty answers in the query layer.** The Datalog fact form `edge(X, Y, "T").` returns
   `[]` on a graph that has the edge. The help text's own example without the dot is refused.
 - **S5 — the npm package ships `rfdb-server` 0.4.0** inside the 0.4.1 release, and every command warns
