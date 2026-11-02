@@ -1,0 +1,1012 @@
+{
+ "_comment": "R2-grafema, card research/tools/grafema.md. grafema 0.4.1 from npm, Linux x64; config include ['**/*.py'] (the quickstart's brace glob loads no Python analyzer, §0.1). Stage bquant@cb89a24, scope verified canonical. The quickstart block here is the FIRST probe, contaminated by analyzers cached from the earlier runs; the clean probe on a fresh HOME is in the card.",
+ "analyze": [
+  {
+   "rc": 0,
+   "seconds": 21.2,
+   "tail": " 0 Go, 0 C/C++, 0 BEAM, 0 skipped): 93767 nodes, 116139 edges, 2 errors\n\nAnalysis complete in 19.95s\n  Nodes: 89817\n  Edges: 112882\n  Library callbacks: 0 domain nodes, 0 HANDLES edges (unresolved: 0)\n  Contracts: 0 contracts (0 inputs, 0 outputs, 0 errors); 0 features lacked HANDLES edge\n  Speced contracts: 0 (0 inputs); byCategory={}; missingExtractor=0, missingSpec=0\n  Behaviors: 0 BEHAVIOR nodes, 0 SHARES_BEHAVIOR_WITH edges (totalCoreNodes=0, missingEntry=0)\npython-resolve: 1001 import edges\npython-type-resolve: 337 type edges (TYPE_OF=280, EXTENDS=57)\npython-call-resolve: 948 call edges\n"
+  },
+  {
+   "rc": 0,
+   "seconds": 20.5,
+   "tail": " 0 Go, 0 C/C++, 0 BEAM, 0 skipped): 93769 nodes, 116141 edges, 2 errors\n\nAnalysis complete in 19.28s\n  Nodes: 89820\n  Edges: 112884\n  Library callbacks: 0 domain nodes, 0 HANDLES edges (unresolved: 0)\n  Contracts: 0 contracts (0 inputs, 0 outputs, 0 errors); 0 features lacked HANDLES edge\n  Speced contracts: 0 (0 inputs); byCategory={}; missingExtractor=0, missingSpec=0\n  Behaviors: 0 BEHAVIOR nodes, 0 SHARES_BEHAVIOR_WITH edges (totalCoreNodes=0, missingEntry=0)\npython-resolve: 1001 import edges\npython-type-resolve: 337 type edges (TYPE_OF=280, EXTENDS=57)\npython-call-resolve: 948 call edges\n"
+  },
+  {
+   "rc": 0,
+   "seconds": 20.2,
+   "tail": " 0 Go, 0 C/C++, 0 BEAM, 0 skipped): 93767 nodes, 116139 edges, 2 errors\n\nAnalysis complete in 18.98s\n  Nodes: 89818\n  Edges: 112882\n  Library callbacks: 0 domain nodes, 0 HANDLES edges (unresolved: 0)\n  Contracts: 0 contracts (0 inputs, 0 outputs, 0 errors); 0 features lacked HANDLES edge\n  Speced contracts: 0 (0 inputs); byCategory={}; missingExtractor=0, missingSpec=0\n  Behaviors: 0 BEHAVIOR nodes, 0 SHARES_BEHAVIOR_WITH edges (totalCoreNodes=0, missingEntry=0)\npython-resolve: 1001 import edges\npython-type-resolve: 337 type edges (TYPE_OF=280, EXTENDS=57)\npython-call-resolve: 948 call edges\n"
+  }
+ ],
+ "cycles": {
+  "grafema": 8,
+  "grafema_false": 0,
+  "hit": 8,
+  "truth": 45
+ },
+ "determinism": {
+  "distinct_digests": 1,
+  "runs": 3
+ },
+ "edges": {
+  "false": [
+   [
+    "bquant.cli",
+    "bquant.visualization"
+   ]
+  ],
+  "grafema": 164,
+  "precision": 0.9939,
+  "recall": 0.6128,
+  "true": 163,
+  "truth": 266
+ },
+ "fixture_c3": {
+  "analyze": {
+   "rc": 0,
+   "seconds": 2.1,
+   "tail": " 0 Kotlin, 12 Python, 0 Go, 0 C/C++, 0 BEAM, 0 skipped): 136 nodes, 124 edges, 0 errors\n\nAnalysis complete in 1.16s\n  Nodes: 166\n  Edges: 158\n  Library callbacks: 0 domain nodes, 0 HANDLES edges (unresolved: 0)\n  Contracts: 0 contracts (0 inputs, 0 outputs, 0 errors); 0 features lacked HANDLES edge\n  Speced contracts: 0 (0 inputs); byCategory={}; missingExtractor=0, missingSpec=0\n  Behaviors: 0 BEHAVIOR nodes, 0 SHARES_BEHAVIOR_WITH edges (totalCoreNodes=0, missingEntry=0)\npython-resolve: 8 import edges\npython-type-resolve: 1 type edges (TYPE_OF=1, EXTENDS=0)\npython-call-resolve: 3 call edges\n"
+  },
+  "checks": {
+   "C3a": {
+    "edge": "pkg.a -> pkg.b",
+    "expected": true,
+    "present": true
+   },
+   "C3b": {
+    "edge": "pkg.a -> pkg.c",
+    "expected": true,
+    "present": true
+   },
+   "C3c": {
+    "edge": "pkg.a -> pkg.d",
+    "expected": true,
+    "present": true
+   },
+   "C3d": {
+    "edge": "pkg.a -> pkg.e",
+    "expected": true,
+    "present": true
+   },
+   "C3e": {
+    "edge": "pkg.a -> pkg.f",
+    "expected": true,
+    "present": true
+   },
+   "C3f": {
+    "edge": "pkg.a -> pkg",
+    "expected": true,
+    "present": true
+   },
+   "C3g": {
+    "edge": "pkg.sub -> pkg.sub.m",
+    "expected": true,
+    "present": false
+   },
+   "C3h_right": {
+    "edge": "pkg.sub -> pkg.sub.m2",
+    "expected": true,
+    "present": false
+   },
+   "C3h_wrong": {
+    "edge": "pkg.sub -> pkg.m2",
+    "expected": false,
+    "present": true
+   },
+   "C3i": {
+    "edge": "pkg.user -> pkg.sub",
+    "expected": true,
+    "present": true
+   }
+  },
+  "edges": [
+   [
+    "pkg.a",
+    "pkg"
+   ],
+   [
+    "pkg.a",
+    "pkg.b"
+   ],
+   [
+    "pkg.a",
+    "pkg.c"
+   ],
+   [
+    "pkg.a",
+    "pkg.d"
+   ],
+   [
+    "pkg.a",
+    "pkg.e"
+   ],
+   [
+    "pkg.a",
+    "pkg.f"
+   ],
+   [
+    "pkg.sub",
+    "pkg.m2"
+   ],
+   [
+    "pkg.user",
+    "pkg.sub"
+   ]
+  ]
+ },
+ "init": {
+  "found_from_package": 2,
+  "truth_from_package": 87
+ },
+ "missed": {
+  "by_class": {
+   "init_relative": 85,
+   "into_package": 4,
+   "other": 14
+  },
+  "rows": [
+   [
+    "bquant.analysis",
+    "bquant.analysis.candlestick",
+    "init_relative",
+    [
+     "function"
+    ]
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.chart",
+    "init_relative",
+    [
+     "function"
+    ]
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.statistical",
+    "init_relative",
+    [
+     "function"
+    ]
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.technical",
+    "init_relative",
+    [
+     "function"
+    ]
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.timeseries",
+    "init_relative",
+    [
+     "function"
+    ]
+   ],
+   [
+    "bquant.analysis",
+    "bquant.analysis.zones",
+    "init_relative",
+    [
+     "function"
+    ]
+   ],
+   [
+    "bquant.analysis",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.candlestick",
+    "bquant.analysis",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.candlestick",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.chart",
+    "bquant.analysis",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.chart",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.statistical",
+    "bquant.analysis",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.hypothesis_testing",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.statistical",
+    "bquant.analysis.statistical.regression",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.statistical",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.technical",
+    "bquant.analysis",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.technical",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.timeseries",
+    "bquant.analysis",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.timeseries",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.validation",
+    "bquant.analysis.validation.suite",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.analyzer",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.detection",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.models",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.pipeline",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.presets",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.sequence_analysis",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.analysis.zones.zone_features",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.analyzer",
+    "bquant.analysis.timeseries",
+    "into_package",
+    [
+     "function"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.cache",
+    "bquant.analysis.zones.pipeline",
+    "other",
+    [
+     "type_checking"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.detection",
+    "bquant.analysis.zones.detection.base",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.detection",
+    "bquant.analysis.zones.detection.combined",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.detection",
+    "bquant.analysis.zones.detection.line_crossing",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.detection",
+    "bquant.analysis.zones.detection.preloaded",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.detection",
+    "bquant.analysis.zones.detection.registry",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.detection",
+    "bquant.analysis.zones.detection.threshold",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.detection",
+    "bquant.analysis.zones.detection.zero_crossing",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.analyzer",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.cache",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.detection",
+    "into_package",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.models",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.strategies.registry",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.strategies.swing",
+    "into_package",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.analysis.zones.strategies.swing.thresholds",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.core.cache",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.core.config",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.core.logging_config",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.data.processor",
+    "other",
+    [
+     "function"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.indicators",
+    "into_package",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.pipeline",
+    "bquant.indicators.base",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.presets",
+    "bquant.analysis.zones.models",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.presets",
+    "bquant.analysis.zones.pipeline",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies",
+    "bquant.analysis.zones.strategies.base",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies",
+    "bquant.analysis.zones.strategies.divergence",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies",
+    "bquant.analysis.zones.strategies.registry",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies",
+    "bquant.analysis.zones.strategies.shape",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies",
+    "bquant.analysis.zones.strategies.swing",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies",
+    "bquant.analysis.zones.strategies.volatility",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies",
+    "bquant.analysis.zones.strategies.volume",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies.divergence",
+    "bquant.analysis.zones.strategies.divergence.classic",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies.shape",
+    "bquant.analysis.zones.strategies.shape.statistical",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies.swing",
+    "bquant.analysis.zones.strategies.swing.find_peaks",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies.swing",
+    "bquant.analysis.zones.strategies.swing.pivot_points",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies.swing",
+    "bquant.analysis.zones.strategies.swing.zigzag",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies.volatility",
+    "bquant.analysis.zones.strategies.volatility.combined",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.analysis.zones.strategies.volume",
+    "bquant.analysis.zones.strategies.volume.standard",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.cli",
+    "bquant.visualization.charts",
+    "other",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.core",
+    "bquant.core.config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.core",
+    "bquant.core.exceptions",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.core",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.core",
+    "bquant.core.nb",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.core",
+    "bquant.core.numpy_fix",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.core",
+    "bquant.core.utils",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.data",
+    "bquant.data.loader",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.data",
+    "bquant.data.processor",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.data",
+    "bquant.data.schemas",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.data",
+    "bquant.data.validator",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.data.samples",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.data.samples",
+    "bquant.data.samples.datasets",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.data.samples",
+    "bquant.data.samples.generator",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.data.samples",
+    "bquant.data.samples.utils",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators",
+    "bquant.indicators.base",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators",
+    "bquant.indicators.custom",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators",
+    "bquant.indicators.library",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators",
+    "bquant.indicators.macd",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators",
+    "bquant.indicators.preloaded",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.custom",
+    "bquant.indicators.base",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.custom",
+    "bquant.indicators.custom.bollinger",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.custom",
+    "bquant.indicators.custom.ema",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.custom",
+    "bquant.indicators.custom.macd",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.custom",
+    "bquant.indicators.custom.rsi",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.custom",
+    "bquant.indicators.custom.sma",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.library",
+    "bquant.indicators.library.manager",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.library",
+    "bquant.indicators.library.pandas_ta",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.library",
+    "bquant.indicators.library.talib",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.preloaded",
+    "bquant.indicators.base",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.indicators.preloaded",
+    "bquant.indicators.preloaded.macd",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.visualization",
+    "bquant.core.logging_config",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.visualization",
+    "bquant.visualization.charts",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.visualization",
+    "bquant.visualization.statistical",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.visualization",
+    "bquant.visualization.themes",
+    "init_relative",
+    [
+     "module"
+    ]
+   ],
+   [
+    "bquant.visualization",
+    "bquant.visualization.zones",
+    "init_relative",
+    [
+     "module"
+    ]
+   ]
+  ]
+ },
+ "modules": {
+  "all_module_nodes": 206,
+  "bquant_modules": 87,
+  "truth_modules": 89
+ },
+ "quickstart": {
+  "analyze": {
+   "rc": 0,
+   "seconds": 20.1,
+   "tail": " 0 Go, 0 C/C++, 0 BEAM, 0 skipped): 93768 nodes, 116140 edges, 2 errors\n\nAnalysis complete in 19.17s\n  Nodes: 89818\n  Edges: 112883\n  Library callbacks: 0 domain nodes, 0 HANDLES edges (unresolved: 0)\n  Contracts: 0 contracts (0 inputs, 0 outputs, 0 errors); 0 features lacked HANDLES edge\n  Speced contracts: 0 (0 inputs); byCategory={}; missingExtractor=0, missingSpec=0\n  Behaviors: 0 BEHAVIOR nodes, 0 SHARES_BEHAVIOR_WITH edges (totalCoreNodes=0, missingEntry=0)\npython-resolve: 1001 import edges\npython-type-resolve: 337 type edges (TYPE_OF=280, EXTENDS=57)\npython-call-resolve: 948 call edges\n"
+  },
+  "include": [
+   "- \"**/*.{py}\"",
+   "- \"**/*.test.*\"",
+   "- \"**/__tests__/**\"",
+   "- \"**/node_modules/**\"",
+   "- \"**/dist/**\"",
+   "- \"**/build/**\"",
+   "- \"**/target/**\"",
+   "- \"**/vendor/**\"",
+   "- \"**/.git/**\""
+  ],
+  "modules": 206
+ },
+ "scopes": {
+  "found": {
+   "function": 17,
+   "module": 146
+  },
+  "found_only_function": 17,
+  "found_only_type_checking": 0,
+  "only_function": 25,
+  "truth": {
+   "function": 25,
+   "module": 240,
+   "type_checking": 1
+  }
+ },
+ "version": "0.4.1"
+}

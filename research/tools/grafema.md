@@ -1,13 +1,28 @@
 # grafema
 
-**Verdict:** *pending — §0 only* · **Card status:** pre-registration committed, no run on the R2 tree yet
+**Verdict:** learn (strong) for the design; the Python product, as measured, is not usable ·
+**Feeds:** R1-C39 (reason on the edge), R1-C13 (labels on the edge), derived edges as declared rules
+(new, §Разбор) · **Card status:** hands-on — import graph and T1–T3 on the full R2 tree, 0.4.1 from npm
 
 **Scope:** `sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2` (R2 benchmark
 `bquant.scope.json` — 280 files, 207 .py / 73 .md, bquant@cb89a24) · run mode: **materialized** from a
 fresh `git archive cb89a24` extract (staging verified `== canonical ✓`)
 
-**How to read this card.** §0 holds the expectations, committed before any run on the R2 tree. The
-sections after it are what the runs showed, reconciled against §0.
+> The design is the most careful of any import graph measured here. Every import becomes a node in
+> the scope it sits in, so imports inside functions, under `TYPE_CHECKING` and in `try:` are all read.
+> Module dependencies are derived by a four-line Datalog rule you can read. Of 164 edges, 163 are real,
+> and three runs are identical. Then three defects in the Python path take it from **42** visible import
+> cycles to **8** of 45:
+> - relative imports inside `__init__.py` resolve one package too high (85 edges);
+> - any f-string with `!r` or `!s` drops its whole file, `pipeline.py` among them, with exit 0;
+> - the README's quickstart loads no Python analyzer at all, and reports success over an empty graph.
+>
+> With the public `analyze_zones` gone, `who`/`impact` attribute its 88 call sites to a method of the
+> same name and mark them `[resolved]`.
+
+**How to read this card.** §0 holds the expectations, committed before any run on the R2 tree
+(1119ba0), with an addendum before the T1–T3 probe (597c28f). §1–§2 are what the runs showed,
+reconciled against them. The comparison, the разбор and the verdict come last.
 
 ## Identity
 
@@ -174,3 +189,211 @@ table.
 - JS/TS behaviour, its primary language.
 - `main` behaviour beyond what is read from its source.
 - The MCP server, `why` and the knowledge layer.
+
+## 1. Hands-on — the import graph on the R2 tree
+
+Harness `research/bench/grafema.py`. Raw results, with paths removed, are in
+[`bench/grafema_results.json`](../bench/grafema_results.json). Stand: Linux x64, Node 22.
+
+**Fixture C3, before the tree.** Every line came out as predicted:
+
+| case | edge | present |
+|---|---|---|
+| C3a top-level absolute | `pkg.a → pkg.b` | yes |
+| C3b top-level relative | `pkg.a → pkg.c` | yes |
+| C3c function-local | `pkg.a → pkg.d` | yes |
+| C3d `if TYPE_CHECKING:` | `pkg.a → pkg.e` | yes |
+| C3e `try:` | `pkg.a → pkg.f` | yes |
+| C3f `from . import NAME` | `pkg.a → pkg` | yes |
+| C3g relative, inside `pkg/sub/__init__.py` | `pkg.sub → pkg.sub.m` | **no** |
+| C3h same form, a namesake one level up | `pkg.sub → pkg.m2` | **yes, wrong module** |
+| C3i re-export through a package `__init__` | `pkg.user → pkg.sub` | yes |
+
+**The tree, three runs on fresh copies:**
+
+```
+analyze                    exit 0, 20.2–21.2 s each, 206 MODULE nodes of 207 .py files
+edge set                   identical in all 3 runs (sha256 ed23087f…)
+bquant → bquant edges      164, of them 163 in the truth (precision 99.4 %), recall 163 / 266 = 61 %
+by truth scope             module 146 / 240 · function 17 / 25 · type_checking 0 / 1
+edges out of a package     2 of 87
+  __init__.py
+import cycles              8 of 45 hit, 0 false
+```
+
+**The one edge outside the truth** is `bquant.cli → bquant.visualization`, from
+`from bquant.visualization import charts`. Python executes the package `__init__` first, so the
+dependency is real. The truth attributes it to `visualization.charts`, and grafema to the package.
+It is the same convention gap Understand-Anything's single extra edge fell into.
+
+**All 103 missed truth edges, classified:**
+
+| class | edges | cause |
+|---|---:|---|
+| relative import inside a package `__init__.py` | 85 | **defect A**, resolves one level too high (C3g) |
+| from or into `zones/pipeline.py` or `zones/presets.py` | 16 | **defect B**, both files never analyzed |
+| `analyzer → analysis.timeseries` | 1 | the imported name `ZoneRegressionAnalyzer` does not exist in that package. It is a broken import in bquant@cb89a24 itself, inside a function, and grafema drops an unresolved name without a record |
+| `cli → visualization.charts` | 1 | attribution, see above |
+
+So P2's shortfall (17 of 25 function-scope edges, 0 of 1 `TYPE_CHECKING`) is not about scope at all.
+The 8 missing function-scope edges are 6 × defect A, 1 × defect B and the broken import. The one
+`TYPE_CHECKING` edge points into `pipeline.py`. Scope handling itself is right, as C3c–e show.
+
+**Defect B, found on the tree.**
+- The Python analyzer refuses `bquant/analysis/zones/pipeline.py` and `presets.py` with
+  `decode error: … .conversion: parsing Int failed, expected Number, but encountered String`.
+- They are the only two files in the tree with an f-string conversion (`{x!r}`). Checked with `ast`
+  over all 207 files.
+- Minimal reproduction, four files:
+  - `f"{y!r}"` and `f"{y!s}"` drop the file;
+  - `f"{y}"` and `f"{y:>8}"` do not.
+- The run still exits 0. The refusal is printed only under `--verbose`, and `--log-file` without
+  `--verbose` writes an empty file.
+
+**What fixing each defect would give**, by putting the classified missing edges back:
+
+| | edges | cycles hit |
+|---|---:|---:|
+| as measured | 163 | 8 / 45 |
+| defect A fixed | 248 | 25 / 45 |
+| defect B fixed | 179 | 9 / 45 |
+| **both fixed** | 264 | **42 / 45** |
+
+The last three cycles need the two edges that are not defects (the broken import and the attribution).
+
+**The quickstart (P7), probed twice.**
+- The first probe ran on the same machine after the three runs. It analyzed everything (206 modules,
+  exit 0), because the Python analyzer was already cached in `~/.grafema/bin` from those runs. That
+  was a flaw in the harness, not a property of the tool.
+- Re-run with an empty `HOME`, as a new user would have it:
+  - `analyze --quickstart` wrote `include: "**/*.{py}"`;
+  - it downloaded only `grafema-analyzer` and `grafema-resolve`;
+  - it finished with **exit 0 and 0 `MODULE` nodes** over the 207 Python files.
+
+**T1–T3, on the analyzed tree** (addendum §0.5a):
+
+- **T1.** `MACDZoneAnalyzer` is found (`bquant/indicators/macd.py:48`), and so is the method
+  `UniversalZoneAnalyzer.analyze_zones`. The top-level `analyze_zones` is not, because its file was
+  dropped.
+- **T2.** `who MACDZoneAnalyzer` lists **83** call sites, each marked `[resolved]` (23) or
+  `[unresolved]` (60): an honest per-site label.
+- **T2/T3 on `analyze_zones`: the confident wrong answer.**
+  - `who analyze_zones` lists **118** callers, **109 marked `[resolved]`**.
+  - `impact analyze_zones` reports **93** direct callers and 0 transitive, all of them against the
+    method `UniversalZoneAnalyzer.analyze_zones`.
+  - The tree has **10** attribute calls `….analyze_zones(…)` and **88** bare calls `analyze_zones(…)`
+    of the public function, as in `from bquant.analysis.zones import analyze_zones` →
+    `analyze_zones(df)` (checked by hand at `examples/02a_universal_zones.py:220`).
+  - With the function missing, the name fell through to the only definition left. Nothing in the answer
+    says so: there is no ambiguity flag and no "file failed to analyze".
+- **T3** is direct-only on both symbols: "0 transitive callers". Callers are listed as `MODULE` ids,
+  one row per call site.
+
+## 2. Reconciliation with the pre-registration
+
+| | expected | measured | |
+|---|---|---|---|
+| C1 | canonical staging | ✓ | holds |
+| C2 | 266 edges, 45 cycles, 87 from `__init__`, 9 cycles without them | ✓ | holds |
+| C3a–b | positive controls | both present | holds |
+| C3c–f, C3i | present | all present | holds |
+| C3g | no edge | no edge | holds — defect A |
+| C3h | edge to the wrong module | present | holds — defect A misbinds |
+| P1 | 89 of 89 bquant modules | **87** | **fails** — defect B, not foreseen |
+| P2 | ≥ 20 of 25 function, 1 of 1 TC | **17, 0** | **fails** — every miss is A, B or the broken import |
+| P3 | < half of 87 | 2 | holds |
+| P4 | 5–20 of 45 cycles | 8 | holds |
+| P5 | ≥ 85 % precision | 99.4 % | holds |
+| P6 | identical across 3 runs | identical | holds |
+| P7 | 0 `MODULE` and exit ≠ 0 | 0 `MODULE`, **exit 0** | half: the graph is empty as predicted, and the exit is worse than predicted |
+| T1 | class ✓, method ✓, function ✗ | as expected | holds |
+| T2 | fewer refs than codemap; `analyze_zones` → method or none | 83 refs for the class; 109 "resolved" callers of the method | the class count was not compared row by row; the method half holds, and in the worse form |
+| T3 | no blast radius for the public function | the method's radius is reported instead | holds, and in the worse form |
+
+**Decision rules.**
+- **R1.** Defect A is confirmed (C3g, C3h, P3), and so is the quickstart defect (P7). Defect B is new
+  and confirmed on four files. Each has a minimal reproduction. Filing upstream is the owner's call;
+  nothing has been filed.
+- **R2.** Done above. Of the 37 missed cycles, 34 come back when A and B are fixed.
+- **R3.** Verdict below.
+
+### Surprises
+
+- **S1 — defect B.** Not predicted. It removes the file that defines the project's flagship API, and
+  the run says nothing.
+- **S2 — the harness contaminated its own quickstart probe** through the analyzer cache in `$HOME`.
+  It was caught because the result contradicted the toy run. The clean probe uses a fresh `HOME`.
+- **S3 — a broken import in bquant itself.** `analysis/zones/analyzer.py:99` imports
+  `ZoneRegressionAnalyzer` from `bquant.analysis.timeseries`, a stub that does not define it. It sits
+  inside a function, so it fails only when that path runs. This is the tree at cb89a24 and may be
+  long fixed: the bquant session was not asked about it, and nothing here is a claim about current
+  bquant.
+- **S4 — silent empty answers in the query layer.** The Datalog fact form `edge(X, Y, "T").` returns
+  `[]` on a graph that has the edge. The help text's own example without the dot is refused.
+- **S5 — the npm package ships `rfdb-server` 0.4.0** inside the 0.4.1 release, and every command warns
+  about the mismatch. It is harmless here, but it is the same kind of drift as defect A: two parts of one
+  release that were never run together.
+
+### What this card does not establish
+
+Everything in §0.6, plus: whether defect A or B is fixed in `main` by behaviour (both functions read
+unchanged, but `main` was not built); the class-level T2 set against codemap row by row; macOS.
+
+## Coverage vs codemap
+
+| | grafema 0.4.1 (Python) | codemap |
+|---|---|---|
+| T1 defs | ◐ — right where a file is analyzed; the files defect B drops have no definitions at all | ✅ |
+| T2 callers | ◐ — per-site `[resolved]`/`[unresolved]`, an honest design; a missing definition is replaced by a namesake without a flag | ✅ |
+| T3 impact | ◐ — direct callers only, no transitive closure | ✅ |
+| T4 sig-change | ✖ — not offered for Python | ✅ |
+| T5 arch | ◐ — the design reads every import scope; defects A and B leave 8 of 45 cycles | ✅ |
+| determinism | ✅ — identical edge sets in 3 runs | ✅ |
+| failure reporting | ✖ — a refused file, an empty quickstart graph and an empty fact query all finish quietly | ✅ — a refused file is named at build ("missing, not absent") |
+
+## Разбор
+
+- **What we'd take.**
+  - **Derived edges as declared rules.** `DEPENDS_ON` is four lines of `depends.dl` that anyone can
+    read and argue with. In codemap the same kind of derivation lives in Python code. A declared rule
+    is also the documentation of what the edge means. A backlog candidate: the licence closes the code,
+    not the idea.
+  - **An import is a node in its own scope.** That is why function-local, `TYPE_CHECKING` and `try:`
+    imports come for free rather than one by one. codemap makes the same distinction through
+    `extras.scope` on the edge; in grafema it is graph structure, and where an import sits can be
+    queried.
+  - **A label on every call site** (`[resolved]` / `[unresolved]`). The same idea as R1-C13 and R1-C39:
+    honesty at the edge, not only in the answer.
+- **What their failures teach. This matters more than what we would take.**
+  - All three defects are one kind: two parts of one system never run together.
+    - `quickstart.ts` writes a glob that `analyzeAction.ts` cannot read.
+    - The Haskell decoder expects `conversion` as a number, and the parser sends a string.
+    - `resolveRelativeImport` is right for a module and wrong for an `__init__`, and the tests cover
+      only the module.
+    - The 0.4.1 package ships a 0.4.0 server.
+  - Every one of them is silent: exit 0, the error only under `--verbose`, an empty list from a fact
+    query. When a definition goes missing, the name falls through to a namesake and the answer says
+    `[resolved]`.
+  - Our check on the same failure class: given a file with a syntax error, codemap prints
+    `1 input file(s) produced no module (1 syntax): pkg/broken.py … missing, not absent`, and it parses
+    an f-string with `!r`. **Not checked:** whether that warning reaches every MCP answer it affects,
+    as CodeGraph's `warnings` do, or only the build output. A backlog candidate, to be settled by a
+    probe rather than by belief.
+- **What we'd do differently.** Never let an answer about a symbol replace a missing definition with a
+  namesake without a flag. codemap answers with `resolved.ambiguous` here, but that is a claim about our
+  code, not a measurement on this card.
+
+## Verdict & backlog effect
+
+**learn (strong) for the design; the Python product, as measured on 0.4.1, is not usable.** The
+architecture is the most careful seen in R2: every import scope is read, derivations are declared
+rules, there is a per-site resolution label, and the edge set is deterministic. On a real Python
+package, three integration defects hide 37 of 45 import cycles and replace the flagship function with
+a namesake, all while reporting success. The licence (FSL) rules out `wrap` and `integrate` in any case.
+
+**Backlog effect:**
+- **New candidate:** derived edges declared as readable rules. A design note, not code.
+- **New candidate:** a probe that a file the parser refuses is named in every MCP answer it affects,
+  not only in the build output.
+- **Feeds R1-C39 / R1-C13:** a second independent tool that labels resolution per site.
+- **Upstream:** three defects with minimal reproductions (A, B, quickstart). Filing is the owner's call.
