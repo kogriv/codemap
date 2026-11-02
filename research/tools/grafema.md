@@ -151,6 +151,22 @@ At least one of P3, P4 and C3g fails if the `__init__` defect is not real.
 - **R3.** The verdict is set after the run. It cannot be `wrap` or `integrate` whatever the numbers:
   the licence forbids taking code, so the best possible outcome is `learn (strong)`.
 
+### 0.5a Addendum — T1–T3, written after the import run and before this probe (2026-11-02)
+
+The import run (§1) showed that `bquant/analysis/zones/pipeline.py` and `presets.py` have no `MODULE`
+node. Expectations for the symbol questions, on the same config:
+
+- **T1.** `MACDZoneAnalyzer`, a class in `indicators/macd.py`, is found. The method
+  `UniversalZoneAnalyzer.analyze_zones` in `analyzer.py` is found. The top-level function
+  `analyze_zones` in `pipeline.py` is **not** found, because its file was never analyzed.
+- **T2.** `grafema who MACDZoneAnalyzer` returns fewer references than codemap's. `who analyze_zones`
+  returns only references that resolve to the method, or none.
+- **T3.** `grafema impact analyze_zones` cannot report the public function's blast radius, since the
+  function does not exist in its graph.
+
+These are descriptive probes. No decision rule hangs on them beyond the T-columns of the comparison
+table.
+
 ### 0.6 What this card will not establish
 
 - Data flow, control flow, effects, symbolic execution. They are grafema's distinguishing claims,
