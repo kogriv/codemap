@@ -404,7 +404,10 @@ a namesake. None of it stops the run or reaches an answer. The licence (FSL) rul
 - **New candidate:** a probe that a file the parser refuses is named in every MCP answer it affects,
   not only in the build output.
 - **Feeds R1-C39 / R1-C13:** a second independent tool that labels resolution per site.
-- **Upstream:** three defects with minimal reproductions (A, B, quickstart). Filing is the owner's call.
+- **Upstream:** filed 2026-11-02 on the owner's decision, after the re-verification in §5:
+  [#482](https://github.com/Disentinel/grafema/issues/482) (A, `__init__` relative imports),
+  [#480](https://github.com/Disentinel/grafema/issues/480) (B, f-string conversion),
+  [#481](https://github.com/Disentinel/grafema/issues/481) (quickstart glob).
 
 ## 5. Re-verification before filing — pre-registration (2026-11-02)
 
@@ -469,4 +472,4 @@ Fresh `HOME` and a fresh directory for every scenario, grafema 0.4.1, Python 3.1
   part of any issue.
 
 **Still holds unchanged:** all three defects, their minimal reproductions, the counts on the tree (8 of
-45 cycles; 42 with A and B fixed), and the `analyze_zones` misattribution. They are ready to file.
+45 cycles; 42 with A and B fixed), and the `analyze_zones` misattribution. They are ready to file. *Filed: #482 (A), #480 (B), #481 (quickstart).*
