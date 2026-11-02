@@ -473,3 +473,85 @@ Fresh `HOME` and a fresh directory for every scenario, grafema 0.4.1, Python 3.1
 
 **Still holds unchanged:** all three defects, their minimal reproductions, the counts on the tree (8 of
 45 cycles; 42 with A and B fixed), and the `analyze_zones` misattribution. They are ready to file. *Filed: #482 (A), #480 (B), #481 (quickstart).*
+
+## 6. Second pass — pre-registration (2026-11-02)
+
+The first pass measured the import graph in depth. It left grafema's own headline claims untouched:
+guarantees, calls, data flow and MCP. Same tool, tree, config and stand. A fresh `HOME` is used for
+every probe that touches installation.
+
+### 6.1 Guarantees: a Datalog contract against `codemap check`
+
+bquant's own architecture contract (`codemap.toml`: eight forbidden layer pairs) is written as grafema
+guarantees, one per pair, of the form:
+
+```
+violation(X) :- node(X, "MODULE"), attr(X, "file", F), starts_with(F, "bquant/core/"),
+                edge(X, Y, "DEPENDS_ON"), attr(Y, "file", G), starts_with(G, "bquant/analysis/").
+```
+
+On cb89a24 the truth breaks the contract in exactly three places, and all three are in grafema's
+measured edge set. So the prediction is exact, not a range:
+
+- **G1, clean tree.** `check` exits 1 and names exactly these three:
+  - `core.config → analysis.zones.strategies.registry` (function scope);
+  - `indicators.macd → analysis.zones` (function scope);
+  - `indicators.macd → analysis.zones.models`.
+- **G2, a mutation in an ordinary module.** Add a top-level `from bquant.analysis.zones import models`
+  to `bquant/data/loader.py`. A fourth violation appears, `data.loader → analysis.zones.models`.
+  `codemap check` names it too.
+- **G3, the same mutation inside a package `__init__.py`.** Add `from ..analysis.zones import models` to
+  `bquant/data/__init__.py`. grafema reports **no** new violation, because of defect A; `codemap check`
+  reports it. So a contract gate inherits the resolver's blind spot.
+- **G4, a rule with a typo.** The predicate `edgee(...)` instead of `edge(...)`, on the clean tree. The
+  guarantee **passes** with 0 violations and exit 0. Their docs say an unknown predicate makes the
+  rule be "skipped with a warning".
+- **G5, an edited rule.** `check` runs with rule v1 (G1's first rule). The file is then edited so v1
+  can never match, and `check` runs again without re-analysis. The old v1 still runs: `import()` skips
+  a guarantee whose node already exists.
+- **G6, cycles as a recursive rule.**
+  `reach(X,Y) :- edge(X,Y,"DEPENDS_ON"). reach(X,Z) :- reach(X,Y), edge(Y,Z,"DEPENDS_ON").
+  violation(X) :- node(X,"MODULE"), reach(X,X).` If the engine accepts multi-clause recursive rules,
+  the violations are exactly the **11** modules on grafema's own cycles. If it does not, the card says
+  how it refuses.
+
+### 6.2 Calls against codemap
+
+Edges: `MATCH (c)-[:CALLS]->(f) RETURN c.file, f.file`. Only `bquant/** → bquant/**` pairs across
+different files are scored, against the same pairs from codemap's `calls` edges on the same tree.
+codemap is not ground truth for calls, so this is **agreement**. A sample of 10 disagreements per side
+is classified by reading the source.
+
+- **K1.** At least 80 % of grafema's file pairs are also codemap's.
+- **K2.** grafema has fewer than 60 % of codemap's file pairs. Expected causes: the dropped
+  `pipeline.py`, and names re-exported through package `__init__` files that defect A leaves
+  unresolved.
+- **K3.** For `MACDZoneAnalyzer`, the files that `who` marks `[resolved]` are a subset of the files
+  codemap lists as callers.
+
+### 6.3 Data flow, descriptive
+
+Three `wtf` questions whose answers are read from the source beforehand:
+
+- **D1.** `wtf ALLDATA_DIR` (`core/config.py:19`). The chain should be `DATA_DIR / 'alldata'` →
+  `DATA_DIR` → `PROJECT_ROOT` → `Path(__file__).parent…`. Predicted: correct. It is a chain of
+  module-level constants.
+- **D2.** `wtf removed_rows` (`data/processor.py:133`). It should reach `initial_rows - len(cleaned_df)`,
+  then both names' assignments in the same function. Predicted: correct.
+- **D3.** `wtf zones_features` (`zones/analyzer.py:151`). It should reach
+  `self.features.extract_all_zones_features(zones)`, then the assignment of `self.features` in
+  `__init__`. Predicted: partial, stopping at the call or at `self.features`. Their dataflow is
+  "partial" for Python.
+
+### 6.4 MCP, descriptive
+
+`grafema-mcp --project <tree>` over stdio: `initialize`, then `tools/list`, then `get_stats` and
+`find_calls` for `MACDZoneAnalyzer`.
+
+- **M1.** The server starts and lists at least 25 tools.
+- **M2.** `find_calls` agrees with the CLI's `who` count for the same symbol (83).
+
+### 6.5 What the second pass will still not establish
+
+Incremental behaviour, memory and scale beyond one 20-second tree, a build of `main`, JS/TS, `why`
+and the knowledge layer, `git-ingest`. They stay "not established" in the card.
