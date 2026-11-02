@@ -14,8 +14,9 @@ fresh `git archive cb89a24` extract (staging verified `== canonical ✓`)
 > and three runs are identical. Then three defects in the Python path take it from **42** visible import
 > cycles to **8** of 45:
 > - relative imports inside `__init__.py` resolve one package too high (85 edges);
-> - any f-string with `!r` or `!s` drops its whole file, `pipeline.py` among them, with exit 0;
-> - the README's quickstart loads no Python analyzer at all, and reports success over an empty graph.
+> - any f-string with `!r`, `!s` or `!a` drops its whole file, `pipeline.py` among them, logged as an
+>   error but at exit 0;
+> - the README's quickstart loads no Python analyzer at all, and never says why.
 >
 > With the public `analyze_zones` gone, `who`/`impact` attribute its 88 call sites to a method of the
 > same name and mark them `[resolved]`.
@@ -65,8 +66,10 @@ here was run on the R2 tree.
   pattern cannot read past the `{`, so no extension is recognised and only the JS/TS pair is fetched.
 - The orchestrator then fails to spawn `grafema-python-analyzer` for every Python file. On the toy:
   4 nodes (`FILE`, `DIRECTORY`), no `MODULE`, exit 1. The run fails on two JS rule packs
-  (`E-PLAN-003`); the Python failure appears only with `--verbose`. The "binaries missing" warning in
-  the same function stays silent, because Python was never put on the list of needed binaries.
+  (`E-PLAN-003`). The default output does show `ERROR … Failed to spawn grafema-python-analyzer` once per
+  file, but nothing names the cause. The "binaries missing" warning in the same function stays silent,
+  because Python was never put on the list of needed binaries. *(Corrected 2026-11-02 in §5: this line
+  first said the failure showed only with `--verbose`.)*
 - Both functions are unchanged on `main`, read from source on 2026-11-02.
 - **Workaround used for every measurement below:** a config whose include list is the plain glob
   `"**/*.py"`. With it, the toy gives `MODULE` ×3, `IMPORTS_FROM`, `CALLS`, `DEPENDS_ON`, exit 0, and
@@ -247,8 +250,11 @@ The 8 missing function-scope edges are 6 × defect A, 1 × defect B and the brok
 - Minimal reproduction, four files:
   - `f"{y!r}"` and `f"{y!s}"` drop the file;
   - `f"{y}"` and `f"{y:>8}"` do not.
-- The run still exits 0. The refusal is printed only under `--verbose`, and `--log-file` without
-  `--verbose` writes an empty file.
+- The run still exits 0. The default output logs one `ERROR … Python analyzer failed … decode error`
+  line per file and ends `Analysis complete … errors=N`. `coverage` counts the files, but as
+  "Unsupported — no indexer available", which is the wrong reason. No query answer mentions them.
+  *(Corrected in §5: this line first said the refusal was printed only under `--verbose`. That came
+  from reading an empty `--log-file` and a verbose run, never the default output.)*
 
 **What fixing each defect would give**, by putting the classified missing edges back:
 
@@ -320,7 +326,8 @@ The last three cycles need the two edges that are not defects (the broken import
 ### Surprises
 
 - **S1 — defect B.** Not predicted. It removes the file that defines the project's flagship API, and
-  the run says nothing.
+  the run exits 0. The per-file `ERROR` lines are in the analyze output, and nothing in the graph or in
+  the answers carries them.
 - **S2 — the harness contaminated its own quickstart probe** through the analyzer cache in `$HOME`.
   It was caught because the result contradicted the toy run. The clean probe uses a fresh `HOME`.
 - **S3 — a broken import in bquant itself.** `analysis/zones/analyzer.py:99` imports
@@ -349,7 +356,7 @@ unchanged, but `main` was not built); the class-level T2 set against codemap row
 | T4 sig-change | ✖ — not offered for Python | ✅ |
 | T5 arch | ◐ — the design reads every import scope; defects A and B leave 8 of 45 cycles | ✅ |
 | determinism | ✅ — identical edge sets in 3 runs | ✅ |
-| failure reporting | ✖ — a refused file, an empty quickstart graph and an empty fact query all finish quietly | ✅ — a refused file is named at build ("missing, not absent") |
+| failure reporting | ◐ — a refused file is logged as `ERROR` at exit 0 and counted by `coverage` under the wrong reason, but no answer carries it; defect A logs nothing; a fact query returns `[]` | ✅ — a refused file is named at build ("missing, not absent") |
 
 ## Разбор
 
@@ -371,8 +378,9 @@ unchanged, but `main` was not built); the class-level T2 set against codemap row
     - `resolveRelativeImport` is right for a module and wrong for an `__init__`, and the tests cover
       only the module.
     - The 0.4.1 package ships a 0.4.0 server.
-  - Every one of them is silent: exit 0, the error only under `--verbose`, an empty list from a fact
-    query. When a definition goes missing, the name falls through to a namesake and the answer says
+  - None of them stops the run or reaches an answer. Defect A logs nothing. Defect B and the
+    quickstart log per-file `ERROR` lines and still exit 0 (the quickstart exits 1 only when an unrelated
+    JS rule pack also fails). A fact query returns an empty list. When a definition goes missing, the name falls through to a namesake and the answer says
     `[resolved]`.
   - Our check on the same failure class: given a file with a syntax error, codemap prints
     `1 input file(s) produced no module (1 syntax): pkg/broken.py … missing, not absent`, and it parses
@@ -389,7 +397,7 @@ unchanged, but `main` was not built); the class-level T2 set against codemap row
 architecture is the most careful seen in R2: every import scope is read, derivations are declared
 rules, there is a per-site resolution label, and the edge set is deterministic. On a real Python
 package, three integration defects hide 37 of 45 import cycles and replace the flagship function with
-a namesake, all while reporting success. The licence (FSL) rules out `wrap` and `integrate` in any case.
+a namesake. None of it stops the run or reaches an answer. The licence (FSL) rules out `wrap` and `integrate` in any case.
 
 **Backlog effect:**
 - **New candidate:** derived edges declared as readable rules. A design note, not code.
@@ -430,3 +438,35 @@ Expectations:
   `MODULE`.
 
 If any control fails, the matching issue is not filed until it is understood.
+
+### 5.1 Re-verification reconciled
+
+Fresh `HOME` and a fresh directory for every scenario, grafema 0.4.1, Python 3.12 as the reference.
+
+| | expected | measured | |
+|---|---|---|---|
+| V-A1 | Python loads `pkg.sub.m`; grafema has no `sub → sub.m` | `pkg.sub.m` loaded, `pkg.m` not; no such edge | holds |
+| V-A2 | control `sub.a → sub.m` present | present | holds |
+| V-A3 | grafema has `sub → pkg.m`, which Python never loads | `pkg/sub/__init__.py -> pkg/m.py` | holds |
+| V-B1 | `!r`/`!s`/`!a` dropped, `{y}`/`{y:>8}` kept, all compile, exit 0 | exactly so | holds |
+| V-B1 | no line of the default output names a dropped file | **6 lines do**: one `ERROR … decode error` per file, plus `errors=3` | **fails — my earlier claim was wrong** |
+| V-Q1 | brace glob, no Python analyzer, 0 `MODULE`, no warning | brace glob, no analyzer, 0 `MODULE`. `ERROR … Failed to spawn grafema-python-analyzer` per file, and the cause is never named | half: the defect holds, "no warning" does not |
+| V-Q2 | control with `**/*.py` finds every module | 3 of 3, Python analyzer downloaded | holds |
+
+**What changed in the card because of this check:**
+- The claim that defect B and the quickstart failure were visible "only with `--verbose`" was wrong.
+  It came from reading an empty `--log-file` and a verbose run, and never the default output. Corrected
+  in §0.1, §1, the coverage table, the разбор, `comparison.md` and the backlog.
+- The accurate account:
+  - Defect A logs nothing at all.
+  - Defect B logs one `ERROR` per file and exits 0. `coverage` counts the files as "Unsupported — no
+    indexer available", the wrong reason. No query answer carries it: `who g` says "no callers found",
+    and `query g` lists only the two analyzed definitions.
+  - The quickstart logs a spawn failure per file and never names the cause.
+- The quickstart's exit code is not a property of the defect. On the three-file project it exits 1,
+  because two JS rule packs fail with `E-PLAN-003` ("per-rule output estimate … exceeds
+  max_materialized"). On the bquant tree it exited 0. That pack failure is not understood and is not
+  part of any issue.
+
+**Still holds unchanged:** all three defects, their minimal reproductions, the counts on the tree (8 of
+45 cycles; 42 with A and B fixed), and the `analyze_zones` misattribution. They are ready to file.
