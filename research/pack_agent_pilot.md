@@ -132,3 +132,38 @@ pack arm runs that called pack: 1 of 40
 
 Each changes the question, from "would an agent choose it" to "does its output help". That is why it is
 not decided here.
+
+## 4. Pilot 2: `pack` handed over, not offered. Pre-registered 2026-11-03, before any run
+
+**The owner chose this protocol after pilot 1** ("hand `pack` over in advance"). The question changes from
+"does an agent choose `pack`" to **"does `pack`'s output help an agent locate a change, compared with grep
+output of the same size over the same names"**. Same 20 tasks, same trees, model, isolation, budget, 2 repeats.
+
+**Seeds.** The words of the commit message (4+ characters) that are the short name of a node of the graph
+(function, class, module, attribute), in order of appearance, at most 8. Every task has at least one; 7 tasks
+have 1, and 6 have 8. Some seeds are generic words that happen to name a module (`validation`, `zones`,
+`bquant`). That is what a mechanical rule picks, and it is kept.
+
+**Arms**, both without any MCP server (empty `--strict-mcp-config`), both with `Read`, `Grep`, `Glob`:
+- **pack_ctx:** the prompt ends with `codemap pack --seed …` (budget 2000 tokens, the default, two-way walk),
+  as markdown;
+- **grep_ctx:** the prompt ends with the files matching any seed as a word, ranked by total matches, cut to the
+  same number of characters as that task's pack. When the matches run out first, the grep context is
+  shorter. That happens in 11 tasks: pack 644–9791 characters, grep 386–9737. The cap is equal, the size is not.
+- Both arms use the same header: "Context gathered automatically from the names in the message (seeds: …)".
+
+The contexts are computed before any run and are part of the input (`t*/context_*.md`). No refusal occurred.
+
+**Expectations (about the protocol, as in pilot 1, plus the reading):**
+- **Q1.** Errors under 10 % per arm.
+- **Q2.** Cost per run between $0.05 and $1.00. The prompts are now 1–10 k characters longer.
+- **Q3, uptake.** It is reported how often a run's named files include a file that appears in its own arm's
+  context. If uptake is near zero in both arms, the context was ignored, and the arms do not differ in what
+  the agent used.
+- **Q4.** The per-task paired recall difference (pack_ctx − grep_ctx) is reported as the **pilot
+  difference**, with its sd and the number of tasks a full run would need for a 0.05 difference.
+  - It decides nothing at n = 20.
+  - If that number exceeds the 38 leak-free tasks available, the report says that a full run on this
+    selection cannot resolve the question.
+- Precision and cost are reported beside recall. A context that adds recall by adding files costs precision,
+  and that trade is part of the answer.

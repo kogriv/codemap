@@ -9,6 +9,10 @@ the owner's decision on a full run. It makes no usefulness claim. Design: resear
   run     --work W --out O [--codemap BIN] [--budget USD]
                                       2 arms x 2 repeats per task, headless `claude`, isolated
   report  --out O                     recall / precision / cost / turns per arm, spread between repeats
+
+Protocol v2 (pilot 2, research/pack_agent_pilot.md §4): `context --work W --codemap BIN` computes, per task,
+a `pack` over seeds taken from the message and a grep listing over the same names cut to the same length;
+`run --protocol v2` gives each arm its context in the prompt and no MCP at all.
 """
 from __future__ import annotations
 
@@ -100,6 +104,64 @@ def prepare(repo: str, work: Path, codemap: str) -> None:
     (work / "tasks.json").write_text(json.dumps(tasks, indent=1))
 
 
+SEED_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{3,}")
+MAX_SEEDS, PACK_BUDGET = 8, 2000
+ARMS_V2 = ("grep_ctx", "pack_ctx")
+CONTEXT_HEAD = ("\n\nContext gathered automatically from the names in the message (seeds: {seeds}):\n<<<\n"
+                "{context}\n>>>")
+
+
+def seeds_for(message: str, graph: dict) -> list[str]:
+    """Words of the message (4+ chars) that are the short name of a node of the graph, in order, at most 8."""
+    names = {n["id"].rsplit(".", 1)[-1] for n in graph["nodes"]
+             if n.get("kind") in ("function", "class", "module", "attribute")}
+    out = []
+    for w in SEED_RE.findall(message):
+        if w in names and w not in out:
+            out.append(w)
+    return out[:MAX_SEEDS]
+
+
+def grep_context(tree: Path, seeds: list[str], limit: int) -> str:
+    """Files under the tree matching each seed as a word, ranked by total hits, cut to `limit` characters."""
+    hits: dict[str, int] = {}
+    for sd in seeds:
+        p = subprocess.run(["grep", "-rcw", "--include=*.py", sd, "."], cwd=tree, capture_output=True, text=True)
+        for line in p.stdout.splitlines():
+            path, _, n = line.rpartition(":")
+            if n.isdigit() and int(n) > 0:
+                hits[path.lstrip("./")] = hits.get(path.lstrip("./"), 0) + int(n)
+    lines, size = [], 0
+    for path, n in sorted(hits.items(), key=lambda x: (-x[1], x[0])):
+        row = f"- {path} ({n} matches)"
+        if size + len(row) + 1 > limit:
+            break
+        lines.append(row)
+        size += len(row) + 1
+    return "\n".join(lines) or "(no matches)"
+
+
+def context(work: Path, codemap: str) -> None:
+    tasks = json.loads((work / "tasks.json").read_text())
+    for i, t in enumerate(tasks):
+        d = work / f"t{i:02d}"
+        g = json.loads((d / "graph.json").read_text())
+        seeds = seeds_for(t["message"], g)
+        if seeds:
+            p = subprocess.run([codemap, "pack", "--graph", str(d / "graph.json"), "--budget", str(PACK_BUDGET),
+                                *[x for sd in seeds for x in ("--seed", sd)]],
+                               cwd=d / "repo", capture_output=True, text=True)
+            pack_md = p.stdout.strip() if p.returncode == 0 else f"(pack refused: {p.stdout.strip()[:300]})"
+        else:
+            pack_md = "(no name in the message is a symbol of the graph)"
+        grep_md = grep_context(d / "repo", seeds, max(len(pack_md), 200)) if seeds else \
+            "(no name in the message is a symbol of the graph)"
+        (d / "context_pack.md").write_text(pack_md)
+        (d / "context_grep.md").write_text(grep_md)
+        (d / "seeds.json").write_text(json.dumps(seeds))
+        print(f"t{i:02d} seeds={len(seeds)} pack_chars={len(pack_md)} grep_chars={len(grep_md)}", flush=True)
+
+
 def _final_list(text: str) -> list[str] | None:
     for line in reversed((text or "").strip().splitlines()):
         line = line.strip().strip("`")
@@ -112,14 +174,15 @@ def _final_list(text: str) -> list[str] | None:
     return None
 
 
-def run(work: Path, out: Path, codemap: str, budget: float) -> None:
+def run(work: Path, out: Path, codemap: str, budget: float, protocol: str = "v1") -> None:
     tasks = json.loads((work / "tasks.json").read_text())
     done = {}
     if out.exists():
         for line in out.read_text().splitlines():
             r = json.loads(line)
             done[(r["task"], r["arm"], r["rep"])] = r
-    plan = [(i, arm, rep) for i in range(len(tasks)) for arm in ARMS for rep in range(REPEATS)]
+    arms = ARMS if protocol == "v1" else ARMS_V2
+    plan = [(i, arm, rep) for i in range(len(tasks)) for arm in arms for rep in range(REPEATS)]
     random.Random(SEED).shuffle(plan)                    # arms interleaved, order fixed
     spent = sum(r.get("cost") or 0 for r in done.values())
     empty = work / "empty_mcp.json"
@@ -136,7 +199,12 @@ def run(work: Path, out: Path, codemap: str, budget: float) -> None:
         shutil.copytree(d / "repo", tree)
         prompt = PROMPT.format(message=t["message"])
         tools = list(BASE_TOOLS)
-        if arm == "pack":
+        if arm in ARMS_V2:
+            ctx = (d / ("context_pack.md" if arm == "pack_ctx" else "context_grep.md")).read_text()
+            seeds = ", ".join(json.loads((d / "seeds.json").read_text())) or "none"
+            prompt += CONTEXT_HEAD.format(seeds=seeds, context=ctx)
+            cfg = empty
+        elif arm == "pack":
             cfg = d / "mcp_pack.json"
             cfg.write_text(json.dumps({"mcpServers": {"codemap": {
                 "command": codemap, "args": ["serve", "--mcp", "--graph", str(d / "graph.json"),
@@ -166,7 +234,7 @@ def run(work: Path, out: Path, codemap: str, budget: float) -> None:
         named = _final_list(j.get("result", ""))
         truth = set(t["truth"])
         hit = len(truth & set(named or []))
-        rec = {"task": i, "sha": t["sha"], "arm": arm, "rep": rep, "named": named,
+        rec = {"task": i, "sha": t["sha"], "arm": arm, "rep": rep, "protocol": protocol, "named": named,
                "truth": sorted(truth), "hits": hit,
                "recall": hit / len(truth), "precision": (hit / len(named)) if named else None,
                "cost": j.get("total_cost_usd"), "turns": j.get("num_turns"),
@@ -184,8 +252,9 @@ def run(work: Path, out: Path, codemap: str, budget: float) -> None:
 
 def report(out: Path) -> str:
     rows = [json.loads(x) for x in out.read_text().splitlines()]
+    arms = ARMS_V2 if any(r.get("protocol") == "v2" for r in rows) else ARMS
     lines = ["arm       runs  errors  recall(mean)  precision(mean)  cost/run  turns(mean)"]
-    for arm in ARMS:
+    for arm in arms:
         r = [x for x in rows if x["arm"] == arm]
         ok = [x for x in r if not x["error"]]
         mean = lambda xs: sum(xs) / len(xs) if xs else float("nan")
@@ -200,14 +269,14 @@ def report(out: Path) -> str:
                  f"{(sum(diffs) / len(diffs)) if diffs else float('nan'):.3f}")
     paired = []
     for i in {x["task"] for x in rows}:
-        a = [x["recall"] for x in rows if x["task"] == i and x["arm"] == "baseline"]
-        b = [x["recall"] for x in rows if x["task"] == i and x["arm"] == "pack"]
+        a = [x["recall"] for x in rows if x["task"] == i and x["arm"] == arms[0]]
+        b = [x["recall"] for x in rows if x["task"] == i and x["arm"] == arms[1]]
         if a and b:
             paired.append(sum(b) / len(b) - sum(a) / len(a))
     if paired:
         m = sum(paired) / len(paired)
         sd = (sum((d - m) ** 2 for d in paired) / max(len(paired) - 1, 1)) ** 0.5
-        lines.append(f"per-task paired difference (pack - baseline): mean {m:+.3f}, sd {sd:.3f}, n {len(paired)}")
+        lines.append(f"per-task paired difference ({arms[1]} - {arms[0]}): mean {m:+.3f}, sd {sd:.3f}, n {len(paired)}")
         lines.append(f"tasks needed to see a 0.05 difference at ~95% (2 sd/sqrt(n) < 0.05): "
                      f"{int((2 * sd / 0.05) ** 2) + 1}")
     pk = [x for x in rows if x["arm"] == "pack"]
@@ -225,6 +294,8 @@ def main(argv=None) -> int:
     p.add_argument("--codemap", default="codemap")
     r = sub.add_parser("run"); r.add_argument("--work", required=True); r.add_argument("--out", required=True)
     r.add_argument("--codemap", default="codemap"); r.add_argument("--budget", type=float, default=50.0)
+    r.add_argument("--protocol", choices=("v1", "v2"), default="v1")
+    c = sub.add_parser("context"); c.add_argument("--work", required=True); c.add_argument("--codemap", default="codemap")
     q = sub.add_parser("report"); q.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     if a.cmd == "select":
@@ -234,7 +305,9 @@ def main(argv=None) -> int:
     elif a.cmd == "prepare":
         prepare(a.repo, Path(a.work), a.codemap)
     elif a.cmd == "run":
-        run(Path(a.work), Path(a.out), a.codemap, a.budget)
+        run(Path(a.work), Path(a.out), a.codemap, a.budget, a.protocol)
+    elif a.cmd == "context":
+        context(Path(a.work), a.codemap)
     else:
         print(report(Path(a.out)))
     return 0
