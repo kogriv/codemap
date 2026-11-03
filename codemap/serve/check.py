@@ -92,7 +92,8 @@ def _rule_count(name: str, a: dict) -> str:
     return f"{name} ({dec})" if dec == app else f"{name} ({dec} declared, {app} applicable)"
 
 
-def build_check(query, contract: ArchitectureContract, violations: list[Violation]) -> dict:
+def build_check(query, contract: ArchitectureContract, violations: list[Violation], *,
+                currency: dict | None = None, allow_stale: bool = False) -> dict:
     """Structured result: ok flag + violations with their concrete edges.
 
     ``ok`` answers *may the pipeline proceed?*, so an unreadable ``codemap.toml`` makes it
@@ -110,7 +111,11 @@ def build_check(query, contract: ArchitectureContract, violations: list[Violatio
         # R1-C35: where the contract was looked for. A machine reader of `contract_empty`
         # has the same "absent or mislocated?" question a human does.
         "contract_path": contract.path,
-        "ok": not violations and contract.error is None,
+        "ok": (not violations and contract.error is None
+               and not (_is_behind(currency) and not allow_stale)),
+        # R1-C70: is the graph the tree it judges? Always present (R1-C28): `built_now` when
+        # the graph came from the tree in this same process.
+        "graph_currency": currency if currency is not None else {"status": "built_now"},
         # R1-C62: declared vs applicable per rule, and the names that do not exist. Always
         # present while a contract is readable — a consumer cannot tell "nothing phantom"
         # from "this build does not report it" if the field comes and goes (R1-C28).
@@ -126,7 +131,41 @@ def build_check(query, contract: ArchitectureContract, violations: list[Violatio
     }
 
 
-def render_check(query, contract: ArchitectureContract, violations: list[Violation]) -> str:
+def _is_behind(currency: dict | None) -> bool:
+    return bool(currency) and currency.get("status") == "behind"
+
+
+def render_currency(currency: dict | None, allow_stale: bool = False) -> str:
+    """The R1-C70 line: is the graph the tree it judges? Empty under ``--build``."""
+    if currency is None:
+        return ""
+    status = currency.get("status")
+    if status == "current":
+        return (f"_The graph matches its source tree (scope `{currency['scope_id'][:19]}…`)._\n\n")
+    if status == "behind":
+        parts = [f"{currency[k]} {k}" for k in ("changed", "added", "removed") if currency.get(k)]
+        what = ", ".join(parts) or "the scope differs"
+        tail = (" `--allow-stale` was given, so the exit code is the verdict's."
+                if allow_stale else " This exits 2.")
+        return ("⚠️ **The graph is behind its source tree** — "
+                f"{what} since it was built. The verdict below is about the tree as it was, "
+                "not as it is. Rebuild with `codemap refresh <graph>` or check with "
+                f"`--build <path>`.{tail}\n\n")
+    return f"_Graph currency not checked: {currency.get('reason', 'unknown')}._\n\n"
+
+
+def render_check(query, contract: ArchitectureContract, violations: list[Violation], *,
+                 currency: dict | None = None, allow_stale: bool = False) -> str:
+    """The markdown verdict, with the R1-C70 currency line right under the title."""
+    text = _render_verdict(query, contract, violations)
+    line = render_currency(currency, allow_stale)
+    if not line:
+        return text
+    head, sep, rest = text.partition("\n\n")
+    return head + sep + line + rest
+
+
+def _render_verdict(query, contract: ArchitectureContract, violations: list[Violation]) -> str:
     target = query.graph.target
     # R1-C27: ask `error` before `is_empty()`. A contract that would not parse used to be
     # reported as a contract that does not exist, which is how one missing `]` turned a

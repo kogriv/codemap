@@ -696,7 +696,14 @@ class Session:
         from codemap.serve.check import build_check
         root = args.get("root") or self.source_root or "."
         contract = load_contract(root)
-        return build_check(self.query, contract, check_contract(self.query, contract))
+        # R1-C70: the served graph came from disk; say whether it is the tree it judges.
+        currency = None
+        if self.graph_path:
+            from codemap.serve.currency import graph_currency
+            currency = graph_currency(self.graph_path,
+                                      (self.query.graph.provenance or {}).get("scope_id"))
+        return build_check(self.query, contract, check_contract(self.query, contract),
+                           currency=currency)
 
     def _op_communities(self, args) -> list:
         """R1-C18: data-driven module subsystems (greedy modularity).

@@ -1626,10 +1626,15 @@ Python-focus** — если задача его нарушает, это отм�
       ближайший ключ подсказан. Приёмка: 8 строк V1–V4 exit 2; вывод `check` на bquant и codemap побайтно
       прежний, контракт bquearch разбирается так же; сьют 1079/3; на откате 11 из 13 стражей красные.
       Попутно: `docs/architecture-contracts.md` с R1-C27 врал, что битый toml — «no-op success».
-- [ ] **R1-C70 `check --graph` не сверяет граф с деревом** (S) — 🆕 (2026-11-03, та же проба). Граф собран до
+- [x] **R1-C70 `check --graph` не сверяет граф с деревом** (S) ✅ (2026-11-03, без схемы; дизайн
+      [`docs/design/check_graph_currency.md`](docs/design/check_graph_currency.md), предрегистрация f433b7b; та же проба). Граф собран до
       нарушающего импорта → «✅ Contract satisfied», exit 0, о возрасте ни слова; `--build` на том же дереве —
       exit 2. Данные для сверки уже есть (`scope_id` в сайдкаре, R1-C25/R1-C31); у grafema `check` печатает
-      «Graph is fresh» перед проверкой.
+      «Graph is fresh» перед проверкой. **Сделано:** рецепт из сайдкара → `resolve_scope` сборки → сравнение
+      `scope_id`; behind = exit 2 (`--allow-stale` — исключение), unknown названо с причиной, current — одной
+      строкой; MCP `graph_currency` + `ok:false`. Приёмка S1–S10; `--build` на bquant побайтно прежний,
+      цена на bquant ~0 с; сьют 1091/3. Сюрприз: первое место (`freshness`) нарушило собственный контракт
+      codemap (`freshness → scope` вверх) — поймал dogfood-тест, функция переехала в `serve/currency.py`.
 - [ ] **R1-C67 вложенные определения узлами графа** (M, **решение владельца — не сейчас**) — 🆕 (2026-10-15,
       остаток R1-C60). R1-C60 закрыт **объявлением**: `dead-code` называет сужение, граф побайтно прежний.
       Сами 49 вложенных определений bquant (`cached.decorator.wrapper`, `register_*.decorator`) в графе по-

@@ -1,6 +1,6 @@
 # Design — `check --graph` says whether the graph is the tree it judges
 
-**Status:** 🧪 pre-registered (2026-11-03), not yet shipped. **Motivates:** gap
+**Status:** ✅ **shipped** (2026-11-03, no schema change), with acceptance reconciled below. Pre-registered in f433b7b before any code. **Motivates:** gap
 [contract_silent_passes_2026-11-03](../../gaps/contract_silent_passes_2026-11-03.md), row P6.
 **Backlog:** R1-C70.
 
@@ -28,7 +28,7 @@ Everything needed is already recorded:
 - `{"status": "unknown", "reason": …}`, when there is no sidecar or recipe, the recorded `cwd` is
   gone, the graph has no `provenance.scope_id`, or the scope cannot be resolved.
 
-The recipe is parsed with codemap's own `build_parser()`, and the scope is resolved exactly as
+The recipe is parsed for the arguments that decide the scope, and the scope is resolved exactly as
 `build` resolves it (`path`, `--consumer`, `--docs`, relative to the recorded `cwd`). That way "the
 same input" means the same thing in both places.
 
@@ -91,3 +91,30 @@ accounting.
   - With the exit-code branch removed, S1 exits 0 (a test goes red).
 
 At least one expectation fails if nothing is done: S1 exits 0 today (measured in the probe).
+
+## Acceptance reconciled (2026-11-03)
+
+| | expected | measured | |
+|---|---|---|---|
+| S1 | exit 2, "behind", "1 changed", names `refresh` and `--build`, verdict still shown | so | holds |
+| S2 | exit 0, "matches its source" | so | holds |
+| S3 | `--allow-stale`: exit 0, line kept | so | holds |
+| S4 | no sidecar: exit 0, "currency not checked: no build recipe beside the graph" | so | holds |
+| S5 | new file: behind, "1 added" | so | holds |
+| S6 | `--build` byte-identical, fixture and bquant | fixture: no currency line. bquant: identical output, exit 0 both | holds |
+| S7 | MCP `behind`, `ok: false` | so | holds |
+| S8 | bquant `check --graph` adds < 1 s | median 0.49 s before, 0.49 s after (3 runs each). The scope resolves through git and costs nothing visible | holds |
+| S9 | bquant, a fresh graph: exit 0, "current" | so | holds |
+| S10 | both mutations red | both red. With the code reverted (before the move below), 11 of 12 tests fail; the one that passes is the `--build` "no line" test | holds |
+
+Suite: 1091 passed, 3 skipped (1079 + 12).
+
+**Surprises, both changed the design text above:**
+- **D1 said the recipe would be parsed with codemap's own `build_parser()`.** It cannot be: the
+  function first lived in `freshness`, which sits below `cli` in codemap's own layer contract. A
+  narrow parser reads only `path`, `--consumer` and `--docs`, and a test pins that it agrees with
+  `build_parser` on three argvs.
+- **The first placement broke codemap's own contract.** `freshness → scope` points up the stack,
+  and the dogfood test `test_codemap_satisfies_its_own_architecture_contract` caught it in the
+  suite. The function moved to `codemap/serve/currency.py`, a layer allowed to import both. It is the
+  same kind of slip as the defects this work fixes, caught by the gate this work hardens.

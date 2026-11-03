@@ -200,7 +200,22 @@ codemap check --graph graph.json
 codemap check --build ./yourpkg                 # or build fresh
 codemap check --graph graph.json --root infra/   # the dir holding codemap.toml (default: cwd)
 codemap check --graph graph.json --require-contract   # a missing contract is a failure
+codemap check --graph graph.json --allow-stale        # do not fail on a graph behind its tree
 ```
+
+**A graph read from disk is checked against its source tree first** (R1-C70). `check --graph`
+re-derives the input scope from the build recipe recorded beside the graph, using `build`'s own
+definition of the input, and compares it by content (`scope_id`) with the scope the graph was built
+from:
+- If the source has changed since, `check` says the graph is behind, with how many files changed,
+  were added or removed, and exits **2**. The rule verdict below that line is about the tree as it
+  was. `--allow-stale` returns the verdict's own exit code and keeps the line.
+- If the graph matches its tree, one line says so.
+- If it cannot tell (no sidecar beside the graph, the build directory is gone), it says "graph
+  currency not checked" with the reason, and the exit code is the verdict's.
+
+`--build` needs none of this: the graph comes from the tree in the same run. Before, a graph built
+before a forbidden import was added answered "✅ Contract satisfied" and said nothing about its age.
 
 **Use `--require-contract` in CI.** A missing or empty `[architecture]` block is a
 deliberate no-op success — a project without a contract must not fail — which means the
@@ -246,7 +261,9 @@ break the architecture?"** after a change:
 //                                 "edges": [["pkg.a.m", "pkg.b.m"]]}]}
 ```
 
-Over MCP it is the `check` tool (`{ok, violations:[{rule, summary, edges}]}`). Pair it
+Over MCP it is the `check` tool (`{ok, violations:[{rule, summary, edges}], graph_currency}`).
+`graph_currency.status` is `current`, `behind` or `unknown`, and `built_now` under `--build`. `ok` is
+false when the served graph is behind its source tree. Pair it
 with `review` (what a diff touches) for a before/after health check around an agent's
 change.
 

@@ -5,6 +5,17 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **`check --graph` says whether the graph is the tree it judges** (R1-C70, design
+  [`docs/design/check_graph_currency.md`](docs/design/check_graph_currency.md)).
+  - The input scope is re-derived from the build recipe beside the graph and compared by `scope_id`.
+  - A graph behind its source tree is named, with counts, and **exits 2**. `--allow-stale` keeps the
+    verdict's exit code and the line.
+  - "Not checked" is named with its reason; "current" is one line.
+  - MCP `check` carries `graph_currency` and answers `ok: false` when the graph is behind.
+  - Before, a graph built before a forbidden import answered "✅ Contract satisfied". `--build` output is
+    unchanged.
+  - **Behaviour change:** `check --graph` output gains a currency line, and a stale graph fails the gate.
+
 - **A contract the gate cannot fully read is refused** (R1-C69, design
   [`docs/design/contract_validation.md`](docs/design/contract_validation.md)). `[architecture]` is
   validated against a closed schema: unknown keys (with the nearest known one suggested), flags that are

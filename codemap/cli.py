@@ -807,6 +807,12 @@ def _cmd_pack(args) -> int:
     return 1 if "error" in p else 0
 
 
+def _check_exit(violations, currency: dict | None, allow_stale: bool) -> int:
+    """2 on a violation, or on a graph behind its source unless ``--allow-stale`` (R1-C70)."""
+    behind = currency is not None and currency.get("status") == "behind"
+    return 2 if (violations or (behind and not allow_stale)) else 0
+
+
 def _cmd_check(args) -> int:
     """Enforce the [architecture] contract → exit 2 on any violation (R1-C3).
 
@@ -820,21 +826,28 @@ def _cmd_check(args) -> int:
     from codemap.serve.check import render_check
     q = Query(_graph_from(args))
     contract = load_contract(args.root)
+    # R1-C70: a graph read from disk may be behind the tree it is about to be judged as.
+    currency = None
+    if getattr(args, "graph", None) and not getattr(args, "build", None):
+        from codemap.serve.currency import graph_currency
+        currency = graph_currency(args.graph, (q.graph.provenance or {}).get("scope_id"))
+    allow_stale = getattr(args, "allow_stale", False)
     # R1-C27: check `error` before anything else. A malformed codemap.toml used to be
     # indistinguishable from an absent one, so removing a single `]` turned a gate that
     # reported 14 violations into exit 0. Exit 2 — the same code as a violation, not a new
     # one: the status answers "may the pipeline proceed?" (no, either way), and a new code
     # would sort an unreadable contract into the success branch of every `if rc == 2` that
     # already exists in someone's pipeline.
+    kw = {"currency": currency, "allow_stale": allow_stale}
     if contract.error:
-        _emit_answer(render_check(q, contract, []))
+        _emit_answer(render_check(q, contract, [], **kw))
         return 2
     if contract.is_empty() and args.require_contract:
-        _emit_answer(render_check(q, contract, []))
+        _emit_answer(render_check(q, contract, [], **kw))
         raise SystemExit("error: no [architecture] contract found (--require-contract)")
     violations = check_contract(q, contract)
-    _emit_answer(render_check(q, contract, violations))
-    return 2 if violations else 0
+    _emit_answer(render_check(q, contract, violations, **kw))
+    return _check_exit(violations, currency, allow_stale)
 
 
 def _cmd_diff(args) -> int:
@@ -1173,6 +1186,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Dir with codemap.toml holding [architecture] (default: cwd).")
     ck.add_argument("--require-contract", action="store_true",
                     help="Fail if no [architecture] contract is present (default: no-op success).")
+    ck.add_argument("--allow-stale", action="store_true",
+                    help="With --graph: do not fail when the graph is behind its source tree "
+                         "(R1-C70); the 'behind' line is still printed.")
     ck.set_defaults(func=_cmd_check)
 
     return p
