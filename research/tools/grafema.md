@@ -2,7 +2,8 @@
 
 **Verdict:** learn (strong) for the design; the Python product, as measured, is not usable ·
 **Feeds:** R1-C39 (reason on the edge), R1-C13 (labels on the edge), derived edges as declared rules
-(new, §Разбор) · **Card status:** hands-on — import graph and T1–T3 on the full R2 tree, 0.4.1 from npm
+(new, §Разбор) · **Card status:** hands-on — import graph and T1–T3 on the full R2 tree (§1–§2), then
+guarantees, calls, data flow and MCP (§6), 0.4.1 from npm
 
 **Scope:** `sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2` (R2 benchmark
 `bquant.scope.json` — 280 files, 207 .py / 73 .md, bquant@cb89a24) · run mode: **materialized** from a
@@ -20,6 +21,19 @@ fresh `git archive cb89a24` extract (staging verified `== canonical ✓`)
 >
 > With the public `analyze_zones` gone, `who`/`impact` attribute its 88 call sites to a method of the
 > same name and mark them `[resolved]`.
+>
+> The second pass (§6) tested the headline features:
+> - **Guarantees** are real Datalog. A recursive rule finds exactly the 11 modules on cycles, and a
+>   layer violation added to an ordinary module is caught. But:
+>   - the first `check` on a fresh graph evaluates nothing and passes with exit 0;
+>   - a typo in a predicate passes silently;
+>   - an edited rule keeps its old body;
+>   - a violation inside an `__init__.py` is invisible (defect A);
+>   - importing the rules costs about 300 s each, unless `governs` is narrowed.
+> - **Calls** agree with codemap where present (95.8 %), but cover a third of its file pairs. No call
+>   ever resolves to a class.
+> - **Data flow** (`wtf`) answers "no reachable nodes" for every Python question, a toy included. The
+>   same toy in JS works.
 
 **How to read this card.** §0 holds the expectations, committed before any run on the R2 tree
 (1119ba0), with an addendum before the T1–T3 probe (597c28f). §1–§2 are what the runs showed,
@@ -282,7 +296,9 @@ The last three cycles need the two edges that are not defects (the broken import
   `UniversalZoneAnalyzer.analyze_zones`. The top-level `analyze_zones` is not, because its file was
   dropped.
 - **T2.** `who MACDZoneAnalyzer` lists **83** call sites, each marked `[resolved]` (23) or
-  `[unresolved]` (60): an honest per-site label.
+  `[unresolved]` (60). *(Corrected in §6.6: the 23 "resolved" rows are imports of the class. All 60
+  calls are unresolved, because no call to a class is ever resolved. This line first called it "an
+  honest per-site label".)*
 - **T2/T3 on `analyze_zones`: the confident wrong answer.**
   - `who analyze_zones` lists **118** callers, **109 marked `[resolved]`**.
   - `impact analyze_zones` reports **93** direct callers and 0 transitive, all of them against the
@@ -344,17 +360,20 @@ The last three cycles need the two edges that are not defects (the broken import
 ### What this card does not establish
 
 Everything in §0.6, plus: whether defect A or B is fixed in `main` by behaviour (both functions read
-unchanged, but `main` was not built); the class-level T2 set against codemap row by row; macOS.
+unchanged, but `main` was not built); the class-level T2 set against codemap row by row (compared by
+file in §6.6, K3); macOS.
 
 ## Coverage vs codemap
 
 | | grafema 0.4.1 (Python) | codemap |
 |---|---|---|
 | T1 defs | ◐ — right where a file is analyzed; the files defect B drops have no definitions at all | ✅ |
-| T2 callers | ◐ — per-site `[resolved]`/`[unresolved]`, an honest design; a missing definition is replaced by a namesake without a flag | ✅ |
+| T2 callers | ◐ — per-site `[resolved]`/`[unresolved]` labels. But no call to a class ever resolves, and the CLI's "resolved" rows for a class are its imports. A missing definition is replaced by a namesake without a flag. File pairs: 95.8 % agree with codemap, covering 35.9 % of codemap's pairs (§6.6) | ✅ |
 | T3 impact | ◐ — direct callers only, no transitive closure | ✅ |
 | T4 sig-change | ✖ — not offered for Python | ✅ |
 | T5 arch | ◐ — the design reads every import scope; defects A and B leave 8 of 45 cycles | ✅ |
+| contract gate | ◐ — Datalog guarantees, recursion included; catches an ordinary-module violation. But the first `check` passes vacuously, a typo passes, an edited rule stays stale, an `__init__` violation is invisible, and import costs ~300 s per rule (§6.6) | ✅ `codemap check`, catches the `__init__` case |
+| data flow | ✖ for Python — `wtf` answers "no reachable nodes" on 3 of 3 tree questions and on a toy; the JS toy works | — not offered |
 | determinism | ✅ — identical edge sets in 3 runs | ✅ |
 | failure reporting | ◐ — a refused file is logged as `ERROR` at exit 0 and counted by `coverage` under the wrong reason, but no answer carries it; defect A logs nothing; a fact query returns `[]` | ✅ — a refused file is named at build ("missing, not absent") |
 
@@ -370,7 +389,13 @@ unchanged, but `main` was not built); the class-level T2 set against codemap row
     `extras.scope` on the edge; in grafema it is graph structure, and where an import sits can be
     queried.
   - **A label on every call site** (`[resolved]` / `[unresolved]`). The same idea as R1-C13 and R1-C39:
-    honesty at the edge, not only in the answer.
+    honesty at the edge, not only in the answer. The idea, not the implementation: §6.6 found that the
+    label calls a class's imports "resolved" and every call to it "unresolved".
+  - **Contracts as Datalog over the graph,** recursion included. One three-line rule found exactly
+    the 11 modules on cycles. Their failures also show what a contract gate must refuse:
+    - an empty rule set reported as a pass;
+    - an unknown predicate;
+    - a stored rule that differs from its file.
 - **What their failures teach. This matters more than what we would take.**
   - All three defects are one kind: two parts of one system never run together.
     - `quickstart.ts` writes a glob that `analyzeAction.ts` cannot read.
@@ -397,17 +422,39 @@ unchanged, but `main` was not built); the class-level T2 set against codemap row
 architecture is the most careful seen in R2: every import scope is read, derivations are declared
 rules, there is a per-site resolution label, and the edge set is deterministic. On a real Python
 package, three integration defects hide 37 of 45 import cycles and replace the flagship function with
-a namesake. None of it stops the run or reaches an answer. The licence (FSL) rules out `wrap` and `integrate` in any case.
+a namesake. None of it stops the run or reaches an answer. The second pass (§6) adds more of the same
+kind, a silent pass where the user expects a check:
+- a first `check` that evaluates nothing at exit 0;
+- a typo that passes;
+- a stale rule;
+- Python data flow that answers nothing;
+- no call ever resolved to a class.
+
+The licence (FSL) rules out `wrap` and `integrate` in any case.
 
 **Backlog effect:**
 - **New candidate:** derived edges declared as readable rules. A design note, not code.
 - **New candidate:** a probe that a file the parser refuses is named in every MCP answer it affects,
   not only in the build output.
+- **New candidate (§6.6):** probe `codemap check` for the three silent passes grafema showed: an
+  empty or unread contract, a contract naming a layer or module that does not exist, and a contract
+  edited between two runs. Each should refuse or say so. This is a probe to run, not a claim that
+  codemap already does it.
 - **Feeds R1-C39 / R1-C13:** a second independent tool that labels resolution per site.
 - **Upstream:** filed 2026-11-02 on the owner's decision, after the re-verification in §5:
   [#482](https://github.com/Disentinel/grafema/issues/482) (A, `__init__` relative imports),
   [#480](https://github.com/Disentinel/grafema/issues/480) (B, f-string conversion),
   [#481](https://github.com/Disentinel/grafema/issues/481) (quickstart glob).
+- **Upstream candidates from §6, not filed:**
+  - the first `check` imports and reports "No guarantees found" at exit 0 (S6);
+  - an unknown predicate passes without the documented warning (G4);
+  - an edited rule keeps its stored body (G5);
+  - no `CALLS` edge to a class;
+  - Python `wtf` returns nothing (a toy reproduces it, and the JS toy is the control);
+  - ~300 s per rule on import with the default `governs` (S7).
+
+  Filing is the owner's call. Each would first get the §5 treatment: a minimal reproduction with a
+  control, on a fresh `HOME`.
 
 ## 5. Re-verification before filing — pre-registration (2026-11-02)
 
@@ -555,3 +602,112 @@ Three `wtf` questions whose answers are read from the source beforehand:
 
 Incremental behaviour, memory and scale beyond one 20-second tree, a build of `main`, JS/TS, `why`
 and the knowledge layer, `git-ingest`. They stay "not established" in the card.
+
+### 6.6 Second pass reconciled (2026-11-02/03)
+
+Same tool, tree, config and stand as §1. Every guarantee probe uses a fresh copy of the tree and a
+fresh `analyze`. The measured numbers are under `second_pass` in
+[`bench/grafema_results.json`](../bench/grafema_results.json). The probes were shell scripts around
+the CLI and are not part of the harness; the rule files are in that block verbatim.
+
+**How the guarantee probes had to be run, found on the way.** The pre-registered form, 8 rules and
+`check` after `analyze`, never finished: every attempt hit its timeout (180 s, then 1200 s). I first
+blamed CPU contention on the shared stand. That was wrong: on an idle stand, capped at 8 cores, it
+still hung. What it was, found by reading `check.js` and `GuaranteeManager.js` and then measured:
+- `check` first **imports** the YAML. For each rule it adds a `GUARANTEE` node and one `GOVERNS` edge
+  to every module the rule's `governs` glob matches. With no `governs`, the default is `**/*`, which
+  means all 206 modules.
+- That import costs **301–322 s per rule**. Three different rules on three fresh trees took 322, 310
+  and 301 s. With `governs: ["no/such/dir/**"]`, it takes 1 s. So 8 rules cost about 40 minutes
+  before a single one is evaluated. Evaluation itself takes 10–12 ms per rule.
+- A `check` killed by a timeout leaves `rfdb-server` computing. One was seen at 95 % of a core
+  31 minutes later, and the next `check` on that tree queues behind it.
+
+So the probes below add the one line `governs: ["no/such/dir/**"]` to every rule. This is a deviation
+from §6.1: the rules are otherwise unchanged, and none of them reads `GOVERNS`. Each tree gets two
+`check` runs: the first imports, the second answers.
+
+**Guarantees.**
+
+| | expected | measured | |
+|---|---|---|---|
+| G1 | exit 1, exactly the three violating edges | exit 1, **2** violations: `core/config.py` and `indicators/macd.py`, 6 / 8 passed | holds. The two `macd` edges are one row because the rule returns the source module `X`, and that is my rule's form |
+| G2 | a fourth violation, `data.loader`; `codemap check` names it too | `loader` added, 5 / 8 passed. codemap: 4 violations, `data.loader → analysis.zones.models` among them | holds |
+| G3 | no new violation from the `__init__` mutation; codemap reports it | 6 / 8, the same two as G1. codemap: 4 violations, `bquant.data → analysis.zones.models` among them | holds. **A contract gate inherits defect A's blind spot** |
+| G4 | the typo `edgee(...)` passes, 0 violations, exit 0 | `✓ typo-core-analysis`, 1 / 1 passed, exit 0. No warning on stdout or stderr | holds. Their docs promise "skipped with a warning" |
+| G5 | an edited rule with the same name still runs as v1 | after the edit, `g5-rule` still reports v1's violation (`config`), exit 1 | holds. `import()` skips a guarantee whose node exists |
+| G6 | recursion accepted; exactly the 11 modules on grafema's own cycles | 11 violations, the same 11 modules as the cycles computed from grafema's §1 edge set | holds |
+
+**Surprises in the guarantees:**
+- **S6 — the first `check` on a fresh graph checks nothing and passes.** It imports the rules, then
+  `list()` sees none of them. It prints "No guarantees found" and exits 0, with `--json` too:
+  `{"total": 0, …}`. This happened on all 11 fresh trees where the first `check` finished. The nodes do exist: MCP `get_stats` counted
+  `GUARANTEE: 8` afterwards, and the next `check` evaluates them. A CI job that analyzes a clean
+  checkout and runs `check` once passes every contract without evaluating one.
+- **S7 — import costs about 300 s per rule** on a 206-module tree, as above. The cause was measured
+  (default `governs` against no `governs`), but not traced inside the server.
+- **S8 — a killed `check` keeps the server busy**, and the next `check` waits behind it.
+
+**Calls (K).** 948 `CALLS` edges; scored on `bquant → bquant` file pairs across different files.
+
+| | expected | measured | |
+|---|---|---|---|
+| K1 | ≥ 80 % of grafema's pairs are codemap's | 69 of 72 = **95.8 %** | holds |
+| K2 | grafema has < 60 % of codemap's pairs | 69 of 192 = **35.9 %** | holds |
+| K3 | the files `who MACDZoneAnalyzer` marks `[resolved]` are a subset of codemap's caller files | 23 files; 22 are codemap's, plus `bquant/indicators/__init__.py` | **fails, by one file**. See below |
+
+- **The 3 pairs only grafema has are all wrong**, and all three have the same cause, a namesake bound
+  in place of the imported definition:
+  - `indicators/macd.py → zones/analyzer.py`: the `analyze_zones` misattribution again (§1).
+  - `data/samples/__init__.py → data/loader.py`: `get_data_info` is imported from `.utils`, a relative
+    import inside an `__init__` (defect A). The call is bound to the namesake in `loader.py`.
+  - `data/samples/utils.py → data/samples/__init__.py`: `get_dataset_info` is imported from
+    `.datasets`, an ordinary module. The call is bound to the namesake wrapper in the package
+    `__init__`.
+- **No `CALLS` edge targets a class anywhere in the graph.** Constructor calls get `CALL` nodes and are
+  never resolved. A sample of 10 codemap-only pairs (seed 7), read in the source, showed three causes:
+  class instantiation (`SwingMetrics`, `IndicatorCalculationError`), defect A (`AnalysisResult`
+  through `from .. import` in an `__init__`), and virtual dispatch, where codemap's edges are inferred.
+  Per-cause counts were not recorded. 18 of the 123 codemap-only pairs touch `pipeline.py`
+  or `presets.py` (defect B).
+- **K3, read closely.** The CLI's 23 `[resolved]` rows for `MACDZoneAnalyzer` are resolved
+  **imports** of the class, not calls. The extra file re-exports it and calls nothing. The 60 actual
+  call sites are all `[unresolved]`, as the no-class-target finding predicts. The per-site label is
+  therefore real, but on this symbol it says "resolved" about imports and "unresolved" about every
+  call.
+
+**Data flow (D).** All three fail the same way: `wtf ALLDATA_DIR`, `wtf removed_rows` and
+`wtf zones_features` each answer `← no reachable nodes`.
+- `zones_features` picked `examples/02a_universal_zones.py:67` instead of `zones/analyzer.py:151`,
+  and said nothing about the choice.
+- Control, a toy module written twice, once in Python and once in JS: `BASE = 10`,
+  `DERIVED = BASE * 2`, and `f(x)` with `y = x + BASE; z = y * 2`.
+  - In Python, `wtf DERIVED` and `wtf z` both answer "no reachable nodes".
+  - In JS, analyzed alone, `wtf DERIVED` returns a chain of 4 nodes (`BASE`, `10`, `*`, `2`) and
+    `wtf z` one of 7, back to the parameter `x`.
+
+  So `wtf` works, and backward data flow returns nothing for Python in 0.4.1. Their table says
+  "partial".
+
+**MCP (M).**
+
+| | expected | measured | |
+|---|---|---|---|
+| M1 | starts, ≥ 25 tools | `grafema-mcp` 0.1.0, **52** tools | holds |
+| M2 | `find_calls MACDZoneAnalyzer` agrees with the CLI's 83 | **60** calls, **0 resolved** | **fails**. The CLI's 83 = these 60 calls + 23 resolved imports |
+
+The server's own instructions tell an agent to avoid `grep` for "who calls what", because grep "misses
+calls through aliases, re-exports, and dynamic dispatch". On this tree, `find_calls` resolved none of
+the 60 calls to the class.
+
+**What this pass changes in the card:**
+- The praise of an "honest per-site label" in §1 T2, the coverage table and the разбор is softened.
+  The label exists, but no call to a class is ever resolved, and the CLI's "resolved" rows for a class
+  are its imports.
+- Guarantees work as a mechanism: recursion, exact cycle modules, mutation caught in an ordinary
+  module. But the first `check` passes vacuously, a typo passes silently, an edited rule keeps its old
+  body, and an `__init__` violation is invisible.
+- Data flow is listed but answers nothing for Python.
+
+**Still not established:** everything in §6.5 (the JS toy above is a control, not a JS measurement),
+plus where the time inside `rfdb-server` goes during import, and whether S6–S8 hold on `main`.

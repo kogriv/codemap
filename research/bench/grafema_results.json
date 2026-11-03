@@ -1,5 +1,5 @@
 {
- "_comment": "R2-grafema, card research/tools/grafema.md. grafema 0.4.1 from npm, Linux x64; config include ['**/*.py'] (the quickstart's brace glob loads no Python analyzer, §0.1). Stage bquant@cb89a24, scope verified canonical. The quickstart block here is the FIRST probe, contaminated by analyzers cached from the earlier runs; the clean probe on a fresh HOME is in the card.",
+ "_comment": "R2-grafema, card research/tools/grafema.md. grafema 0.4.1 from npm, Linux x64; config include ['**/*.py'] (the quickstart's brace glob loads no Python analyzer, \u00a70.1). Stage bquant@cb89a24, scope verified canonical. The quickstart block here is the FIRST probe, contaminated by analyzers cached from the earlier runs; the clean probe on a fresh HOME is in the card.",
  "analyze": [
   {
    "rc": 0,
@@ -1006,6 +1006,134 @@
    "function": 25,
    "module": 240,
    "type_checking": 1
+  }
+ },
+ "second_pass": {
+  "_comment": "Second pass (card \u00a76, pre-registered e5b347e). Shell probes around the CLI on fresh copies of the same stage; not produced by the harness. Every guarantee rule below got one extra line `governs: [\"no/such/dir/**\"]` for the measured runs (\u00a76.6).",
+  "calls": {
+   "K1_pct": 95.8,
+   "K2_pct": 35.9,
+   "K3": {
+    "extra": "bquant/indicators/__init__.py",
+    "in_codemap_callers": 22,
+    "resolved_rows_are": "imports",
+    "who_resolved_files": 23
+   },
+   "calls_edges": 948,
+   "calls_to_class_edges": 0,
+   "codemap_only": 123,
+   "codemap_only_touching_pipeline_or_presets": 18,
+   "codemap_pairs": 192,
+   "grafema_only": [
+    [
+     "bquant/indicators/macd.py",
+     "bquant/analysis/zones/analyzer.py",
+     "analyze_zones namesake"
+    ],
+    [
+     "bquant/data/samples/__init__.py",
+     "bquant/data/loader.py",
+     "get_data_info namesake (import from .utils in __init__)"
+    ],
+    [
+     "bquant/data/samples/utils.py",
+     "bquant/data/samples/__init__.py",
+     "get_dataset_info namesake (import from .datasets)"
+    ]
+   ],
+   "grafema_pairs": 72,
+   "shared": 69
+  },
+  "dataflow": {
+   "toy_js_control": {
+    "DERIVED": 4,
+    "z": 7
+   },
+   "toy_python": {
+    "DERIVED": "no reachable nodes",
+    "z": "no reachable nodes"
+   },
+   "wtf_ALLDATA_DIR": "no reachable nodes",
+   "wtf_removed_rows": "no reachable nodes",
+   "wtf_zones_features": "no reachable nodes (picked examples/02a_universal_zones.py:67)"
+  },
+  "guarantees": {
+   "G1_clean": {
+    "exit": 1,
+    "passed": "6/8",
+    "violations": [
+     "bquant/core/config.py",
+     "bquant/indicators/macd.py"
+    ]
+   },
+   "G2_loader_mutation": {
+    "codemap_check_violations": 4,
+    "exit": 1,
+    "passed": "5/8",
+    "violations": [
+     "bquant/core/config.py",
+     "bquant/indicators/macd.py",
+     "bquant/data/loader.py"
+    ]
+   },
+   "G3_init_mutation": {
+    "codemap_check_violations": 4,
+    "exit": 1,
+    "passed": "6/8",
+    "violations": [
+     "bquant/core/config.py",
+     "bquant/indicators/macd.py"
+    ]
+   },
+   "G4_typo": {
+    "exit": 0,
+    "passed": "1/1",
+    "warning": null
+   },
+   "G5_edited_rule": {
+    "after_edit_violations": [
+     "bquant/core/config.py"
+    ],
+    "v1_violations": [
+     "bquant/core/config.py"
+    ]
+   },
+   "G6_recursive_cycles": {
+    "equals_cycle_modules_of_own_edges": true,
+    "violations": 11
+   },
+   "eval_ms_per_rule": [
+    10,
+    12
+   ],
+   "first_check_on_fresh_graph": {
+    "exit": 0,
+    "fresh_trees_observed": 11,
+    "json_total": 0,
+    "output": "No guarantees found."
+   },
+   "import_cost_s_default_governs": {
+    "layer-core-analysis": 301,
+    "t-edge": 310,
+    "t-none": 322
+   },
+   "import_cost_s_narrow_governs": 1,
+   "rules": {
+    "cycles": "guarantees:\n  - name: no-import-cycles\n    check: datalog\n    severity: error\n    rule: 'reach(X, Y) :- edge(X, Y, \"DEPENDS_ON\"). reach(X, Z) :- reach(X, Y), edge(Y, Z, \"DEPENDS_ON\"). violation(X) :- node(X, \"MODULE\"), reach(X, X).'\n",
+    "layers": "guarantees:\n  - name: layer-core-analysis\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/core/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/analysis/\").'\n  - name: layer-core-indicators\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/core/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/indicators/\").'\n  - name: layer-core-data\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/core/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/data/\").'\n  - name: layer-core-visualization\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/core/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/visualization/\").'\n  - name: layer-data-indicators\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/data/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/indicators/\").'\n  - name: layer-data-analysis\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/data/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/analysis/\").'\n  - name: layer-indicators-analysis\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/indicators/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/analysis/\").'\n  - name: layer-indicators-visualization\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/indicators/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/visualization/\").'\n",
+    "typo": "guarantees:\n  - name: typo-core-analysis\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/core/\"), edgee(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/analysis/\").'\n",
+    "v1": "guarantees:\n  - name: g5-rule\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"MODULE\"), attr(X, \"file\", F), starts_with(F, \"bquant/core/\"), edge(X, Y, \"DEPENDS_ON\"), attr(Y, \"file\", G), starts_with(G, \"bquant/analysis/\").'\n",
+    "v2": "guarantees:\n  - name: g5-rule\n    check: datalog\n    severity: error\n    rule: 'violation(X) :- node(X, \"NO_SUCH_TYPE\").'\n"
+   }
+  },
+  "mcp": {
+   "cli_who_rows": 83,
+   "find_calls_MACDZoneAnalyzer": {
+    "calls": 60,
+    "resolved": 0
+   },
+   "server": "grafema-mcp 0.1.0",
+   "tools": 52
   }
  },
  "version": "0.4.1"

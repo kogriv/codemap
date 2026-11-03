@@ -147,7 +147,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 | PyCG | academic reference for Python call-graph accuracy; hand-labeled micro/macro benchmark corpus (the ~99%P/~70%R ceiling citation) | **does not run on Python 3.12** (import-hook surgery collides with stdlib; fails on a 3-line file); batch CLI, not a service; unmaintained (0.0.8, 2021) | learn (methodology only — spike-negative as a live oracle) | R1-C13 |
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
 | CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync, **0.33 s** save→answerable with its watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 on any reachable surface (no argument contract; no layers/violations at all, and the library-only cycle finder reports **136 where 41 are real** *(corrected 2026-10-15: 45 real on the measured tree, so recall 29% and codemap's 2.2%; 1.6.2 reports 25, 16 real — footnote ⁴)*, sees a function-local import only when the symbol is *called*, and does not separate a cycle that breaks on import from one a lazy import already fixed — it walks name-resolved call edges, so `dict.get` becomes a call into an unrelated class; precision 10%, and its recall of 32% beat codemap's 2.4% until R1-C29 closed that same day); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639), **fixed by the author 2026-09-08 in PR #1772, not yet released**; the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
-| grafema | **every import scope read by design** (imports are nodes in their scope); module dependencies **derived by a readable Datalog rule**; per-call-site `[resolved]`/`[unresolved]`; deterministic edge set; 99.4 % edge precision | three Python defects that never stop the run (`__init__` relative imports one level too high, with no log line at all; f-string `!r` drops the file, logged at exit 0; quickstart loads no Python analyzer) → **8 / 45** cycles; a missing definition is replaced by a namesake marked resolved; FSL licence | learn (strong), design | derived-edge rules (new); R1-C39, R1-C13 |
+| grafema | **every import scope read by design** (imports are nodes in their scope); module dependencies **derived by a readable Datalog rule**; per-call-site `[resolved]`/`[unresolved]`; deterministic edge set; 99.4 % edge precision | three Python defects that never stop the run (`__init__` relative imports one level too high, with no log line at all; f-string `!r` drops the file, logged at exit 0; quickstart loads no Python analyzer) → **8 / 45** cycles; a missing definition is replaced by a namesake marked resolved; no call ever resolves to a class; the first guarantee `check` on a fresh graph passes with nothing evaluated, a predicate typo passes, an edited rule stays stale; Python `wtf` answers nothing; FSL licence | learn (strong), design | derived-edge rules (new); R1-C39, R1-C13 |
 
 ⁷ jevgrep / `@dzhng/jevgrep` (0.8.0), hands-on **Stages A, B and D** on the R2 scope (materialized staging,
 `scope_id` verified). Stages A–B used a **local stand-in gateway** and measure their **pipeline**; **Stage D
@@ -202,9 +202,20 @@ verified), with `include: ["**/*.py"]` because the quickstart's brace glob loads
     an error, but the run exits 0 and no answer mentions it;
   - the README quickstart never loads the Python analyzer and never names the cause.
   With A and B fixed, 42 of 45.
-- **T1–T3** ◐: honest per-site `[resolved]`/`[unresolved]` labels. But with `pipeline.py` gone,
-  `who`/`impact analyze_zones` attribute the public function's 88 call sites to a method of the same
-  name, 109 of them marked resolved. `impact` is direct-only.
+- **T1–T3** ◐: per-site `[resolved]`/`[unresolved]` labels, but no call to a class ever resolves.
+  For `MACDZoneAnalyzer` the 23 "resolved" rows are imports, and MCP `find_calls` resolves 0 of 60.
+  With `pipeline.py` gone, `who`/`impact analyze_zones` attribute the public function's 88 call sites
+  to a method of the same name, 109 of them marked resolved. `impact` is direct-only.
+- **Calls** (agreement, not truth): 95.8 % of grafema's file pairs are codemap's; they cover 35.9 %
+  of codemap's. The 3 grafema-only pairs are all namesake bindings.
+- **Guarantees:** Datalog with recursion. It finds exactly the 11 cycle modules and catches a layer
+  violation in an ordinary module. But it misses one inside an `__init__` (defect A), and:
+  - the first `check` on a fresh graph imports the rules, evaluates none and exits 0;
+  - a predicate typo passes without warning;
+  - an edited rule keeps its old body;
+  - import costs ~300 s per rule unless `governs` is narrowed.
+- **Data flow:** `wtf` answers "no reachable nodes" for every Python question, a toy included. The JS
+  toy works.
 
 See the [card](tools/grafema.md).
 
