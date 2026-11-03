@@ -770,6 +770,41 @@ Same procedure: both versions from PyPI into clean environments, `PYTHONHASHSEED
 - **Nothing-was-done control:** if any consumer's text diff is empty, the run did not reach two versions.
 - **bquearch's pin is theirs to raise.** They are told after the upload, with the format change named.
 
+**0.0.24 published 2026-11-03:** [`codmap` 0.0.24](https://pypi.org/project/codmap/0.0.24/), schema **0.13**
+(unchanged, thirteenth release running), **`ANSWER_FORMAT` 4**. Same procedure from the pushed commit
+`e7a69dd`: suite 1125 passed / 3 skipped, CI green on 3.11–3.14, `twine check` PASSED on both artifacts.
+Reconciled from PyPI, `PYTHONHASHSEED=7`, inside the shared core-slot accounting:
+
+```
+                         0.0.23 (published)                         0.0.24 (published)
+R1-C73 --version         exit 2, "arguments are required: command"  exit 0, codemap 0.0.24 · answer format 4 · schema 0.13
+two bodies               f calls.out = 1                            3
+namesake                 M.lookup → target (false), out 1           M.closure → target via nested; M.lookup out 0
+class body               no edge from C, no counter                 C → h; C carries calls (out 1)
+report behavior          "(2 sites in 6 functions)"                 "(5 call sites)" + "3 in function bodies, 1 in
+                                                                    nested functions, 0 at module level, 1 in class bodies"
+trailer                  _answer format 3 · schema 0.13_            _answer format 4 · schema 0.13_
+bquant --build (7e33039) exit 0                                     exit 0, diff = trailer only
+bquant --graph           exit 0                                     exit 0, diff = trailer only
+bquant graph (8efa112)   —                                          imports identical; calls +16 (all from class nodes),
+                                                                    −0; other edges identical; nodes identical outside
+                                                                    the counter keys; 1 node's calls changed
+                                                                    (ZigZagSwingStrategy.deviation, the property with a setter)
+bquearch gate (72f73f3)  exit 0                                     exit 0, diff = trailer only
+```
+
+Every expectation holds. The fixture was run on 0.0.23 first, and every defect showed there (rule 4). The
+fixture's 5 call sites on 0.0.24 are the source's 5 `ast.Call`s; 0.0.23 counted 2 of them.
+
+**Two things of my own, both caught before anyone was told:**
+- **The first fixture pass called `report pkg --root .`**, which is not the command's form (`report <kind>
+  --graph`). It exited 2 on 0.0.23 and printed nothing to compare. Fixed in the script, re-run on 0.0.23
+  before the upload, and the table above is from the corrected script.
+- **The first 0.0.24 pass hit the index cache again** ("no version of codmap==0.0.24") on its first calls,
+  though the script passes `--refresh-package`. Later calls in the same pass already got 0.0.24. After
+  `uv cache clean codmap` the whole fixture ran on 0.0.24 and gives the table. The consumer runs in that
+  pass were on 0.0.24 throughout: their trailer says format 4.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
