@@ -1,0 +1,54 @@
+{
+ "new": [
+  [
+   "_pytest.assertion.util",
+   "_pytest._code"
+  ],
+  [
+   "_pytest.config",
+   "_pytest.deprecated"
+  ],
+  [
+   "_pytest.config",
+   "_pytest.hookspec"
+  ],
+  [
+   "_pytest.config.argparsing",
+   "_pytest._io"
+  ],
+  [
+   "_pytest.main",
+   "_pytest._code"
+  ],
+  [
+   "_pytest.terminal",
+   "_pytest._version"
+  ]
+ ],
+ "removed": [
+  [
+   "_pytest.assertion.util",
+   "_pytest"
+  ],
+  [
+   "_pytest.config.argparsing",
+   "_pytest"
+  ],
+  [
+   "_pytest.main",
+   "_pytest"
+  ],
+  [
+   "_pytest.nodes",
+   "_pytest"
+  ],
+  [
+   "_pytest.terminal",
+   "_pytest"
+  ],
+  [
+   "_pytest.unittest",
+   "_pytest"
+  ]
+ ]
+}
