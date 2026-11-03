@@ -5,6 +5,17 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **Every call site is counted somewhere, and the counts add up to the source** (R1-C74, design
+  [`docs/design/call_site_conservation.md`](docs/design/call_site_conservation.md)). **`ANSWER_FORMAT` 3 → 4.**
+  - `report behavior` printed function bodies' resolution as if it were the package's. Module-level code,
+    nested functions and class bodies were outside it, and class bodies were outside the call graph too.
+  - Now every scope has a counter (modules, classes, `calls_nested` on the owner), class bodies make `calls`
+    edges, and the report names the whole and its parts.
+  - On bquant, codemap and pytest the counts equal every `ast.Call` in the source.
+  - Found by that check: a node with two standing bodies (an `if`/`else` definition, a property setter) had
+    its counter **overwritten** by the last body. And a def nested in a method, named like another method,
+    **was taken for that method**: a false self-loop in pytest. Both fixed.
+
 - **`codemap --version`** (R1-C73, design [`docs/design/cli_version.md`](docs/design/cli_version.md)). Prints
   `codemap 0.0.23 · answer format 3 · schema 0.13`, adding `@commit` (and `(dirty)`) from a source tree. It
   is built from the same identity every graph records as `provenance.tool`, so the CLI and the artifact

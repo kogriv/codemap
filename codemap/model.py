@@ -109,7 +109,11 @@ SCHEMA_VERSION = "0.13"
 #       `check --graph` carries a currency line, and its structured answer a `graph_currency`
 #       block, with a graph behind its source tree failing the gate (R1-C70,
 #       docs/design/check_graph_currency.md).
-ANSWER_FORMAT = 3
+#   4 — `report behavior` states the whole and its parts: call sites in function bodies,
+#       nested functions, module-level code and class bodies, plus sites in shadowed
+#       bodies that are not walked; the structured answer gains `by_scope` and
+#       `shadowed_not_walked` (R1-C74, docs/design/call_site_conservation.md).
+ANSWER_FORMAT = 4
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship

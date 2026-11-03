@@ -1,6 +1,6 @@
 # Design — every call site is counted somewhere, and the counts add up to the source
 
-**Status:** 🧪 pre-registered (2026-11-03), not yet shipped. **Motivates:** the R1-C71 reconciliation,
+**Status:** ✅ **shipped** (2026-11-03, `ANSWER_FORMAT` 3 → 4 at the next release), with acceptance reconciled below. Pre-registered in 124605c before any code. **Motivates:** the R1-C71 reconciliation,
 where the counters fell short of an independent count for a reason nobody had written down.
 **Backlog:** R1-C74.
 
@@ -85,3 +85,43 @@ pytest 9.1.1.
 - **C8, suite** green, README count moved, and the pinned rendered hash re-pinned with the format bump.
 
 At least one expectation fails if nothing is done: C1 and the conservation sum fail today.
+
+## Acceptance reconciled (2026-11-03)
+
+Fast and deep builds and the suite ran on the stand, inside the shared core-slot accounting: before =
+`124605c`, after = the same tree plus the change. The scripts are `research/bench/r1c74/call_scopes.py` (the
+prediction, revised as said below) and `sum_by_scope.py` (sums, edge diff, class-edge check).
+
+| | expected | measured, final run | |
+|---|---|---|---|
+| C1 fixture | each scope on its node; a class-body edge | so (7 tests) | holds |
+| C2 bquant | 7288 / 198 / 136 / 42, shadowed 1, total 7665 | **7289** / 198 / 136 / 42, shadowed **0**, total **7665** | conservation holds exactly; the split differs, reconciled below |
+| C2 codemap | 4113 / 212 / 53 / 27, total 4405 | exactly so | holds |
+| C2 `_pytest` | 7464 / 325 / 100 / 58, shadowed 18, total 7965 | **7482** / 325 / 100 / 58, shadowed **0**, total **7965** | conservation holds exactly; the split differs, reconciled below |
+| C3 edges | only new `calls` from class nodes; nothing else | bquant: +16 from class nodes, **16 of 16 verified** against the class-body source, 0 removed. codemap: 0. `_pytest`: 0 added, **1 removed**: the false self-loop `FixtureManager.getfixturedefs → itself` | **fails as written, by one edge that was wrong**, below |
+| C3 nodes | only new counter keys | plus the `calls` of nodes that own two bodies: 1 in bquant, 8 in `_pytest` (their increases sum to 18) | **fails as written**, below |
+| C4 report | bquant names 7664 sites and the parts | 7665 sites: 7289 / 198 / 136 / 42; no shadowed line, there are none | holds in form; the number is the corrected one |
+| C5 deep | the same sums | 7289 / 198 / 136 / 42 = 7665 | holds |
+| C6 cost | ±10 % | first run +11 %. After computing the shadow map once per module: **+8 %** (median 8.85 → 9.56 s, alternating 5 + 5) | holds on the second run, at the edge |
+| C7 mutation | red | class bodies unwalked: red. `behavior.py` reverted: 5 of 5 then-existing tests fail | holds |
+| C8 suite | green | 1125 passed, 3 skipped | holds |
+
+**The first run found two defects the conservation law was built to find, and one error in my
+prediction.**
+1. **My shadowing rule was not codemap's.** The script took "the last definition wins, through `if`/`try`
+   branches". R1-C46 documents the opposite: only a direct statement of a body shadows. A definition under
+   `if`/`try`, or a legitimate rebinding (a property's setter), keeps *both* bodies walked. That made the
+   predicted "shadowed" 1 and 18 where codemap has none. The script was corrected to the documented rule
+   after the run. That is a post-run revision, and it is named as one.
+2. **That exposed a real loss.** Both bodies of such a node were walked, but `_process_function` *overwrote*
+   the node's counter with the last body's. So the first body's sites were counted nowhere: neither on
+   the node nor as shadowed. Fixed: counts of bodies that share a node add up. This is the 1 (bquant,
+   `ZigZagSwingStrategy.deviation`, a property) and the 18 (`_pytest`) moving into the function scope.
+3. **A nested namesake became the method.** In `_pytest`, `def getfixturedefs` nested in
+   `FixtureManager.getfixtureclosure` was taken for the *method* `FixtureManager.getfixturedefs`, because a
+   node id is built from the class chain only. Its calls and edges went to a namesake, including a false
+   self-loop. Fixed: a def nested in a function is never a definition node. The conservation check had
+   counted its 2 sites as nested, where codemap counted them in a method.
+
+**Surprises:** items 2 and 3 are defects older than this work, found only because the counts now have to
+add up to the source. Item 1 is my prediction being wrong about a rule that is written down in the code.

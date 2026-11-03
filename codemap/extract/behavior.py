@@ -83,11 +83,18 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
         # R1-C46: the surviving definition says which earlier bodies it replaced. Stamped
         # here because this pass holds the AST; the walkers below skip those bodies.
         _stamp_shadows(graph, tree, modpath)
+        walked_here: set[str] = set()   # R1-C74: nodes that already took a body in this module
+        shadow_skip = _shadow_map(tree)[0]
         for fnode, class_stack, scope in _named_functions_scoped(tree):
             node_id = _node_id(modpath, class_stack, fnode.name)
             local = local_imports.get(id(fnode))
             fn_imports = {**imports, **local} if local else imports
-            if node_id not in graph.nodes:
+            # R1-C74: a def nested in a function is never a definition node, whatever its
+            # name. `_node_id` sees only the class chain, so `def getfixturedefs` inside a method
+            # of `FixtureManager` used to *become* the method `FixtureManager.getfixturedefs` —
+            # its calls and edges attributed to a namesake (found by the conservation check).
+            nested_in_function = len(scope) > len(class_stack)
+            if node_id not in graph.nodes or nested_in_function:
                 # R1-C22 D3: a closure / dynamically-built class body is not a definition
                 # node, but the calls inside it are real. Attribute them to the innermost
                 # definition that *does* exist instead of discarding them.
@@ -103,7 +110,9 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                 return _resolve(call, modpath, _cp, _im, _mm, _me, reexports, nodes)
             resolve = (_deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules)
                        if script else fast)
-            _process_function(graph, node_id, fnode, resolve)
+            _process_function(graph, node_id, fnode, resolve,
+                              accumulate=node_id in walked_here)
+            walked_here.add(node_id)
             # R1-C22 D1: functions/classes named as *values* here (dispatch tables,
             # `default=` callbacks) — a use the call layer cannot see.
             _emit_name_references(graph, node_id, fnode, modpath, fn_imports, modmembers,
@@ -115,7 +124,11 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
         mod_resolve = (_deep_then_fast(graph, script, target_pkg, mod_fast, modpath, known_modules)
                        if script else mod_fast)
         _process_module_level(graph, modpath, tree, mod_resolve, imports, modmembers,
-                              reexports)
+                              reexports, shadow_skip=shadow_skip)
+        # R1-C74: class bodies run at import time and were walked by nobody.
+        _process_class_bodies(graph, modpath, tree, mod_resolve, imports, modmembers,
+                              script, target_pkg, nested, known_modules, reexports,
+                              skip=shadow_skip)
         _emit_nested_calls(graph, nested)
 
 
@@ -525,30 +538,49 @@ def _deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules):
     return resolve
 
 
-def _process_function(graph, node_id, fnode, resolve) -> None:
-    counts = {"out": 0, "resolved": 0, "external": 0, "unresolved": 0, "dynamic": 0}
+def _new_counts() -> dict:
+    return {"out": 0, "resolved": 0, "external": 0, "unresolved": 0, "dynamic": 0}
+
+
+def _tally(counts: dict, graph, target, resolution) -> bool:
+    """Count one call site by how it resolved; True when it becomes an internal edge.
+
+    One rule for every scope (R1-C74): a function body, a nested function, module-level
+    code and a class body are classified the same way, so their counters can be summed
+    and checked against the source.
+    """
+    counts["out"] += 1
+    if resolution in _EDGE_RESOLUTIONS and target and target in graph.nodes:
+        counts["resolved"] += 1
+        return True
+    if resolution == "external":
+        counts["external"] += 1
+    elif resolution == "dynamic":
+        counts["dynamic"] += 1
+    else:
+        counts["unresolved"] += 1
+    return False
+
+
+def _process_function(graph, node_id, fnode, resolve, accumulate: bool = False) -> None:
+    """``accumulate``: this node already took a body in this pass (R1-C74). A name defined in
+    both branches of an ``if``/``try``, or a legitimate rebinding (a property's setter), keeps
+    *both* bodies walked (R1-C46) — their counts add up instead of the last overwriting."""
+    counts = _new_counts()
     # F7: edges are deduped caller->callee, so aggregate the per-call-site argument
     # contract before emitting — a refactorer needs "how is it called", and the
     # collapse itself (2 sites -> 1 edge) must stay visible via `callsites`.
     by_target: dict[str, dict] = {}
     for call in _own_calls(fnode):
-        counts["out"] += 1
         target, resolution = resolve(call)
         # Soundness (R1-C13-f1/f2): an internal call edge must point at a real
         # graph node. A resolver can name a non-node — a local variable jedi typed
         # to its own scope-path, or a nested/closure function that is not a
         # definition node — so downgrade any such target to unresolved rather than
         # emit an edge to nothing (which would poison callers/callees/impact).
-        if resolution in _EDGE_RESOLUTIONS and target and target in graph.nodes:
-            counts["resolved"] += 1
+        if _tally(counts, graph, target, resolution):
             agg = by_target.setdefault(target, {"resolution": resolution, "shapes": []})
             agg["shapes"].append(_arg_shape(call))
-        elif resolution == "external":
-            counts["external"] += 1
-        elif resolution == "dynamic":
-            counts["dynamic"] += 1
-        else:
-            counts["unresolved"] += 1
 
     for target in sorted(by_target):
         agg = by_target[target]
@@ -556,7 +588,11 @@ def _process_function(graph, node_id, fnode, resolve) -> None:
         graph.add_edge(Edge("calls", node_id, target, extras=extras))
 
     node = graph.nodes[node_id]
-    node.extras["calls"] = counts
+    if accumulate and "calls" in node.extras:
+        for k, v in counts.items():
+            node.extras["calls"][k] = node.extras["calls"].get(k, 0) + v
+    else:
+        node.extras["calls"] = counts
     node.extras["control"] = _control(fnode)
     node.extras["complexity"] = _complexity(fnode)
 
@@ -941,14 +977,30 @@ def _emit_name_references(graph, src_id, scope, modpath, imports, modmembers,
 
 
 def _process_module_level(graph, modpath, tree, resolve, imports, modmembers,
-                          reexports=None) -> None:
-    """Calls and value-references in module-level code, sourced from the module (D1/D2)."""
+                          reexports=None, shadow_skip=None) -> None:
+    """Calls and value-references in module-level code, sourced from the module (D1/D2).
+
+    R1-C74: the module node also carries ``extras.calls`` — its sites used to make edges
+    and appear in no resolution figure.
+    """
     by_target: dict[str, dict] = {}
+    counts = _new_counts()
     for call in (n for n in _module_level_nodes(tree) if isinstance(n, ast.Call)):
         target, resolution = resolve(call)
-        if resolution in _EDGE_RESOLUTIONS and target and target in graph.nodes:
+        if _tally(counts, graph, target, resolution):
             agg = by_target.setdefault(target, {"resolution": resolution, "shapes": []})
             agg["shapes"].append(_arg_shape(call))
+    if modpath in graph.nodes:
+        graph.nodes[modpath].extras["calls"] = counts
+        # R1-C74 D1: a replaced body is not walked (R1-C46) — said, not absorbed.
+        skipped = _shadow_map(tree)[0] if shadow_skip is None else shadow_skip
+        if skipped:
+            seen: set[int] = set()
+            for node in ast.walk(tree):
+                if id(node) in skipped:
+                    seen.update(id(c) for c in ast.walk(node) if isinstance(c, ast.Call))
+            if seen:
+                graph.nodes[modpath].extras["calls_shadowed"] = len(seen)
     for target in sorted(by_target):
         agg = by_target[target]
         graph.add_edge(Edge("calls", modpath, target,
@@ -956,6 +1008,57 @@ def _process_module_level(graph, modpath, tree, resolve, imports, modmembers,
                                     **_arg_contract(agg["shapes"])}))
     _emit_name_references(graph, modpath, tree, modpath, imports, modmembers,
                           reexports=reexports)
+
+
+def _process_class_bodies(graph, modpath, tree, resolve, imports, modmembers, script,
+                          target_pkg, nested, known_modules=frozenset(), reexports=None,
+                          skip=None) -> None:
+    """Calls in class bodies outside their methods — bases, keywords, decorators, statements.
+
+    R1-C74 (design ``call_site_conservation.md`` D1). A class body runs at import time, so a
+    class that is a graph node is the source of its own ``calls`` edges and carries
+    ``extras.calls``, resolved like module-level code. A class nested in a function runs
+    when the function does: its sites go to the owner as nested, like a closure's. Shadowed
+    definitions are skipped, as everywhere (R1-C46).
+    """
+    skip = _shadow_map(tree)[0] if skip is None else skip
+
+    def visit(node, scope, in_function):
+        for child in ast.iter_child_nodes(node):
+            if id(child) in skip:
+                continue
+            if isinstance(child, ast.ClassDef):
+                cscope = scope + [child.name]
+                calls = [n for n in _own_nodes(child) if isinstance(n, ast.Call)]
+                cid = ".".join([modpath, *cscope])
+                if not in_function and cid in graph.nodes:
+                    counts = _new_counts()
+                    by_target: dict[str, dict] = {}
+                    for call in calls:
+                        target, resolution = resolve(call)
+                        if _tally(counts, graph, target, resolution) and target != cid:
+                            agg = by_target.setdefault(target, {"resolution": resolution,
+                                                                "shapes": []})
+                            agg["shapes"].append(_arg_shape(call))
+                    graph.nodes[cid].extras["calls"] = counts
+                    for target in sorted(by_target):
+                        agg = by_target[target]
+                        graph.add_edge(Edge("calls", cid, target,
+                                            extras={"resolution": agg["resolution"],
+                                                    **_arg_contract(agg["shapes"])}))
+                elif calls:
+                    owner = _nearest_owner(graph, modpath, scope)
+                    if owner is not None:
+                        _collect_nested_calls(graph, owner, child, modpath, imports, modmembers,
+                                              script, target_pkg, nested, known_modules,
+                                              reexports, calls=calls)
+                visit(child, cscope, in_function)
+            elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                visit(child, scope + [child.name], True)
+            else:
+                visit(child, scope, in_function)
+
+    visit(tree, [], False)
 
 
 def _named_functions_scoped(tree):
@@ -1001,17 +1104,22 @@ def _nearest_owner(graph, modpath, scope) -> str | None:
 
 def _collect_nested_calls(graph, owner, fnode, modpath, imports, modmembers,
                           script, target_pkg, out, known_modules=frozenset(),
-                          reexports=None) -> None:
-    """Resolve a non-node function's own calls and stage them under ``owner`` (D3)."""
+                          reexports=None, calls=None) -> None:
+    """Resolve a non-node function's own calls and stage them under ``owner`` (D3).
+
+    ``fnode`` may also be a class nested in a function (R1-C74): its body runs inside the
+    owner, like a closure's. Every site is counted into the owner's ``extras.calls_nested``.
+    """
     def fast(call):
         return _resolve(call, modpath, "", imports, modmembers, {}, reexports, graph.nodes)
     # R1-C26: the same union the named-function path uses — a closure's calls must not be
     # resolved by a weaker rule than its neighbours'.
     resolve = (_deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules)
                if script is not None else fast)
-    for call in _own_calls(fnode):
+    counts = graph.nodes[owner].extras.setdefault("calls_nested", _new_counts())
+    for call in (calls if calls is not None else _own_calls(fnode)):
         target, resolution = resolve(call)
-        if resolution not in _EDGE_RESOLUTIONS or not target or target not in graph.nodes:
+        if not _tally(counts, graph, target, resolution):
             continue
         if target == owner:
             continue  # a closure calling its own enclosing function — recursion, not a dep

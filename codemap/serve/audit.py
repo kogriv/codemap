@@ -103,15 +103,37 @@ def build_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
     }
 
 
+def call_sites_by_scope(graph) -> dict:
+    """Call-site counters summed by the scope that runs them (R1-C74, design D2).
+
+    ``function`` — own bodies of function nodes (attribute nodes are properties: functions too);
+    ``nested`` — closures and classes inside them, carried by their owner; ``module`` —
+    module-level code; ``class_body`` — class bodies outside methods. Plus the sites in
+    shadowed bodies, which are counted but never walked.
+    """
+    keys = ("out", "resolved", "external", "unresolved", "dynamic")
+    by = {s: dict.fromkeys(keys, 0) for s in ("function", "nested", "module", "class_body")}
+    shadowed = 0
+    for n in graph.nodes.values():
+        scope = {"function": "function", "attribute": "function", "module": "module",
+                 "class": "class_body"}.get(n.kind)
+        for key, bucket in (("calls", scope), ("calls_nested", "nested")):
+            c = n.extras.get(key)
+            if c and bucket:
+                for k in keys:
+                    by[bucket][k] += c.get(k, 0)
+        shadowed += n.extras.get("calls_shadowed", 0)
+    every = {k: sum(by[s][k] for s in by) for k in keys}
+    return {"all": every, "by_scope": by, "shadowed_not_walked": shadowed}
+
+
 def build_behavior(query: Query) -> dict:
     """:func:`render_behavior`, structured (R1-C32)."""
     graph = query.graph
     funcs = [n for n in graph.nodes.values() if n.kind == "function"]
     with_cov = [n for n in funcs if "calls" in n.extras]
-    agg = {"out": 0, "resolved": 0, "external": 0, "unresolved": 0, "dynamic": 0}
-    for n in with_cov:
-        for k, v in n.extras["calls"].items():
-            agg[k] = agg.get(k, 0) + v
+    sites = call_sites_by_scope(graph)
+    agg = sites["all"]
     by_res: dict[str, int] = {}
     for e in graph.edges:
         if e.type == "calls":
@@ -122,7 +144,11 @@ def build_behavior(query: Query) -> dict:
     return {
         "kind": "behavior",
         "target": graph.target,
-        "call_sites": {**agg, "functions_with_coverage": len(with_cov)},
+        "call_sites": {**agg, "functions_with_coverage": len(with_cov),
+                       # R1-C74: the whole and its parts; they sum to every call in the source
+                       # that can run (shadowed bodies are named, not walked).
+                       "by_scope": sites["by_scope"],
+                       "shadowed_not_walked": sites["shadowed_not_walked"]},
         "calls_edges": {"total": sum(by_res.values()), "by_resolution": dict(sorted(by_res.items()))},
         "complexity": {
             "functions_scored": len(scored),
@@ -236,10 +262,8 @@ def render_behavior(query: Query) -> str:
     graph = query.graph
     funcs = [n for n in graph.nodes.values() if n.kind == "function"]
     with_cov = [n for n in funcs if "calls" in n.extras]
-    agg = {"out": 0, "resolved": 0, "external": 0, "unresolved": 0, "dynamic": 0}
-    for n in with_cov:
-        for k, v in n.extras["calls"].items():
-            agg[k] += v
+    sites = call_sites_by_scope(graph)
+    agg, by = sites["all"], sites["by_scope"]
     total = agg["out"] or 1
     lines = [f"# Behavioral layer — `{graph.target}`", ""]
     lines.append(
@@ -247,7 +271,17 @@ def render_behavior(query: Query) -> str:
         "type inference and are left unresolved on purpose (gaps/ CM-09/10)._"
     )
     lines.append("")
-    lines.append(f"## Call-site resolution ({agg['out']} sites in {len(with_cov)} functions)")
+    lines.append(f"## Call-site resolution ({agg['out']} call sites)")
+    lines.append("")
+    # R1-C74: name the parts. The heading used to count function bodies only and read as the
+    # whole package; module-level code, nested functions and class bodies were outside it.
+    shadow = sites["shadowed_not_walked"]
+    lines.append(
+        f"_{by['function']['out']} in function bodies, {by['nested']['out']} in nested functions, "
+        f"{by['module']['out']} at module level, {by['class_body']['out']} in class bodies"
+        + (f"; {shadow} more sit in bodies replaced by a later definition and are not walked "
+           "(they cannot run)" if shadow else "")
+        + "._")
     lines.append("")
     lines.append(f"- resolved to internal edges: **{agg['resolved']}** ({100*agg['resolved']/total:.1f}%)")
     lines.append(f"- external / builtin (flagged): {agg['external']} ({100*agg['external']/total:.1f}%)")

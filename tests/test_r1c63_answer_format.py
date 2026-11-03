@@ -43,7 +43,8 @@ from codemap.serve.session import Session
 # blind-spot line — wording inside an existing note, not a change of structure.
 # Re-pinned with a bump to 3 (2026-11-03, R1-C69/R1-C70): the refusal of an invalid contract and
 # the three states of the `check --graph` currency line join the pinned surfaces.
-RENDERED_SHA = "395f32ca271c12cc0ad26bee19e66e1eae23ee1826098dd97e0ce8c5437f2d35"
+# Re-pinned with a bump to 4 (2026-11-03, R1-C74): `report behavior` names its scopes.
+RENDERED_SHA = "32a160c89e31af252873c0703d0e903397c6d470013fad5889b9194e2a3a2eb8"
 
 FILES = {
     "__init__.py": "",

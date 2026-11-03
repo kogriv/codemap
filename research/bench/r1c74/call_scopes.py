@@ -7,7 +7,14 @@ Scopes, matching how codemap attributes code:
                (nested) module-level class. Its decorators, defaults and annotations are included, since
                they are children of the def node, as in codemap's `_own_nodes`. When one name is
                defined twice at one level, the last definition is the node (R1-C46).
-- shadowed   : every call in a definition replaced by a later one of the same name at the same level.
+- shadowed   : every call in a definition replaced by a later one of the same name, by R1-C46's documented
+               rule: only a *direct* statement of a module, class or function body shadows (a definition under
+               if/try/with neither shadows nor is shadowed), and a legitimate rebinding is not shadowing (the
+               later one decorated `.setter`/`.getter`/`.deleter`/`.register` or named `_`, or the earlier one
+               `@overload`). Two bodies that both stand (conditional, or legitimate) belong to one node, and
+               their calls add up.
+  (Revised after the first acceptance run: the pre-registered version used "the last definition wins,
+  through if/try", which is not codemap's documented rule. See the design's reconciliation.)
 - nested     : every call inside a def, lambda-free class or def nested in a function node.
 - class_body : calls in a class body outside its methods, plus its bases, keywords and decorators.
 - module     : module-level statements outside any def or class.
@@ -76,27 +83,71 @@ def head_calls(kind, node):
     return 0
 
 
+EXEMPT_EARLIER, EXEMPT_LATER = {"overload"}, {"setter", "getter", "deleter", "register"}
+
+
+def tails(d):
+    return [ast.unparse(x).split("(", 1)[0].rsplit(".", 1)[-1] for x in d.decorator_list]
+
+
+def shadow_skip(tree):
+    """R1-C46's documented rule, re-stated: direct statements of a module/def/class body only."""
+    skip = set()
+
+    def walk(node):
+        if isinstance(node, (ast.Module,) + DEFS + (ast.ClassDef,)):
+            last = {}
+            for st in node.body:
+                if not isinstance(st, DEFS + (ast.ClassDef,)):
+                    continue
+                prev = last.get(st.name)
+                legit = prev is not None and (st.name == "_" or set(tails(prev)) & EXEMPT_EARLIER
+                                              or set(tails(st)) & EXEMPT_LATER)
+                if prev is not None and not legit:
+                    skip.add(id(prev))
+                last[st.name] = st
+        for c in ast.iter_child_nodes(node):
+            if id(c) not in skip:
+                walk(c)
+    walk(tree)
+    return skip
+
+
+def calls_excl(node, skip):
+    """Every call under `node`, not entering skipped definitions."""
+    n = 0
+    for c in ast.iter_child_nodes(node):
+        if id(c) in skip:
+            continue
+        n += isinstance(c, ast.Call) + calls_excl(c, skip)
+    return n
+
+
 def scan(path, module_id, tot, per_node):
     tree = ast.parse(path.read_text())
+    skip = shadow_skip(tree)
+    # shadowed: calls inside skipped subtrees, not counting a skipped subtree inside another twice
+    seen = set()
+    for node in ast.walk(tree):
+        if id(node) in skip:
+            seen.update(id(c) for c in ast.walk(node) if isinstance(c, ast.Call))
+    tot["shadowed"] += len(seen)
 
     def define(stmts, prefix, scope_for_other):
         defs, other = level(stmts)
         for kind, node in other:
             tot[scope_for_other] += head_calls(kind, node)
-        last = {}
         for d in defs:
-            last[d.name] = d
-        for d in defs:
-            if last[d.name] is not d:
-                tot["shadowed"] += every_call(d)
+            if id(d) in skip:
                 continue
             nid = f"{prefix}.{d.name}"
             if isinstance(d, DEFS):
                 k = own_calls(d)
                 tot["function"] += k
-                per_node[nid] = k
+                per_node[nid] = per_node.get(nid, 0) + k
                 for inner in nested_defs(d):
-                    tot["nested"] += every_call(inner)
+                    if id(inner) not in skip:
+                        tot["nested"] += isinstance(inner, ast.Call) + calls_excl(inner, skip)
             else:
                 tot["class_body"] += sum(every_call(x) for x in d.bases + [kw.value for kw in d.keywords]
                                          + d.decorator_list)
