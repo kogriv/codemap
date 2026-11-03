@@ -436,25 +436,25 @@ The licence (FSL) rules out `wrap` and `integrate` in any case.
 - **New candidate:** derived edges declared as readable rules. A design note, not code.
 - **New candidate:** a probe that a file the parser refuses is named in every MCP answer it affects,
   not only in the build output.
-- **New candidate (§6.6):** probe `codemap check` for the three silent passes grafema showed: an
-  empty or unread contract, a contract naming a layer or module that does not exist, and a contract
-  edited between two runs. Each should refuse or say so. This is a probe to run, not a claim that
-  codemap already does it.
+- **Our own gate, probed (§6.6 candidate, done 2026-11-03):** see
+  [`gaps/contract_silent_passes_2026-11-03.md`](../../gaps/contract_silent_passes_2026-11-03.md).
+  `codemap check` has the same class of silent pass:
+  - `import a.b.c` yields an edge to `a`, so a forbidden import written that way passes (R1-C68);
+  - `[architecture]` keys and values are not validated (R1-C69);
+  - `check --graph` does not compare the graph with the tree (R1-C70).
+
+  What already holds: absent names are named (R1-C62), an absent contract names its path, and MCP
+  re-reads the contract on every call.
 - **Feeds R1-C39 / R1-C13:** a second independent tool that labels resolution per site.
 - **Upstream:** filed 2026-11-02 on the owner's decision, after the re-verification in §5:
   [#482](https://github.com/Disentinel/grafema/issues/482) (A, `__init__` relative imports),
   [#480](https://github.com/Disentinel/grafema/issues/480) (B, f-string conversion),
   [#481](https://github.com/Disentinel/grafema/issues/481) (quickstart glob).
-- **Upstream candidates from §6, not filed:**
-  - the first `check` imports and reports "No guarantees found" at exit 0 (S6);
-  - an unknown predicate passes without the documented warning (G4);
-  - an edited rule keeps its stored body (G5);
-  - no `CALLS` edge to a class;
-  - Python `wtf` returns nothing (a toy reproduces it, and the JS toy is the control);
-  - ~300 s per rule on import with the default `governs` (S7).
-
-  Filing is the owner's call. Each would first get the §5 treatment: a minimal reproduction with a
-  control, on a fresh `HOME`.
+- **Upstream from §6:** re-verified in §7 and filed 2026-11-03 on the owner's decision:
+  [#483](https://github.com/Disentinel/grafema/issues/483) (first `check` reports none, stale edited
+  rule, import cost), [#484](https://github.com/Disentinel/grafema/issues/484) (unknown predicate),
+  [#485](https://github.com/Disentinel/grafema/issues/485) (calls to a class),
+  [#486](https://github.com/Disentinel/grafema/issues/486) (Python `wtf`).
 
 ## 5. Re-verification before filing — pre-registration (2026-11-02)
 
@@ -760,3 +760,30 @@ carries `governs: ["no/such/dir/**"]` except in U6.
 - one for U5.
 
 So four issues at most, not six. Anything that fails its control is not filed until understood.
+
+### 7.1 Re-verification reconciled
+
+Fresh `HOME` and a fresh directory for every scenario. The probe ran inside the stand's shared
+core-slot accounting, with 4 cores.
+
+| | expected | measured | |
+|---|---|---|---|
+| U1 | first `check` "No guarantees found", exit 0; second reports `core`, exit 1; same with `-f` | exactly so, both forms | holds |
+| U2 | `edgee` passes, exit 0, no warning; the `edge` control fails | `✓ 1/1`, exit 0. stderr has only the two `RFDBServerBackend` lines. Control: 1 violation, exit 1 | holds |
+| U3 | after the edit, v1's violation is still reported; v2 alone passes | `core` still reported, exit 1; v2 alone `✓`, exit 0 | holds |
+| U4 | `make()` resolves (control); `A()` does not; a `CALL A` node exists | `CALLS`: only `make → make (FUNCTION)`. `CALL` nodes `A` and `make`, `CLASS A`. `who A`: 1 caller, `[unresolved]` | holds |
+| U5 | Python `wtf` empty; the JS control returns chains | Python: "no reachable nodes" ×2. JS: 4 and 7 nodes | holds |
+| U6 | 200 synthetic modules: default `governs` ≥ 10× narrowed and ≥ 30 s | **2 s against 0 s** | **fails**. The bquant tree with an empty `HOME`: **375 s** for one rule |
+
+U6 failed as written. So the import cost was filed only as a section of the import issue, with the
+bquant numbers and the failed synthetic attempt both stated, as §7 required. The cost seems to follow
+graph size (about 90k nodes), not the number of modules.
+
+**Filed 2026-11-03, on the owner's decision:**
+- [#483](https://github.com/Disentinel/grafema/issues/483): the first `check` imports and reports none,
+  an edited rule keeps its body, and the import cost as section 3 (U1, U3, U6);
+- [#484](https://github.com/Disentinel/grafema/issues/484): an unknown predicate passes without the
+  documented warning (U2);
+- [#485](https://github.com/Disentinel/grafema/issues/485): calls to a class are never resolved in
+  Python (U4);
+- [#486](https://github.com/Disentinel/grafema/issues/486): Python `wtf` returns nothing (U5).
