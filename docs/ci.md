@@ -86,15 +86,20 @@ line: the regression, the interpreter nobody tried, the artifact nobody installe
 Two versions travel with every answer, and they answer different questions:
 
 ```
-_answer format 2 · schema 0.13_          ← the trailer on any markdown answer
-{"ok": true, "answer_format": 2, …}      ← the same fact in a serve/MCP envelope
+_answer format 3 · schema 0.13_          ← the trailer on any markdown answer
+{"ok": true, "answer_format": 3, …}      ← the same fact in a serve/MCP envelope
 ```
 
 What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says
 what it did with its seeds (a `seeds` block, `unreachable_from_seeds`, a `coverage` block), and a seed
 set that resolves to nothing is a refusal instead of the global pack ([pack](pack.md)); and, before
 2 was first released, a seeded pack began walking both ways by default — what the seeds use and what
-uses them — with `coverage.walk` naming the walk. Nothing outside `pack` changed shape in 2.
+uses them — with `coverage.walk` naming the walk. Nothing outside `pack` changed shape in 2. **3** (0.0.23) —
+the gate's verdict: an `[architecture]` section that departs from the schema is refused (exit 2, "Contract
+not read") where it was read as absent or partly enforced, and `check --graph` carries a currency line
+(and a `graph_currency` block in its structured answer), with a graph behind its source tree failing the
+gate ([architecture contracts](architecture-contracts.md)). `check --build` on a valid contract changes by
+its trailer alone.
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.

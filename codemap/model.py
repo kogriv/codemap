@@ -103,7 +103,13 @@ SCHEMA_VERSION = "0.13"
 #       uses them — with `coverage.walk` naming the walk (R1-C66,
 #       docs/design/pack_direction.md). Not a separate number: no release ever
 #       answered 2 without it.
-ANSWER_FORMAT = 2
+#   3 — the gate's verdict changed shape twice: an `[architecture]` section that departs from
+#       the schema is refused ("Contract not read — nothing was enforced", exit 2) where it was
+#       read as absent or partly enforced (R1-C69, docs/design/contract_validation.md); and
+#       `check --graph` carries a currency line, and its structured answer a `graph_currency`
+#       block, with a graph behind its source tree failing the gate (R1-C70,
+#       docs/design/check_graph_currency.md).
+ANSWER_FORMAT = 3
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship

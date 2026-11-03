@@ -187,11 +187,12 @@ def test_global_pack_fields_are_present_and_null(q):
 
 # -- serve / MCP: the same answer, a new format ---------------------------------
 
-def test_serve_carries_the_same_blocks_and_format_2(q):
+def test_serve_carries_the_same_blocks_from_format_2_on(q):
     from codemap.serve.session import Session
     sess = Session(q.graph)
     env = sess.handle({"op": "pack", "args": {"budget": BIG, "seeds": ["seed"]}})
-    assert env["ok"] and env["answer_format"] == ANSWER_FORMAT == 2
+    # the blocks arrived with format 2 and stay in every later one (3: the gate, not pack)
+    assert env["ok"] and env["answer_format"] == ANSWER_FORMAT >= 2
     assert env["result"] == build_pack(q, budget=BIG, seeds=("seed",))
     refused = sess.handle({"op": "pack", "args": {"budget": BIG, "seeds": ["no_such_symbol"]}})
     assert refused["ok"] is True and "error" in refused["result"]

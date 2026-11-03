@@ -666,6 +666,30 @@ saying the rule was broken. The cause: `echo "… $(basename $T) exit=$?"` runs 
 before `$?` is read, so the substitution reset it to 0. The report and the exit code disagreed, and the
 report was right. Exit codes now come from `rc=$?` on the line right after the command.
 
+**0.0.23 — the release check, pre-registered before the upload (2026-11-03).** Five items (R1-C68–C72);
+schema **0.13** unchanged; **`ANSWER_FORMAT` 2 → 3**. Both versions are installed from PyPI into clean
+environments, with `PYTHONHASHSEED=7`. One fixture tree carries the form of every defect, and it is run
+on 0.0.22 **first**, to show that the defects are visible there (rule 4).
+
+| | tree form | 0.0.22 (expected) | 0.0.23 (expected) |
+|---|---|---|---|
+| R1-C68 | `import pkg.analysis.b` in `pkg/core/a.py`; `forbidden core → analysis` | exit 0, "Contract satisfied" | exit 2, `pkg.core.a → pkg.analysis.b` named |
+| R1-C69 | `forbiden = [...]` | exit 0, "No `[architecture]` contract found" | exit 2, "not a valid contract", `forbiden` named |
+| R1-C70 | graph built, then a forbidden import added; `check --graph` | exit 0, no word about the graph | exit 2, "behind its source tree" |
+| R1-C71 | `import pkg.analysis.b` + `pkg.analysis.b.f()` | no `calls` edge | `calls` edge to `pkg.analysis.b.f` |
+| R1-C72 | `pkg/logging.py` + `import logging` in `a.py` + `from pkg import a` in `b.py` | `imports` `a → pkg.logging`, `resolution: flat` | no such edge |
+| format | any markdown answer | `_answer format 2 · schema 0.13_` | `_answer format 3 · schema 0.13_` |
+
+**Consumers, before they are told:**
+- **bquant** (its live tree, `codemap check --build bquant` from its own `codemap.toml`): exit 0 on both
+  versions, and the text differs by the trailer alone.
+- **bquant graph:** `imports` and every edge identical. Nodes differ only in `extras.calls` counters, by
+  R1-C71's measured shift (external +38, unresolved −36, dynamic −2 at `8efa112`).
+- **bquearch** (its gate on a copy of its tree): the verdict is unchanged. The text differs by the
+  trailer alone; their contract holds only cycle rules, so R1-C69 has nothing to refuse.
+- If either text diff is empty, the run did not reach two versions. That is the nothing-was-done
+  control.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

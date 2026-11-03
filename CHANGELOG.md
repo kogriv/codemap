@@ -5,6 +5,22 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.23] - 2026-11-03
+
+**The architecture gate stopped saying "ok" without checking, and the import graph stopped inventing and
+losing edges on two ordinary spellings.** Schema unchanged (**0.13**, twelfth release running).
+**`ANSWER_FORMAT` 2 → 3**: the gate's verdict changed shape. An invalid `[architecture]` section is
+refused, and `check --graph` carries a currency line and a `graph_currency` block. `check --build` on a
+valid contract changes by its trailer alone. Five items, all found by probing our own gate the way we had
+probed grafema's (gap [`contract_silent_passes_2026-11-03`](gaps/contract_silent_passes_2026-11-03.md)).
+Each was pre-registered before its code.
+
+**Behaviour changes to act on:**
+- `check --graph` on a graph behind its source tree **exits 2** (`--allow-stale` to keep the old exit).
+- A contract with an unknown key or a mistyped value **exits 2** instead of passing.
+- Graphs of packages that write `import a.b.c`, or that have a module named like a stdlib module, change
+  edges (fewer false, more true).
+
 - **The flat-layout inference stays out of a package whose twins are stdlib names** (R1-C72, design
   [`docs/design/flat_inference_in_packages.md`](docs/design/flat_inference_in_packages.md)).
   - A bare import is rewritten to a sibling module only with evidence that the directory itself is on

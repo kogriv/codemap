@@ -41,7 +41,9 @@ from codemap.serve.session import Session
 # instead of the tool (R1-C25 — the mistake `tests/frozen.py` exists to prevent).
 # Re-pinned without a bump by R1-C60 (2026-10-14): one more item in dead-code's existing
 # blind-spot line — wording inside an existing note, not a change of structure.
-RENDERED_SHA = "ec16c7653608b27a030682eeb9c90ef9bde10564907de00c0eb35c5299618702"
+# Re-pinned with a bump to 3 (2026-11-03, R1-C69/R1-C70): the refusal of an invalid contract and
+# the three states of the `check --graph` currency line join the pinned surfaces.
+RENDERED_SHA = "395f32ca271c12cc0ad26bee19e66e1eae23ee1826098dd97e0ce8c5437f2d35"
 
 FILES = {
     "__init__.py": "",
@@ -71,6 +73,15 @@ def _rendered(query) -> str:
     contract = parse_contract(CONTRACT)
     return "\n@@\n".join([
         render_check(query, contract, check_contract(query, contract)),
+        # format 3 (R1-C69, R1-C70): the refusal of an invalid contract, and the currency line
+        # of `check --graph` in each of its three states — blocks the pin did not cover before.
+        render_check(query, parse_contract({"forbiden": [], "no_cycles": "false"}), []),
+        render_check(query, contract, [], currency={"status": "current", "scope_id": "sha256:" + "0" * 64}),
+        render_check(query, contract, [], currency={"status": "behind", "recorded": "sha256:a",
+                                                    "current": "sha256:b", "added": 1, "removed": 0,
+                                                    "changed": 2}),
+        render_check(query, contract, [], currency={"status": "unknown",
+                                                    "reason": "no build recipe beside the graph"}),
         render_architecture(query),
         render_api_surface(query.graph),
         render_dead_code(query),
