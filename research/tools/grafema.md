@@ -711,3 +711,52 @@ the 60 calls to the class.
 
 **Still not established:** everything in §6.5 (the JS toy above is a control, not a JS measurement),
 plus where the time inside `rfdb-server` goes during import, and whether S6–S8 hold on `main`.
+
+## 7. Re-verification of the §6 candidates before filing — pre-registration (2026-11-03)
+
+The owner decided to file whatever survives this check. Same rules as §5:
+- every scenario runs with a fresh `HOME` and a fresh directory;
+- a control stands next to every claim;
+- grafema 0.4.1 from npm.
+
+Read before the check: on `main` (f0ae8c82, 2026-08-16), `GuaranteeManager.import()` still skips a
+guarantee whose node exists. It still defaults `governs` to `['**/*']`. `check.ts` still calls
+`list()` straight after `import()`. `docs/cli-reference.md:222` still promises that an unknown
+predicate skips the rule "with a warning". The tracker has no issue on any of these.
+
+Toy for U1–U3: `pkg/core.py` with `import pkg.analysis`, `pkg/analysis.py`, `pkg/__init__.py`. Each rule
+carries `governs: ["no/such/dir/**"]` except in U6.
+
+- **U1, the first check.** Rule `violation(X) :- node(X,"MODULE"), attr(X,"file",F),
+  starts_with(F,"pkg/core"), edge(X,Y,"DEPENDS_ON").`
+  - After `analyze`, the first `check` prints "No guarantees found" and exits 0.
+  - Control: the second `check` reports 1 violation (`core`) and exits 1.
+  - The same with `check -f <file>` in its own fresh directory.
+- **U2, unknown predicate.** The same rule with `edgee`. The second `check` passes with exit 0, and
+  neither stdout nor stderr contains a warning. Control: the `edge` version in its own directory
+  reports the violation.
+- **U3, edited rule.** v1 = the U1 rule. It is checked twice, then the file is edited to v2
+  (`node(X,"NO_SUCH_TYPE")`) under the same name, and checked again. The answer still reports v1's
+  violation. Control: v2 alone in a fresh directory passes.
+- **U4, calls to a class.** `pkg/m.py`: `class A: pass`, `def make(): return A()`,
+  `def use(): return make()`.
+  - Cypher has `use → make` over `CALLS` (control), and no `CALLS` edge from `make` to `A`.
+  - A `CALL` node named `A` exists.
+- **U5, Python `wtf`.** `BASE = 10`, `DERIVED = BASE * 2`, and `f(x)` with `y = x + BASE; z = y * 2`.
+  - In Python, `wtf DERIVED` and `wtf z` answer "no reachable nodes".
+  - Control: the same in JS, in its own directory, returns chains.
+- **U6, import cost.**
+  - On a synthetic package of 200 small modules (one function each), importing one rule with the
+    default `governs` takes at least 10× longer than with the narrowed `governs`. Prediction: at
+    least 30 s.
+  - If the synthetic tree does not reproduce it, the cost is not filed from a toy. It would then be
+    reported only with the bquant numbers (public repo, commit `cb89a24`), labelled as such.
+
+**Grouping, if everything holds:**
+- one issue for the guarantee import (U1 and U3, both in `import()`/`list()`), with U6 as a separate
+  section of the same issue;
+- one for U2 (the documented warning);
+- one for U4;
+- one for U5.
+
+So four issues at most, not six. Anything that fails its control is not filed until understood.
