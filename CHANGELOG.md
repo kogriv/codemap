@@ -5,6 +5,17 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **`import a.b.c` depends on `a.b.c`, not on `a`** (R1-C68, design
+  [`docs/design/dotted_imports.md`](docs/design/dotted_imports.md)). griffe files a dotted import
+  under its bound name, so the `imports` edge went to the root package. A contract banning
+  `core → analysis` answered "✅ satisfied" over `import pkg.analysis.b`. Under
+  `if TYPE_CHECKING:` the same root left an **eager** edge to the head. Both fixed; a plain `import a`
+  beside it keeps its edge. Schema unchanged.
+  - Measured on `_pytest` (pytest 9.1.1): exactly the 6 new and 6 removed pairs an independent AST
+    script predicted, plus one edge whose scope became `module`.
+  - bquant and codemap graphs are byte-identical (fast tier). Build time +1.8 %.
+  - Not fixed: the fast tier does not resolve a *call* through `pkg.analysis.b.f()` (R1-C71).
+
 ## [0.0.22] - 2026-10-15
 
 **`pack` was measured against git history for the first time, lost to grep, and was changed until it

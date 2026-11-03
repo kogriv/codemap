@@ -1,6 +1,6 @@
 # Design — `import a.b.c` depends on `a.b.c`, not on `a`
 
-**Status:** 🧪 pre-registered (2026-11-03), not yet shipped. **Motivates:** gap
+**Status:** ✅ **shipped** (2026-11-03, no schema change), with acceptance reconciled below. Pre-registered in 84b335d before any code. **Motivates:** gap
 [contract_silent_passes_2026-11-03](../../gaps/contract_silent_passes_2026-11-03.md). The probe's
 own control failed: `forbidden core → analysis` answered "✅ satisfied" on a tree that breaks it.
 **Backlog:** R1-C68.
@@ -92,7 +92,7 @@ the shared core-slot accounting.
 - **E3, no-op trees.** bquant (`8efa112`) and codemap's own tree (the commit before the change): the graph
   JSON is **byte-identical** before and after, `provenance` aside. Neither uses the spelling.
 - **E4, `_pytest` (pytest 9.1.1), predicted from Python semantics by an independent AST script, not by
-  codemap's code:**
+  codemap's code** (`research/bench/r1c68/predict_dotted_imports.py`, output `pred_pytest_9.1.1.json`):
   - new: `assertion.util → _code`, `config → deprecated`, `config → hookspec`,
     `config.argparsing → _io`, `main → _code`, `terminal → _version`;
   - removed: `assertion.util`, `config.argparsing`, `main`, `nodes`, `terminal`, `unittest` → `_pytest`;
@@ -110,3 +110,36 @@ the shared core-slot accounting.
 
 At least one expectation fails if nothing is done: E1 and E2 fail on the current code, as the probe
 showed.
+
+## Acceptance reconciled (2026-11-03)
+
+Fixtures ran locally. The suite and the tree builds ran on the stand inside the shared core-slot
+accounting: before = `84b335d`, after = the same tree plus the change.
+
+| | expected | measured | |
+|---|---|---|---|
+| E1 before | the TYPE_CHECKING row has an extra eager `→ pkg` | `[('pkg', module), ('pkg.analysis.b', type_checking)]` | holds: the second symptom was real |
+| E1 after | 7 rows as tabled | all 7 exactly | holds |
+| E2 | exit 2, edge named | exit 2, `pkg.core.a → pkg.analysis.b` | holds |
+| E3 bquant fast | byte-identical | identical (`provenance` aside) | holds |
+| E3 codemap | byte-identical | identical | holds |
+| E3 bquant deep | not pre-registered separately | **different**, but two *before* builds differ from each other the same way: jedi noise in `_validate`'s calls and accesses. The `imports` edge sets of all four deep builds are identical: 299 edges, one hash | holds for what the change can touch. Byte-identity is not a property deep has |
+| E4 new | 6 pairs | the 6 pairs | holds |
+| E4 removed | 6 edges to `_pytest` | the 6 edges | holds |
+| E4 else | nothing | nodes identical. One more line: `config → deprecated` moved from scope `function` to `module`, because the file has a module-level `import _pytest.deprecated` (line 66) and a function-local one. The script ignored scope and listed the pair as new | holds. The extra line is the edge becoming right |
+| E5 | bquant ±10 % | median 8.25 s → 8.40 s (+1.8 %) | holds |
+| E6 | `g → pkg.analysis.b.f` present before and after | **absent before and after** in the fast tier; deep resolves it; `from pkg.analysis import b` + `b.f()` resolves in fast | **fails. My claim in D3 was wrong** |
+| E7 | three mutations, each red | each in-test mutation red. With the code reverted, 12 of 14 tests fail; the 2 that pass are the spellings that were already right | holds |
+
+The suite on the changed tree: 1051 passed, 3 skipped, the same as before the change. The 14 new
+tests are in `tests/test_r1c68_dotted_imports.py`.
+
+**E6, why it failed.** The fast tier's `_resolve` reads a call `Name.attr(...)` and nothing deeper,
+so `pkg.analysis.b.f()` is unresolved however `pkg` was imported. `import pkg.analysis as pa;
+pa.b.f()` is unresolved too. This is not R1-C68. It is a separate limit of the fast tier, now
+R1-C71. Size, by an approximate AST count of chain calls rooted at an imported internal module:
+bquant 0, codemap 0, `_pytest` 21 sites in 11 files. Not fixed here: that would change call graphs
+this change was meant to leave alone.
+
+**Surprises:** E6, above. Also, the second symptom held: an eager edge to the head under
+`TYPE_CHECKING`, which had been on every tree that writes `if TYPE_CHECKING: import a.b`.

@@ -29,6 +29,13 @@ from pathlib import Path
 #: on one rule instead of two that can drift apart.
 NESTED_IMPORT_HINT = re.compile(r"^[ \t]+(?:from|import)\s|import\s+\*", re.MULTILINE)
 
+#: R1-C68 (design ``dotted_imports.md`` D3): a top-level ``import`` statement naming a dotted
+#: module. griffe files ``import a.b.c`` under its bound name ``a``, so the import graph has to
+#: read the source for it — but only the import graph: call resolution keeps the gate above,
+#: since ``a`` *is* the name bound. A false positive (``import a.b as x``) costs one parse.
+#: Not seen: a dotted name after a backslash continuation line.
+DOTTED_IMPORT_HINT = re.compile(r"^import\s[^\n#]*\w\.\w", re.MULTILINE)
+
 
 def module_file(obj) -> Path | None:
     """The single source file behind a griffe object, or ``None`` if it has none."""

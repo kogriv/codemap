@@ -29,7 +29,8 @@ from codemap.extract.attrflow import add_attrflow
 from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import add_dispatch, add_family_links
-from codemap.extract.gsource import NESTED_IMPORT_HINT, module_file, module_identity
+from codemap.extract.gsource import (DOTTED_IMPORT_HINT, NESTED_IMPORT_HINT, module_file,
+                                     module_identity)
 from codemap.extract.union import merge_samples
 from codemap.provenance import build_provenance
 from codemap.model import Edge, Graph, Node
@@ -322,9 +323,10 @@ def _input_report(graph, pkg_dir: Path, root: Path, walk) -> dict:
     return report
 
 
-def _source_import_targets(module) -> tuple[list[tuple[str, str]], set[str]]:
-    """``([(target, scope)], eager targets)`` — the imports griffe's module-level map does
-    not carry, and the targets it carries correctly.
+def _source_import_targets(module) -> tuple[list[tuple[str, str]], set[str], set[str]]:
+    """``([(target, scope)], eager targets, griffe heads to drop)`` — the imports griffe's
+    module-level map does not carry, the targets it carries correctly, and the entries it
+    carries wrongly.
 
     Two families, one traversal, one parse — griffe records neither, and both used to be
     invisible to the import graph:
@@ -345,6 +347,13 @@ def _source_import_targets(module) -> tuple[list[tuple[str, str]], set[str]]:
       of a condition that is always false at run time — so the second value returned is
       the set of targets imported at plain module level: the caller demotes griffe's entry
       for a target that appears only under ``TYPE_CHECKING``.
+    - **dotted `import a.b.c` at module level** (R1-C68, design ``dotted_imports.md``).
+      griffe records the *bound name*, ``{"a": "a"}``, so the edge went to the root package
+      and a contract banning ``core → analysis`` passed over ``import pkg.analysis.b``. The
+      full name is recorded here, scope ``"module"``; the third value returned is the heads
+      griffe's entry should be dropped for — bound by dotted imports only, never by a plain
+      ``import a`` (D2). Under ``TYPE_CHECKING`` the full name already came out of this
+      pass; the head griffe filed beside it was left behind as an *eager* edge to ``a``.
 
     Cost discipline, and it is not theoretical: the first version of this walked every
     function's subtree separately, which is quadratic in nesting and cost the dogfood
@@ -356,13 +365,13 @@ def _source_import_targets(module) -> tuple[list[tuple[str, str]], set[str]]:
     try:
         src = module.source
     except Exception:                       # no source (namespace dir, synthetic)
-        return [], set()
-    if not NESTED_IMPORT_HINT.search(src):
-        return [], set()
+        return [], set(), set()
+    if not (NESTED_IMPORT_HINT.search(src) or DOTTED_IMPORT_HINT.search(src)):
+        return [], set(), set()
     try:
         tree = ast.parse(src)
     except (SyntaxError, ValueError):
-        return [], set()                     # unreadable: D2's report owns this file
+        return [], set(), set()              # unreadable: D2's report owns this file
     modpath = module.canonical_path
     f = module_file(module)
     is_pkg = f is not None and f.name == "__init__.py"
@@ -376,6 +385,19 @@ def _source_import_targets(module) -> tuple[list[tuple[str, str]], set[str]]:
 
     out: list[tuple[str, str]] = []
     eager: set[str] = set()   # targets imported at plain module level (griffe has them)
+    # R1-C68/D2: heads griffe records for module-level `import a.b.c` (it files the bound
+    # name), against heads a plain `import a` really binds. Only the difference is dropped.
+    dotted_heads: set[str] = set()
+    plain_heads: set[str] = set()
+
+    def note_heads(names) -> None:
+        for a in names:
+            if a.asname is not None:
+                continue                     # `import a.b as x`: griffe records a.b, correctly
+            if "." in a.name:
+                dotted_heads.add(a.name.split(".", 1)[0])
+            else:
+                plain_heads.add(a.name)
 
     def visit(node, scope: str | None) -> None:
         """``scope`` is None at module level (griffe has those), else
@@ -398,10 +420,16 @@ def _source_import_targets(module) -> tuple[list[tuple[str, str]], set[str]]:
                 for stmt in child.orelse:
                     visit_stmt(stmt, else_scope if else_scope else scope)
             elif isinstance(child, ast.Import):
+                if scope in (None, "type_checking"):
+                    # griffe's map holds these (TYPE_CHECKING included, as module-level)
+                    note_heads(child.names)
                 if scope is not None:
                     out.extend((a.name, scope) for a in child.names)
                 else:
                     eager.update(a.name for a in child.names)
+                    # R1-C68: griffe has `a` for `import a.b.c`; the dependency is a.b.c
+                    out.extend((a.name, "module") for a in child.names
+                               if a.asname is None and "." in a.name)
             elif isinstance(child, ast.ImportFrom):
                 target = resolve(child)
                 if not target:
@@ -428,7 +456,7 @@ def _source_import_targets(module) -> tuple[list[tuple[str, str]], set[str]]:
         visit(holder, scope)
 
     visit(tree, None)
-    return out, eager
+    return out, eager, dotted_heads - plain_heads
 
 
 def _type_checking_branches(node: ast.If) -> tuple[str | None, str | None] | None:
@@ -457,7 +485,7 @@ def _collect(graph, obj, root, target_pkg, walk) -> None:
         # R1-C23/D3 (star imports) + R1-C29 (function-local and class-body imports) +
         # R1-C48 (`if TYPE_CHECKING:`): everything griffe's module-level map does not
         # carry, or carries under the wrong scope, in one parse.
-        nested, eager = _source_import_targets(obj)
+        nested, eager, dotted_only = _source_import_targets(obj)
         type_checking = {tgt for tgt, scope in nested if scope == "type_checking"}
         # R1-C56/D1: a `.pyi` is a declaration — Python never executes it, so *none* of
         # its imports run, whatever they look like. Recorded as a fourth scope rather
@@ -465,6 +493,10 @@ def _collect(graph, obj, root, target_pkg, walk) -> None:
         # cycle classes are named by mechanism.
         stub = _is_stub(obj)
         for name, tgt in (obj.imports or {}).items():
+            if name == tgt and tgt in dotted_only:
+                # R1-C68/D2: the bound name of `import a.b.c`, not a dependency on `a`;
+                # the full name came from the AST pass above.
+                continue
             # griffe files an import under `if TYPE_CHECKING:` as module-level; it never
             # runs. Demote it unless the same target is also imported eagerly (D2).
             scope = "type_checking" if tgt in type_checking and tgt not in eager else "module"

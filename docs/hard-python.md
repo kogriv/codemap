@@ -126,6 +126,13 @@ explosion without knowing what a symlink is.
   kind of its own, not a lazy one (R1-C49) — the two modules have no runtime dependency. griffe files it as module-level, so codemap demotes it — unless the
   same target is also imported eagerly, in which case the edge reads eager (R1-C48,
   issue #18). A compound test (`if TYPE_CHECKING or X:`) is not read and stays eager.
+- `import a.b.c` (no `as`) depends on `a.b.c`, the module it names, as every other spelling
+  does (R1-C68). griffe records such an import under its *bound name* `a`, so until R1-C68 the
+  edge went to the root package, and a contract banning `core → analysis` passed over
+  `import pkg.analysis.b`. Under `if TYPE_CHECKING:` the same root also left an eager edge to
+  `a`. A plain `import a` beside it keeps its own edge. Not read: a dotted name after a
+  backslash continuation line. The fast tier still does not resolve a *call* through such a
+  chain (`pkg.analysis.b.f()`); the deep tier does. That is R1-C71.
 - `type X = int | str` (PEP 695 alias) produces no node.
 - The names a star import binds are not expanded.
 - Dynamic dispatch remains dynamic: `getattr`, `importlib`, and registry lookups by a
