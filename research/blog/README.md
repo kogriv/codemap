@@ -24,12 +24,13 @@ One rule threads all of them: **measurements, not verdict.**
 | 8 | **Eight of my last twelve bug fixes were the same bug.** — sorted by cause instead of by place, the backlog stopped looking like twelve bugs. The audit that followed was full, and missed the next one by a day. | [EN](08-eight-of-twelve.md) | [RU](08-eight-of-twelve.ru.md) |
 | 9 | **My tool reported 464,109 import cycles. Every one of them was real.** — and on the next package, the one cycle it reported did not exist. Measurement cannot tell a true number from a meaningful one. | [EN](09-true-and-worthless.md) | [RU](09-true-and-worthless.ru.md) |
 | 10 | **I measured a tool that asks a model about every file. On my scope, mine won — and the scope is the caveat.** — a model-judged search against a graph, five questions, real Jev, $1.14. What it found, what it cannot see, and when you would pick it instead. | [EN](10-asks-a-model-about-every-file.md) | [RU](10-asks-a-model-about-every-file.ru.md) |
+| 11 | **I tested a rival's architecture gate for silent passes. Then I pointed the same probe at mine, and my own control failed first.** — grafema has the most careful import graph I have measured and a gate that can pass without checking; the same questions, asked of `codemap check`, found three holes in mine, and the fixes found three more. | [EN](11-the-probe-i-pointed-at-myself.md) | [RU](11-the-probe-i-pointed-at-myself.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
-readers can start at 0. Posts 4, 5, 6, 8 and 9 are the ones where the method is turned on the author — 4 on a
+readers can start at 0. Posts 4, 5, 6, 8, 9 and 11 are the ones where the method is turned on the author — 4 on a
 claim of his, 5 on the limits of how he was testing it, 6 on three differentiators he had to give up, 8 on
-twelve of his own closed bug reports, 9 on the limit of measuring at all. Post 7 is the one where an outside
+twelve of his own closed bug reports, 9 on the limit of measuring at all, 11 on his own architecture gate, with a probe written for a rival's. Post 7 is the one where an outside
 implementation agreed with his numbers exactly, which is the only external check in the series.
 
 Posts 5 and 9 are a pair, and read best together: 5 is *the target is a shape, not a sample* about defects,

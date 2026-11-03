@@ -1108,11 +1108,62 @@ merely aliases — what `attrs/__init__.pyi` has and a hand-written fixture did 
 - "My guard test passed with the fix mutated off, because my hand-written fixture did not carry the defect's
   shape. A fixture is a claim too, and it has to be verified against the old version." → build-story #9
 
+## Build-story #11 — "I tested a rival's gate for silent passes, then pointed the probe at mine" (grafema, and ourselves)
+
+**Facts:** [`tools/grafema.md`](tools/grafema.md) §1–§7, gap
+[`contract_silent_passes_2026-11-03`](../gaps/contract_silent_passes_2026-11-03.md), designs
+`dotted_imports`, `contract_validation`, `check_graph_currency`, `attribute_chain_calls`,
+`flat_inference_in_packages`, `call_site_conservation`. **Post:** [11](blog/11-the-probe-i-pointed-at-myself.md).
+
+### The setup
+The most careful import-graph design measured in R2: imports are nodes in their scope, dependencies derived by
+a readable Datalog rule. 164 edges, 163 real, identical in 3 runs. Three integration seams take it to 8 of 45
+cycles (42 with two fixed), and one of them drops the file that defines the flagship function, so a namesake
+method inherits its 88 callers as `[resolved]`.
+
+### The surprising measurement
+Its contract gate is real Datalog: a recursive rule finds exactly the 11 cycle modules. It also passes without
+checking in four ways:
+- the first `check` on a fresh graph imports the rules and lists none, exit 0, on 11 of 11 trees;
+- a predicate typo passes against the documented warning;
+- an edited rule keeps its stored body;
+- an `__init__` violation is invisible.
+
+### The turn
+The same questions asked of `codemap check` broke the **control** first: `import pkg.analysis.b` became an edge
+to `pkg`, so the gate said "satisfied" over a forbidden import. Then the predictions came true:
+- a typo key read as "no contract";
+- `"false"` switched a rule on;
+- a stale graph passed with no word.
+
+Fixed and released in 0.0.23 (R1-C68–C70). The fixes, each checked against an independent prediction on pytest,
+found three more: chain calls (exactly 16 predicted pairs), a flat-layout guard rewriting `import warnings` into
+the package (65 false edges), and counters that did not add up to the source (an overwrite, and a closure taken
+for a method).
+
+### The lesson (reusable)
+A probe written for a rival is a probe. My truth sets were two repositories that happened not to use the
+spellings that broke me; the fixture written to attack my own gate did not have that luck.
+
+### What we take, what we keep
+- **Take:** derived edges as declared rules (a design note; the licence closes the code, not the idea); the
+  list of what a gate must refuse.
+- **Keep:** source-only, deterministic, and now a gate that refuses what it cannot read and says when its
+  graph is stale.
+
+**Quotable:**
+- "The first thing that broke was not a prediction. It was the control: a forbidden import my gate called
+  satisfied, because I had turned `import pkg.analysis.b` into an edge to `pkg`." → build-story #11
+- "The rival's gate passed without checking in four ways. Mine passed without checking in three, and the
+  probe that showed it was one I had written for someone else." → build-story #11
+- "A guard I had declared safe 'by measurement' was measured on two repositories that happen to have no
+  module named like a standard-library one. pytest has six. 65 false edges." → build-story #11
+
 ## Future stories (skeletons — fill on разбор)
 
-- **#10 …** next tool from R2.2 (rag_for_git / Understand-Anything / …). Same shape: setup → the surprising
-  measurement → head-to-head → lesson → take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code,
-  #6 CodeGraph, #7 OntoIndex done; #4, #5, #8, #9 are about ourselves.)
+- **#12 …** next tool from R2.2. Same shape: setup → the surprising measurement → head-to-head → lesson →
+  take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code, #6 CodeGraph, #7 OntoIndex, #10 jevgrep, #11 grafema
+  done; #4, #5, #8, #9 are about ourselves, and #11 is both.)
 - **The determinism story.** ✅ Told twice, neither time as sketched: #4 (a determinism *test* went red and
   the tool was fine) and #8 (the artifact was byte-stable and the *rendering* was not). The sketch asked for
   "graph diff caught X" and the episodes that happened were both sharper than that.
