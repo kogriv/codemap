@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **`codemap --version`** (R1-C73, design [`docs/design/cli_version.md`](docs/design/cli_version.md)). Prints
+  `codemap 0.0.23 · answer format 3 · schema 0.13`, adding `@commit` (and `(dirty)`) from a source tree. It
+  is built from the same identity every graph records as `provenance.tool`, so the CLI and the artifact
+  cannot disagree. Before, the flag was an argparse error asking for a command.
+
 ## [0.0.23] - 2026-11-03
 
 **The architecture gate stopped saying "ok" without checking, and the import graph stopped inventing and

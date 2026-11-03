@@ -1,6 +1,6 @@
 # Design — `codemap --version`
 
-**Status:** 🧪 pre-registered (2026-11-03), not yet shipped. **Backlog:** R1-C73.
+**Status:** ✅ **shipped** (2026-11-03), with acceptance reconciled below. Pre-registered in ccc6b6e before any code. **Backlog:** R1-C73.
 
 ## The gap
 
@@ -43,3 +43,16 @@ codemap 0.0.23 @06fdc65 · answer format 3 · schema 0.13
   `importlib.metadata` and `provenance.tool` goes red.
 
 At least one expectation fails if nothing is done: V1–V3 all exit 2 today.
+
+## Acceptance reconciled (2026-11-03)
+
+| | expected | measured | |
+|---|---|---|---|
+| V1 | `codemap 0.0.23 @<HEAD> · answer format 3 · schema 0.13`, `(dirty)` when dirty; equal to `provenance.tool` | `codemap 0.0.23 @ccc6b6e (dirty) · answer format 3 · schema 0.13` with `cli.py` uncommitted; a graph built in the same env records `{version: 0.0.23, commit: ccc6b6e, dirty: true}` | holds |
+| V2 | the wheel outside the tree, no commit | `codemap 0.0.23 · answer format 3 · schema 0.13` from a fresh venv | holds |
+| V3 | `--version build x` → version, exit 0 | so | holds |
+| V4 | no arguments → exit 2 | so | holds |
+| V5 | `stats --graph` does not call `tool_identity()` | **there is no `stats` command in the CLI** (it is a serve op); measured instead on `query` and `report`, which pass with it patched to raise | holds, on the commands that exist |
+| V6 | a fixed string goes red | red. With `cli.py` reverted, 4 of 6 tests fail; the 2 that pass are V4 and V5, which hold before and after | holds |
+
+**Surprise, my own:** V5 named a CLI command that does not exist. It was written from memory of the serve op, not read from the parser. The intent (no other command pays for the identity) is measured on two real commands instead.

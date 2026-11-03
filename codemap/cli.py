@@ -982,8 +982,41 @@ def _add_source(p) -> None:
                    help="Deep call resolution via jedi (richer, ~1 min; default fast).")
 
 
+def version_line() -> str:
+    """``codemap 0.0.23 @abc1234 · answer format 3 · schema 0.13`` (R1-C73).
+
+    Built from ``provenance.tool_identity()`` — the identity every graph records as
+    ``provenance.tool`` — so the CLI and the artifact cannot disagree. Commit and dirtiness
+    appear only when known, as there; a missing distribution is said, never invented.
+    """
+    from codemap.model import ANSWER_FORMAT, SCHEMA_VERSION
+    from codemap.provenance import tool_identity
+    t = tool_identity()
+    head = f"codemap {t['version']}" if t.get("version") else \
+        "codemap version unknown (not installed as a distribution)"
+    if t.get("commit"):
+        head += f" @{t['commit']}"
+    if t.get("dirty"):
+        head += " (dirty)"
+    return f"{head} · answer format {ANSWER_FORMAT} · schema {SCHEMA_VERSION}"
+
+
+class _VersionAction(argparse.Action):
+    """``--version``, computed only when asked: ``tool_identity()`` calls git (design D1)."""
+
+    def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS,
+                 help="Print the installed version, the answer format and the graph schema, then exit."):
+        super().__init__(option_strings=option_strings, dest=dest, default=default, nargs=0,
+                         help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(version_line())
+        parser.exit(0)
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="codemap", description="Static code-graph builder.")
+    p.add_argument("--version", action=_VersionAction)
     sub = p.add_subparsers(dest="command", required=True)
 
     b = sub.add_parser("build", help="Build the canonical graph from a package path.")

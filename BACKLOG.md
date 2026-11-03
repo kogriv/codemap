@@ -1659,10 +1659,12 @@ Python-focus** — если задача его нарушает, это отм�
       строкой; MCP `graph_currency` + `ok:false`. Приёмка S1–S10; `--build` на bquant побайтно прежний,
       цена на bquant ~0 с; сьют 1091/3. Сюрприз: первое место (`freshness`) нарушило собственный контракт
       codemap (`freshness → scope` вверх) — поймал dogfood-тест, функция переехала в `serve/currency.py`.
-- [ ] **R1-C73 у CLI нет `--version`** (S) — 🆕 (2026-11-03). `codemap --version` отвечает «the following arguments
+- [x] **R1-C73 у CLI нет `--version`** (S) ✅ (2026-11-03; дизайн [`docs/design/cli_version.md`](docs/design/cli_version.md), предрегистрация ccc6b6e). `codemap --version` отвечает «the following arguments
       are required: command». Встретил сам в проверке релиза 0.0.23, отдельно сообщил bquant (их гейт версию так не
       читает). Версия сейчас видна только через `importlib.metadata` и `provenance.tool` в графе. Сделать флаг,
       печатающий версию пакета, `ANSWER_FORMAT` и `SCHEMA_VERSION`, и стража на совпадение с метаданными колеса.
+      **Сделано:** `--version` из `provenance.tool_identity()` (CLI и граф не расходятся), лениво — остальные команды
+      git не зовут; колесо вне дерева печатает без коммита. V1–V6 держатся, на откате 4 из 6 стражей красные.
 - [ ] **R1-C67 вложенные определения узлами графа** (M, **решение владельца — не сейчас**) — 🆕 (2026-10-15,
       остаток R1-C60). R1-C60 закрыт **объявлением**: `dead-code` называет сужение, граф побайтно прежний.
       Сами 49 вложенных определений bquant (`cached.decorator.wrapper`, `register_*.decorator`) в графе по-
