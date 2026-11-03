@@ -1,6 +1,6 @@
 # Design — the fast tier follows a call through an attribute chain from an import
 
-**Status:** 🧪 pre-registered (2026-11-03), not yet shipped. **Motivates:** the failed expectation E6
+**Status:** ✅ **shipped** (2026-11-03, no schema change), with acceptance reconciled below. Pre-registered in 3462ed0 before any code. **Motivates:** the failed expectation E6
 in [dotted_imports.md](dotted_imports.md). **Backlog:** R1-C71.
 
 ## The defect
@@ -101,3 +101,57 @@ committed beside it:
 - **C8, suite.** All green; the README count is moved in the same commit.
 
 At least one expectation fails if nothing is done: C1 rows 1–3, 6–9 and C2–C4 all differ from today.
+
+## Acceptance reconciled (2026-11-03)
+
+Fixtures ran locally. The trees, the deep builds, the timing and the suite ran on the stand inside the
+shared core-slot accounting: before = `3462ed0`, after = the same tree plus the change. The three
+predictions were re-run on the stand's copies and reproduce byte for byte.
+
+| | expected | measured | |
+|---|---|---|---|
+| C1 (10 rows + 1) | as tabled | all 10 rows exact. One row was added during the work: `pkg.analysis.b.registry.get("k")` is `dynamic` before and after (see "changed in the code" below) | holds |
+| C2 edges | the 16 predicted pairs, less those present before (0) | **16 new pairs, exactly the predicted ones**; none missing, none extra, none removed | holds |
+| C2 Σ external | +126 | **+117** | **differs, reconciled below** |
+| C2 Σ unresolved | −146 | **−114** | **differs, reconciled below** |
+| C2 else | nothing | nodes identical outside `extras.calls`; no non-`calls` edge changed | holds |
+| C3 bquant | 0 edges; external +39, unresolved −39 | 0 edges; **external +38, unresolved −36, dynamic −2** | edges hold; counters reconciled below |
+| C4 codemap | 0 edges; external +17, unresolved −17 | 0 edges; **external +16, unresolved −16** | edges hold; counters reconciled below |
+| C5 deep bquant | `imports` identical; `calls`/`accesses` within noise | `imports`: 299 edges, one hash in all four builds. Before→after: `calls` +1, `accesses` +1. Before→before: `calls` +1, `accesses` ±1. After→after: `calls` −2, `accesses` +1 | holds |
+| C6 | ±10 % | median 8.21 s → 8.22 s | holds |
+| C7 | three mutations red | all three red. With `behavior.py` reverted, 11 of 14 tests fail; the 3 that pass are the rows that do not change | holds |
+| C8 | suite green | 1105 passed, 3 skipped (1091 + 14) | holds |
+
+**The counters, reconciled exactly.** The scripts are in `research/bench/r1c71/`: `compare_graphs.py`, `own_body_external.py` and `own_body_literal_dispatch.py`. Every edge prediction held. Every counter difference has one of
+three causes, each counted.
+1. **The prediction counted sites that codemap keeps no counter for.** `extras.calls` counts a node's
+   *own* call sites. Calls at module level and in a function nested in another produce edges, but no
+   counts: `_process_module_level` and `_collect_nested_calls` emit edges only. This is not changed
+   here. The script assumed otherwise.
+   - bquant: 1 site (`stats.norm.cdf` in `ks_distance`, nested in `lilliefors_normal`).
+   - codemap: 1 site (`os.path.getmtime` in `probe`, nested in `mtime_probe`).
+   - `_pytest`: 1 internal site, plus the external sites below.
+2. **String-keyed dispatch was counted as `dynamic` before.** `X.get("lit")`, `.create(…)` and
+   `.register(…)` on a chain fell through to the `dynamic` rule. An external chain now answers
+   `external` first. Counted independently in node bodies: **22** in `_pytest`, **2** in bquant, **0** in
+   codemap, which are exactly the `dynamic` deltas. That is why unresolved fell by less than external
+   rose: 117 + 19 = 114 + 22.
+3. **A stdlib module shadowed by a same-named internal one** (`_pytest` only). `import pathlib` in
+   `_pytest/config/__init__.py` is the standard library, but the flat-layout rule (`qualify_target`,
+   R1-C21) rewrites it to `_pytest.pathlib`, a module of the package. The chain `pathlib.Path.cwd()` is
+   then followed internally, lands on no node, and stays unresolved: 2 sites (`Config.__init__`,
+   `get_config`). This is a defect, but not R1-C71's: it is **R1-C72**, below.
+
+Per node in `_pytest`, the own-body external sites predicted sum to 118. Measured: 118 − 2 (cause 3)
++ 1 = 117. The +1 is `_pytest.pathlib._is_same`, defined twice under a module-level `if/else`: codemap
+counts it as a node, and the script took it for a nested function. That is the script's error.
+
+**Changed in the code during the work:** a chain of depth ≥ 2 that lands on no definition falls through
+to the old rules. Without that, `b.registry.get("k")` would have changed from `dynamic` to `unresolved`,
+losing information the old answer had. The row was added to the tests.
+
+**Surprise, recorded as R1-C72.** In the `_pytest` graph, **65 edges carry `resolution: "flat"`** (24
+`imports`, 41 `export`) in a packaged layout, where there should be none. Every one of them is a stdlib
+import (`warnings` 34, `pathlib` 23, `doctest`, `logging`, `unittest`, `pprint` 2 each) rewritten to the
+same-named module of the package. That includes `_pytest.doctest → _pytest.doctest`, an import of
+itself. bquant and codemap have 0 such edges. Not fixed here.

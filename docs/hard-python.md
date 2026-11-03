@@ -131,8 +131,9 @@ explosion without knowing what a symlink is.
   edge went to the root package, and a contract banning `core → analysis` passed over
   `import pkg.analysis.b`. Under `if TYPE_CHECKING:` the same root also left an eager edge to
   `a`. A plain `import a` beside it keeps its own edge. Not read: a dotted name after a
-  backslash continuation line. The fast tier still does not resolve a *call* through such a
-  chain (`pkg.analysis.b.f()`); the deep tier does. That is R1-C71.
+  backslash continuation line. Since R1-C71 the fast tier also resolves a *call* through such a
+  chain (`pkg.analysis.b.f()`, `pa.b.f()`, through re-exports), and counts a chain rooted at an
+  external import as external, not unresolved.
 - `type X = int | str` (PEP 695 alias) produces no node.
 - The names a star import binds are not expanded.
 - Dynamic dispatch remains dynamic: `getattr`, `importlib`, and registry lookups by a

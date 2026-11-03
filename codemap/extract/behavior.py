@@ -588,16 +588,33 @@ def _arg_contract(shapes: list[tuple]) -> dict:
     return contract
 
 
+def _is_internal(target: str, modpath: str) -> bool:
+    """R1-C71/D3: the package root is inside the package. ``startswith(pkg + ".")`` alone
+    filed ``import pkg; pkg.f()`` — and the bound name of ``import pkg.a.b`` — as external."""
+    root = modpath.split(".")[0]
+    return target == root or target.startswith(root + ".")
+
+
+def _attr_chain(node) -> tuple[str, list[str]] | None:
+    """``a.b.c`` → ``("a", ["b", "c"])`` when the chain bottoms out in a plain name."""
+    parts = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if not isinstance(node, ast.Name):
+        return None
+    return node.id, parts[::-1]
+
+
 def _resolve(call, modpath, class_prefix, imports, modmembers, members, reexports=None,
              nodes=frozenset()):
     """Return (target_id, resolution). Only module/self/imported become edges."""
-    pkg = modpath.split(".")[0] + "."
     f = call.func
     if isinstance(f, ast.Name):
         name = f.id
         if name in imports:
             tgt = imports[name]
-            if tgt.startswith(pkg):
+            if _is_internal(tgt, modpath):
                 return _follow_reexport(tgt, reexports or {}, nodes), "imported"
             return tgt, "external"
         if name in modmembers:
@@ -613,13 +630,27 @@ def _resolve(call, modpath, class_prefix, imports, modmembers, members, reexport
                 # method call on self — resolve to the class that actually defines
                 # the member (own or a base), never a phantom same-class id.
                 return f"{members[attr]}.{attr}", "self"
-            if recv.id in imports:
-                tgt = imports[recv.id]
-                if tgt.startswith(pkg):
-                    return _follow_reexport(f"{tgt}.{attr}", reexports or {}, nodes), "imported"
-                return f"{tgt}.{attr}", "external"
-            if recv.id in modmembers:
+            if recv.id in modmembers and recv.id not in imports:
                 return f"{modpath}.{recv.id}.{attr}", "module"
+        # R1-C71 (design ``attribute_chain_calls.md``): a callee rooted at an imported name,
+        # at any depth. Internal: follow it hop by hop, each hop through a re-export when the
+        # name is no node (D1) — the depth-1 case is the one-hop instance and answers as it
+        # always did; the soundness guard downstream still refuses a target that is no node,
+        # so `b.registry.get()` stays unresolved. External: external at any depth (D2) —
+        # `np.random.rand()` is no more unknown than `np.zeros()`.
+        chain = _attr_chain(f)
+        if chain is not None and chain[0] in imports:
+            head, parts = chain
+            tgt = imports[head]
+            if not _is_internal(tgt, modpath):
+                return f"{tgt}.{'.'.join(parts)}", "external"
+            cur = tgt
+            for part in parts:
+                cur = _follow_reexport(f"{cur}.{part}", reexports or {}, nodes)
+            if len(parts) == 1 or cur in nodes:
+                return cur, "imported"
+            # a deeper chain that lands on no definition (`b.registry.get("k")`) keeps the
+            # answer it had before R1-C71: string-keyed dispatch, else unresolved
         # X.method('literal', ...) — dynamic string-keyed dispatch (registry/dict)
         if call.args and isinstance(call.args[0], ast.Constant) \
                 and isinstance(call.args[0].value, str) and attr in ("create", "get", "register"):
@@ -868,10 +899,9 @@ def _module_level_nodes(tree):
 def _resolve_name(name, modpath, imports, modmembers, reexports=None, nodes=frozenset()):
     """(target_id, resolution) for a bare name used as a value — the `_resolve` rules for
     ``ast.Name`` minus the call. Only module/imported become edges."""
-    pkg = modpath.split(".")[0] + "."
     if name in imports:
         tgt = imports[name]
-        if tgt.startswith(pkg):
+        if _is_internal(tgt, modpath):
             return _follow_reexport(tgt, reexports or {}, nodes), "imported"
         return tgt, "external"
     if name in modmembers:

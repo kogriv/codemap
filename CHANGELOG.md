@@ -5,6 +5,17 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **The fast tier follows a call through an attribute chain rooted at an import** (R1-C71, design
+  [`docs/design/attribute_chain_calls.md`](docs/design/attribute_chain_calls.md)).
+  - `pkg.analysis.b.f()`, `pa.b.f()` and calls through re-exports now resolve, as `b.f()` always did.
+  - A chain rooted at an external import counts as `external` at any depth, no longer as `unresolved`.
+  - `import pkg; pkg.f()` is internal.
+  - Measured on `_pytest` (pytest 9.1.1): exactly the 16 call pairs an independent AST script predicted.
+  - bquant and codemap: no edge changes; only `extras.calls` counters move, from `unresolved`/`dynamic`
+    to `external`.
+  - Found while reconciling: the flat-layout rule rewrites stdlib imports (`import warnings`) to
+    same-named package modules; 65 false edges in `_pytest` (R1-C72, open).
+
 - **`check --graph` says whether the graph is the tree it judges** (R1-C70, design
   [`docs/design/check_graph_currency.md`](docs/design/check_graph_currency.md)).
   - The input scope is re-derived from the build recipe beside the graph and compared by `scope_id`.
