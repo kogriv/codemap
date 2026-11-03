@@ -690,6 +690,24 @@ on 0.0.22 **first**, to show that the defects are visible there (rule 4).
 - If either text diff is empty, the run did not reach two versions. That is the nothing-was-done
   control.
 
+**Addendum before the consumer runs: both consumers call `check --graph`, not `--build`.** The bullets above,
+and what I told the owner before the release, assumed `check --build`. That was not read from their trees.
+In fact:
+- bquearch's `scripts/codemap_gate.sh` builds `research/shared` into a temporary file (relative name,
+  `--mode full`) and runs `check --graph … --require-contract`;
+- bquant documents `codemap check --graph .codemap/graph.json`.
+
+So R1-C70 reaches both. The danger is a *false* "behind", which would turn their gates red: the recipe
+read wrongly (`--mode full`, a relative path, a temporary directory), or the scope resolved differently.
+Added expectations for the form they actually run, written before it runs:
+- **bquearch gate** (a copy of `aa5c02a`, the gate script with only the version changed): exit 0 on both
+  versions. 0.0.23 says "The graph matches its source tree". The text diff is that line and the trailer,
+  nothing else.
+- **bquant** (`build bquant -o .codemap/graph.json`, then `check --graph .codemap/graph.json`): exit 0 on
+  both; diff = the currency line + the trailer.
+- **Control for the new failure mode:** the same bquearch copy with a forbidden import added after the
+  build gives exit 2 on 0.0.23, "behind". If it said "current", the check would be blind.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
