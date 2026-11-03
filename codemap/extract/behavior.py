@@ -27,8 +27,8 @@ import ast
 import math
 from pathlib import Path
 
-from codemap.extract.gsource import (NESTED_IMPORT_HINT, module_file, module_imports,
-                                     qualify_target)
+from codemap.extract.gsource import (NESTED_IMPORT_HINT, flat_inference_applies, module_file,
+                                     module_imports, qualify_target)
 from codemap.model import Edge
 
 _BUILTINS = set(vars(__import__("builtins")))
@@ -51,7 +51,9 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
     modules left out. When ``None`` (default) every module is processed.
     """
     modules = _index_modules(griffe_root)
-    known_modules = set(modules)  # R1-C21: flat-layout sibling lookup
+    # R1-C21 flat-layout sibling lookup — empty, so it never fires, in a core that imports
+    # itself by name (R1-C72): there `import warnings` is the standard library.
+    known_modules = set(modules) if flat_inference_applies(graph, target_pkg) else frozenset()
     project = _jedi_project(search_path) if deep else None
     # R1-C30-f1: a call to a re-exported name points at a name that is not a definition.
     # The structural pass already recorded where each re-export really leads.

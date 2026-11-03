@@ -5,6 +5,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **The flat-layout inference stays out of a package whose twins are stdlib names** (R1-C72, design
+  [`docs/design/flat_inference_in_packages.md`](docs/design/flat_inference_in_packages.md)).
+  - A bare import is rewritten to a sibling module only with evidence that the directory itself is on
+    `sys.path`: a bare sibling import that is not a stdlib name, or a namespace root.
+  - pytest 9.1.1 loses exactly its 65 false `flat` edges (`import warnings` → `_pytest.warnings`,
+    `_pytest.doctest → _pytest.doctest`). Calls and attribute reads through those names now count as
+    external.
+  - bquant and codemap graphs are byte-identical. Flat layouts, including the mixed one R1-C21 pinned,
+    are unchanged.
+
 - **The fast tier follows a call through an attribute chain rooted at an import** (R1-C71, design
   [`docs/design/attribute_chain_calls.md`](docs/design/attribute_chain_calls.md)).
   - `pkg.analysis.b.f()`, `pa.b.f()` and calls through re-exports now resolve, as `b.f()` always did.

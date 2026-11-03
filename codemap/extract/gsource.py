@@ -105,3 +105,19 @@ def qualify_target(target: str, modpath: str, known_modules) -> str:
     if not target.startswith(pkg) and f"{parent}.{target.split('.', 1)[0]}" in known_modules:
         return f"{parent}.{target}"
     return target
+
+
+def flat_inference_applies(graph, core_pkg: str) -> bool:
+    """Does the flat-layout inference (R1-C21) apply to this core? One predicate, three users.
+
+    True for a namespace root (no file), or when the structural pass emitted at least one
+    ``imports`` edge labelled ``resolution="flat"``. Since R1-C72 that pass emits none in a core
+    that imports itself by package-qualified or relative name: there a bare ``import warnings``
+    is absolute — the standard library — however a module beside the importer is named
+    (design ``flat_inference_in_packages.md``). The import map for calls and attribute access
+    (``module_imports`` / ``qualify_target``, the deep tier's ``_flat_qualify``) and the
+    cross-root gate (``roots.core_is_flat``) all ask this, so they cannot disagree.
+    """
+    root = graph.nodes.get(core_pkg)
+    return (root is not None and root.file is None) or any(
+        e.type == "imports" and e.extras.get("resolution") == "flat" for e in graph.edges)

@@ -1,6 +1,6 @@
 # Design — the flat-layout inference stays out of a package that imports itself by name
 
-**Status:** 🧪 pre-registered (2026-11-03), not yet shipped. **Motivates:** the R1-C71 reconciliation
+**Status:** ✅ **shipped** (2026-11-03, no schema change), with acceptance reconciled below. Pre-registered in 7e59acd; D1 revised before acceptance in 19994b9. **Motivates:** the R1-C71 reconciliation
 ([attribute_chain_calls.md](attribute_chain_calls.md), "Surprise"). **Backlog:** R1-C72. **Revises:**
 [flat_layout.md](flat_layout.md) D2.
 
@@ -127,3 +127,45 @@ nothing is rewritten.
   That is the existing tests, green.
 
 F6's first mutation now forces the evidence to "found".
+
+## Acceptance reconciled (2026-11-03)
+
+The fast and deep builds and the suite ran on the stand, inside the shared core-slot accounting:
+before = `19994b9`, after = the same tree plus the change. The per-node reconciliation script is
+`research/bench/r1c72/reconcile_pernode.py`.
+
+| | expected | measured | |
+|---|---|---|---|
+| F1 flat edges | exactly the 65 listed disappear, none becomes an external export | **removed == the predicted 65** (24 `imports`, 41 `export`); 0 flat edges after; 0 edges added | holds |
+| F1 other edges | none change | none changed | holds |
+| F1 nodes | identical outside `extras.calls` | **not identical: `extras.attr_access` changed on 68 nodes** | **fails as written**, reconciled below |
+| F1 Σ external | +114 | **+113** | **differs by 1**, reconciled below |
+| F2 bquant, codemap | byte-identical | both identical (`provenance` aside) | holds |
+| F3 row 1 | packaged tree: no edge to the twin; the call is external | so | holds |
+| F3 row 2 | the same tree without the qualified import is flat, with an edge to the twin | **no edge**: D1-revised needs a bare sibling import that cannot be stdlib, and this tree has none. With one added (`b.py: import a`), the flat edge to the twin is there | **fails as written.** It is a consequence of the D1 revision that I did not carry into F3, although the addendum said F1–F7 were unchanged. Both versions are tested |
+| F3b | the mixed R1-C21 fixture keeps its edges | its tests are green, unchanged | holds |
+| F4 deep bquant | `imports` identical; the rest within noise | `imports`: 299 edges, one hash in all four builds. Before→after: `calls` −2; before→before: `calls` −2, `accesses` −1; after→after: `calls` +2, `accesses` −1 | holds |
+| F5 | ±10 % | the first run was noisy: "after" read 9.38 / 14.94 / 11.45 s, and right after it the stand's 5-minute load average was 2.25 with no slot held (someone else's work outside the accounting, not identified). Re-run on an idle stand, alternating, 5 + 5: median **9.32 s → 9.33 s** | holds, on the re-run |
+| F6 | two mutations red | both red. With the code reverted, 5 of 7 new tests fail; the 2 that pass are the stdlib-list check and the flat-with-evidence case, which behave the same before and after | holds |
+| F7 | suite green | 1112 passed, 3 skipped (1105 + 7) | holds |
+
+**The counters, reconciled exactly.**
+- **Calls, +113 against +114.** The prediction counted 2 twin calls in the first, Windows-only definition of
+  `_pytest.pathlib._is_same`. codemap does not walk that body, because it is replaced by the `else`
+  definition (R1-C46). It missed 1, in `Config.inicfg`, which is defined inside `if TYPE_CHECKING: … else:`
+  in the class body; the script did not descend there. Recounted with both rules, the prediction is
+  **113 = 113**, node by node. Both were the script's errors.
+- **`attr_access`, not foreseen.** attrflow counts attribute accesses on *internal* targets. A twin binding
+  made `warnings.filters`, `doctest.ELLIPSIS`, `logging.INFO` read as internal and unresolved. Now they
+  are external, and so not counted. Measured: Σ `attr_access.out` fell by **99**. Counted independently in
+  own bodies, excluding call callees, there are 98 `twin.attr` expressions, plus 1 bare name bound by
+  `from warnings import warn` and used in `check_ispytest`: **99 = 99**. That is the D2 gate doing what it
+  should on a counter I had not listed.
+
+**Surprises:**
+- **D1 as first written was wrong.** The existing R1-C21 tests showed it (the mixed fixture), and it was
+  revised before acceptance.
+- **F3 row 2 was not carried through that revision.**
+- **`attr_access`** moved, as above.
+- **The first timing run read +24 %.** On the idle-stand re-run, alternating builds, it was +0.1 %. The
+  first run is put down to load outside the slot accounting; what it was is not known.

@@ -20,6 +20,7 @@ from __future__ import annotations
 import ast
 import multiprocessing
 import os
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -590,6 +591,19 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
     )
 
     known_modules = set(module_ids)
+    # R1-C72 (design ``flat_inference_in_packages.md`` D1, revised): the flat inference is for
+    # a directory that is itself on sys.path. The evidence is a bare import that can only be a
+    # sibling — it names a module beside the importer (not the importer itself) and is no
+    # standard-library name. With it, siblings shadow the stdlib too and every bare import is
+    # rewritten; without it, `import warnings` beside `_pytest/warnings.py` is the standard
+    # library and nothing is. A namespace root needs no evidence. Decided from the collected
+    # imports before anything is emitted, so edge order is kept.
+    root_node = graph.nodes.get(target_pkg)
+    flat_ok = (root_node is not None and root_node.file is None) or any(
+        (sib := _flat_sibling(src, t, known_modules)) is not None and sib != src
+        and t.split(".", 1)[0] not in sys.stdlib_module_names
+        for src, t, _scope in imports
+        if not (t == target_pkg or t.startswith(target_pkg + ".")))
     for parent_module, name, target_path, is_public in aliases:
         extras = {"as": name, "public": is_public}
         if not (target_path == target_pkg or target_path.startswith(target_pkg + ".")):
@@ -599,7 +613,7 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
             # here — so every re-export in such a tree was filed as external and produced
             # no edge at all. Same narrow gate as pass B: only when the head names a
             # module sitting beside the re-exporter, and labelled as the inference it is.
-            if _flat_sibling(parent_module, target_path, known_modules) is None:
+            if not flat_ok or _flat_sibling(parent_module, target_path, known_modules) is None:
                 # R1-C57: `import numpy as np` is not this package's API and stays out.
                 # A **public** alias to an outside definition is the opposite case: it is
                 # exactly what the package exposes, and dropping it made the facade layout
@@ -646,7 +660,7 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
     # sys.path. griffe records the source-literal target, so pass A cannot tell it from
     # `pandas.DataFrame`. Retry it against the importer's own package — and label it, since
     # this is an inference about sys.path, not something the source states.
-    for src_module, target_path, scope in unresolved:
+    for src_module, target_path, scope in (unresolved if flat_ok else ()):  # R1-C72
         tgt_module = _flat_sibling(src_module, target_path, known_modules)
         if tgt_module is None or tgt_module == src_module:
             continue

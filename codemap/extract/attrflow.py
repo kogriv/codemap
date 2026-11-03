@@ -50,7 +50,7 @@ from codemap.extract.behavior import (
     _node_id,
     _own_nodes,
 )
-from codemap.extract.gsource import module_file, module_imports
+from codemap.extract.gsource import flat_inference_applies, module_file, module_imports
 from codemap.model import Edge
 
 
@@ -66,7 +66,8 @@ def add_attrflow(graph, griffe_root, target_pkg: str, *, deep: bool = False,
     (R1-C9), mirroring :func:`add_behavior`.
     """
     modules = _index_modules(griffe_root)
-    known_modules = set(modules)  # R1-C21: flat-layout sibling lookup
+    # R1-C21 sibling lookup, gated like behavior's (R1-C72).
+    known_modules = set(modules) if flat_inference_applies(graph, target_pkg) else frozenset()
     project = _jedi_project(search_path) if deep else None
     pkg = target_pkg + "."
     # (func_id, attr_id, access, resolution) — dedup collapses repeated sites.

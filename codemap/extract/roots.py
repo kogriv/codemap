@@ -152,10 +152,8 @@ class _CoreIndex:
         # script cannot be reaching `core/alpha.py` — inferring an edge there would invent
         # one. Both flat shapes satisfy this: a namespace directory (root has no file), or a
         # directory whose own imports needed the flat inference.
-        root = graph.nodes.get(core_pkg)
-        self.core_is_flat = (root is not None and root.file is None) or any(
-            e.type == "imports" and e.extras.get("resolution") == "flat" for e in graph.edges
-        )
+        from codemap.extract.gsource import flat_inference_applies
+        self.core_is_flat = flat_inference_applies(graph, core_pkg)
         self.top_modules = {
             mid.split(".", 1)[1].split(".")[0]
             for mid in self.module_ids

@@ -133,11 +133,18 @@ and any consumer recomputes it from the graph it already holds.
 
 ## Boundaries
 
-- **Ambiguity resolves toward the sibling.** A local `types.py` next to `import types`
-  resolves to the local module — correct for a flat layout, wrong for a package that merely
-  shares a name with a stdlib module. The edge is labelled `flat` so the assumption is
-  visible. Measured on two real packages (codemap, bquant) the inference fires **zero**
-  times, so a correctly-laid-out package is untouched — a test pins exactly that.
+- **The inference needs evidence that the directory itself is on `sys.path`** (R1-C72). It
+  applies only to a namespace directory, or to a core where at least one bare import names a
+  sibling module (other than the importer itself), and that name is not a standard-library
+  module. Such an import works only with the directory on `sys.path`, and there a sibling
+  `types.py` *does* shadow `import types`, so the inference covers every bare import. Without such
+  evidence the core is a package, a bare `import warnings` is the standard library, and nothing is
+  rewritten.
+  - Before R1-C72 the guard was "unresolved, and a sibling has that name", which fired on any
+    package with a stdlib-named module: pytest 9.1.1 had 65 false `flat` edges
+    (`_pytest.doctest → _pytest.doctest` among them).
+  - Limits: a twin of a *third-party* name in a package that also has other bare sibling imports is
+    still rewritten. `sys.stdlib_module_names` differs slightly between Python versions.
 - **Only siblings.** The head of the import must name a module beside the importer;
   deeper `sys.path` games are out of scope.
 - **No runtime `sys.path` reasoning** — `sys.path.insert`, `.pth` files and editable-install
