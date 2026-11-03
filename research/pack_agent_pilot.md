@@ -82,3 +82,53 @@ training data. That affects both arms alike, and the size of the effect is unkno
 - The pilot's recall difference is reported as it comes, and called the **pilot** difference.
 - With 20 tasks it decides nothing. No result of it goes into `positioning.md`.
 - Whether to spend on the full run, and how much, is the owner's decision, made on P2–P4.
+
+## 3. Reconciled (2026-11-03)
+
+80 runs, all completed, **$5.08** in total by the CLI's own meter. Raw rows:
+[`bench/agent_pack_pilot_results.jsonl`](bench/agent_pack_pilot_results.jsonl).
+
+```
+arm       runs  errors  recall(mean)  precision(mean)  cost/run  turns(mean)
+baseline    40       0         0.392            0.805     0.055          5.5
+pack        40       0         0.395            0.676     0.072          5.8
+repeat spread: mean |recall(rep0) - recall(rep1)| over 40 task-arm pairs = 0.019
+per-task paired difference (pack - baseline): mean +0.003, sd 0.058, n 20
+pack arm runs that called pack: 1 of 40
+```
+
+| | expected | measured | |
+|---|---|---|---|
+| P1 | errors < 10 % per arm | 0 and 0 | holds |
+| P2 | $0.05–1.00 per run | $0.055 and $0.072 | holds |
+| P3 | the pack arm calls `pack` in ≥ half its runs | **1 of 40** | **fails, and it decides the pilot** |
+| P4 | spread reported, tasks needed computed | repeats differ by 0.019 recall on average; paired sd 0.058, which gives 6 tasks for a 0.05 difference | reported, but see below |
+
+**What the pilot says, and what it does not:**
+- **The arm did not test `pack`.** In 39 of 40 runs the agent solved the task with `Grep`, `Glob` and `Read`
+  (128, 34 and 28 calls in the pack arm). It called `pack` once, on task 14 (recall 0.2). The recall
+  difference, +0.003, is the difference between two arms that did the same thing. A full run in this form
+  would measure the presence of a tool the agent ignores, which is exactly what P3 was written to catch.
+- **P4's arithmetic stands but has no subject.** The spread between repeats is small (0.019), so a full run
+  could detect a difference of 0.05 with few tasks *if the arms differed in what the agent did*. They did
+  not.
+- **Precision differed, 0.805 against 0.676, with `pack` almost never called.** The only other difference
+  between the arms is the prompt's extra paragraph. So the paragraph itself changed what the agent named:
+  more files, less precisely. Not tested further.
+
+**Two things about my harness, found in the rows:**
+- **The pack arm saw all of codemap's MCP tools, not only `pack`.** `--allowedTools` controls what runs
+  without asking, not what is offered. One run tried `mcp__codemap__search`, which was then denied. The
+  arm was therefore "baseline + `pack` allowed + the other codemap tools visible but denied". The
+  pre-registration said "the same, plus `mcp__codemap__pack`". This did not change the result, because
+  one call is one call, but it is not what was written.
+- **Two host tools appeared** (`ToolSearch` once, `ReportFindings` once). These are built into the CLI and
+  not removed by `--setting-sources local`. That applies to both arms alike.
+
+**What would make a full run measure `pack`:** that is a protocol decision, and the owner's. Options:
+- tell the agent to start with `pack`;
+- run `pack` for it, on seeds taken from the message, and put the result in the prompt;
+- offer `pack` as the only search tool in that arm.
+
+Each changes the question, from "would an agent choose it" to "does its output help". That is why it is
+not decided here.
