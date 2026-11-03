@@ -167,3 +167,46 @@ The contexts are computed before any run and are part of the input (`t*/context_
     selection cannot resolve the question.
 - Precision and cost are reported beside recall. A context that adds recall by adding files costs precision,
   and that trade is part of the answer.
+
+### 4.1 Pilot 2 reconciled (2026-11-03)
+
+80 runs, **$5.58**. Raw rows: [`bench/agent_pack_pilot2_results.jsonl`](bench/agent_pack_pilot2_results.jsonl).
+
+```
+arm       runs  errors  recall(mean)  precision(mean)  cost/run  turns(mean)
+grep_ctx    40       1         0.402            0.728     0.073          5.4
+pack_ctx    40       0         0.375            0.724     0.067          5.2
+repeat spread: mean |recall(rep0) - recall(rep1)| = 0.040
+per-task paired difference (pack_ctx - grep_ctx): mean -0.027, sd 0.069, n 20
+per task: 17 tasks identical, three lower with pack (-0.12, -0.25, -0.17), none higher
+```
+
+| | expected | measured | |
+|---|---|---|---|
+| Q1 | errors < 10 % per arm | 1 (grep_ctx) and 0 | holds |
+| Q2 | $0.05–1.00 per run | $0.073 and $0.067 | holds |
+| Q3 | uptake reported | runs naming at least one file of their own context: **grep 28 of 40, pack 23 of 40** | reported. **My first count read pack 0 of 40, and it was wrong**, see below |
+| Q4 | pilot difference, sd, tasks needed | **−0.027**, sd 0.069; a full run would need about 8 tasks for 0.05 | reported |
+
+**The reading, as a pilot:**
+- **Handed over, `pack`'s output did not help this agent locate a change any better than grep output of the
+  same length over the same names.** The pilot difference is −0.027. A rough 95 % interval at n = 20 is
+  −0.058 to +0.004, so it excludes the +0.05 a full run would be looking for. Seventeen tasks came out the
+  same; three were lower with `pack`; none were higher.
+- **The contexts carried the same share of the answer.** Of each task's truth files, the grep context listed
+  68.8 % and the pack context 67.6 %, averaged over the 20 tasks. But pack spread it over more files: a
+  median of 94 per context, against 50 for grep. The agent named a file of its context in 23 of 40 runs with
+  pack and 28 of 40 with grep.
+- **Precision did not move** (0.728 against 0.724), and nor did cost or turns.
+- This is a pilot on 20 tasks with one model. It is not a claim about `pack` in general. It is a reason for
+  the full run in this form to be expected to show no gain of 0.05.
+
+**A measurement error of mine, caught before writing this down:**
+- Q3 was first computed by matching `.py` paths in each context. `pack` lists symbols by dotted id
+  (`bquant.indicators.custom.macd.MACD`), not by path, so the count read 0 of 40 for pack.
+- Recounted with each id mapped to the file of its module in that task's tree, it reads 23 of 40.
+- The same recount gave context coverage, and that was first averaged over every other row of a shuffled
+  list, not over tasks. Corrected to once per task.
+
+**What it says about `pack` as a product, beyond the number:** for a question whose answer is files, `pack`
+answers in symbols, and the agent has to translate. That is a design observation, not tested here.
