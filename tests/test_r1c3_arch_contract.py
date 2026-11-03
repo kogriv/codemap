@@ -42,14 +42,29 @@ def _q(edges, **kw) -> Query:
 def test_parse_contract_shapes():
     c = parse_contract({
         "layers": ["ui", "core"],
-        "independent": [["a", "b"], ["oops"]],   # <2 members dropped
-        "forbidden": [{"from": "core", "to": "ui"}, {"bad": 1}],  # malformed dropped
+        "independent": [["a", "b"]],
+        "forbidden": [{"from": "core", "to": "ui"}],
         "no_cycles": True,
     })
+    assert c.error is None
     assert c.layers == ("ui", "core")
     assert c.independent == (("a", "b"),)
     assert c.forbidden == (("core", "ui"),)
     assert c.no_cycles and not c.exhaustive
+
+
+def test_malformed_items_refuse_the_contract_instead_of_being_dropped():
+    """R1-C69 reversed what this test used to pin: a group of one and a malformed
+    `forbidden` item were dropped silently, and the rest was enforced. That is a partial
+    pass. Now the whole contract is refused, and both items are named."""
+    c = parse_contract({
+        "layers": ["ui", "core"],
+        "independent": [["a", "b"], ["oops"]],
+        "forbidden": [{"from": "core", "to": "ui"}, {"bad": 1}],
+        "no_cycles": True,
+    })
+    assert c.error and "independent[1]" in c.error and "forbidden[1]" in c.error
+    assert c.is_empty(), "nothing from an invalid contract is enforced"
 
 
 def test_empty_contract_is_noop():

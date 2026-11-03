@@ -1,6 +1,6 @@
 # Design — a contract the gate cannot fully read is refused, not partly enforced
 
-**Status:** 🧪 pre-registered (2026-11-03), not yet shipped. **Motivates:** gap
+**Status:** ✅ **shipped** (2026-11-03, no schema change), with acceptance reconciled below. Pre-registered in 4734368 before any code. **Motivates:** gap
 [contract_silent_passes_2026-11-03](../../gaps/contract_silent_passes_2026-11-03.md), rows P1–P2d.
 **Backlog:** R1-C69. **Precedent:** [R1-C27](../../gaps/unverified_claims_2026-08-27.md): one missing
 `]` turned a failing gate green. The file is now read, but its *meaning* still is not checked.
@@ -90,3 +90,27 @@ changed.
   removed, V2c enables the rule again. Each is a test that goes red.
 
 At least one expectation fails if nothing is done: V1–V4 all exit 0 today (measured in the probe).
+
+## Acceptance reconciled (2026-11-03)
+
+| | expected | measured | |
+|---|---|---|---|
+| V1–V4 (8 rows) | exit 2, the named key or index in the message | all 8: exit 2, "Contract not read — nothing was enforced", each needle present. V4 names both problems in one line | holds |
+| V5 | MCP `ok: false`, `contract_error` names `forbiden` | so | holds |
+| V6 bquant | `check` output byte-identical | identical, exit 0 both | holds |
+| V6 codemap | byte-identical | identical, exit 0 both | holds |
+| V6 bquearch | parses to the same contract | same, no error (read from its checkout, parse only) | holds |
+| V6 P3, P4 | as before | absent name: "1 declared, 0 applicable", exit 0; no contract: exit 0 with the path | holds |
+| V7 | each mutation red | both in-test mutations red. With `arch.py` reverted, 11 of 13 new tests fail; the 2 that pass are the "as before" tests | holds |
+
+Suite: 1079 passed, 3 skipped (1065 + 14).
+
+**Changed besides the code:**
+- `test_parse_contract_shapes` (R1-C3) pinned the old behaviour: "<2 members dropped", "malformed
+  dropped". It is split. The valid shape is parsed as before, and the old malformed input now
+  refuses the contract and names both items.
+- `docs/architecture-contracts.md` still said that a malformed `codemap.toml` "yields an empty
+  contract (a no-op success)". That was untrue since R1-C27 (exit 2) and is corrected here. It is
+  doc drift from August, found while writing this.
+
+**Surprises:** the stale sentence above. No surprise in the measurements.

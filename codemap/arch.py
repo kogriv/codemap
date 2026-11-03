@@ -104,8 +104,83 @@ def load_contract(root: str | Path = ".") -> ArchitectureContract:
     return replace(parse_contract(data.get("architecture", {})), path=str(path))
 
 
+#: R1-C69: the closed schema of ``[architecture]``. A key outside it is an error, not a skip.
+_FLAGS = ("no_cycles", "no_lazy_cycles", "no_type_only_cycles", "exhaustive", "no_phantom_rules")
+_KNOWN_KEYS = ("layers", "independent", "forbidden") + _FLAGS
+
+
+def _is_str_list(v) -> bool:
+    return isinstance(v, list) and all(isinstance(x, str) for x in v)
+
+
+def contract_problems(section) -> list[str]:
+    """Every way ``section`` departs from the ``[architecture]`` schema, in reading order (R1-C69).
+
+    Empty when the section is valid. Design ``docs/design/contract_validation.md`` D1: unknown
+    keys (with the nearest known one suggested), values of the wrong type — `"false"` is a
+    string and used to switch a rule *on* — and malformed items, each named by key and index.
+    Names that do not exist in the graph are not a schema question (D3, R1-C62).
+    """
+    import difflib
+
+    if not isinstance(section, dict):
+        return [f"`[architecture]` must be a table, got {type(section).__name__}"]
+    problems: list[str] = []
+    for key in section:
+        if key not in _KNOWN_KEYS:
+            near = difflib.get_close_matches(key, _KNOWN_KEYS, n=1, cutoff=0.6)
+            hint = f" (did you mean `{near[0]}`?)" if near else ""
+            problems.append(f"unknown key `{key}`{hint}; known keys: {', '.join(_KNOWN_KEYS)}")
+    if "layers" in section and not _is_str_list(section["layers"]):
+        problems.append("`layers` must be a list of strings")
+    if "independent" in section:
+        groups = section["independent"]
+        if not isinstance(groups, list):
+            problems.append("`independent` must be a list of lists of strings")
+        else:
+            for i, grp in enumerate(groups):
+                if not _is_str_list(grp) or len(grp) < 2:
+                    problems.append(f"`independent[{i}]` must be a list of at least 2 strings")
+    if "forbidden" in section:
+        items = section["forbidden"]
+        if not isinstance(items, list):
+            problems.append("`forbidden` must be a list of `{ from = \"…\", to = \"…\" }` tables")
+        else:
+            for i, item in enumerate(items):
+                if not isinstance(item, dict):
+                    problems.append(f"`forbidden[{i}]` must be a table `{{ from = \"…\", to = \"…\" }}`")
+                    continue
+                extra = sorted(set(item) - {"from", "to"})
+                missing = [k for k in ("from", "to") if k not in item]
+                wrong = [k for k in ("from", "to") if k in item and not isinstance(item[k], str)]
+                if extra:
+                    problems.append(f"`forbidden[{i}]` has unknown key(s) "
+                                    + ", ".join(f"`{k}`" for k in extra))
+                if missing:
+                    problems.append(f"`forbidden[{i}]` is missing " + ", ".join(f"`{k}`" for k in missing))
+                if wrong:
+                    problems.append(f"`forbidden[{i}]`: " + ", ".join(f"`{k}`" for k in wrong)
+                                    + " must be a string")
+    for flag in _FLAGS:
+        if flag in section and not isinstance(section[flag], bool):
+            problems.append(f"`{flag}` must be true or false, got {type(section[flag]).__name__} "
+                            f"`{section[flag]!r}`")
+    return problems
+
+
 def parse_contract(section: dict) -> ArchitectureContract:
-    """Build a contract from the parsed ``[architecture]`` table (validated leniently)."""
+    """Build a contract from the parsed ``[architecture]`` table.
+
+    R1-C69: validated against a closed schema first. A section with any problem is **not
+    enforced at all** — it comes back as an ``error`` contract, the R1-C27 path, so the CLI
+    exits 2 and MCP answers ``ok: false`` naming every problem. Enforcing the valid half used
+    to be the silent part: ``forbiden = [...]`` beside ``no_cycles = true`` printed a green
+    tick over a rule the gate never ran.
+    """
+    problems = contract_problems(section)
+    if problems:
+        return ArchitectureContract(
+            error="`[architecture]` is not a valid contract: " + "; ".join(problems))
     forbidden = []
     for item in section.get("forbidden", []) or []:
         if isinstance(item, dict) and "from" in item and "to" in item:

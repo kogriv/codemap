@@ -5,6 +5,18 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A contract the gate cannot fully read is refused** (R1-C69, design
+  [`docs/design/contract_validation.md`](docs/design/contract_validation.md)). `[architecture]` is
+  validated against a closed schema: unknown keys (with the nearest known one suggested), flags that are
+  not booleans, `layers` that is not a list of strings, `independent` groups of fewer than two,
+  `forbidden` items without exactly `from`/`to`.
+  - Any problem refuses the whole contract: `check` exits 2, MCP answers `ok: false`, and every problem
+    is named.
+  - Before, `forbiden = [...]` read as "no contract found" (exit 0). Beside `no_cycles = true` it read as
+    "Rules enforced: no_cycles". `no_cycles = "false"` switched the rule on.
+  - Valid contracts give byte-identical output (bquant, codemap). **Behaviour change:** a contract with a
+    key from a newer codemap is refused by an older one.
+
 - **`import a.b.c` depends on `a.b.c`, not on `a`** (R1-C68, design
   [`docs/design/dotted_imports.md`](docs/design/dotted_imports.md)). griffe files a dotted import
   under its bound name, so the `imports` edge went to the root package. A contract banning

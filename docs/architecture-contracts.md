@@ -54,9 +54,24 @@ exhaustive = false
 | `no_phantom_rules` | a name the contract mentions doesn't exist in the graph | the absent names |
 
 Rules that reference a layer not present in the graph are **inert** — you can write
-the contract ahead of the code. An absent or malformed `codemap.toml` yields an
-empty contract (a no-op success), so a broken file never wedges the gate; use
+the contract ahead of the code.
+
+An **absent** contract is a no-op success that names the file it looked for. Use
 `--require-contract` to make "no contract" a failure instead.
+
+A contract the gate cannot fully read is **refused**: exit 2, and nothing is enforced. That covers
+two cases:
+- a `codemap.toml` that is not valid TOML (R1-C27);
+- an `[architecture]` section that departs from the schema above (R1-C69). That means an unknown
+  key, with the nearest known one suggested (`forbiden` → `forbidden`); a flag that is not a TOML
+  boolean (`no_cycles = "false"` used to switch the rule *on*); a `layers` that is not a list of
+  strings; an `independent` group of fewer than two; or a `forbidden` item without exactly `from` and
+  `to`.
+
+Every problem is named in one message, and MCP answers `ok: false` with `contract_error`. The valid
+half of an invalid contract is not enforced either. Enforcing it was the silent part: a typo beside
+`no_cycles = true` used to print a green tick over a rule that never ran. A contract that uses a key
+from a newer codemap is refused by an older one, for the same reason.
 
 ### An inert rule says so, because "enforced" was a claim
 
