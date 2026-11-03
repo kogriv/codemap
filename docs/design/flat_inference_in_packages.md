@@ -91,3 +91,39 @@ codemap. They are committed beside this design in `research/bench/r1c72/`:
 - **F7, suite:** green, with the README count moved in the same commit.
 
 At least one expectation fails if nothing is done: F1 and F3's packaged row both differ from today.
+
+## Addendum, before acceptance (2026-11-03): D1 as written was wrong, and the suite said so
+
+The first implementation of D1 ("any package-qualified self-import means packaged") turned 6 existing
+tests red. Four are in R1-C21, two in R1-C26. Their fixture `tests/fixtures/flatpkg` is **mixed**:
+`gamma.py` has both `import beta` (bare sibling) and `from flatpkg.alpha import WIDTH` (qualified). That
+works when both the directory and its parent are on `sys.path`. There the bare import *does* reach the
+sibling, so the inference is right, and D1 switched it off.
+
+So the evidence is the wrong way round. Whether the package imports itself by name does not decide the
+layout. What decides it is whether some bare import *can only be a sibling*.
+
+**D1, revised.** The flat inference applies when the core root is a namespace directory, or when at least
+one bare import names a sibling module (other than the importer itself), and that name is not a
+standard-library module (`sys.stdlib_module_names`). Such an import works only with the directory on
+`sys.path`, and then siblings do shadow the standard library, so the inference applies to every bare
+import, twins included. Without such evidence a twin of a stdlib name is the standard library, and
+nothing is rewritten.
+
+- `_pytest`: all six twins are stdlib names, so there is no evidence and the inference is off.
+- bquant: its twins are self-imports (`pandas_ta.py` importing `pandas_ta`), which are not evidence, so
+  it is off.
+- `flatpkg`: `alpha` and `beta` are evidence, so it is on.
+
+**Named limits:**
+- A package with a twin of a *third-party* name and no other evidence (say `mylib/requests.py` with
+  `import requests`) still gets the false edge: telling an installed package from a sibling would make the
+  graph depend on the machine.
+- `sys.stdlib_module_names` differs slightly between Python versions (removed modules), so such a twin
+  can read differently on 3.11 and 3.14.
+
+**Acceptance F1–F7 is unchanged.** One row is added:
+- **F3b.** The mixed fixture keeps its flat edges and its qualified edge exactly as R1-C21 pinned them.
+  That is the existing tests, green.
+
+F6's first mutation now forces the evidence to "found".
