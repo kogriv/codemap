@@ -1,0 +1,18 @@
+{
+ "edges": [],
+ "internal_resolved_sites": 0,
+ "internal_unresolved": 0,
+ "external_sites": 17,
+ "external_by_module": {
+  "codemap.cli": 5,
+  "codemap.extract.griffe_extractor": 1,
+  "codemap.extract.roots": 1,
+  "codemap.freshness": 1,
+  "codemap.scope": 2,
+  "codemap.serve.ctags": 1,
+  "codemap.serve.currency": 3,
+  "codemap.serve.scip": 1,
+  "codemap.serve.session": 1,
+  "codemap.watch": 1
+ }
+}

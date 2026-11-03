@@ -1,0 +1,27 @@
+{
+ "edges": [],
+ "internal_resolved_sites": 0,
+ "internal_unresolved": 0,
+ "external_sites": 39,
+ "external_by_module": {
+  "bquant.analysis.statistical": 2,
+  "bquant.analysis.statistical.hypothesis_testing": 2,
+  "bquant.analysis.statistical.regression": 1,
+  "bquant.analysis.validation.suite": 8,
+  "bquant.analysis.zones.cache": 1,
+  "bquant.analysis.zones.detection.combined": 2,
+  "bquant.analysis.zones.detection.preloaded": 4,
+  "bquant.analysis.zones.sequence_analysis": 3,
+  "bquant.core.cache": 2,
+  "bquant.core.config": 1,
+  "bquant.core.logging_config": 2,
+  "bquant.data.samples.datasets": 1,
+  "bquant.data.schemas": 1,
+  "bquant.indicators.base": 1,
+  "bquant.indicators.library.manager": 1,
+  "bquant.indicators.preloaded.macd": 1,
+  "bquant.visualization.export": 1,
+  "bquant.visualization.statistical": 3,
+  "bquant.visualization.themes": 2
+ }
+}

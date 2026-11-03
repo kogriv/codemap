@@ -1,0 +1,102 @@
+{
+ "edges": [
+  [
+   "_pytest.assertion.util.assertrepr_compare",
+   "_pytest._code.code.ExceptionInfo.from_current"
+  ],
+  [
+   "_pytest.config.Config._consider_importhook",
+   "_pytest.assertion.install_importhook"
+  ],
+  [
+   "_pytest.config.argparsing.DropShorterLongHelpFormatter.__init__",
+   "_pytest._io.terminalwriter.get_terminal_width"
+  ],
+  [
+   "_pytest.debugging.pytestPDB._get_pdb_wrapper_class",
+   "_pytest.config.create_terminal_writer"
+  ],
+  [
+   "_pytest.debugging.pytestPDB._init_pdb",
+   "_pytest.config.create_terminal_writer"
+  ],
+  [
+   "_pytest.fixtures._show_fixtures_per_test",
+   "_pytest.config.create_terminal_writer"
+  ],
+  [
+   "_pytest.fixtures._showfixtures_main",
+   "_pytest.config.create_terminal_writer"
+  ],
+  [
+   "_pytest.main.wrap_session",
+   "_pytest._code.code.ExceptionInfo.from_current"
+  ],
+  [
+   "_pytest.mark.pytest_cmdline_main",
+   "_pytest.config.create_terminal_writer"
+  ],
+  [
+   "_pytest.pytester.Pytester.parseconfig",
+   "_pytest.config._prepareconfig"
+  ],
+  [
+   "_pytest.python.CallSpec2.setmulti",
+   "_pytest.nodes.Collector.CollectError"
+  ],
+  [
+   "_pytest.python.Function._traceback_filter",
+   "_pytest._code.code.Code.from_function"
+  ],
+  [
+   "_pytest.python.IdMaker.make_unique_parameterset_ids",
+   "_pytest.nodes.Collector.CollectError"
+  ],
+  [
+   "_pytest.python.importtestmodule",
+   "_pytest.nodes.Collector.CollectError"
+  ],
+  [
+   "_pytest.terminal.TerminalReporter.__init__",
+   "_pytest.config.create_terminal_writer"
+  ],
+  [
+   "_pytest.unittest.TestCaseFunction._addexcinfo",
+   "_pytest._code.code.ExceptionInfo.from_current"
+  ]
+ ],
+ "internal_resolved_sites": 20,
+ "internal_unresolved": 1,
+ "external_sites": 126,
+ "external_by_module": {
+  "_pytest._argcomplete": 3,
+  "_pytest._code.code": 2,
+  "_pytest._io.terminalwriter": 5,
+  "_pytest._py.error": 1,
+  "_pytest._py.path": 9,
+  "_pytest.assertion": 2,
+  "_pytest.assertion.rewrite": 5,
+  "_pytest.cacheprovider": 1,
+  "_pytest.capture": 4,
+  "_pytest.compat": 3,
+  "_pytest.config": 23,
+  "_pytest.config.findpaths": 2,
+  "_pytest.debugging": 2,
+  "_pytest.doctest": 2,
+  "_pytest.faulthandler": 2,
+  "_pytest.freeze_support": 1,
+  "_pytest.helpconfig": 4,
+  "_pytest.junitxml": 6,
+  "_pytest.logging": 3,
+  "_pytest.main": 6,
+  "_pytest.monkeypatch": 1,
+  "_pytest.pathlib": 17,
+  "_pytest.pytester": 8,
+  "_pytest.python": 1,
+  "_pytest.python_api": 2,
+  "_pytest.runner": 3,
+  "_pytest.terminalprogress": 1,
+  "_pytest.tmpdir": 3,
+  "_pytest.unittest": 4
+ }
+}
