@@ -1,0 +1,143 @@
+{
+ "bindings": {
+  "_pytest._io.saferepr": {
+   "pprint": "_pytest._io.pprint"
+  },
+  "_pytest.cacheprovider": {
+   "Path": "_pytest.pathlib.Path",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.compat": {
+   "Path": "_pytest.pathlib.Path",
+   "deprecated": "_pytest.warnings.deprecated"
+  },
+  "_pytest.config": {
+   "pathlib": "_pytest.pathlib",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.debugging": {
+   "UnexpectedException": "_pytest.doctest.UnexpectedException"
+  },
+  "_pytest.deprecated": {
+   "warn": "_pytest.warnings.warn"
+  },
+  "_pytest.doctest": {
+   "Path": "_pytest.pathlib.Path",
+   "doctest": "_pytest.doctest",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.faulthandler": {
+   "faulthandler": "_pytest.faulthandler"
+  },
+  "_pytest.fixtures": {
+   "Path": "_pytest.pathlib.Path",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.hookspec": {
+   "Path": "_pytest.pathlib.Path",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.legacypath": {
+   "Path": "_pytest.pathlib.Path"
+  },
+  "_pytest.logging": {
+   "LogRecord": "_pytest.logging.LogRecord",
+   "Path": "_pytest.pathlib.Path",
+   "logging": "_pytest.logging"
+  },
+  "_pytest.main": {
+   "Path": "_pytest.pathlib.Path",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.monkeypatch": {
+   "Path": "_pytest.pathlib.Path",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.nodes": {
+   "Path": "_pytest.pathlib.Path",
+   "pathlib": "_pytest.pathlib",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.outcomes": {
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.pathlib": {
+   "Path": "_pytest.pathlib.Path",
+   "PurePath": "_pytest.pathlib.PurePath",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.pytester": {
+   "Path": "_pytest.pathlib.Path"
+  },
+  "_pytest.python": {
+   "Path": "_pytest.pathlib.Path",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.raises": {
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.recwarn": {
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.terminal": {
+   "Path": "_pytest.pathlib.Path",
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.threadexception": {
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.tmpdir": {
+   "Path": "_pytest.pathlib.Path"
+  },
+  "_pytest.tracemalloc": {
+   "tracemalloc": "_pytest.tracemalloc"
+  },
+  "_pytest.unittest": {
+   "TestCase": "_pytest.unittest.TestCase",
+   "TestLoader": "_pytest.unittest.TestLoader",
+   "_SubTest": "_pytest.unittest.case._SubTest",
+   "_subtest_msg_sentinel": "_pytest.unittest.case._subtest_msg_sentinel",
+   "unittest": "_pytest.unittest"
+  },
+  "_pytest.unraisableexception": {
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.warning_types": {
+   "warnings": "_pytest.warnings"
+  },
+  "_pytest.warnings": {
+   "warnings": "_pytest.warnings"
+  }
+ },
+ "sites_by_module": {
+  "_pytest._io.saferepr": 1,
+  "_pytest.cacheprovider": 4,
+  "_pytest.compat": 1,
+  "_pytest.config": 15,
+  "_pytest.deprecated": 1,
+  "_pytest.doctest": 7,
+  "_pytest.faulthandler": 8,
+  "_pytest.fixtures": 11,
+  "_pytest.legacypath": 1,
+  "_pytest.logging": 13,
+  "_pytest.main": 10,
+  "_pytest.monkeypatch": 3,
+  "_pytest.nodes": 5,
+  "_pytest.outcomes": 2,
+  "_pytest.pathlib": 14,
+  "_pytest.pytester": 3,
+  "_pytest.python": 4,
+  "_pytest.raises": 1,
+  "_pytest.recwarn": 3,
+  "_pytest.terminal": 2,
+  "_pytest.threadexception": 1,
+  "_pytest.tmpdir": 2,
+  "_pytest.tracemalloc": 1,
+  "_pytest.unittest": 1,
+  "_pytest.unraisableexception": 1,
+  "_pytest.warning_types": 1,
+  "_pytest.warnings": 5
+ },
+ "sites_counted": 114,
+ "sites_uncounted": 7
+}

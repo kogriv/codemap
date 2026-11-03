@@ -1,0 +1,19 @@
+{
+ "predicted_vanish": [
+  [
+   "imports",
+   "_pytest.config",
+   "_pytest.pathlib"
+  ],
+  [
+   "imports",
+   "_pytest.nodes",
+   "_pytest.pathlib"
+  ],
+  [
+   "imports",
+   "_pytest.terminal",
+   "_pytest.warnings"
+  ]
+ ]
+}

@@ -1,0 +1,16 @@
+{
+ "bindings": {
+  "bquant.indicators.library.pandas_ta": {
+   "pandas_ta": "bquant.indicators.library.pandas_ta",
+   "ta": "bquant.indicators.library.pandas_ta"
+  },
+  "bquant.indicators.library.talib": {
+   "talib": "bquant.indicators.library.talib"
+  }
+ },
+ "sites_by_module": {
+  "bquant.indicators.library.talib": 5
+ },
+ "sites_counted": 0,
+ "sites_uncounted": 5
+}
