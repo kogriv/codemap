@@ -708,6 +708,41 @@ Added expectations for the form they actually run, written before it runs:
 - **Control for the new failure mode:** the same bquearch copy with a forbidden import added after the
   build gives exit 2 on 0.0.23, "behind". If it said "current", the check would be blind.
 
+**0.0.23 published 2026-11-03:** [`codmap` 0.0.23](https://pypi.org/project/codmap/0.0.23/), schema **0.13**
+(unchanged, twelfth release running), **`ANSWER_FORMAT` 3**. Same procedure from the pushed commit
+`06fdc65`, CI green on 3.11–3.14, `twine check` PASSED on both artifacts, tag `v0.0.23` written with `-F`.
+Reconciled from PyPI, `PYTHONHASHSEED=7`, on the stand inside the shared core-slot accounting:
+
+```
+                         0.0.22 (published)                 0.0.23 (published)
+R1-C68 import a.b.c      exit 0, "Contract satisfied"       exit 2, the edge named
+R1-C69 forbiden = [...]  exit 0, "No contract found"        exit 2, "not a valid contract", `forbiden`
+R1-C70 stale --graph     exit 0, no word                    exit 2, "behind its source tree"
+R1-C71 pkg.analysis.b.f  no calls edge                      calls → pkg.analysis.b.f
+R1-C72 logging twin      imports a → pkg.logging (flat)     none
+trailer                  _answer format 2 · schema 0.13_    _answer format 3 · schema 0.13_
+bquant --build           exit 0                             exit 0, diff = trailer only
+bquant --graph (doc'd)   exit 0                             exit 0, diff = currency line + trailer
+bquant graph             —                                  edges identical; nodes differ only in
+                                                            extras.calls (external +38, unresolved −36,
+                                                            dynamic −2: R1-C71's measured shift)
+bquearch gate (aa5c02a)  exit 0                             exit 0, diff = currency line + trailer
+bquearch control         —                                  content changed after the build: exit 2, "behind"
+```
+
+Every expectation holds, the added ones included.
+- The fixture was run on 0.0.22 first, and every defect showed there (rule 4).
+- The control used a neutral line appended to a module, not a forbidden import. That is enough for the
+  currency check, which is what it controls; the contract rule itself is covered by R1-C68's row.
+
+**Two of my own mistakes, both caught before anyone was told:**
+- **The owner was told that both consumers run `check --build`.** They run `check --graph`, so R1-C70
+  reaches them. The danger was a false "behind" turning their gates red. Measured: it does not; both read
+  "matches its source tree".
+- **The first fixture pass on 0.0.23 answered "no version of codmap==0.0.23"** for its first two calls:
+  the index cache just after the upload, a trap already on record. Re-run with `--refresh`, it gives the
+  table above.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
