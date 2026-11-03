@@ -743,6 +743,33 @@ Every expectation holds, the added ones included.
   the index cache just after the upload, a trap already on record. Re-run with `--refresh`, it gives the
   table above.
 
+**0.0.24 — the release check, pre-registered before the upload (2026-11-03).** Two items (R1-C73, R1-C74);
+schema **0.13** unchanged; **`ANSWER_FORMAT` 3 → 4** (`report behavior` names the whole and its parts).
+Same procedure: both versions from PyPI into clean environments, `PYTHONHASHSEED=7`, the fixture tree run on
+0.0.23 **first** (rule 4). The fixtures are the forms of the unit tests, so a fixture that shows nothing on
+0.0.23 is a fixture that does not carry the defect, and the row fails.
+
+| | tree form | 0.0.23 (expected) | 0.0.24 (expected) |
+|---|---|---|---|
+| R1-C73 | `codemap --version` | exit 2, argparse asks for a command | exit 0, exactly `codemap 0.0.24 · answer format 4 · schema 0.13` (no `@commit`: an installed wheel has none) |
+| R1-C74 two bodies | `f` defined in both branches of an `if`, bodies with 2 and 1 calls of `h` | `f`'s `calls.out` = 1, the last body | `calls.out` = 3 |
+| R1-C74 namesake | `def lookup` nested in `M.closure`, beside a method `M.lookup` | a `calls` edge `M.lookup → target`, which `M.lookup` never makes | no such edge; `M.closure → target`, `via: nested`; `M.lookup` `calls.out` = 0 |
+| R1-C74 class body | `class C:` with `X = h()` | no `calls` edge from `C`, no counter on `C` | `calls` edge `C → h`; `C` carries `calls` |
+| report | `report behavior` on that tree | heading "Call-site resolution (N sites in M functions)" | "Call-site resolution (N call sites)" plus the parts line |
+| format | any markdown answer | `_answer format 3 · schema 0.13_` | `_answer format 4 · schema 0.13_` |
+
+**Consumers, before they are told:**
+- **bquant** (its tree at today's `7e33039`): `check --build bquant` and the documented `build` + `check --graph`
+  both exit 0 on both versions; the text diff is the trailer alone. The currency line is in both.
+- **bquant graph** (at `8efa112`, where R1-C74's acceptance was measured): `imports` identical. `calls` edges: **+16,
+  every one from a class node, 0 removed**. Nodes identical outside the `extras` keys `calls`, `calls_nested`,
+  `calls_shadowed`, and **one** node whose existing `calls` value changes (the node with two bodies).
+- **bquearch** (its gate on a copy of its tree at `72f73f3`, the gate script with only `CODMAP_VERSION` changed,
+  0.0.23 → 0.0.24): exit 0 on both; the text diff is the trailer alone. Their contract holds cycle rules over
+  `imports`, which R1-C74 does not touch.
+- **Nothing-was-done control:** if any consumer's text diff is empty, the run did not reach two versions.
+- **bquearch's pin is theirs to raise.** They are told after the upload, with the format change named.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
