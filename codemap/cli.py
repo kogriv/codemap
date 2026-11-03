@@ -983,7 +983,7 @@ def _add_source(p) -> None:
 
 
 def version_line() -> str:
-    """``codemap 0.0.23 @abc1234 · answer format 3 · schema 0.13`` (R1-C73).
+    """``codemap 0.0.24 @abc1234 · answer format 4 · schema 0.13`` (R1-C73).
 
     Built from ``provenance.tool_identity()`` — the identity every graph records as
     ``provenance.tool`` — so the CLI and the artifact cannot disagree. Commit and dirtiness

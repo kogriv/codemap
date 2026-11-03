@@ -86,9 +86,9 @@ line: the regression, the interpreter nobody tried, the artifact nobody installe
 Two versions travel with every answer, and they answer different questions:
 
 ```
-_answer format 3 · schema 0.13_          ← the trailer on any markdown answer
-{"ok": true, "answer_format": 3, …}      ← the same fact in a serve/MCP envelope
-codemap 0.0.23 · answer format 3 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
+_answer format 4 · schema 0.13_          ← the trailer on any markdown answer
+{"ok": true, "answer_format": 4, …}      ← the same fact in a serve/MCP envelope
+codemap 0.0.24 · answer format 4 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
 ```
 
 What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says
@@ -100,7 +100,9 @@ the gate's verdict: an `[architecture]` section that departs from the schema is 
 not read") where it was read as absent or partly enforced, and `check --graph` carries a currency line
 (and a `graph_currency` block in its structured answer), with a graph behind its source tree failing the
 gate ([architecture contracts](architecture-contracts.md)). `check --build` on a valid contract changes by
-its trailer alone.
+its trailer alone. **4** (0.0.24) — `report behavior`: the call-site heading counts every call
+site in the package, not function bodies alone, and a parts line names function bodies, nested functions,
+module level and class bodies ([design](design/call_site_conservation.md)). Nothing outside that report changed shape in 4.
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.

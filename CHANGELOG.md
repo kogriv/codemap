@@ -5,6 +5,14 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.24] - 2026-11-03
+
+**Every call site is counted somewhere, and the CLI says which version it is.** Schema unchanged (**0.13**,
+thirteenth release running). **`ANSWER_FORMAT` 3 → 4**: `report behavior` changed shape: its call-site
+heading counts the whole package and a parts line names where the sites are. Nothing else changed shape;
+`check` output on a valid contract changes by its trailer alone. In the graph, class bodies now make
+`calls` edges (bquant: +16), and new counter keys appear in `extras`; `imports` is untouched.
+
 - **Every call site is counted somewhere, and the counts add up to the source** (R1-C74, design
   [`docs/design/call_site_conservation.md`](docs/design/call_site_conservation.md)). **`ANSWER_FORMAT` 3 → 4.**
   - `report behavior` printed function bodies' resolution as if it were the package's. Module-level code,
@@ -17,7 +25,7 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
     **was taken for that method**: a false self-loop in pytest. Both fixed.
 
 - **`codemap --version`** (R1-C73, design [`docs/design/cli_version.md`](docs/design/cli_version.md)). Prints
-  `codemap 0.0.23 · answer format 3 · schema 0.13`, adding `@commit` (and `(dirty)`) from a source tree. It
+  `codemap 0.0.24 · answer format 4 · schema 0.13`, adding `@commit` (and `(dirty)`) from a source tree. It
   is built from the same identity every graph records as `provenance.tool`, so the CLI and the artifact
   cannot disagree. Before, the flag was an argparse error asking for a command.
 
