@@ -439,3 +439,7 @@ Fresh venv from PyPI (`graphify 0.9.102`), empty `HOME` per tree, stand inside t
 
 On bquant two of the five homonym links were `EXTRACTED`; in the minimal tree the one link is `INFERRED`.
 The tag depends on context I did not isolate, and the filing says so.
+
+**Filed 2026-11-04 on the owner's decision:** (B) as [#4989](https://github.com/Graphify-Labs/graphify/issues/4989);
+(A) as a comment on [#2447](https://github.com/Graphify-Labs/graphify/issues/2447#issuecomment-6620870051), with
+the A1 tree, its control, and the `deferred`-stamp suggestion.

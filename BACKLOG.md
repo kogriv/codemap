@@ -2752,8 +2752,9 @@ R1 закартировал поле сверху вниз; **R2** идёт по
             `NotImplementedError` связан с одноимённым классом пакета, в том числе с меткой `EXTRACTED`.
             Граф ненаправленный: обратный импорт хранится пометкой `reverse_import` (их #4839). Предсказание
             сбылось наполовину, сказано в §2. `cluster-only` без ключа зовёт `claude -p` (объявлено, отключается
-            `GRAPHIFY_BACKEND=none`). Вердикт **learn (strong)**. Питает R1-C75 (наш пробел), R1-C13; кандидаты
-            в апстрим (A) локальный импорт и (B) builtin-однофамилец — после перепроверки, по решению владельца.
+            `GRAPHIFY_BACKEND=none`). Вердикт **learn (strong)**. Питает R1-C75 (наш пробел), R1-C13; заведено по
+            решению владельца после перепроверки (§3): (B) [#4989](https://github.com/Graphify-Labs/graphify/issues/4989),
+            (A) комментарием к открытому [#2447](https://github.com/Graphify-Labs/graphify/issues/2447).
       - [ ] остальные — import-linter (сосед `codemap check`, следующий), CodeSlicer,
             ast-index, Graphify, CodeWiki, Foglamp (desk где SaaS/не воспроизводится — с честной
             пометкой). Порядок — по близости к codemap и по связи с R1-C.
