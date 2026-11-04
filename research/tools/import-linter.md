@@ -1,7 +1,24 @@
 # import-linter
 
-**Verdict:** set after the run (§0.6) · **Feeds:** set after the run · **Card status:** pre-registration only.
-Nothing below §0 has been run.
+**Verdict:** learn (strong): the reference gate. grimp's graph equals our truth exactly (266 / 266 edges,
+45 / 45 cycles, 0.11 s), and on bquant's contract the two gates agree on all four trees · **Feeds:** R1-C76
+(new, codemap's own: a misspelled `[architecture]` table passes), indirect-chain semantics as a design note ·
+**Card status:** hands-on: graph, 19 gate probes, bquant's contract in both gates (§1–§3); 2.15 and `main`
+
+> The import graph is the best measured in this series, and by a margin: grimp reads every scope, so its
+> edges are **exactly** codemap's 266, and its cycles exactly the 45. Three builds take 0.11 s each and are
+> identical. As a gate it catches everything the codemap probe of post 11 asked: a lazy import, a
+> `TYPE_CHECKING` import (with an opt-out), `import a.b.c`, a violation in `__init__.py`, a stale cache.
+>
+> Three ways it passes without checking, all predicted from its source:
+> - **an unknown contract option is ignored:** `exhaustiv = True` is kept, exit 0 (filed,
+>   [#392](https://github.com/seddonym/import-linter/issues/392));
+> - **a misspelled forbidden module is dropped:** already reported as #386 and fixed on `main`, unreleased;
+> - **zero contracts pass:** `[[tool.importlinter.contract]]` (singular) in `pyproject.toml` reads as no
+>   contracts, exit 0 (filed, [#393](https://github.com/seddonym/import-linter/issues/393)).
+>
+> Asked of codemap, the third question found the same hole: a misspelled `[architectur]` table reads as
+> "no contract", exit 0, unless `--require-contract` is passed. That is R1-C76.
 
 **Scope:** `sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2` (R2 benchmark: 280 files,
 bquant@cb89a24, materialized and verified `== canonical ✓`) for the import graph; bquant at `aca0718` (its live
@@ -120,3 +137,136 @@ counts core modules.
 - `independence`, `protected`, `acyclic_siblings` beyond reading their docs; the `ui` extra.
 - Performance on a large codebase.
 - grimp's handling of namespace packages and external packages.
+
+## 1. Hands-on
+
+Stand, inside the shared core-slot accounting; `import-linter==2.15` with `grimp` 3.18 in a fresh venv,
+Python 3.12. Numbers: [`bench/import_linter_results.json`](../bench/import_linter_results.json).
+
+**The graph (R2 tree).**
+
+```
+modules        89 / 89
+edges          266, all 266 in the truth: precision 100 %, recall 100 %
+  by scope     module 240 / 240 · function 25 / 25 · type_checking 1 / 1
+cycles         45 / 45, 0 false
+determinism    3 builds, identical; 0.14 / 0.11 / 0.11 s
+exclude_type_checking_imports   drops exactly zones.cache → zones.pipeline, the one type_checking edge
+```
+
+Two engines that share no code (codemap reads griffe's model and the AST, grimp has a Rust core) produce the
+same module graph, edge for edge. That is the strongest external check the truth set has had. It is
+corroboration, not proof: both could share a blind spot that this tree does not exercise.
+
+**The gate probes (fixture `gp`).**
+
+| probe | measured |
+|---|---|
+| G0c / G0 | exit 0 kept / exit 1 broken: the controls hold |
+| G1 lazy, G2 `TYPE_CHECKING`, G3 `import gp.high.h`, G4 `__init__` | exit 1, broken, each |
+| G2b `exclude_type_checking_imports` | exit 0, kept |
+| G5c `exhaustive = True` | exit 1, broken |
+| **G5 `exhaustiv = True`** | **exit 0, kept, no warning** |
+| G6 `forbiden_modules` | exit 1, "forbidden_modules: This is a required field." |
+| G7c `forbidden_modules = gp.high` | exit 1, broken |
+| **G7 `forbidden_modules = gp.hihg`** | **exit 0, kept** |
+| G8 `source_modules = gp.lwo` | exit 1, "Module 'gp.lwo' does not exist." |
+| G9 layer `hihg` | exit 1, "Missing layer in container 'gp': module gp.hihg does not exist." |
+| G10 `exhaustive = maybe` | exit 1, "Could not parse a boolean from 'maybe'." |
+| **G11 no contract** | **exit 0, "Contracts: 0 kept, 0 broken."** |
+| G12 cache on, violation added after a clean run | first exit 0, second exit 1: the cache invalidates |
+| G13 `type = layer` | exit 1; the whole message is `layer` (known: #35) |
+| G14 `root_pakage` | exit 1; the whole message is `'root_package'` |
+| G15 unmatched `ignore_imports` | exit 1, "No matches for ignored import gp.low.l -> gp.hihg.h." |
+
+**bquant's contract, both gates, `aca0718`.**
+
+| tree | `codemap check` 0.0.25 | `lint-imports` 2.15 |
+|---|---|---|
+| as is | exit 0, satisfied (layered 7, forbidden 8, no_cycles, no_type_only_cycles, exhaustive) | exit 0, 4 kept |
+| M1 module-level `import bquant.analysis` in `core/config.py` | exit 2: `layered` 1, `forbidden` core → analysis | exit 1, **4 broken** |
+| M2 the same inside a function | exit 2, the same | exit 1, 4 broken |
+| M3 the same under `if TYPE_CHECKING:` | exit 2, the same | exit 1, 4 broken |
+
+They agree on every verdict. They disagree on how much one edge breaks. import-linter forbids chains, so
+`data → core → analysis` breaks the `data` contract and `indicators → core → analysis` the `indicators` one.
+codemap names the one edge that points up. Both are right by their own definition. Theirs tells you how far
+the damage reaches; ours tells you which line to change.
+
+## 2. Reconciliation with the pre-registration
+
+| | expected | measured | |
+|---|---|---|---|
+| P1 | 89 modules | 89 | holds |
+| P2 | precision, recall ≥ 95 % | 100 %, 100 % | holds |
+| P3 | 25 / 25 function, 1 / 1 type_checking | both | holds |
+| P4 | ≥ 40 / 45 cycles | 45 / 45 | holds |
+| P5 | identical edge sets | identical | holds |
+| P6 | only the type_checking edge drops | exactly that one | holds |
+| G0c–G4, G6, G8–G10, G12–G15 | as in §0.4 | as in §0.4 | hold |
+| G5 | exit 0, no warning | exit 0, kept | holds: a silent pass |
+| G7 | exit 0, kept | exit 0, kept | holds: a silent pass |
+| G11 | recorded | exit 0, "0 kept, 0 broken" | a silent pass, see §3 |
+| bquant, as is | both exit 0 | both exit 0 | holds |
+| M1, M2 | codemap 2, import-linter 1 | as expected | holds |
+| M3 | codemap recorded; import-linter 1 | codemap 2; import-linter 1 | holds |
+
+Every prediction held. The two silent passes I predicted from source are real.
+
+### Surprises
+
+- **The graph matched to the edge.** I predicted ≥ 95 %. Two unrelated engines agreeing on 266 of 266 was not
+  something I would have dared to write down.
+- **A one-edge violation broke four contracts.** Correct under indirect semantics, and worth knowing before
+  reading a red CI log.
+- **The question I aimed at them caught me.** A misspelled table name is the codemap version of G11.
+
+## 3. Before filing (2026-11-04)
+
+- **Duplicates.** All 163 issues read by title. G7 is
+  [#386](https://github.com/seddonym/import-linter/issues/386), closed 2026-10-13, fixed on `main` by
+  447ec81 ("Raise an error when a forbidden module does not exist"); the release notes list it under
+  "latest". G13's terse message is #35, open. Nothing on unknown options or zero contracts.
+- **Re-checked on `main` at e582318** (installed from git), same probes: G5 still exit 0 kept; G7 now exit 1,
+  "Module 'gp.hihg' does not exist."; G11 still exit 0.
+- **G16, the concrete form of G11**, on `main`: `[[tool.importlinter.contract]]` (singular) in
+  `pyproject.toml` gives "Contracts: 0 kept, 0 broken.", exit 0; with `contracts`, exit 1 broken. The INI
+  form is tolerant: `[importlinter:contrat:layers]` was still read as a contract.
+
+**Filed 2026-11-04** (the owner's "Делай все. Полноценно"; recorded in kogriv/codemap#23):
+[#392](https://github.com/seddonym/import-linter/issues/392) unknown contract options are ignored;
+[#393](https://github.com/seddonym/import-linter/issues/393) zero contracts pass. G7 is not filed: it is fixed.
+
+## Coverage vs codemap
+
+| task | import-linter 2.15 | codemap |
+|---|---|---|
+| T1–T4 | — (not its job) | ✅ |
+| T5 arch: layers, forbidden | ✅ direct and indirect | ✅ direct |
+| T5 arch: cycles | ◐ `acyclic_siblings` only | ✅ eager / type-only / lazy, each a rule |
+| T5 arch: independence, protected | ✅ | ◐ independent groups; no `protected` |
+| gate refuses a bad contract | ◐ required keys, types, booleans; **not** unknown optional keys or zero contracts | ◐ unknown keys refused (R1-C69); a misspelled table passes without `--require-contract` (R1-C76) |
+| determinism | ✅ | ✅ |
+
+## Разбор
+
+**What to learn.**
+- **Indirect semantics.** "No chain from `data` to `analysis`" is a stronger rule than "no edge", and it is
+  the rule people usually mean. codemap's `forbidden` could offer it as an option. A design note, not a
+  promise.
+- **`protected`**, a contract type codemap does not have: only listed modules may import a module.
+- **Guidance on a broken contract** (`broken_contract_guidance`): the contract says how to fix itself.
+
+**What not to learn.** Ignoring unknown options. Ours refuses them, since 0.0.23.
+
+## Verdict & backlog effect
+
+**learn (strong).** As a gate, it is the reference: mature, fast, and right on every import shape we asked
+about. Its graph confirms codemap's on this tree edge for edge. Its weak spots are configuration typos, two
+filed and one already fixed. codemap does not replace it for teams that only need contracts. codemap adds
+what import-linter does not try to do: separate cycle rules per import scope, an answer that names the edge,
+and the rest of the graph (T1–T4) behind the same artifact.
+
+- **R1-C76 (new, codemap):** a top-level table in `codemap.toml` whose name is close to `architecture`
+  (`[architectur]`) is read as "no contract", exit 0. It should be refused like an invalid contract.
+- **Design notes:** indirect `forbidden`; a `protected` rule; guidance text on a rule.

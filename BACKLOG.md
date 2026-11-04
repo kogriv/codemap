@@ -1684,6 +1684,10 @@ Python-focus** — если задача его нарушает, это отм�
       и вызовы первого тела не считались нигде; вложенная функция-тёзка метода **становилась методом** (ложная петля
       в pytest). Мой прогноз брал не то правило затенения, что документирует R1-C46, — исправлен после прогона, названо.
       `ANSWER_FORMAT` 3 → 4 к следующему релизу. +8 % ко времени сборки.
+- [ ] **R1-C76 опечатка в имени таблицы `[architecture]` читается как «контракта нет», exit 0** (S) — 🆕 (2026-11-04,
+      найдено вопросом, заданным import-linter, [`research/tools/import-linter.md`](research/tools/import-linter.md)).
+      `[architectur]` → «No `[architecture]` contract found», exit 0; с `--require-contract` exit 1. Таблица с
+      именем, близким к `architecture`, почти наверняка опечатка → отказ, как у R1-C69 (exit 2, с подсказкой).
 - [x] **R1-C75 вызов через имя класса, пришедшего реэкспортом пакета, не разрешается в быстром тире** (S) ✅
       (2026-11-04, фикс 903466d, предрегистрация 5a1dec6; bquant +6, `_pytest` +8 — ровно предсказанные пары, codemap 0)
       — 🆕 (2026-11-04, найдено сверкой с Graphify, [`research/tools/graphify.md`](research/tools/graphify.md) §1).
@@ -2757,7 +2761,18 @@ R1 закартировал поле сверху вниз; **R2** идёт по
             `GRAPHIFY_BACKEND=none`). Вердикт **learn (strong)**. Питает R1-C75 (наш пробел), R1-C13; заведено по
             решению владельца после перепроверки (§3): (B) [#4989](https://github.com/Graphify-Labs/graphify/issues/4989),
             (A) комментарием к открытому [#2447](https://github.com/Graphify-Labs/graphify/issues/2447).
-      - [ ] остальные — import-linter (сосед `codemap check`, следующий), CodeSlicer,
+      - [x] **import-linter** — карточка [`research/tools/import-linter.md`](research/tools/import-linter.md)
+            (2026-11-04, 2.15 + grimp 3.18, BSD-2; предрегистрация 2220ef1; решение
+            [#23](https://github.com/kogriv/codemap/issues/23)). Граф grimp **совпал с эталоном до ребра**: 266/266,
+            45/45 циклов, 0,11 с — самое сильное внешнее подтверждение эталона. Гейт ловит ленивые импорты,
+            `TYPE_CHECKING`, `import a.b.c`, `__init__`, устаревший кэш. На контракте bquant (`aca0718`) вердикты
+            обоих гейтов совпали на 4 деревьях; import-linter считает непрямые цепочки, поэтому одно ребро вверх
+            ломает 4 контракта. Тихие проходы, предсказанные по исходнику: неизвестный необязательный ключ
+            (`exhaustiv`) игнорируется — заведено [#392](https://github.com/seddonym/import-linter/issues/392); ноль
+            контрактов проходит (`[[tool.importlinter.contract]]`) — [#393](https://github.com/seddonym/import-linter/issues/393);
+            опечатка в запрещённом модуле — уже #386, исправлено в `main`. Тот же вопрос нашёл дыру у нас: R1-C76.
+            Вердикт **learn (strong)**.
+      - [ ] остальные — CodeSlicer,
             ast-index, Graphify, CodeWiki, Foglamp (desk где SaaS/не воспроизводится — с честной
             пометкой). Порядок — по близости к codemap и по связи с R1-C.
             **Sentrux понижен до desk** (2026-08-28, по факту): ★2919, MIT, Rust — но создан 11.03.2026,

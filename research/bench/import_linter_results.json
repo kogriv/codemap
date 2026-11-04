@@ -1,0 +1,104 @@
+{
+ "bquant_aca0718": {
+  "M1_module_level": {
+   "codemap": "2: layered 1 + forbidden core->analysis",
+   "import_linter": "1: 4 broken (indirect chains)"
+  },
+  "M2_function_local": {
+   "codemap": 2,
+   "import_linter": "1: 4 broken"
+  },
+  "M3_type_checking": {
+   "codemap": 2,
+   "import_linter": "1: 4 broken"
+  },
+  "base": {
+   "codemap": 0,
+   "import_linter": "0, 4 kept"
+  }
+ },
+ "gate_probes_2_15": {
+  "G0": "1 broken",
+  "G0c": "0 kept",
+  "G1": "1 broken (lazy)",
+  "G10": "1, Could not parse a boolean from 'maybe'.",
+  "G11": "0, Contracts: 0 kept, 0 broken.",
+  "G12": "first 0, after edit 1 (cache invalidated)",
+  "G13": "1, prints only 'layer'",
+  "G14": "1, prints only \"'root_package'\"",
+  "G15": "1, No matches for ignored import gp.low.l -> gp.hihg.h.",
+  "G2": "1 broken (TYPE_CHECKING)",
+  "G2b": "0 kept (exclude_type_checking_imports)",
+  "G3": "1 broken (import a.b.c)",
+  "G4": "1 broken (__init__)",
+  "G5": "0, KEPT (exhaustiv: ignored)",
+  "G5c": "1 broken (exhaustive)",
+  "G6": "1, forbidden_modules: This is a required field.",
+  "G7": "0, KEPT (forbidden_modules = gp.hihg)",
+  "G7c": "1 broken",
+  "G8": "1, Module 'gp.lwo' does not exist.",
+  "G9": "1, Missing layer in container 'gp': module gp.hihg does not exist."
+ },
+ "graph": {
+  "cycles": {
+   "false": 0,
+   "grimp": 45,
+   "hit": 45,
+   "truth": 45
+  },
+  "determinism": {
+   "distinct": 1,
+   "runs": 3,
+   "seconds": [
+    0.14,
+    0.11,
+    0.11
+   ]
+  },
+  "edges": {
+   "false": [],
+   "grimp": 266,
+   "missed": [],
+   "precision": 1.0,
+   "recall": 1.0,
+   "true": 266,
+   "truth": 266
+  },
+  "exclude_type_checking": {
+   "dropped": [
+    [
+     "bquant.analysis.zones.cache",
+     "bquant.analysis.zones.pipeline"
+    ]
+   ],
+   "edges": 265
+  },
+  "modules": {
+   "extra": [],
+   "grimp": 89,
+   "missing": [],
+   "truth": 89
+  },
+  "scopes": {
+   "found": {
+    "function": 25,
+    "module": 240,
+    "type_checking": 1
+   },
+   "truth": {
+    "function": 25,
+    "module": 240,
+    "type_checking": 1
+   }
+  }
+ },
+ "main_e582318": {
+  "G11": "0 (still)",
+  "G16_control_contracts": "1 broken",
+  "G16_ini_contrat": "1 broken (INI tolerant)",
+  "G16_toml_singular_contract": "0, Contracts: 0 kept, 0 broken.",
+  "G5": "0 KEPT (still)",
+  "G7": "1, Module 'gp.hihg' does not exist. (fixed, #386, unreleased)"
+ },
+ "note": "R2-import-linter: import-linter 2.15 / grimp 3.18 on the R2 tree; card research/tools/import-linter.md"
+}
