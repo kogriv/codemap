@@ -1159,11 +1159,49 @@ spellings that broke me; the fixture written to attack my own gate did not have 
 - "A guard I had declared safe 'by measurement' was measured on two repositories that happen to have no
   module named like a standard-library one. pytest has six. 65 false edges." → build-story #11
 
+## Build-story #12 — "Right imports, wrong cycles, and a hole in mine" (Graphify)
+
+**Facts:** [`tools/graphify.md`](tools/graphify.md) §0–§3, design
+[`reexported_class_calls`](../docs/design/reexported_class_calls.md). **Post:** [12](blog/12-right-imports-wrong-cycles.md).
+
+### The setup
+The most-starred tool in the niche (141k ★, YC S26, Apache-2.0). Its code layer is tree-sitter only, and it
+measured as the most complete released Python import graph on our truth: 240 of 241 dependencies real, 90 %
+recall, byte-identical `graph.json` in 14 s, the same 23 caller files as codemap, ambiguity refused with exit 3.
+
+### The surprising measurement
+Its cycle report sees 2 of 45. A prediction from source (an undirected graph drops one direction of every
+mutual import) was half right: the direction is lost, but the authors stamp it (`reverse_import`), and their
+cycle finder reads the stamp. The real cause was another: an import inside a function makes no module
+dependency, and that is how this codebase breaks 13 of its 14 mutual imports.
+
+### The turn
+Reading the call disagreements in both directions: Graphify's `EXTRACTED` calls through a re-exported class
+(`LibraryManager.create_indicator`) were right, and codemap resolved 0 of 17 calls in that function. One-line
+fix (follow the chain's head through the re-export first). An independent predictor gave 6 / 0 / 8 new edges on
+bquant / codemap / pytest; the build produced exactly those. Released in 0.0.25. Filed upstream: a builtin
+class homonym tagged `EXTRACTED` (#4989), and the lazy-import consequence as a comment on #2447.
+
+### The lesson (reusable)
+A prediction from source is a hypothesis about the part of the source you read. And a fact kept only where
+your own reader looks is invisible to everyone else's.
+
+### What we take, what we keep
+- **Take:** the fix the rival's answers pointed at; exit codes for ambiguous / no match; tags on edges, with
+  their failure mode recorded.
+- **Keep:** each import scope as a separate fact, so a lazy import still closes a cycle in the gate.
+
+**Quotable:**
+- "The lost direction cost exactly one edge on my tree. The function-local gap cost 25 edges and nearly every
+  cycle. I had predicted the wrong cause, and the part I got right was already handled." → build-story #12
+- "The rival's resolver was right where mine was wrong. I would not have looked there if I had read only the
+  cases where it was wrong." → build-story #12
+
 ## Future stories (skeletons — fill on разбор)
 
-- **#12 …** next tool from R2.2. Same shape: setup → the surprising measurement → head-to-head → lesson →
-  take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code, #6 CodeGraph, #7 OntoIndex, #10 jevgrep, #11 grafema
-  done; #4, #5, #8, #9 are about ourselves, and #11 is both.)
+- **#13 …** next tool from R2.2 (import-linter next). Same shape: setup → the surprising measurement → head-to-head → lesson →
+  take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code, #6 CodeGraph, #7 OntoIndex, #10 jevgrep, #11 grafema,
+  #12 Graphify done; #4, #5, #8, #9 are about ourselves, and #11 is both.)
 - **The determinism story.** ✅ Told twice, neither time as sketched: #4 (a determinism *test* went red and
   the tool was fine) and #8 (the artifact was byte-stable and the *rendering* was not). The sketch asked for
   "graph diff caught X" and the episodes that happened were both sharper than that.
