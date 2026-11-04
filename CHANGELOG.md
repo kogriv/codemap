@@ -5,6 +5,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A call through a class name that came in by a package re-export resolves** (R1-C75, design
+  [`docs/design/reexported_class_calls.md`](docs/design/reexported_class_calls.md)). `from pkg import Cls` +
+  `Cls.method()` was unresolved in the fast tier, while `Cls()` through the same import, and the same call
+  after a direct import of the defining module, resolved. bquant gains 6 call edges, pytest 8, exactly the
+  independently predicted pairs. Found by comparing with Graphify. No schema or answer-format change.
+
 ## [0.0.24] - 2026-11-03
 
 **Every call site is counted somewhere, and the CLI says which version it is.** Schema unchanged (**0.13**,

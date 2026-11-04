@@ -1,6 +1,6 @@
 # Design — a call through a class name that came in by a package re-export
 
-**Status:** 🟡 pre-registered, before any code. **Backlog:** R1-C75. **Found by:** the Graphify card
+**Status:** ✅ **shipped** (2026-11-04, no schema change, `ANSWER_FORMAT` unchanged), with acceptance reconciled below. Pre-registered in 5a1dec6 before any code. **Backlog:** R1-C75. **Found by:** the Graphify card
 ([`research/tools/graphify.md`](../../research/tools/graphify.md) §1). Graphify linked
 `LibraryManager.create_indicator(...)` to its method, and codemap did not.
 
@@ -80,3 +80,30 @@ Before = `main` at e7a69dd; after = the fix. Fast tier, `PYTHONHASHSEED=0`, the 
 - **A7, cost.** bquant fast build within ±10 %, alternating runs on an idle stand.
 
 At least A1, A2 and A3 fail if nothing is done.
+
+## Acceptance reconciled (2026-11-04)
+
+Fix in 903466d. Before = the package source of e7a69dd; after = 903466d. Fast tier, `PYTHONHASHSEED=0`,
+stand, inside the shared slot accounting. Suite 1127 passed / 3 skipped; CI green on 3.11–3.14.
+
+| | expected | measured | |
+|---|---|---|---|
+| A1 fixture | edges for `via_reexport` (2) and `absolute_reexport` (1); `direct` unchanged; counters all resolved | as expected; `LibraryManager()` through the re-export unchanged too | holds |
+| A2 bquant | new pairs = predicted 6, none removed, no other edge type | +6, all 6 predicted, 0 removed, 0 extras changed | holds |
+| A2 codemap | 0 | 0 | holds |
+| A2 `_pytest` | new pairs = predicted 8 | +8, all 8 predicted, 0 removed | holds |
+| A3 counters | bquant +6/−6, codemap 0, `_pytest` +8/−8 | bquant +6/−6; codemap 0; `_pytest` **+7/−7 in `calls` and +1/−1 in `calls_nested`** | holds once both counter keys are counted (below) |
+| A4 codemap graph | identical outside provenance | identical | holds |
+| A5 nodes | identical outside `extras.calls` | `_pytest`: one node differs in `calls_nested` | **fails as written**, by my wording (below) |
+| A6 mutation | reverting D1 fails the test; a cosmetic mutation does not | 1 failed / 1 passed on the revert; 2 passed on the renamed local | holds |
+| A7 cost | bquant fast build within ±10 % | five alternating pairs: old 8.70–8.94 s, new 8.69–8.76 s | holds |
+
+**A3 and A5, read.** One of `_pytest`'s eight sites sits in a function nested in
+`FixtureManager.pytest_generate_tests`. Since R1-C74 such a call is counted on its owner under
+`calls_nested`, not `calls`. The prediction attributed the site to that owner, correctly, but my wording of
+A3 and A5 named only `calls`. The conservation is exact over both keys: 8 sites moved from `unresolved` to
+`resolved`. A5 should have said "outside the counter keys", as R1-C74's acceptance did. It is left failing as
+written.
+
+The two bquant calls Graphify had and codemap lacked (`LibraryManager.create_indicator` in `zigzag.py` and
+`combined.py`) are among the six.
