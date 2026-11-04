@@ -826,6 +826,28 @@ procedure: both versions from PyPI, `PYTHONHASHSEED=7`, the fixture run on 0.0.2
 - **bquearch** (its gate on a copy of its HEAD, `CODMAP_VERSION` changed only): exit 0 on both,
   byte-identical output.
 
+**0.0.25 published 2026-11-04:** [`codmap` 0.0.25](https://pypi.org/project/codmap/0.0.25/), schema **0.13**,
+**`ANSWER_FORMAT` 4**, both unchanged. From the pushed commit `8571123`: CI green on 3.11–3.14, the suite at the
+fix commit 1127 passed / 3 skipped, `twine check` PASSED on both artifacts. Reconciled from PyPI,
+`PYTHONHASHSEED=7`, inside the shared slot accounting:
+
+```
+                         0.0.24 (published)                    0.0.25 (published)
+R1-C75 fixture           no calls edge, unresolved 1           calls → …LibraryManager.create_indicator, resolved 1
+--version                codemap 0.0.24 · answer format 4 …    codemap 0.0.25 · answer format 4 · schema 0.13
+trailer                  _answer format 4 · schema 0.13_       the same
+bquant (aca0718)         --build, --graph exit 0               exit 0; text byte-identical on both
+bquant graph (8efa112)   —                                     calls +6, exactly R1-C75's predicted pairs; −0;
+                                                               counters +6/−6; nodes identical outside counters
+bquearch gate (1f119da)  exit 0                                exit 0; output byte-identical
+```
+
+Every expectation holds. The fixture was run on 0.0.24 first and showed the defect (rule 4). **One slip,
+known:** the first 0.0.25 `--version` call in the consumer pass hit the index cache again ("no version of
+codmap==0.0.25"), though the script had just run `uv cache clean codmap`. The build in the same pass already
+got 0.0.25. A re-run a minute later gave the table's line. So the cache-clean is not enough right after an
+upload, and waiting is.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
