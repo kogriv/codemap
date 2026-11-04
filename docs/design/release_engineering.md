@@ -848,6 +848,20 @@ codmap==0.0.25"), though the script had just run `uv cache clean codmap`. The bu
 got 0.0.25. A re-run a minute later gave the table's line. So the cache-clean is not enough right after an
 upload, and waiting is.
 
+**0.0.26 — the release check, pre-registered before the upload (2026-11-04).** One item (R1-C76); schema
+**0.13** and **`ANSWER_FORMAT` 4** unchanged. Decided by the codemap session under the owner's delegation
+(kogriv/codemap issue for this release). Fixture run on 0.0.25 first (rule 4), `PYTHONHASHSEED=7`.
+
+| | tree form | 0.0.25 (expected) | 0.0.26 (expected) |
+|---|---|---|---|
+| R1-C76 | `[architectur]` with a rule the tree breaks | exit 0, "No `[architecture]` contract found" | exit 2, names `[architectur]` and `[architecture]` |
+| R1-C76 control | the same rule under `[architecture]` | exit 2, 1 rule broken | the same |
+| version | `codemap --version` | `codemap 0.0.25 · …` | `codemap 0.0.26 · answer format 4 · schema 0.13` |
+
+**Consumers:** bquant (HEAD) and bquearch (HEAD): exit 0 on both versions, output byte-identical, graphs
+identical too. Neither has a near-miss table, so the fixture row and the version line are the
+nothing-was-done controls.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
