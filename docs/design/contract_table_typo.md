@@ -1,6 +1,6 @@
 # Design — a misspelled `[architecture]` table is refused, not read as "no contract"
 
-**Status:** 🟡 pre-registered, before any code. **Backlog:** R1-C76. **Found by:** the import-linter card
+**Status:** ✅ **shipped** (2026-11-04, no schema change, `ANSWER_FORMAT` unchanged), acceptance reconciled below. Pre-registered in c716462 before any code. **Backlog:** R1-C76. **Found by:** the import-linter card
 ([`research/tools/import-linter.md`](../../research/tools/import-linter.md)). Its G11/G16 probe showed that a
 configuration whose contracts sit under the wrong table name passes with zero contracts. The same question,
 asked of codemap, found the same hole.
@@ -63,3 +63,23 @@ asserts that the rendered pin (`RENDERED_SHA`) is unchanged.
 - **A7.** `RENDERED_SHA` and the suite's other pins are unchanged.
 
 At least A1–A3 fail if nothing is done.
+
+## Acceptance reconciled (2026-11-04)
+
+Fix in 56e7daa. Suite 1133 passed / 3 skipped on the stand (after reinstalling the editable package, whose
+metadata still said 0.0.24); CI green on 3.11–3.14.
+
+| | expected | measured | |
+|---|---|---|---|
+| A1 `[architectur]` | exit 2, both names; MCP `ok: false` | as expected | holds |
+| A2 `[Architecture]`, `[archtecture]` | exit 2 each | exit 2 each | holds |
+| A3 both tables | exit 2 | exit 2 | holds |
+| A4 valid / `[integrations]` only / no file | unchanged | a real violation still exit 2 "1 rule(s) broken"; "No contract found" exit 0; `--require-contract` exit 1; no file exit 0 | holds |
+| A5 consumers | byte-identical | bquant `aca0718` and bquearch HEAD: exit 0 before (0.0.25 from PyPI) and after, output identical | holds |
+| A6 mutation | D1 removed → red; cosmetic → green | 5 of 6 tests red (the "as before" one stays green); a renamed local, 6 green; an unreachable threshold, 5 red | holds |
+| A7 pins | `RENDERED_SHA` unchanged | `test_r1c63_answer_format` green | holds |
+
+**One slip of my own, in the test.** The first version asserted `rc == 1` for `--require-contract`, but the
+CLI raises `SystemExit` with a message there. The test failed on the fix and on the mutant alike, so the first
+mutation count (6 of 6 red) was not evidence. With `pytest.raises(SystemExit)`, the counts above are from a
+clean run.

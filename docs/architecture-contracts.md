@@ -60,8 +60,11 @@ An **absent** contract is a no-op success that names the file it looked for. Use
 `--require-contract` to make "no contract" a failure instead.
 
 A contract the gate cannot fully read is **refused**: exit 2, and nothing is enforced. That covers
-two cases:
+three cases:
 - a `codemap.toml` that is not valid TOML (R1-C27);
+- a table whose name is a near miss of `[architecture]`, such as `[architectur]` or `[Architecture]`
+  (R1-C76). It used to read as "no contract", exit 0. It is refused even when a real `[architecture]`
+  sits beside it, since its rules would never run;
 - an `[architecture]` section that departs from the schema above (R1-C69). That means an unknown
   key, with the nearest known one suggested (`forbiden` → `forbidden`); a flag that is not a TOML
   boolean (`no_cycles = "false"` used to switch the rule *on*); a `layers` that is not a list of

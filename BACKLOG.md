@@ -1684,7 +1684,8 @@ Python-focus** — если задача его нарушает, это отм�
       и вызовы первого тела не считались нигде; вложенная функция-тёзка метода **становилась методом** (ложная петля
       в pytest). Мой прогноз брал не то правило затенения, что документирует R1-C46, — исправлен после прогона, названо.
       `ANSWER_FORMAT` 3 → 4 к следующему релизу. +8 % ко времени сборки.
-- [ ] **R1-C76 опечатка в имени таблицы `[architecture]` читается как «контракта нет», exit 0** (S) — 🆕 (2026-11-04,
+- [x] **R1-C76 опечатка в имени таблицы `[architecture]` читается как «контракта нет», exit 0** (S) ✅ (фикс 56e7daa,
+      дизайн [`docs/design/contract_table_typo.md`](docs/design/contract_table_typo.md)) — (2026-11-04,
       найдено вопросом, заданным import-linter, [`research/tools/import-linter.md`](research/tools/import-linter.md)).
       `[architectur]` → «No `[architecture]` contract found», exit 0; с `--require-contract` exit 1. Таблица с
       именем, близким к `architecture`, почти наверняка опечатка → отказ, как у R1-C69 (exit 2, с подсказкой).

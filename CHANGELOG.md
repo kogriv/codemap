@@ -5,6 +5,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **A misspelled `[architecture]` table is refused** (R1-C76, design
+  [`docs/design/contract_table_typo.md`](docs/design/contract_table_typo.md)). `[architectur]`, `[Architecture]`
+  and other near misses read as "no contract" and exited 0, unless `--require-contract` was passed. Now `check`
+  exits 2 and names the table, also when a real `[architecture]` sits beside it. Found by asking codemap the
+  question its import-linter card asked of import-linter. Other tables are not checked; no answer-format change.
+
 ## [0.0.25] - 2026-11-04
 
 **A call through a re-exported class resolves.** Schema unchanged (**0.13**, fourteenth release running).
