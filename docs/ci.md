@@ -88,7 +88,7 @@ Two versions travel with every answer, and they answer different questions:
 ```
 _answer format 4 · schema 0.13_          ← the trailer on any markdown answer
 {"ok": true, "answer_format": 4, …}      ← the same fact in a serve/MCP envelope
-codemap 0.0.25 · answer format 4 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
+codemap 0.0.26 · answer format 4 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
 ```
 
 What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says

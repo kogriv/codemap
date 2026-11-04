@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.26] - 2026-11-04
+
+**A misspelled contract table no longer passes.** Schema unchanged (**0.13**, fifteenth release running).
+**`ANSWER_FORMAT` unchanged (4):** the refusal is the existing error path; only which inputs reach it changed.
+
 - **A misspelled `[architecture]` table is refused** (R1-C76, design
   [`docs/design/contract_table_typo.md`](docs/design/contract_table_typo.md)). `[architectur]`, `[Architecture]`
   and other near misses read as "no contract" and exited 0, unless `--require-contract` was passed. Now `check`
