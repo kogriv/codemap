@@ -424,3 +424,18 @@ Minimal trees, `graphifyy==0.9.102` from PyPI into a fresh venv, an empty `HOME`
 - **B2:** `pkg/files.py` defines `def open(path)`; `pkg/c.py` calls `open("f")` without importing it.
   Recorded, not predicted: whether the builtin-shadowing applies to functions too.
 - Each tag (`EXTRACTED`/`INFERRED`) is recorded as found.
+
+### 3.1 Re-verification reconciled
+
+Fresh venv from PyPI (`graphify 0.9.102`), empty `HOME` per tree, stand inside the slot accounting:
+
+| | expected | measured | |
+|---|---|---|---|
+| A1 | no `y → x` `imports_from`, no stamp; report "None detected" | `imports_from` only `x → y`, no stamp; `imports` `y → X` present; report **"None detected."** | holds |
+| A1-control | the report lists the 2-file cycle | `x → y` stamped `reverse_import`; report: "2-file cycle: `pkg/x.py -> pkg/y.py -> pkg/x.py`" | holds: the cycle finder works when the edge exists |
+| B1 | a `calls` link to `pkg/errors.py`'s class, though Python resolves the builtin | `todo() → errors.py:NotImplementedError`, **`INFERRED`** | holds |
+| B1-control | the same link, correct | `todo2() → errors.py:NotImplementedError`, `EXTRACTED`, with its `imports` | holds |
+| B2 | recorded | **no** link from `read()` to `files.py:open` | a function homonym is not affected; the defect is on classes |
+
+On bquant two of the five homonym links were `EXTRACTED`; in the minimal tree the one link is `INFERRED`.
+The tag depends on context I did not isolate, and the filing says so.
