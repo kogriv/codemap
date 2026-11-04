@@ -395,3 +395,32 @@ licence would allow `integrate`; nothing here needs it.
   (A) a function-local `from` import makes no `imports_from`, so lazy-import cycles are invisible;
   (B) a builtin resolved to a package class of the same name, tagged `EXTRACTED`. The `claude -p` labeling
   is a documented decision and is not a candidate.
+
+## 3. Re-verification before filing — pre-registration (2026-11-04)
+
+The owner decided to file both candidates after this re-check. Duplicate search first:
+- **(A) is partly upstream already.** Open [#2447](https://github.com/Graphify-Labs/graphify/issues/2447),
+  cause B: "Import statement inside a function body → no `imports` edge emitted at all", measured on
+  0.9.32 against `mod.func()` call resolution. On 0.9.102 an `imports` edge to the symbol *is* emitted
+  (D2), so part of it has moved. What is not in #2447 is the consequence for the module graph: no
+  `imports_from`, so `## Import Cycles` cannot see a cycle that closes through a lazy import. So (A) goes
+  as a **comment on #2447**, not a new issue.
+- **(B):** no issue found for "builtin", "shadow", "homonym", "NotImplementedError". A new issue.
+
+Minimal trees, `graphifyy==0.9.102` from PyPI into a fresh venv, an empty `HOME`, `GRAPHIFY_BACKEND=none`,
+`extract . --code-only`, then `cluster-only .` for the report:
+
+- **A1:** `pkg/x.py` imports `pkg.y` at module level; `pkg/y.py` imports `pkg.x` inside a function. Python
+  sees a cycle (it is the way such cycles are usually broken, and it is still a dependency cycle).
+  **Expected:** no `imports_from` link `y → x`, no `reverse_import` stamp for it, and the report says
+  "None detected".
+- **A1-control:** the same with both imports at module level. **Expected:** the report lists the 2-file
+  cycle. If it does not, A1 says nothing and is not filed.
+- **B1:** `pkg/errors.py` defines `class NotImplementedError(Exception)`; `pkg/a.py` does
+  `raise NotImplementedError("x")` inside a function and imports nothing. **Expected:** a `calls` link
+  from that function to `pkg/errors.py`'s class, although Python resolves the builtin there.
+- **B1-control:** `pkg/b.py` does `from pkg.errors import NotImplementedError` and the same raise.
+  **Expected:** the same link, now correct. If B1 has no link, there is nothing to file.
+- **B2:** `pkg/files.py` defines `def open(path)`; `pkg/c.py` calls `open("f")` without importing it.
+  Recorded, not predicted: whether the builtin-shadowing applies to functions too.
+- Each tag (`EXTRACTED`/`INFERRED`) is recorded as found.
