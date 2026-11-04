@@ -682,7 +682,11 @@ def _resolve(call, modpath, class_prefix, imports, modmembers, members, reexport
             tgt = imports[head]
             if not _is_internal(tgt, modpath):
                 return f"{tgt}.{'.'.join(parts)}", "external"
-            cur = tgt
+            # R1-C75 (design ``reexported_class_calls.md``): the head first. A class bound through
+            # a package re-export (`from pkg import Cls`) is no node under the package's name, so
+            # `Cls.method()` died on its first hop while `Cls()` resolved. Unchanged for a head that
+            # is a node or names no re-export.
+            cur = _follow_reexport(tgt, reexports or {}, nodes)
             for part in parts:
                 cur = _follow_reexport(f"{cur}.{part}", reexports or {}, nodes)
             if len(parts) == 1 or cur in nodes:
