@@ -134,6 +134,9 @@ explosion without knowing what a symlink is.
   backslash continuation line. Since R1-C71 the fast tier also resolves a *call* through such a
   chain (`pkg.analysis.b.f()`, `pa.b.f()`, through re-exports), and counts a chain rooted at an
   external import as external, not unresolved.
+- `from pkg import Cls` + `Cls.method()`, where `pkg/__init__.py` re-exports `Cls` from a
+  submodule, resolves to the method (R1-C75). Until then only `Cls()` and a direct import of the
+  defining module did. Not resolved: a method `Cls` inherits from a base class.
 - `type X = int | str` (PEP 695 alias) produces no node.
 - The names a star import binds are not expanded.
 - Dynamic dispatch remains dynamic: `getattr`, `importlib`, and registry lookups by a
