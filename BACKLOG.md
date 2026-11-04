@@ -1689,7 +1689,8 @@ Python-focus** — если задача его нарушает, это отм�
       В `CombinedVolatilityStrategy._calculate_bollinger_metrics` (bquant@cb89a24) разрешено 0 из 17 вызовов;
       `LibraryManager` пришёл через `from .....indicators import LibraryManager`, а Graphify правильно
       связывает `LibraryManager.create_indicator(...)` с `indicators/library/manager.py` (с меткой
-      `EXTRACTED`). Пока видел только один случай. Сначала минимальное дерево и контроль, потом дизайн.
+      `EXTRACTED`). Подтверждено на минимальном дереве (прямой импорт разрешается, через реэкспорт — нет);
+      дизайн [`docs/design/reexported_class_calls.md`](docs/design/reexported_class_calls.md).
 - [ ] **R1-C67 вложенные определения узлами графа** (M, **решение владельца — не сейчас**) — 🆕 (2026-10-15,
       остаток R1-C60). R1-C60 закрыт **объявлением**: `dead-code` называет сужение, граф побайтно прежний.
       Сами 49 вложенных определений bquant (`cached.decorator.wrapper`, `register_*.decorator`) в графе по-

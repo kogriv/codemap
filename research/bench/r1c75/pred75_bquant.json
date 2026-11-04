@@ -1,0 +1,68 @@
+{
+ "edges": [
+  [
+   "bquant.analysis.zones.pipeline.ZoneAnalysisPipeline._detect_zones",
+   "bquant.analysis.zones.detection.registry.ZoneDetectionRegistry.get"
+  ],
+  [
+   "bquant.analysis.zones.pipeline.ZoneAnalysisPipeline._prepare_data",
+   "bquant.indicators.base.IndicatorFactory.create"
+  ],
+  [
+   "bquant.analysis.zones.presets._declared_column",
+   "bquant.indicators.base.IndicatorFactory.create"
+  ],
+  [
+   "bquant.analysis.zones.strategies.swing.zigzag.ZigZagSwingStrategy._swing_context",
+   "bquant.indicators.library.manager.LibraryManager.create_indicator"
+  ],
+  [
+   "bquant.analysis.zones.strategies.volatility.combined.CombinedVolatilityStrategy._calculate_bollinger_metrics",
+   "bquant.indicators.library.manager.LibraryManager.create_indicator"
+  ],
+  [
+   "bquant.indicators.calculators.IndicatorCalculator.__init__",
+   "bquant.indicators.library.manager.LibraryManager.ensure_loaded"
+  ]
+ ],
+ "internal_resolved_sites": 6,
+ "internal_unresolved": 0,
+ "sites": [
+  [
+   "bquant.analysis.zones.pipeline",
+   411,
+   "IndicatorFactory.create",
+   "bquant.indicators.base.IndicatorFactory.create"
+  ],
+  [
+   "bquant.analysis.zones.pipeline",
+   524,
+   "ZoneDetectionRegistry.get",
+   "bquant.analysis.zones.detection.registry.ZoneDetectionRegistry.get"
+  ],
+  [
+   "bquant.analysis.zones.presets",
+   44,
+   "IndicatorFactory.create",
+   "bquant.indicators.base.IndicatorFactory.create"
+  ],
+  [
+   "bquant.analysis.zones.strategies.swing.zigzag",
+   176,
+   "LibraryManager.create_indicator",
+   "bquant.indicators.library.manager.LibraryManager.create_indicator"
+  ],
+  [
+   "bquant.analysis.zones.strategies.volatility.combined",
+   115,
+   "LibraryManager.create_indicator",
+   "bquant.indicators.library.manager.LibraryManager.create_indicator"
+  ],
+  [
+   "bquant.indicators.calculators",
+   44,
+   "LibraryManager.ensure_loaded",
+   "bquant.indicators.library.manager.LibraryManager.ensure_loaded"
+  ]
+ ]
+}
