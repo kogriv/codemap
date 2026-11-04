@@ -1,0 +1,577 @@
+{
+ "fixture": {
+  "checks": {
+   "C3a": {
+    "edge": "pkg.a -> pkg.b",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports@symbol",
+     "imports_from"
+    ]
+   },
+   "C3a_reversed": {
+    "edge": "pkg.b -> pkg.a",
+    "expected": false,
+    "present": false,
+    "relations": null
+   },
+   "C3b": {
+    "edge": "pkg.a -> pkg.c",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports@symbol",
+     "imports_from"
+    ]
+   },
+   "C3c": {
+    "edge": "pkg.a -> pkg.d",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports@symbol"
+    ]
+   },
+   "C3d": {
+    "edge": "pkg.a -> pkg.e",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports@symbol",
+     "imports_from:type_only"
+    ]
+   },
+   "C3e": {
+    "edge": "pkg.a -> pkg.f",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports_from"
+    ]
+   },
+   "C3f": {
+    "edge": "pkg.a -> pkg",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports_from"
+    ]
+   },
+   "C3g": {
+    "edge": "pkg.sub -> pkg.sub.m",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "re_exports"
+    ]
+   },
+   "C3h_right": {
+    "edge": "pkg.sub -> pkg.sub.m2",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "re_exports"
+    ]
+   },
+   "C3h_wrong": {
+    "edge": "pkg.sub -> pkg.m2",
+    "expected": false,
+    "present": false,
+    "relations": null
+   },
+   "C3i": {
+    "edge": "pkg.user -> pkg.sub",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports_from"
+    ]
+   },
+   "C3j": {
+    "edge": "pkg.plain -> pkg.b",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports@file"
+    ]
+   },
+   "C3k_xy": {
+    "edge": "pkg.x -> pkg.y",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports@symbol",
+     "imports_from"
+    ]
+   },
+   "C3k_yx": {
+    "edge": "pkg.y -> pkg.x",
+    "expected": true,
+    "present": true,
+    "relations": [
+     "imports@symbol"
+    ]
+   }
+  },
+  "extract": {
+   "rc": 0,
+   "seconds": 0.8,
+   "stderr_tail": "  warning: 7 code file(s) yielded no symbols (0.00 MB) \u2014 a data file, or source this extractor models no symbols for: pkg/__init__.py, pkg/f.py, pkg/m2.py, pkg/sub/__init__.py, pkg/sub/m.py (+2 more)\n",
+   "stdout_tail": "[graphify extract] scanning <work>/w/fixture\n[graphify extract] found 15 code, 0 docs, 0 papers, 0 images\n[graphify extract] AST extraction on 15 code files...\n  AST cache: 0/15 files served from cache (0%); 15 to extract\n[graphify extract] wrote <work>/w/fixture/graphify-out/graph.json: 25 nodes, 30 edges, 5 communities\n[graphify extract] wrote <work>/w/fixture/graphify-out/.graphify_analysis.json\n[graphify extract] next: run `graphify cluster-only <work>/w/fixture` to generate GRAPH_REPORT.md and name communities\n"
+  }
+ },
+ "note": "R2-graphify, graphifyy 0.9.102 on the R2 tree; card research/tools/graphify.md \u00a71-\u00a72",
+ "post_hoc": {
+  "D1_mutual_module_level": {
+   "default": "x->y imports_from with reverse_import=true; y->x imports_from absent as a link",
+   "no_cluster": "both imports_from links present"
+  },
+  "D2_function_local_from_import": "only an imports edge to the symbol; no imports_from, with or without --no-cluster",
+  "P10_inferred_cross_file_calls": {
+   "distinct_pairs": 26,
+   "edges": 37,
+   "extracted_also_wrong": "2 EXTRACTED calls to the same NotImplementedError homonym (indicators/base.py L147, L157)",
+   "not_in_codemap_read": {
+    "correct": "config.validate x4 (base.ZoneDetectionConfig.validate)",
+    "plausible": "indicator.calculate via IndicatorFactory.create (pipeline L285)",
+    "wrong": [
+     "raise NotImplementedError -> bquant.core.exceptions.NotImplementedError x3 (analysis/__init__ L185, ml/__init__ L10, L14): builtin, not imported",
+     "from bquant.analysis.timeseries import ZoneRegressionAnalyzer (analyzer L100, in try/except ImportError) -> statistical.regression: timeseries does not export it"
+    ]
+   },
+   "pair_in_codemap": 28,
+   "pairs_in_codemap": 18
+  },
+  "P11_fake_claude": {
+   "argv": "claude -p --output-format json --no-session-persistence",
+   "cluster_only_calls": 1,
+   "extract_calls": 0,
+   "stderr": "[graphify label] no API key found; naming communities via the `claude` CLI (claude -p)..."
+  },
+  "P12": {
+   "explain MACDZoneAnalyzer": "exit 0, bquant/indicators/macd.py L48, degree 106",
+   "explain analyze_zones": "exit 3, 2 candidates: pipeline.py, analyzer.py UniversalZoneAnalyzer.analyze_zones"
+  },
+  "T2_MACDZoneAnalyzer": {
+   "both": 23,
+   "codemap_caller_files": 23,
+   "graphify_calls_uses_files": 23,
+   "incoming": {
+    "calls EXTRACTED": 57,
+    "imports EXTRACTED": 23,
+    "uses INFERRED": 19
+   }
+  },
+  "cost": {
+   "extract_seconds": [
+    14.2,
+    14.4,
+    14.1
+   ],
+   "max_rss_kb_whole_run_cmd": 290028
+  },
+  "cycles_all_import_links_plus_stamps": "28 of 45, 4 false; precision 0.875, recall 0.974",
+  "cycles_primary_plus_stamps": "3 of 45, 0 false",
+  "report_import_cycles": [
+   "analysis <-> analysis.candlestick",
+   "analysis <-> analysis.chart"
+  ],
+  "reverse_import_stamps_on_r2": {
+   "bquant_edges_recovered": 3,
+   "imports_from": 1,
+   "re_exports": 2
+  }
+ },
+ "score": {
+  "calls": {
+   "agreement": 0.8905,
+   "both": 122,
+   "codemap_pairs": 204,
+   "coverage": 0.598,
+   "graphify_pairs": 137,
+   "only_codemap_sample": [
+    "bquant.analysis.candlestick bquant.core.logging_config",
+    "bquant.analysis.chart bquant.core.logging_config",
+    "bquant.analysis.statistical bquant.core.logging_config",
+    "bquant.analysis.statistical.hypothesis_testing bquant.analysis",
+    "bquant.analysis.technical bquant.core.logging_config",
+    "bquant.analysis.timeseries bquant.core.logging_config",
+    "bquant.analysis.zones bquant.core.logging_config",
+    "bquant.analysis.zones.analyzer bquant.analysis.zones.models",
+    "bquant.analysis.zones.analyzer bquant.core.logging_config",
+    "bquant.analysis.zones.detection bquant.analysis.zones.detection.registry",
+    "bquant.analysis.zones.detection.combined bquant.analysis.zones.detection.registry",
+    "bquant.analysis.zones.detection.combined bquant.analysis.zones.models",
+    "bquant.analysis.zones.detection.line_crossing bquant.analysis.zones.detection.registry",
+    "bquant.analysis.zones.detection.line_crossing bquant.analysis.zones.models",
+    "bquant.analysis.zones.detection.preloaded bquant.analysis.zones.detection.registry",
+    "bquant.analysis.zones.detection.preloaded bquant.analysis.zones.models",
+    "bquant.analysis.zones.detection.registry bquant.core.logging_config",
+    "bquant.analysis.zones.detection.threshold bquant.analysis.zones.detection.registry",
+    "bquant.analysis.zones.detection.threshold bquant.analysis.zones.models",
+    "bquant.analysis.zones.detection.zero_crossing bquant.analysis.zones.detection.registry",
+    "bquant.analysis.zones.detection.zero_crossing bquant.analysis.zones.models",
+    "bquant.analysis.zones.models bquant.core.logging_config",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.detection.combined",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.detection.line_crossing",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.detection.preloaded",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.detection.threshold",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.detection.zero_crossing",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.strategies.swing.find_peaks",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.strategies.swing.pivot_points",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.strategies.swing.zigzag",
+    "bquant.analysis.zones.strategies.divergence.classic bquant.analysis.zones.strategies.registry",
+    "bquant.analysis.zones.strategies.divergence.classic bquant.core.logging_config",
+    "bquant.analysis.zones.strategies.registry bquant.core.logging_config",
+    "bquant.analysis.zones.strategies.shape.statistical bquant.analysis.zones.strategies.registry",
+    "bquant.analysis.zones.strategies.shape.statistical bquant.core.logging_config",
+    "bquant.analysis.zones.strategies.swing.find_peaks bquant.analysis.zones.strategies.registry",
+    "bquant.analysis.zones.strategies.swing.find_peaks bquant.core.logging_config",
+    "bquant.analysis.zones.strategies.swing.pivot_points bquant.analysis.zones.strategies.registry",
+    "bquant.analysis.zones.strategies.swing.pivot_points bquant.core.logging_config",
+    "bquant.analysis.zones.strategies.swing.thresholds bquant.analysis.zones.strategies.swing.find_peaks"
+   ],
+   "only_graphify_sample": [
+    "bquant.analysis bquant.core.exceptions",
+    "bquant.analysis.statistical.regression bquant.analysis",
+    "bquant.analysis.zones.analyzer bquant.analysis.statistical.regression",
+    "bquant.analysis.zones.detection.combined bquant.analysis.zones.detection.base",
+    "bquant.analysis.zones.detection.line_crossing bquant.analysis.zones.detection.base",
+    "bquant.analysis.zones.detection.threshold bquant.analysis.zones.detection.base",
+    "bquant.analysis.zones.detection.zero_crossing bquant.analysis.zones.detection.base",
+    "bquant.analysis.zones.pipeline bquant.analysis.zones.detection.registry",
+    "bquant.analysis.zones.pipeline bquant.indicators.base",
+    "bquant.analysis.zones.strategies.swing.zigzag bquant.indicators.library.manager",
+    "bquant.analysis.zones.strategies.volatility.combined bquant.indicators.library.manager",
+    "bquant.indicators bquant.indicators.library.manager",
+    "bquant.indicators.calculators bquant.indicators.library.manager",
+    "bquant.ml bquant.core.exceptions",
+    "bquant.visualization.zones bquant.indicators.library.manager"
+   ],
+   "tags": {
+    "calls|EXTRACTED|cross": 238,
+    "calls|EXTRACTED|same": 545,
+    "calls|INFERRED|cross": 36,
+    "calls|INFERRED|same": 47,
+    "indirect_call|INFERRED|cross": 1,
+    "indirect_call|INFERRED|same": 19
+   }
+  },
+  "cycles": {
+   "false_all": 0,
+   "graphify_all": 0,
+   "hit_all": 0,
+   "hit_imports_from": 0,
+   "truth": 45,
+   "truth_by_length": {
+    "2": 14,
+    "3": 5,
+    "4": 6,
+    "5": 8,
+    "6": 8,
+    "7": 4
+   },
+   "truth_two": 14
+  },
+  "determinism": {
+   "distinct_bytes": 1,
+   "distinct_imports": 1,
+   "distinct_links": 1,
+   "runs": 3
+  },
+  "edges": {
+   "false": [
+    [
+     "bquant.cli",
+     "bquant.visualization"
+    ]
+   ],
+   "graphify": 241,
+   "imports_from_only": {
+    "n": 160,
+    "recall": 0.5977,
+    "true": 159
+   },
+   "precision": 0.9959,
+   "recall": 0.9023,
+   "symbol_only": {
+    "n": 55,
+    "true": 19,
+    "union_recall": 0.9737
+   },
+   "true": 240,
+   "truth": 266
+  },
+  "extract": [
+   {
+    "rc": 0,
+    "seconds": 14.2,
+    "stderr_tail": "  warning: 3 code file(s) yielded no symbols (0.71 MB) \u2014 a data file, or source this extractor models no symbols for: bquant/data/samples/embedded/mt_xauusd_m15.py, bquant/data/samples/embedded/tv_xauusd_1h.py, research/notebooks/02_ind_factory.py\n",
+    "stdout_tail": "[graphify extract] scanning <work>/w/tree0\n[graphify extract] --code-only: skipping 73 non-code file(s) (73 docs, 0 papers, 0 images) \u2014 no LLM extraction\n[graphify extract] found 208 code, 0 docs, 0 papers, 0 images\n[graphify extract] AST extraction on 208 code files...\n  AST cache: 0/208 files served from cache (0%); 208 to extract\n  AST extraction: 100/208 uncached files (48%) [24 workers]\n  AST extraction: 200/208 uncached files (96%) [24 workers]\n  AST extraction: 208/208 uncached files (100%) [24 workers]\n[graphify] Deduplicated 48 node(s) (38 exact, 10 fuzzy).\n[graphify extract] wrote <work>/w/tree0/graphify-out/graph.json: 5103 nodes, 11699 edges, 219 communities\n[graphify extract] wrote <work>/w/tree0/graphify-out/.graphify_analysis.json\n[graphify extract] next: run `graphify cluster-only <work>/w/tree0` to generate GRAPH_REPORT.md and name communities\n"
+   },
+   {
+    "rc": 0,
+    "seconds": 14.4,
+    "stderr_tail": "  warning: 3 code file(s) yielded no symbols (0.71 MB) \u2014 a data file, or source this extractor models no symbols for: bquant/data/samples/embedded/mt_xauusd_m15.py, bquant/data/samples/embedded/tv_xauusd_1h.py, research/notebooks/02_ind_factory.py\n",
+    "stdout_tail": "[graphify extract] scanning <work>/w/tree1\n[graphify extract] --code-only: skipping 73 non-code file(s) (73 docs, 0 papers, 0 images) \u2014 no LLM extraction\n[graphify extract] found 208 code, 0 docs, 0 papers, 0 images\n[graphify extract] AST extraction on 208 code files...\n  AST cache: 0/208 files served from cache (0%); 208 to extract\n  AST extraction: 100/208 uncached files (48%) [24 workers]\n  AST extraction: 200/208 uncached files (96%) [24 workers]\n  AST extraction: 208/208 uncached files (100%) [24 workers]\n[graphify] Deduplicated 48 node(s) (38 exact, 10 fuzzy).\n[graphify extract] wrote <work>/w/tree1/graphify-out/graph.json: 5103 nodes, 11699 edges, 219 communities\n[graphify extract] wrote <work>/w/tree1/graphify-out/.graphify_analysis.json\n[graphify extract] next: run `graphify cluster-only <work>/w/tree1` to generate GRAPH_REPORT.md and name communities\n"
+   },
+   {
+    "rc": 0,
+    "seconds": 14.1,
+    "stderr_tail": "  warning: 3 code file(s) yielded no symbols (0.71 MB) \u2014 a data file, or source this extractor models no symbols for: bquant/data/samples/embedded/mt_xauusd_m15.py, bquant/data/samples/embedded/tv_xauusd_1h.py, research/notebooks/02_ind_factory.py\n",
+    "stdout_tail": "[graphify extract] scanning <work>/w/tree2\n[graphify extract] --code-only: skipping 73 non-code file(s) (73 docs, 0 papers, 0 images) \u2014 no LLM extraction\n[graphify extract] found 208 code, 0 docs, 0 papers, 0 images\n[graphify extract] AST extraction on 208 code files...\n  AST cache: 0/208 files served from cache (0%); 208 to extract\n  AST extraction: 100/208 uncached files (48%) [24 workers]\n  AST extraction: 200/208 uncached files (96%) [24 workers]\n  AST extraction: 208/208 uncached files (100%) [24 workers]\n[graphify] Deduplicated 48 node(s) (38 exact, 10 fuzzy).\n[graphify extract] wrote <work>/w/tree2/graphify-out/graph.json: 5103 nodes, 11699 edges, 219 communities\n[graphify extract] wrote <work>/w/tree2/graphify-out/.graphify_analysis.json\n[graphify extract] next: run `graphify cluster-only <work>/w/tree2` to generate GRAPH_REPORT.md and name communities\n"
+   }
+  ],
+  "graph": {
+   "directed": false,
+   "meta": {
+    "graphify_version": "0.9.102",
+    "schema_version": 1
+   },
+   "multigraph": false
+  },
+  "init": {
+   "found_from_package": 81,
+   "truth_from_package": 87
+  },
+  "missed": {
+   "by_class": {
+    "into_package": 6,
+    "other": 6,
+    "reverse_of_found_mutual": 14
+   },
+   "rows": [
+    [
+     "bquant.analysis",
+     "bquant.analysis.candlestick",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis",
+     "bquant.analysis.chart",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis",
+     "bquant.analysis.statistical",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis",
+     "bquant.analysis.technical",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis",
+     "bquant.analysis.timeseries",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis",
+     "bquant.analysis.zones",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis.zones.analyzer",
+     "bquant.analysis.statistical",
+     "into_package",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis.zones.analyzer",
+     "bquant.analysis.timeseries",
+     "into_package",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis.zones.analyzer",
+     "bquant.analysis.validation",
+     "into_package",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis.zones.analyzer",
+     "bquant.analysis.zones.sequence_analysis",
+     "other",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis.zones.analyzer",
+     "bquant.analysis.zones.zone_features",
+     "other",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis.zones.pipeline",
+     "bquant.analysis.zones.cache",
+     "reverse_of_found_mutual",
+     [
+      "module"
+     ]
+    ],
+    [
+     "bquant.analysis.zones.pipeline",
+     "bquant.data.processor",
+     "other",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.analysis.zones.strategies.swing.zigzag",
+     "bquant.indicators",
+     "into_package",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.core.config",
+     "bquant.analysis.zones.strategies.registry",
+     "other",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.base",
+     "bquant.indicators.custom.bollinger",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.base",
+     "bquant.indicators.custom.ema",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.base",
+     "bquant.indicators.custom.macd",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.base",
+     "bquant.indicators.custom.rsi",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.base",
+     "bquant.indicators.custom.sma",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.base",
+     "bquant.indicators.library.talib",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.base",
+     "bquant.indicators.preloaded.macd",
+     "reverse_of_found_mutual",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.library.manager",
+     "bquant.indicators.library.pandas_ta",
+     "other",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.library.manager",
+     "bquant.indicators.library.talib",
+     "other",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.indicators.macd",
+     "bquant.analysis.zones",
+     "into_package",
+     [
+      "function"
+     ]
+    ],
+    [
+     "bquant.visualization.zones",
+     "bquant.indicators",
+     "into_package",
+     [
+      "function"
+     ]
+    ]
+   ]
+  },
+  "modules": {
+   "graphify": 89,
+   "missing": [],
+   "truth": 89
+  },
+  "mutual": {
+   "both_directions_found": 0,
+   "truth_pairs": 14
+  },
+  "scopes": {
+   "found": {
+    "module": 239,
+    "type_checking": 1
+   },
+   "truth": {
+    "function": 25,
+    "module": 240,
+    "type_checking": 1
+   }
+  },
+  "version": "graphify 0.9.102"
+ }
+}

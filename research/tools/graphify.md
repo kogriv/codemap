@@ -1,7 +1,34 @@
 # Graphify
 
-**Verdict:** set after the run (§0.5) · **Feeds:** set after the run · **Card status:** pre-registration only.
-Nothing below §0 has been run on the R2 tree yet.
+**Verdict:** learn (strong): the highest import recall of any released tool scored on this truth (90 %,
+precision 99.6 %), with byte-identical runs. Its cycle report sees **2 of 45** · **Feeds:** R1-C13 (labels on the edge), R1-C75 (new, codemap's
+own gap, found here), the `reverse_import` lesson (§Разбор) · **Card status:** hands-on: import graph,
+calls, T1/T2, report, offline claim on the full R2 tree (§1–§2); `graphifyy` 0.9.102 from PyPI
+
+> On the code layer, the README's word "deterministic" holds:
+> - three runs on fresh copies wrote byte-identical `graph.json`, in 14 s each;
+> - of 241 module dependencies, 240 are real (99.6 %); recall is 90 % (codemap's truth on the same tree);
+> - the 23 files that call `MACDZoneAnalyzer` are exactly codemap's 23;
+> - an ambiguous name is refused with exit 3 and both candidates, as the README promises.
+>
+> Two things go wrong:
+> - **An import inside a function makes no module dependency.** It leaves only an edge to the imported
+>   symbol. On this tree 25 of the 266 edges are such imports, and 13 of the 14 mutual-import pairs close
+>   through one. So Graphify's own `## Import Cycles` lists **2 of the 45** cycles.
+> - **A builtin is resolved to a package class of the same name.** `raise NotImplementedError` became a call
+>   to `bquant.core.exceptions.NotImplementedError` in three files that never import it. Two of the five
+>   edges are tagged `EXTRACTED`, "explicit in the source".
+>
+> What I predicted from source and got only half right: the graph is undirected, so two files that import
+> each other keep one link. The authors know this (their #4839). They store the other direction as a
+> `reverse_import` stamp on the surviving link, and their cycle finder reads it. My scoring did not.
+>
+> The community-naming step calls the `claude` CLI on the user's subscription when no API key is set.
+> It announces that on stderr, and `GRAPHIFY_BACKEND=none` turns it off.
+
+**How to read this card.** §0 is the pre-registration, committed in 9431aa0 before any run on the R2 tree.
+§1 is what the runs showed. §2 reconciles §1 with §0, and the diagnostics marked *post hoc* there were
+added after the scored run to separate two causes. The comparison, the разбор and the verdict come last.
 
 **Scope:** `sha256:300e0a010e351d0a91a7e006c3cc18047d7d400c94a525ddbe727f796a5e47d2` (R2 benchmark
 `bquant.scope.json`: 280 files, 207 .py / 73 .md, bquant@cb89a24) · run mode: **materialized** from a
@@ -176,3 +203,195 @@ At least one of P4, P5, P6 and C3k fails if the undirected-graph consequence is 
 - Languages other than Python.
 - The MCP server, unless a later addendum pre-registers it.
 - Graphify Cloud.
+
+## 1. Hands-on — the R2 tree
+
+Stand, inside the shared core-slot accounting; `graphifyy==0.9.102` in a fresh venv, Python 3.12;
+`extract --code-only`, `GRAPHIFY_BACKEND=none`, empty `HOME` per run. Numbers are in
+[`bench/graphify_results.json`](../bench/graphify_results.json).
+
+```
+run 0/1/2         rc 0, 14.2 / 14.4 / 14.1 s, 5 103 nodes, 11 699 links, 89 bquant modules
+graph.json        byte-identical in all three runs; "directed": false, "multigraph": false
+                  graph: {schema_version: 1, graphify_version: "0.9.102"}
+module deps       241, of them 240 in the truth: precision 99.6 %, recall 240 / 266 = 90.2 %
+  by truth scope  module 239 / 240 · function 0 / 25 · type_checking 1 / 1
+  from __init__   81 / 87
+  imports_from    160 links, 159 true (the set Graphify's own cycle finder reads)
+  symbol-only     55 more pairs reached only through an imported symbol's defining file, 19 of them true;
+                  with them recall is 97.4 %, precision 87.5 %
+cycles (truth 45: 14 of length 2, 5 of 3, 6 of 4, 8 of 5, 8 of 6, 4 of 7)
+  links only                  0 of 45
+  links + reverse_import      3 of 45, 0 false
+  every import link + stamps  28 of 45, 4 false
+  GRAPH_REPORT.md             2 cycles: analysis <-> analysis.candlestick, analysis <-> analysis.chart
+```
+
+**The one edge outside the truth** is `bquant.cli → bquant.visualization`, the same edge grafema had. The
+dependency is real; the truth attributes it to `visualization.charts`.
+
+**All 26 missed truth edges.** 25 are the function-scope imports, each present only as an edge to the
+imported symbol, or not at all. The 26th is `zones.pipeline → zones.cache`, a module-level import. It
+collapsed into the `TYPE_CHECKING` link `cache → pipeline` and survives only as that link's
+`reverse_import` stamp. That is the one place on this tree where the undirected graph itself costs an
+edge.
+
+**Diagnostics, post hoc.** The fixture could not tell the two causes apart (§2, C3k), so two minimal trees
+were run after the scored run:
+- **D1**, two files importing each other at module level. Default `extract`: one `imports_from` link,
+  `x → y`, stamped `reverse_import: true`. With `--no-cluster`, which writes the extraction without building
+  the networkx graph, both links are there. So the collapse is real, and it is compensated by the stamp.
+- **D2**, a single function-local `from pkg.d import h`, with nothing else between the two files: an
+  `imports` edge to `h`, and **no** `imports_from`, with or without `--no-cluster`. This one is the
+  extractor, not the graph.
+- Not explained: two of the six `analysis ↔ subpackage` pairs did get a `reverse_import` stamp for their
+  function-local direction, the other four did not.
+
+**Calls**, as file pairs against codemap (agreement, not truth):
+
+```
+Graphify cross-file pairs   137; 122 also codemap's: agreement 89.1 %
+codemap pairs               204; Graphify has 122: coverage 59.8 %
+cross-file call links       EXTRACTED 238 (pair in codemap: 94.5 %) · INFERRED 37 (75.7 %) · indirect 1
+calls to a non-callable     167 links, mostly exception classes (IndicatorCalculationError 16, …)
+```
+
+The nine `INFERRED` cross-file links whose pair codemap lacks, each read against the source:
+- **4 correct:** `config.validate(...)` in four detection modules → `ZoneDetectionConfig.validate` in
+  `detection/base.py`. codemap does not have them.
+- **1 plausible:** `indicator.calculate(df)` on what `IndicatorFactory.create(...)` returns (`pipeline.py`
+  L285). Not decidable statically; `INFERRED` is the honest tag.
+- **4 wrong:**
+  - three are `raise NotImplementedError(...)` in `analysis/__init__.py` (L185) and `ml/__init__.py` (L10,
+    L14). Both files use the **builtin**: neither imports anything from `core.exceptions`. Graphify points the
+    call at `class NotImplementedError(BQuantError)` there. Two more calls to the same homonym, from
+    `indicators/base.py` (L147, L157), carry the tag `EXTRACTED`; that file imports only
+    `IndicatorCalculationError`;
+  - one is `from bquant.analysis.timeseries import ZoneRegressionAnalyzer` inside a `try/except ImportError`
+    (`analyzer.py` L100). `timeseries` does not export that name, so at runtime the import fails. Graphify
+    links the call to the class in `statistical/regression.py` by its name.
+
+The `EXTRACTED` links codemap lacks, sampled: `LibraryManager.create_indicator(...)`,
+`.load_all_libraries()`, `.check_library_availability()` and similar. They are calls through the class
+name, and they are right. **codemap misses them.** In `CombinedVolatilityStrategy._calculate_bollinger_metrics`,
+codemap resolves 0 of 17 calls, and `LibraryManager` there comes in through
+`from .....indicators import LibraryManager`, a package re-export. That is codemap's gap, recorded as
+R1-C75. It is unverified beyond this one function.
+
+**T1/T2, the CLI.**
+- `graphify explain analyze_zones`: **exit 3**, "Ambiguous: 'analyze_zones' matches 2 nodes in different
+  files", with `pipeline.py` and `UniversalZoneAnalyzer.analyze_zones` in `analyzer.py`, and how to retry.
+- `explain MACDZoneAnalyzer`: exit 0, `bquant/indicators/macd.py L48`, degree 106. Incoming: 57 `calls`
+  (`EXTRACTED`), 23 `imports`, 19 `uses` (`INFERRED`, a class whose methods use it).
+- The files with a `calls`/`uses` link to it are **exactly codemap's 23 caller files**, on a repo-scoped
+  codemap graph of the same tree.
+
+**The offline claim (P11).** A fresh `HOME`, no `GRAPHIFY_BACKEND`, no API key, and a fake `claude` on
+`PATH` that logs its arguments and exits 1:
+- `extract . --code-only`: the fake was **not** called;
+- `cluster-only .`, the step `extract` itself suggests next ("to generate GRAPH_REPORT.md and name
+  communities"): the fake was called once, as `claude -p --output-format json --no-session-persistence`.
+  stderr said: "no API key found; naming communities via the `claude` CLI (claude -p). … or
+  GRAPHIFY_BACKEND=none to disable." The prompt carries the top node labels of each community, which are
+  names from the code. With the fake failing, the communities were named "Community N", exit 0.
+
+This is a design decision with its reasoning in the source (#4361): a silent downgrade to placeholders was
+judged worse. It is announced and can be turned off. But the README's first line about code reads "Code
+maps for free, fully local". On a machine with Claude Code installed and no key, the default run's second
+step sends symbol names to a model on the user's subscription.
+
+## 2. Reconciliation with the pre-registration
+
+| | expected | measured | |
+|---|---|---|---|
+| C1 | staging `== canonical ✓` | ✓ | holds |
+| C2 | 266 edges, 45 cycles, 14 of length 2 | ✓ | holds |
+| C3a, C3a_reversed, C3b | a→b, no b→a, a→c | all three | holds: the measurement is valid |
+| C3c | function-local import gives a→d | only `imports` to the symbol `h`; no `imports_from` | **fails** in the primary set. D2 confirms this is the extractor |
+| C3d | a→e, `type_only` | `imports_from:type_only` | holds |
+| C3e, C3f, C3i, C3j | a→f, a→pkg, user→sub, plain→b | all four | holds |
+| C3g, C3h | sub→sub.m; sub→sub.m2, not pkg.m2 | both, as `re_exports`; no pkg.m2 | holds: no grafema `__init__` defect |
+| C3k | exactly one of x→y, y→x | primary set: only x→y. Union: both, y→x through the symbol | holds **as written, for the wrong reason**: y→x is function-local, so D2, not the collapse, removes it. D1 (post hoc) shows the collapse separately |
+| P1 | 89 modules | 89 | holds |
+| P2 | ≥ 20 / 25 function, 1 / 1 type_checking | **0 / 25**, 1 / 1 | **fails** |
+| P3 | ≥ 70 / 87 from `__init__` | 81 | holds |
+| P4 | 0 / 14 mutual pairs with both directions | 0 / 14 as links; 3 / 14 with stamps | holds as written. The cause is D2 for 13 pairs, the collapse for 1 |
+| P5 | 20–31 / 45 cycles | **0** (links); 3 (with stamps); 28 (every import link) | **fails**: below the range. I bounded it by the collapse and did not foresee D2 |
+| P6 | report: ≤ 20 cycles, ≤ 5 files, none of length 2 | 2 cycles, **both of length 2** | **fails**. The stamps put 2-cycles back, and I had not read the stamp code |
+| P7 | precision ≥ 90 % | 99.6 % | holds |
+| P8 | same primary set in 3 runs | byte-identical `graph.json` | holds, more strongly than predicted |
+| P9 | agreement ≥ 80 % | 89.1 % (coverage 59.8 %) | holds |
+| P10 | ≥ 90 % of `INFERRED` cross-file links in codemap | 75.7 % (28 / 37) | **fails as written**. Read: of the 9 outside, 4 correct, 1 plausible, 4 wrong; so about 89 % look right |
+| P11 | recorded | `extract`: no call. `cluster-only`: one `claude -p` call, announced | finding (R3) |
+| P12 | exit 3 with both candidates; MACDZoneAnalyzer exit 0 | as predicted | holds |
+
+At least one of P4, P5, P6 and C3k was to fail if the undirected-graph consequence were not real. P5 and
+P6 failed, but not for that reason, so the pre-registration did not discriminate. D1 does. The consequence
+is real and compensated, and I could not have seen the compensation without reading `analyze.py` past the
+docstring. Its docstring says "from imports_from edges", and its body also reads `reverse_import`.
+
+### Surprises
+
+- **The two causes were not the ones I listed.** I expected the collapse to cost cycles. On this tree it
+  costs one edge. The function-local gap costs 25 edges and almost every cycle.
+- **codemap has a gap Graphify does not:** calls through a class name imported via a package re-export
+  (R1-C75). The comparison ran in the direction I had not planned to read.
+- **Graphify's handling of `__init__` relative imports is right where grafema's was not:** 81 of 87, and
+  the fixture's C3g/C3h pass. The six missed `__init__` edges are function-local.
+
+### What this card does not establish
+
+- Whether the function-local gap is a decision. I found no note on it in the source or docs. That has to
+  be settled before anything is filed, as R1 says.
+- The headline benchmarks (memory, ERPNext), the "80 %", the non-code layer, MCP, Graphify Cloud, other
+  languages.
+- Whether the stamps explain everything the report shows. Two of the six `analysis` pairs got stamps for a
+  function-local direction, and four did not; I did not trace why.
+
+## Coverage vs codemap
+
+| task | Graphify 0.9.102 | codemap |
+|---|---|---|
+| T1 defs | ✅ ambiguity refused, exit 3, both candidates | ✅ (`resolved.ambiguous`) |
+| T2 callers | ✅ the same 23 files as codemap for `MACDZoneAnalyzer` | ✅ |
+| T3 impact | ◐ `affected` exists; not measured | ✅ |
+| T4 sig-change | ✖ no call-contract surface | ✅ |
+| T5 arch | ◐ communities and god nodes. Import cycles: 2 of 45, because function-local imports make no dependency | ✅ |
+| determinism | ✅ byte-identical `graph.json` | ✅ |
+
+## Разбор
+
+**What to learn.**
+- **The stamp is the honest half of a bad trade.** An undirected store loses a direction, and they keep it
+  as an attribute their own analysis reads. Any other consumer of `graph.json` that reads links, an
+  exporter or someone's script, sees one direction. If codemap ever compresses its graph, the lesson is:
+  do not keep a fact only where your own reader looks for it.
+- **Tags on the edge, and the cost of getting them wrong.** `EXTRACTED`/`INFERRED` on every link is what
+  R1-C13 asks for. The `NotImplementedError` case shows how such a tag fails: "explicit in the source" was
+  given to a name the source never imports. It is the same class of defect as codemap's R1-C72 (a stdlib
+  name rewritten into a package module), and found the same way, by reading the disagreements.
+- **Exit codes for answers.** `0` an answer, `3` ambiguous, `4` no match. codemap says the same in its
+  envelope (`resolved.ambiguous`), but a script reading the exit code learns nothing. This is a cheap
+  candidate for the CLI.
+- **Speed and size of the code layer:** 14 s and about 290 MB for this tree, single process.
+
+**What not to learn.** Sending names from the code to a model by default in the step that follows a
+"fully local" one, even when it is announced.
+
+## Verdict & backlog effect
+
+**learn (strong).** On Python imports this is the most complete released graph scored on this truth: recall
+90 %, against 61 % for grafema 0.4.1 and 81 % for Understand-Anything's released extractor, at 99.6 %
+precision, and byte-identical across runs. It cannot serve as an architecture gate on a codebase
+that uses lazy imports to break cycles, which is what bquant does: its cycle report sees 2 of 45. The
+licence would allow `integrate`; nothing here needs it.
+
+- **R1-C75 (new, codemap):** a call through a class name imported via a package re-export goes unresolved
+  in the fast tier (`LibraryManager.create_indicator(...)` after `from .....indicators import LibraryManager`).
+  Seen once; to be verified on a minimal tree before design.
+- **R1-C13:** the `EXTRACTED`/`INFERRED` tags, and their failure mode on a builtin homonym.
+- **CLI exit codes for ambiguity/no match:** a candidate, not filed.
+- **Upstream candidates, the owner's decision after re-verification on a minimal tree with a control:**
+  (A) a function-local `from` import makes no `imports_from`, so lazy-import cycles are invisible;
+  (B) a builtin resolved to a package class of the same name, tagged `EXTRACTED`. The `claude -p` labeling
+  is a documented decision and is not a candidate.

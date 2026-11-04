@@ -1684,6 +1684,12 @@ Python-focus** — если задача его нарушает, это отм�
       и вызовы первого тела не считались нигде; вложенная функция-тёзка метода **становилась методом** (ложная петля
       в pytest). Мой прогноз брал не то правило затенения, что документирует R1-C46, — исправлен после прогона, названо.
       `ANSWER_FORMAT` 3 → 4 к следующему релизу. +8 % ко времени сборки.
+- [ ] **R1-C75 вызов через имя класса, пришедшего реэкспортом пакета, не разрешается в быстром тире** (S, проверить)
+      — 🆕 (2026-11-04, найдено сверкой с Graphify, [`research/tools/graphify.md`](research/tools/graphify.md) §1).
+      В `CombinedVolatilityStrategy._calculate_bollinger_metrics` (bquant@cb89a24) разрешено 0 из 17 вызовов;
+      `LibraryManager` пришёл через `from .....indicators import LibraryManager`, а Graphify правильно
+      связывает `LibraryManager.create_indicator(...)` с `indicators/library/manager.py` (с меткой
+      `EXTRACTED`). Пока видел только один случай. Сначала минимальное дерево и контроль, потом дизайн.
 - [ ] **R1-C67 вложенные определения узлами графа** (M, **решение владельца — не сейчас**) — 🆕 (2026-10-15,
       остаток R1-C60). R1-C60 закрыт **объявлением**: `dead-code` называет сужение, граф побайтно прежний.
       Сами 49 вложенных определений bquant (`cached.decorator.wrapper`, `register_*.decorator`) в графе по-
@@ -2736,7 +2742,19 @@ R1 закартировал поле сверху вниз; **R2** идёт по
             После перепроверки (§7) заведено: [#483](https://github.com/Disentinel/grafema/issues/483),
             [#484](https://github.com/Disentinel/grafema/issues/484), [#485](https://github.com/Disentinel/grafema/issues/485),
             [#486](https://github.com/Disentinel/grafema/issues/486).
-      - [ ] остальные — CodeSlicer,
+      - [x] **Graphify** — карточка [`research/tools/graphify.md`](research/tools/graphify.md) (2026-11-04,
+            PyPI `graphifyy` 0.9.102, ★141k, Apache-2.0; предрегистрация 9431aa0 до прогона; решение сессии
+            по делегированию — [#21](https://github.com/kogriv/codemap/issues/21)). Код-слой детерминирован:
+            3 прогона дали побайтово одинаковый `graph.json` по 14 с. Импорты: 241 зависимость, 240 настоящих
+            (99,6 %), полнота 90 % — лучшая из выпущенных тулов на этом эталоне. `MACDZoneAnalyzer`: те же 23
+            файла-вызывателя, что у codemap; на неоднозначное имя — exit 3 с кандидатами. Но импорт внутри
+            функции не даёт зависимости модулей (0 из 25), поэтому отчёт о циклах видит **2 из 45**. Builtin
+            `NotImplementedError` связан с одноимённым классом пакета, в том числе с меткой `EXTRACTED`.
+            Граф ненаправленный: обратный импорт хранится пометкой `reverse_import` (их #4839). Предсказание
+            сбылось наполовину, сказано в §2. `cluster-only` без ключа зовёт `claude -p` (объявлено, отключается
+            `GRAPHIFY_BACKEND=none`). Вердикт **learn (strong)**. Питает R1-C75 (наш пробел), R1-C13; кандидаты
+            в апстрим (A) локальный импорт и (B) builtin-однофамилец — после перепроверки, по решению владельца.
+      - [ ] остальные — import-linter (сосед `codemap check`, следующий), CodeSlicer,
             ast-index, Graphify, CodeWiki, Foglamp (desk где SaaS/не воспроизводится — с честной
             пометкой). Порядок — по близости к codemap и по связи с R1-C.
             **Sentrux понижен до desk** (2026-08-28, по факту): ★2919, MIT, Rust — но создан 11.03.2026,

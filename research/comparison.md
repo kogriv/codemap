@@ -29,6 +29,7 @@ get a byte-identical staging via [`materialize.py`](tools/_scope/materialize.py)
 | **jevgrep** | [card](tools/jevgrep.md) | ◐⁷ | ◐⁷ | ✖⁷ | ✖⁷ | ✖⁷ | ✖⁷ | ✖ (CLI + skill) | Py/TS/JS/Go/Rust | MIT |
 | **Understand-Anything** | [card](tools/understand-anything.md) | ✅⁸ | ◐⁸ | ◐⁸ | ✖⁸ | ◐⁸ | ◐⁸ | ✖ (skills + JSON) | many + non-code | MIT |
 | **grafema** | [card](tools/grafema.md) | ◐⁹ | ◐⁹ | ◐⁹ | ✖⁹ | ◐⁹ | ✅⁹ | ✅ (40+ tools) | 10+ (claimed; Py beta) | FSL-1.1 → Apache-2.0 |
+| **Graphify** | [card](tools/graphify.md) | ✅¹⁰ | ✅¹⁰ | ◐¹⁰ | ✖¹⁰ | ◐¹⁰ | ✅¹⁰ | ◐ (`[mcp]` extra; not measured) | ~40 (tree-sitter) | Apache-2.0 |
 
 _Rows are seeded from R1/R1.5 (desk-level, hence `?`); each becomes measured as its card moves to
 `hands-on`. `codemap` is the ground-truth reference for T1–T5._
@@ -148,6 +149,7 @@ honesty) as cards complete. See each card's Quality section for detail.
 | cocoindex-code | local Apache-2.0 semantic search, **no DB / no API key**; concept queries nail the right files with zero name knowledge; **incremental re-index ≈ 1 s** (content-hash); bundled tree-sitter `grep`; MCP + agent skill | **no structural analysis** (T2–T5 N/A — vector index only); exact symbol lookup is fuzzy via `search`; binary non-diffable index; `[full]` torch drops pre-Turing GPUs (CPU-only on Pascal) | **wrap** (opt-in semantic adapter) + learn (incremental engine) | R1-C16, R1-C9, R1-C6 |
 | CodeGraph | **speed** (1.4 s cold index, 0.3 s queries, **121 ms** incremental sync, **0.33 s** save→answerable with its watcher); symbol-level callers that *contain* codemap's set; MIT; 20 languages; one npm command, no service; **exemplary claim honesty** — publishes the axis where it loses and retracted its own earlier benchmark after finding the control arm contaminated 26/28 | no T4/T5 on any reachable surface (no argument contract; no layers/violations at all, and the library-only cycle finder reports **136 where 41 are real** *(corrected 2026-10-15: 45 real on the measured tree, so recall 29% and codemap's 2.2%; 1.6.2 reports 25, 16 real — footnote ⁴)*, sees a function-local import only when the symbol is *called*, and does not separate a cycle that breaks on import from one a lazy import already fixed — it walks name-resolved call edges, so `dict.get` becomes a call into an unrelated class; precision 10%, and its recall of 32% beat codemap's 2.4% until R1-C29 closed that same day); impact is **flat and untagged** (no calls-vs-references, no root roles); `.md` outside the model; **silent `--limit 20` truncation** with no marker (filed upstream as [#1639](https://github.com/colbymchenry/codegraph/issues/1639), **fixed by the author 2026-09-08 in PR #1772, not yet released**; the same defect turned up in codemap's own `search` and is fixed as R1-C28); a wall-clock `updatedAt` in the answer; binary 15.5 MB artifact | **learn-only (strong)** | M3.2, R1-C13, R1-C6, R1-C14 |
 | grafema | **every import scope read by design** (imports are nodes in their scope); module dependencies **derived by a readable Datalog rule**; per-call-site `[resolved]`/`[unresolved]`; deterministic edge set; 99.4 % edge precision | three Python defects that never stop the run (`__init__` relative imports one level too high, with no log line at all; f-string `!r` drops the file, logged at exit 0; quickstart loads no Python analyzer) → **8 / 45** cycles; a missing definition is replaced by a namesake marked resolved; no call ever resolves to a class; the first guarantee `check` on a fresh graph passes with nothing evaluated, a predicate typo passes, an edited rule stays stale; Python `wtf` answers nothing; FSL licence | learn (strong), design | derived-edge rules (new); R1-C39, R1-C13 |
+| Graphify | **byte-identical** `graph.json` in 14 s; import precision 99.6 %, recall 90 % (best released on this truth); the same 23 caller files as codemap for `MACDZoneAnalyzer`; ambiguity refused with **exit 3** and candidates; `EXTRACTED`/`INFERRED` on every link | a function-local import makes **no module dependency** (0 / 25), so its cycle report sees **2 of 45**; a builtin `NotImplementedError` linked to a package class of the same name, tagged `EXTRACTED`; undirected store keeps the reverse import only as a `reverse_import` stamp; `cluster-only` calls `claude -p` by default when no key is set (announced) | **learn (strong)** | R1-C75 (codemap's own gap), R1-C13 |
 
 ⁷ jevgrep / `@dzhng/jevgrep` (0.8.0), hands-on **Stages A, B and D** on the R2 scope (materialized staging,
 `scope_id` verified). Stages A–B used a **local stand-in gateway** and measure their **pipeline**; **Stage D
@@ -216,6 +218,11 @@ verified), with `include: ["**/*.py"]` because the quickstart's brace glob loads
   - import costs ~300 s per rule unless `governs` is narrowed.
 - **Data flow:** `wtf` answers "no reachable nodes" for every Python question, a toy included. The JS
   toy works.
+
+¹⁰ Graphify (PyPI `graphifyy` 0.9.102), hands-on on the R2 scope (materialized from `git archive cb89a24`,
+`scope_id` verified), `extract --code-only` with `GRAPHIFY_BACKEND=none`. T2 matches codemap's caller files
+exactly (23 / 23); T3 (`affected`) not measured; T5: communities and god nodes, import cycles 2 of 45. Card:
+[`tools/graphify.md`](tools/graphify.md).
 
 See the [card](tools/grafema.md).
 

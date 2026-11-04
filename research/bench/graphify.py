@@ -108,8 +108,10 @@ def _extract(binary: Path, tree: Path) -> dict:
     t0 = time.time()
     r = subprocess.run([str(binary), "extract", str(tree), "--code-only"], cwd=tree,
                        capture_output=True, text=True, env=_env(home), timeout=3600)
+    # Keep machine paths out of committed results: the work directory becomes `<work>`.
+    clean = lambda x: x.replace(str(tree.parent), "<work>")
     return {"rc": r.returncode, "seconds": round(time.time() - t0, 1),
-            "stdout_tail": r.stdout[-1500:], "stderr_tail": r.stderr[-1500:]}
+            "stdout_tail": clean(r.stdout[-1500:]), "stderr_tail": clean(r.stderr[-1500:])}
 
 
 def _edges(graph: dict, package: str | None) -> dict:
