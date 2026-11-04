@@ -862,6 +862,24 @@ upload, and waiting is.
 identical too. Neither has a near-miss table, so the fixture row and the version line are the
 nothing-was-done controls.
 
+**0.0.26 published 2026-11-04:** [`codmap` 0.0.26](https://pypi.org/project/codmap/0.0.26/), schema 0.13,
+`ANSWER_FORMAT` 4. From `1f156f6`: suite at the fix commit 1133 passed / 3 skipped, CI green on 3.11–3.14,
+`twine check` PASSED. Reconciled from PyPI:
+
+```
+                         0.0.25 (published)                       0.0.26 (published)
+[architectur] + rule     exit 0, "No [architecture] contract"     exit 2, "Contract not read", names both tables
+[architecture] + rule    exit 2, 1 rule broken                    the same
+--version                codemap 0.0.25 · …                       codemap 0.0.26 · answer format 4 · schema 0.13
+bquant (f9d4f2b)         exit 0                                   exit 0; output byte-identical; graph identical
+bquearch gate (ecbb16b)  exit 0                                   exit 0; output byte-identical
+```
+
+Every expectation holds. The index-cache slip happened a third time: the first `--version` call failed even
+after a 60 s wait inside the script, and the call in the same pass's next line already got 0.0.26. A separate
+call a few minutes later gave the line above. The rule from now on: verify the version line last, in its own
+call.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
