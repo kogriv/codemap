@@ -237,6 +237,15 @@ Every prediction held. The two silent passes I predicted from source are real.
 [#392](https://github.com/seddonym/import-linter/issues/392) unknown contract options are ignored;
 [#393](https://github.com/seddonym/import-linter/issues/393) zero contracts pass. G7 is not filed: it is fixed.
 
+**Maintainer reply, same day:** both accepted as improvements, PRs invited. **PRs opened 2026-11-04** on the
+owner's decision: [#395](https://github.com/seddonym/import-linter/pull/395) (#393: `lint_imports` raises
+before the graph is built when no contracts are defined) and
+[#396](https://github.com/seddonym/import-linter/pull/396) (#392: an option no field recognises is an
+`InvalidContractOptions` error, with the closest field suggested; parent-class fields and `id`/`name`/`type`
+recognised). Each was checked against the G16/G5 probe (2.15: exit 0; the branch: exit 1 with the message) and
+by mutation. One trap found on the way: rich parses `[...]` in error messages as markup, so the #395 message
+names the INI section and TOML table without brackets.
+
 ## Coverage vs codemap
 
 | task | import-linter 2.15 | codemap |
