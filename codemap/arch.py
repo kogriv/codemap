@@ -101,7 +101,29 @@ def load_contract(root: str | Path = ".") -> ArchitectureContract:
     data, error = read_toml(path)
     if error:
         return ArchitectureContract(error=error, path=str(path))
+    near = _near_miss_tables(data)
+    if near:
+        return ArchitectureContract(error=near, path=str(path))
     return replace(parse_contract(data.get("architecture", {})), path=str(path))
+
+
+def _near_miss_tables(data: dict) -> str | None:
+    """R1-C76 (design ``contract_table_typo.md``): a table named like ``[architecture]`` but not it.
+
+    ``[architectur]`` used to read as "no contract", exit 0: R1-C69 closed the schema inside the
+    table, and the table name stayed the one typo that turned a gate green. Refused even beside a
+    real ``[architecture]`` (D2): its rules would never run. Other tables are not checked (D3).
+    """
+    import difflib
+
+    names = [k for k, v in data.items()
+             if k != "architecture" and isinstance(v, dict)
+             and difflib.SequenceMatcher(None, k.lower(), "architecture").ratio() >= 0.8]
+    if not names:
+        return None
+    listed = ", ".join(f"`[{k}]`" for k in names)
+    return (f"{listed} looks like a misspelling of `[architecture]`; codemap reads only "
+            "`[architecture]`, so its rules would never run")
 
 
 #: R1-C69: the closed schema of ``[architecture]``. A key outside it is an error, not a skip.
