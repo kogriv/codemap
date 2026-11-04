@@ -805,6 +805,27 @@ fixture's 5 call sites on 0.0.24 are the source's 5 `ast.Call`s; 0.0.23 counted 
   `uv cache clean codmap` the whole fixture ran on 0.0.24 and gives the table. The consumer runs in that
   pass were on 0.0.24 throughout: their trailer says format 4.
 
+**0.0.25 — the release check, pre-registered before the upload (2026-11-04).** One item (R1-C75); schema
+**0.13** and **`ANSWER_FORMAT` 4** unchanged. The first release decided by the codemap session under the
+owner's delegation of 2026-11-04 (recorded in a kogriv/codemap issue for this release). Same
+procedure: both versions from PyPI, `PYTHONHASHSEED=7`, the fixture run on 0.0.24 first (rule 4).
+
+| | tree form | 0.0.24 (expected) | 0.0.25 (expected) |
+|---|---|---|---|
+| R1-C75 | `from pkg.indicators import LibraryManager` + `LibraryManager.create_indicator()` | no `calls` edge, `unresolved` 1 | `calls` edge to `…manager.LibraryManager.create_indicator`, `resolved` 1 |
+| version | `codemap --version` | `codemap 0.0.24 · answer format 4 · schema 0.13` | `codemap 0.0.25 · answer format 4 · schema 0.13` |
+| trailer | any markdown answer | `_answer format 4 · schema 0.13_` | the same |
+
+**Consumers, before they are told:**
+- **bquant** (its tree at today's HEAD, `check --build bquant` and `build` + `check --graph`): exit 0 on both,
+  and the text output is **byte-identical**. The format did not move, so an empty diff is the expectation
+  here, not a sign that nothing ran.
+- **The nothing-was-done control** is therefore the graph. On bquant `8efa112`, 0.0.25 has exactly R1-C75's
+  6 extra `calls` pairs and counters +6/−6, and nothing else differs. If the graphs are identical, the run
+  did not reach two versions.
+- **bquearch** (its gate on a copy of its HEAD, `CODMAP_VERSION` changed only): exit 0 on both,
+  byte-identical output.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
