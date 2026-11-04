@@ -26,12 +26,13 @@ One rule threads all of them: **measurements, not verdict.**
 | 10 | **I measured a tool that asks a model about every file. On my scope, mine won — and the scope is the caveat.** — a model-judged search against a graph, five questions, real Jev, $1.14. What it found, what it cannot see, and when you would pick it instead. | [EN](10-asks-a-model-about-every-file.md) | [RU](10-asks-a-model-about-every-file.ru.md) |
 | 11 | **I tested a rival's architecture gate for silent passes. Then I pointed the same probe at mine, and my own control failed first.** — grafema has the most careful import graph I have measured and a gate that can pass without checking; the same questions, asked of `codemap check`, found three holes in mine, and the fixes found three more. | [EN](11-the-probe-i-pointed-at-myself.md) | [RU](11-the-probe-i-pointed-at-myself.ru.md) |
 | 12 | **The most-starred code graph got my imports right and my cycles wrong. Then it found a hole in mine.** — Graphify: byte-identical runs, 99.6 % import precision, 90 % recall, and a cycle report that sees 2 of 45 because a lazy import makes no dependency; a prediction from its source that came out half right; and its correct answers found a bug in codemap, fixed in 0.0.25. | [EN](12-right-imports-wrong-cycles.md) | [RU](12-right-imports-wrong-cycles.ru.md) |
+| 13 | **The reference gate agreed with my graph to the last edge. Then the question I asked it caught me too.** — import-linter: grimp's graph equals the 266-edge truth exactly and its verdicts match codemap's on a real contract; three configuration typos pass without checking (two filed, one already fixed); the third question, asked of codemap, found the same hole, fixed in 0.0.26. | [EN](13-the-reference-gate.md) | [RU](13-the-reference-gate.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
-readers can start at 0. Posts 4, 5, 6, 8, 9 and 11 are the ones where the method is turned on the author — 4 on a
+readers can start at 0. Posts 4, 5, 6, 8, 9, 11 and 13 are the ones where the method is turned on the author — 4 on a
 claim of his, 5 on the limits of how he was testing it, 6 on three differentiators he had to give up, 8 on
-twelve of his own closed bug reports, 9 on the limit of measuring at all, 11 on his own architecture gate, with a probe written for a rival's. Post 7 is the one where an outside
+twelve of his own closed bug reports, 9 on the limit of measuring at all, 11 on his own architecture gate, with a probe written for a rival's, and 13 on it again, with a question written for the incumbent's. Post 7 is the one where an outside
 implementation agreed with his numbers exactly, which is the only external check in the series. Post 12 is the one
 where a rival's correct answers found a bug in the author's tool.
 

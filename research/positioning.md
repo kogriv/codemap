@@ -1197,11 +1197,43 @@ your own reader looks is invisible to everyone else's.
 - "The rival's resolver was right where mine was wrong. I would not have looked there if I had read only the
   cases where it was wrong." → build-story #12
 
+## Build-story #13 — "The reference gate agreed to the last edge; my question to it caught me" (import-linter)
+
+**Facts:** [`tools/import-linter.md`](tools/import-linter.md) §0–§3, design
+[`contract_table_typo`](../docs/design/contract_table_typo.md). **Post:** [13](blog/13-the-reference-gate.md).
+
+### The setup
+The incumbent Python architecture gate (2019, BSD-2). Its graph (grimp, Rust core) equals codemap's truth to
+the edge: 266/266, 45/45 cycles, 0.11 s. Every gate question that codemap failed in the last month, it passes.
+
+### The surprising measurement
+Three silent passes, all configuration: an unknown optional key is ignored (`exhaustiv`), a misspelled forbidden
+module is dropped (already #386, fixed on `main`), zero contracts pass (`[[tool.importlinter.contract]]`). Two
+were predicted from source before the run. Filed #392, #393.
+
+### The turn
+The third question asked of codemap: `[architectur]` read as "no contract", exit 0. Fixed in 0.0.26 (R1-C76).
+The second time a question written for a rival found a hole in the author's gate.
+
+### The lesson (reusable)
+Two engines with no shared code agreeing edge for edge is the strongest check a truth set can get short of
+ground truth, and it still cannot reveal a blind spot they share. And: the gate's weakest surface is not the
+graph, it is the configuration that tells it what to check.
+
+### What we take, what we keep
+- **Take:** indirect `forbidden` as an option; a `protected` rule; guidance text on a rule.
+- **Keep:** a cycle rule per import scope; the answer that names the edge to change.
+
+**Quotable:**
+- "Two engines that share no code produced the same module graph, edge for edge." → build-story #13
+- "That is the second time a question I wrote for someone else's gate found a hole in mine. I am starting to
+  think that is what such questions are for." → build-story #13
+
 ## Future stories (skeletons — fill on разбор)
 
-- **#13 …** next tool from R2.2 (import-linter next). Same shape: setup → the surprising measurement → head-to-head → lesson →
+- **#14 …** next tool from R2.2 (CodeSlicer, ast-index, CodeWiki, Foglamp in the queue). Same shape: setup → the surprising measurement → head-to-head → lesson →
   take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code, #6 CodeGraph, #7 OntoIndex, #10 jevgrep, #11 grafema,
-  #12 Graphify done; #4, #5, #8, #9 are about ourselves, and #11 is both.)
+  #12 Graphify, #13 import-linter done; #4, #5, #8, #9 are about ourselves, and #11 is both.)
 - **The determinism story.** ✅ Told twice, neither time as sketched: #4 (a determinism *test* went red and
   the tool was fine) and #8 (the artifact was byte-stable and the *rendering* was not). The sketch asked for
   "graph diff caught X" and the episodes that happened were both sharper than that.
