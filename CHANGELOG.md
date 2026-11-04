@@ -5,6 +5,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.25] - 2026-11-04
+
+**A call through a re-exported class resolves.** Schema unchanged (**0.13**, fourteenth release running).
+**`ANSWER_FORMAT` unchanged (4):** no output changed shape; graphs gain `calls` edges and counters move from
+`unresolved` to `resolved`. One item, found by comparing with Graphify.
+
 - **A call through a class name that came in by a package re-export resolves** (R1-C75, design
   [`docs/design/reexported_class_calls.md`](docs/design/reexported_class_calls.md)). `from pkg import Cls` +
   `Cls.method()` was unresolved in the fast tier, while `Cls()` through the same import, and the same call
