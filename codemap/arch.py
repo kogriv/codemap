@@ -16,6 +16,8 @@ integration gate reads). All rules operate on the **core** module import graph
     independent = [["indicators", "data"]]
     # hard bans regardless of layering: `from` must not import `to`.
     forbidden = [{ from = "core", to = "analysis" }]
+    # ...or no chain of imports at all, through any module (R1-C78):
+    #   forbidden = [{ from = "data", to = "analysis", indirect = true }]
     # the import graph must be acyclic *at import time* (the eager graph).
     no_cycles = true
     # also gate the coupling a lazy import hides: cycles closed only by an import
@@ -53,6 +55,9 @@ class ArchitectureContract:
     layers: tuple[str, ...] = ()
     independent: tuple[tuple[str, ...], ...] = ()
     forbidden: tuple[tuple[str, str], ...] = ()
+    # R1-C78: parallel to `forbidden` — True where the item bans every chain, not one edge.
+    # Kept beside the pairs, not inside them, so every reader of `(from, to)` stays as it was.
+    forbidden_indirect: tuple[bool, ...] = ()
     no_cycles: bool = False
     no_lazy_cycles: bool = False
     no_type_only_cycles: bool = False
@@ -192,12 +197,15 @@ def contract_problems(section) -> list[str]:
                 if not isinstance(item, dict):
                     problems.append(f"`forbidden[{i}]` must be a table `{{ from = \"…\", to = \"…\" }}`")
                     continue
-                extra = sorted(set(item) - {"from", "to"})
+                extra = sorted(set(item) - {"from", "to", "indirect"})
                 missing = [k for k in ("from", "to") if k not in item]
                 wrong = [k for k in ("from", "to") if k in item and not isinstance(item[k], str)]
                 if extra:
                     problems.append(f"`forbidden[{i}]` has unknown key(s) "
                                     + ", ".join(f"`{k}`" for k in extra))
+                if "indirect" in item and not isinstance(item["indirect"], bool):
+                    problems.append(f"`forbidden[{i}]`: `indirect` must be true or false, got "
+                                    f"{type(item['indirect']).__name__} `{item['indirect']!r}`")
                 if missing:
                     problems.append(f"`forbidden[{i}]` is missing " + ", ".join(f"`{k}`" for k in missing))
                 if wrong:
@@ -226,10 +234,11 @@ def parse_contract(section: dict) -> ArchitectureContract:
     if problems:
         return ArchitectureContract(
             error="`[architecture]` is not a valid contract: " + "; ".join(problems))
-    forbidden = []
+    forbidden, indirect = [], []
     for item in section.get("forbidden", []) or []:
         if isinstance(item, dict) and "from" in item and "to" in item:
             forbidden.append((str(item["from"]), str(item["to"])))
+            indirect.append(bool(item.get("indirect", False)))
     independent = tuple(
         tuple(str(x) for x in grp)
         for grp in (section.get("independent", []) or [])
@@ -239,6 +248,7 @@ def parse_contract(section: dict) -> ArchitectureContract:
         layers=tuple(str(x) for x in (section.get("layers", []) or [])),
         independent=independent,
         forbidden=tuple(forbidden),
+        forbidden_indirect=tuple(indirect),
         no_cycles=bool(section.get("no_cycles", False)),
         no_lazy_cycles=bool(section.get("no_lazy_cycles", False)),
         no_type_only_cycles=bool(section.get("no_type_only_cycles", False)),
@@ -310,6 +320,71 @@ def _tangle_line(tangle: dict) -> str:
     return f"{head} (tangle of {tangle['size']}: {', '.join(tangle['modules'])})"
 
 
+_CHAIN_CAP = 25   # witness chains listed per indirect item before "… N more"
+
+
+def _forbidden_chain(query, frm: str, to: str) -> Violation | None:
+    """R1-C78 (design ``forbidden_chains.md``): does any module of ``frm`` reach ``to`` by imports?
+
+    The graph is the one the direct rule reads — core modules, every import scope (D2). A chain may
+    pass through any core module, its own layer and undeclared layers included, and stops at the first
+    module of ``to``. Reported (D3): the **entry edges** ``u → v`` (``v`` in ``to``, ``u`` outside it and
+    reachable from ``frm``) and, for each, a shortest witness chain, ties to the lexicographically
+    smallest, so the answer is deterministic.
+    """
+    ig = query.import_graph
+    layer = {m: query._layer_of(m) for m in ig.nodes if query.root_of(m) == "core"}
+    succ = {m: sorted(w for w in ig.successors(m) if w in layer and w != m) for m in layer}
+    sources = sorted(m for m, ly in layer.items() if ly == frm)
+    if not sources:
+        return None
+    # Level-by-level BFS; each node keeps the smallest chain among those of the shortest length.
+    best: dict[str, tuple[str, ...]] = {s: (s,) for s in sources}
+    frontier = sources
+    while frontier:
+        nxt: dict[str, tuple[str, ...]] = {}
+        for u in frontier:
+            for w in succ[u]:
+                if w in best or layer[w] == to:
+                    continue
+                cand = best[u] + (w,)
+                if w not in nxt or cand < nxt[w]:
+                    nxt[w] = cand
+        best.update(nxt)
+        frontier = sorted(nxt)
+    entries = sorted((u, w) for u in best for w in succ[u] if layer[w] == to)
+    if not entries:
+        return None
+    witnesses = [best[u] + (w,) for (u, w) in entries]
+    # Which modules of `frm` reach `to` at all: walk back from the entry edges, outside `to`.
+    pred: dict[str, list[str]] = {}
+    for u in layer:
+        if layer[u] == to:
+            continue
+        for w in succ[u]:
+            pred.setdefault(w, []).append(u)
+    seen, stack = set(), [u for (u, _) in entries]
+    while stack:
+        u = stack.pop()
+        if u in seen:
+            continue
+        seen.add(u)
+        stack.extend(pred.get(u, ()))
+    reaching = sum(1 for s in sources if s in seen)
+    # A one-hop witness is the entry edge itself, already listed; only longer chains add proof.
+    witnesses = [c for c in witnesses if len(c) > 2]
+    lines = [" → ".join(f"`{m}`" for m in c) for c in witnesses[:_CHAIN_CAP]]
+    if len(witnesses) > _CHAIN_CAP:
+        lines.append(f"_… {len(witnesses) - _CHAIN_CAP} more_")
+    return Violation(
+        "forbidden",
+        f"`{frm}` must not reach `{to}`, directly or through other modules: "
+        f"{reaching} module(s) of `{frm}` reach it",
+        edges=tuple(entries),
+        modules=tuple(lines),
+    )
+
+
 def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
     """Evaluate every rule against the graph; return the violations (empty = clean)."""
     if contract.is_empty():
@@ -347,7 +422,13 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
             ))
 
     # -- forbidden: explicit from→to bans ---------------------------------------
-    for frm, to in contract.forbidden:
+    indirect = contract.forbidden_indirect or (False,) * len(contract.forbidden)
+    for (frm, to), chained in zip(contract.forbidden, indirect):
+        if chained:                       # R1-C78: no chain at all, through any module
+            v = _forbidden_chain(query, frm, to)
+            if v:
+                violations.append(v)
+            continue
         bad = tuple((u, v) for (u, v, lu, lv) in edges if lu == frm and lv == to)
         if bad:
             violations.append(Violation(

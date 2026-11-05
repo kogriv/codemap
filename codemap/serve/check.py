@@ -198,7 +198,11 @@ def _render_verdict(query, contract: ArchitectureContract, violations: list[Viol
         if contract.independent:
             rules.append(_rule_count("independent", appl))
         if contract.forbidden:
-            rules.append(_rule_count("forbidden", appl))
+            count = _rule_count("forbidden", appl)
+            k = sum(contract.forbidden_indirect)
+            if k:   # R1-C78 D7: a green run says which kind of rule held
+                count = count[:-1] + f", {k} indirect)"
+            rules.append(count)
         if contract.no_cycles:
             rules.append("no_cycles")
         if contract.no_lazy_cycles:

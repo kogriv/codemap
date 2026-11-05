@@ -105,7 +105,6 @@ REFUSED = {
     "C8": ('[architectur]\nlayers = ["high", "mid", "low"]\n', ["`[architectur]`"]),
     "C9": ('[architecture]\nforbidden = {from = "low", to = "high"}\n', ["`forbidden` must be a list"]),
     "C10": ('[architecture]\nLayers = ["high", "mid", "low"]\n', ["unknown key `Layers`", "did you mean `layers`"]),
-    "C15": ('[architecture]\nforbidden = [{from = "low", to = "high", indirect = true}]\n', ["unknown key(s) `indirect`"]),
 }
 
 
@@ -116,6 +115,13 @@ def test_a_malformed_contract_is_refused(base, tmp_path, capsys, probe):
     assert rc == 2 and "nothing was enforced" in out, f"{probe}: {out}"
     for line in heard:
         assert line in out, f"{probe}: {line!r} not in {out}"
+
+
+def test_C15_indirect_is_accepted_since_r1c78(base, tmp_path, capsys):
+    # First run (73a757e, before R1-C78): refused as an unknown key, as predicted. Now the key exists.
+    toml = '[architecture]\nforbidden = [{from = "low", to = "high", indirect = true}]\n'
+    rc, out = _run(_with(base, tmp_path, toml), capsys)
+    assert rc == 2 and "`low` must not reach `high`" in out and "- `gp.low.l` → `gp.high.h`" in out, out
 
 
 def test_C2_exhaustive_names_an_undeclared_layer(base, tmp_path, capsys):
