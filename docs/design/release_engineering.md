@@ -897,6 +897,25 @@ delegation. Fixture run on 0.0.26 first (rule 4), `PYTHONHASHSEED=7`. Fixture `p
 **Consumers:** bquant (HEAD) and bquearch (HEAD): exit 0 on both versions, output byte-identical. Neither uses
 `indirect` or repeats a name, so the two fixture rows and the version line are the nothing-was-done controls.
 
+**0.0.27 published 2026-11-05:** [`codmap` 0.0.27](https://pypi.org/project/codmap/0.0.27/), schema 0.13,
+`ANSWER_FORMAT` 4. From `b4ab0aa`: suite at the release commit 1177 passed / 3 skipped (1180 collected), CI green
+on 3.11–3.14, `twine check` PASSED. Reconciled from PyPI:
+
+```
+                          0.0.26 (published)                          0.0.27 (published)
+pkg, indirect = true      exit 2, "Contract not read", key `indirect`  exit 2, `data` must not reach `analysis`, witness d → c → a
+pkg, without indirect     exit 0, forbidden (1)                        the same
+gp, layers repeats high   exit 2, the LEGAL gp.high.h → gp.mid.m named exit 2, "Contract not read", `layers` repeats `high`
+gp, valid layers          exit 2, gp.mid.m → gp.high.h                 the same
+--version                 codemap 0.0.26 · …                           codemap 0.0.27 · answer format 4 · schema 0.13
+bquant (cf039ef)          exit 0                                       exit 0; output byte-identical
+bquearch gate (703696d)   exit 0                                       exit 0; output byte-identical
+```
+
+Every expectation holds. The index cache struck a fourth time, on the first fixture: the first call of the pass
+exited 1 with no output, the next calls already ran 0.0.27. Re-run alone, it gave the line above; the version
+line was checked last, in its own call.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
