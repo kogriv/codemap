@@ -107,6 +107,38 @@ is missing. **P5/P6** are the probes I know least about; if either is exit 0, it
 At least P0 fails if the fixture is wrong; at least C11 fails as predicted if my reading of `check_contract` is
 right.
 
+## Reconciliation (2026-11-05, first run at 73a757e)
+
+On the stand, under a 2-core slot: **35 tests, 36 probes, 35 passed in 1.4 s.** Read probe by probe, not by the
+count:
+
+| probes | predicted | measured | |
+|---|---|---|---|
+| P0c, P0 (controls) | 0 / 2 | 0 / 2 | holds |
+| P1–P4, P7–P13 | exit 2 | exit 2, `layered`, the `gp.high…` edge named | holds |
+| **P5** `from gp import high`, **P6** `from .. import high` | exit 2 (**L**: might land on the root) | exit 2 | holds; my doubt was unfounded |
+| P14 `importlib.import_module` | exit 0, a limit | exit 0 | holds |
+| C1, C3, C6, C8, C9, C10, C15 | refused | refused, each line heard | holds |
+| C2, C4b, C7, G1, G1b, G3 | as predicted | as predicted | holds |
+| C4, C5 | exit 0, "0 of 1" / "2 of 3 applicable" | exit 0, `forbidden (1 declared, 0 applicable)` / `layered (3 declared, 2 applicable)` plus the phantom note | holds (my wording, codemap's format) |
+| **C11** repeated layer | **exit 0, a silent pass** | **exit 2 for the wrong edge**: the legal `gp.high.h → gp.mid.m` named, the upward `gp.mid.m → gp.high.h` not | **the defect is real, the shape differs** |
+| C12 `layers = []` | exit 0, "No contract found" | as predicted | holds; judged: not a defect (an empty table enforces nothing, and says exactly that) |
+| C13 `from == to`, C14 `["low", "low"]` | exit 0, counted applicable | as predicted | holds; judged: a defect of the C11 kind |
+| G2 missing `--build` path | exit ≠ 0, the path named (**L**) | as predicted | holds |
+
+### Surprises
+
+- **The C11 test passed on the defect.** It asserted the exit code only, and the fixture's legal `high → mid`
+  edge turned red under the inverted stack. Read by hand, it was the wrong edge. The battery's first lesson is
+  about itself: a gate probe asserts **which** edge, not only **whether**. The test now asserts the refusal.
+- **P5/P6 hold.** A submodule imported through its package is attributed to the submodule.
+
+### Found
+
+C11, C13, C14 are one defect: a rule that names one layer twice contradicts itself and is not refused. Filed as
+**R1-C79** ([`self_contradicting_rules.md`](self_contradicting_rules.md)); the three tests are marked
+`xfail(strict=True)` against the right answer until it is fixed.
+
 ## What the battery does not establish
 
 - Anything about the call graph or the other answers: this is the gate only.

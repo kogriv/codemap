@@ -77,7 +77,8 @@ def test_an_upward_import_is_caught_in_every_shape(base, tmp_path, capsys, probe
     (root / "gp" / rel).write_text(src)
     rc, out = _run(root, capsys)
     assert rc == 2, f"{probe}: {out}"
-    assert "`layered`" in out and "`gp.high" in out, f"{probe}: {out}"
+    # Which edge, not only whether (the C11 lesson): from gp.low, into gp.high.
+    assert "`layered`" in out and "- `gp.low" in out and "` → `gp.high" in out, f"{probe}: {out}"
 
 
 def test_P14_a_dynamic_import_is_a_documented_limit(base, tmp_path, capsys):
@@ -155,10 +156,17 @@ def test_C7_no_contract_passes_unless_required(base, tmp_path, capsys):
         _run(root, capsys, "--require-contract")
 
 
-def test_C11_a_repeated_layer_does_not_invert_the_stack(base, tmp_path, capsys):
+R1C79 = pytest.mark.xfail(strict=True, reason="R1-C79: a rule naming one layer twice is not refused")
+
+
+@R1C79
+def test_C11_a_repeated_layer_is_refused(base, tmp_path, capsys):
+    # First run (73a757e): exit 2, but for the wrong edge. The second `high` overwrote the first in
+    # `rank`, the legal `gp.high.h → gp.mid.m` was named as the violation and the real upward
+    # `gp.mid.m → gp.high.h` was not. An exit-code-only assertion passed on it.
     toml = '[architecture]\nlayers = ["high", "mid", "high", "low"]\n'
     rc, out = _run(_with(base, tmp_path, toml, src="from gp.high import h\n", rel="mid/m.py"), capsys)
-    assert rc == 2, out          # mid → high points up whatever the list repeats
+    assert rc == 2 and "nothing was enforced" in out and "`layers` repeats `high`" in out, out
 
 
 def test_C12_an_empty_layers_list(base, tmp_path, capsys):
@@ -166,15 +174,17 @@ def test_C12_an_empty_layers_list(base, tmp_path, capsys):
     assert rc == 0 and "No `[architecture]` contract found" in out, out
 
 
-def test_C13_a_same_layer_forbidden_item(base, tmp_path, capsys):
+@R1C79
+def test_C13_a_same_layer_forbidden_item_is_refused(base, tmp_path, capsys):
     rc, out = _run(_with(base, tmp_path, '[architecture]\nforbidden = [{from = "low", to = "low"}]\n',
                          src=None), capsys)
-    assert rc == 0 and "forbidden (1)" in out, out
+    assert rc == 2 and "`from` and `to` are both `low`" in out, out
 
 
-def test_C14_an_independent_group_naming_one_layer_twice(base, tmp_path, capsys):
+@R1C79
+def test_C14_an_independent_group_naming_one_layer_twice_is_refused(base, tmp_path, capsys):
     rc, out = _run(_with(base, tmp_path, '[architecture]\nindependent = [["low", "low"]]\n', src=None), capsys)
-    assert rc == 0 and "independent (1)" in out, out
+    assert rc == 2 and "`independent[0]` repeats `low`" in out, out
 
 
 # -- graph and invocation --------------------------------------------------------------------------
