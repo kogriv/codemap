@@ -84,13 +84,24 @@ def score(covfile, graph, repo_root, out, symbols):
                   "next_band": r.get("next_band", "absent"), "truth": len(truth[s]),
                   "true_hits": len({t["id"] for t in r["tests"]} & truth[s])}
     named = {}
-    for name in symbols:
-        ids = [s for s in core if s.endswith("." + name)]
-        for s in ids:
-            r = q.tests_for(s, cap=10 ** 6)
-            named[s] = {"distance": r["distance"], "tests": sorted(t["id"] for t in r["tests"]),
-                        "next_band": r.get("next_band", "absent"),
-                        "truth": sorted(truth.get(s, ())), "caveats": r["caveats"]}
+    from codemap.serve.session import Session
+    session = Session(q.graph)
+    for name in symbols:                       # resolved the way the CLI resolves it
+        env = session.handle({"op": "tests", "args": {"symbol": name, "cap": 10 ** 6}})
+        if not env.get("ok"):
+            named[name] = {"error": env.get("error")}
+            continue
+        r = env["result"]
+        s = r["symbol"]
+        t_true = set(truth.get(s, ()))
+        for k, v in truth.items():             # a module or class answers for its members
+            if k.startswith(s + "."):
+                t_true |= v
+        named[s] = {"asked": name, "distance": r["distance"],
+                    "tests": sorted(t["id"] for t in r["tests"]),
+                    "next_band": r.get("next_band", "absent"), "truth": sorted(t_true),
+                    "missed_true": sorted(t_true - {t["id"] for t in r["tests"]}),
+                    "caveats": r["caveats"]}
     ans = [v for v in per.values() if v["distance"]]
     prec = [v["true_hits"] / len(v["tests"]) for v in ans]
     rec = [v["true_hits"] / v["truth"] for v in ans]
@@ -106,7 +117,11 @@ def score(covfile, graph, repo_root, out, symbols):
                                     indent=1, sort_keys=True) + "\n")
     print(json.dumps(summary, indent=1))
     for s, v in named.items():
-        print(f"{s}: d={v['distance']} tests={len(v['tests'])} truth={len(v['truth'])} next={v['next_band']}")
+        if "error" in v:
+            print(f"{s}: {v['error']}")
+            continue
+        print(f"{s}: d={v['distance']} tests={len(v['tests'])} truth={len(v['truth'])} "
+              f"missed={len(v['missed_true'])} next={v['next_band']}")
 
 
 def compare(base_p, new_p):
