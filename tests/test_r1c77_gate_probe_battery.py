@@ -156,12 +156,8 @@ def test_C7_no_contract_passes_unless_required(base, tmp_path, capsys):
         _run(root, capsys, "--require-contract")
 
 
-R1C79 = pytest.mark.xfail(strict=True, reason="R1-C79: a rule naming one layer twice is not refused")
-
-
-@R1C79
 def test_C11_a_repeated_layer_is_refused(base, tmp_path, capsys):
-    # First run (73a757e): exit 2, but for the wrong edge. The second `high` overwrote the first in
+    # R1-C79. First run (73a757e): exit 2, but for the wrong edge. The second `high` overwrote the first in
     # `rank`, the legal `gp.high.h → gp.mid.m` was named as the violation and the real upward
     # `gp.mid.m → gp.high.h` was not. An exit-code-only assertion passed on it.
     toml = '[architecture]\nlayers = ["high", "mid", "high", "low"]\n'
@@ -174,14 +170,12 @@ def test_C12_an_empty_layers_list(base, tmp_path, capsys):
     assert rc == 0 and "No `[architecture]` contract found" in out, out
 
 
-@R1C79
 def test_C13_a_same_layer_forbidden_item_is_refused(base, tmp_path, capsys):
     rc, out = _run(_with(base, tmp_path, '[architecture]\nforbidden = [{from = "low", to = "low"}]\n',
                          src=None), capsys)
     assert rc == 2 and "`from` and `to` are both `low`" in out, out
 
 
-@R1C79
 def test_C14_an_independent_group_naming_one_layer_twice_is_refused(base, tmp_path, capsys):
     rc, out = _run(_with(base, tmp_path, '[architecture]\nindependent = [["low", "low"]]\n', src=None), capsys)
     assert rc == 2 and "`independent[0]` repeats `low`" in out, out

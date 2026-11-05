@@ -135,6 +135,17 @@ def _is_str_list(v) -> bool:
     return isinstance(v, list) and all(isinstance(x, str) for x in v)
 
 
+def _repeated(names: list[str]) -> list[str]:
+    """Names that occur more than once, in order of first repeat (R1-C79)."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for n in names:
+        if n in seen and n not in out:
+            out.append(n)
+        seen.add(n)
+    return out
+
+
 def contract_problems(section) -> list[str]:
     """Every way ``section`` departs from the ``[architecture]`` schema, in reading order (R1-C69).
 
@@ -153,8 +164,14 @@ def contract_problems(section) -> list[str]:
             near = difflib.get_close_matches(key, _KNOWN_KEYS, n=1, cutoff=0.6)
             hint = f" (did you mean `{near[0]}`?)" if near else ""
             problems.append(f"unknown key `{key}`{hint}; known keys: {', '.join(_KNOWN_KEYS)}")
-    if "layers" in section and not _is_str_list(section["layers"]):
-        problems.append("`layers` must be a list of strings")
+    if "layers" in section:
+        if not _is_str_list(section["layers"]):
+            problems.append("`layers` must be a list of strings")
+        else:
+            # R1-C79 (design ``self_contradicting_rules.md``): a repeated layer overwrote its own
+            # rank and inverted the stack — the legal edge was named, the upward one passed.
+            for name in _repeated(section["layers"]):
+                problems.append(f"`layers` repeats `{name}`")
     if "independent" in section:
         groups = section["independent"]
         if not isinstance(groups, list):
@@ -163,6 +180,9 @@ def contract_problems(section) -> list[str]:
             for i, grp in enumerate(groups):
                 if not _is_str_list(grp) or len(grp) < 2:
                     problems.append(f"`independent[{i}]` must be a list of at least 2 strings")
+                    continue
+                for name in _repeated(grp):      # R1-C79: one layer twice can never fire
+                    problems.append(f"`independent[{i}]` repeats `{name}`")
     if "forbidden" in section:
         items = section["forbidden"]
         if not isinstance(items, list):
@@ -183,6 +203,9 @@ def contract_problems(section) -> list[str]:
                 if wrong:
                     problems.append(f"`forbidden[{i}]`: " + ", ".join(f"`{k}`" for k in wrong)
                                     + " must be a string")
+                elif not missing and item["from"] == item["to"]:
+                    # R1-C79: rules read cross-layer edges, so this can never fire.
+                    problems.append(f"`forbidden[{i}]`: `from` and `to` are both `{item['from']}`")
     for flag in _FLAGS:
         if flag in section and not isinstance(section[flag], bool):
             problems.append(f"`{flag}` must be true or false, got {type(section[flag]).__name__} "

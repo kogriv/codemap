@@ -69,7 +69,10 @@ three cases:
   key, with the nearest known one suggested (`forbiden` → `forbidden`); a flag that is not a TOML
   boolean (`no_cycles = "false"` used to switch the rule *on*); a `layers` that is not a list of
   strings; an `independent` group of fewer than two; or a `forbidden` item without exactly `from` and
-  `to`.
+  `to`. It also means a rule that names one layer twice (R1-C79): a layer repeated in `layers`, which
+  used to overwrite its own rank and invert the stack, so the gate named a legal edge and passed the
+  upward one; a layer repeated in an `independent` group; or a `forbidden` item whose `from` and `to`
+  are the same layer. None of these can mean what it says.
 
 Every problem is named in one message, and MCP answers `ok: false` with `contract_error`. The valid
 half of an invalid contract is not enforced either. Enforcing it was the silent part: a typo beside
