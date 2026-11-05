@@ -49,7 +49,7 @@ from pathlib import Path
 from codemap import store
 from codemap.diagnostics import diagnostics
 from codemap.extract import extract, extract_repo
-from codemap.extract.roots import roots_base
+from codemap.extract.roots import root_problems, roots_base
 from codemap.provenance import build_provenance
 from codemap.query import Query
 from codemap.serve import (
@@ -100,6 +100,19 @@ def _graph_from(args):
     raise SystemExit("error: need --graph <file> or --build <path>")
 
 
+def _refuse_bad_roots(args) -> bool:
+    """R1-C84: print every unreadable ``--consumer``/``--docs`` root; True means refuse (exit 2).
+
+    Checked before anything is built — a `--deep` core pass must not spend minutes on a
+    graph that will lack a root — and before ``-o`` is touched.
+    """
+    problems = root_problems(tuple(getattr(args, "consumer", None) or ()),
+                             tuple(getattr(args, "docs", None) or ()))
+    for p in problems:
+        print(f"error: {p}", file=sys.stderr)
+    return bool(problems)
+
+
 def _cmd_build(args) -> int:
     incr_info = None
     repeat = getattr(args, "repeat", None)
@@ -113,6 +126,8 @@ def _cmd_build(args) -> int:
     if repeat > 1 and not args.deep:
         print(f"error: --repeat {repeat} needs --deep — the fast tier is byte-stable, so "
               "repeating it unions identical samples", file=sys.stderr)
+        return 2
+    if _refuse_bad_roots(args):
         return 2
     if args.consumer or args.docs:
         if getattr(args, "incremental", False):
@@ -311,6 +326,8 @@ def _cmd_watch(args) -> int:
     import argparse as _argparse
     from codemap.watch import DebouncedPoller, scope_probe
 
+    if _refuse_bad_roots(args):
+        return 2
     consumers = tuple(args.consumer or ())
     docs = tuple(args.docs or ())
     build_args = _argparse.Namespace(
@@ -328,7 +345,11 @@ def _cmd_watch(args) -> int:
             # and it would pollute a pipeline this watcher is composed into. Everything
             # this command says goes to stderr — stdout stays empty on purpose.
             with contextlib.redirect_stdout(sys.stderr):
-                _cmd_build(build_args)
+                rc = _cmd_build(build_args)
+            if rc != 0:
+                # R1-C84: a refusal returns 2 rather than raising (a root deleted while
+                # watching); it is a failed rebuild, never "rebuilt".
+                raise RuntimeError(f"build exited {rc}")
         except Exception as exc:
             # A failed rebuild leaves the previous graph in place, and says so. Silence
             # here would be the same defect this project keeps fixing: a stale answer
@@ -402,6 +423,8 @@ def _cmd_scope(args) -> int:
         return 0 if not (d["added"] or d["removed"] or d["changed"]) else 1
     if not args.path:
         raise SystemExit("error: scope needs <path> (or --diff A B)")
+    if _refuse_bad_roots(args):
+        return 2
     scope = resolve_scope(args.path, consumers=tuple(args.consumer or ()),
                           docs=tuple(args.docs or ()), use_git=not args.no_git)
     if args.json:

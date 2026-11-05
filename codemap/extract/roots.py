@@ -61,6 +61,32 @@ def roots_base(core: str | Path, consumers=(), docs=()) -> Path:
     return Path(os.path.commonpath([str(p) for p in parents]))
 
 
+def root_problems(consumers=(), docs=()) -> list[str]:
+    """Every ``--consumer`` / ``--docs`` root that cannot be read, in words (R1-C84).
+
+    The scanners skip a root that is not a directory, so a typo or two roots passed in
+    one string (`--consumer tests,examples`) built a graph without them, exit 0, and the
+    provenance still listed the root as read. Callers refuse on any problem instead.
+    An existing empty directory is not a problem: the graph simply has nothing from it.
+    """
+    problems = []
+    for flag, paths in (("--consumer", consumers), ("--docs", docs)):
+        for raw in paths:
+            p = Path(raw)
+            if p.is_dir():
+                continue
+            if p.exists():
+                problems.append(f"`{flag} {raw}`: not a directory")
+                continue
+            msg = f"`{flag} {raw}`: no such directory"
+            parts = [s for s in str(raw).split(",") if s]
+            if len(parts) > 1 and all(Path(s).is_dir() for s in parts):
+                msg += (" — looks like a list; pass the flag once per root: `"
+                        + " ".join(f"{flag} {s}" for s in parts) + "`")
+            problems.append(msg)
+    return problems
+
+
 def _reroot_files(graph, offset: str) -> None:
     """Prefix every node's ``file`` with ``offset`` (the core pass wrote them relative to
     the core's own parent, which may be below the common origin)."""
@@ -90,6 +116,9 @@ def extract_repo(
     """
     if mode not in ("thin", "full"):
         raise ValueError(f"mode must be 'thin' or 'full', got {mode!r}")
+    problems = root_problems(consumers, docs)
+    if problems:
+        raise ValueError("; ".join(problems))
 
     graph = extract(core, deep=deep, repeat=repeat)
     core_pkg = graph.target
