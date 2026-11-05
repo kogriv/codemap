@@ -11,6 +11,29 @@ bquant `cf039ef`: `tests trades_at_exit` → 1 test; six more call it through `_
 test module, and are dropped because they sit one hop further. `--depth` cannot add them, and the caveat ("searched
 1 hop(s) back") does not say that a nearer band closed the search. Details in the gap.
 
+## Correction before any code (2026-11-05, same day)
+
+The first version of this design, committed in e666077, diagnosed a band problem only. A two-file toy showed the
+larger cause: a consumer root in `full` mode gets edges **into core** only (`codemap/extract/roots.py`,
+`_scan_consumer_module`), so the call `test_through_helper → _helper` inside the test module is never extracted.
+The walk reaches `_vector` and stops: no edge leads to it. That is why `--depth 6` found nothing. The fact bquant
+reported ("the edge `_vector → trades_at_exit` is in the graph") was true, and I did not check the other edge.
+D0 is added below; D1–D4 stand, and the expectations are re-stated after it. Nothing was measured or coded
+between the two versions; the ground-truth run on the stand computes only coverage and 0.0.27 baselines.
+
+## D0 — a consumer module's uses of its own top-level definitions become edges (`full` mode)
+
+In `full` mode, a use inside a consumer module of a function or class **defined at the top level of that same
+module** becomes an edge from the enclosing definition, `calls` if called and `references` otherwise, with
+`resolution: "local"`. This covers `test_x → _vector`, `test_x → _run` and a nested `def one(): _vector(...)`,
+whose edge starts at the nested def. Scope stays tight. There are no cross-module consumer edges, no `self.method` calls, and no
+names rebound before use (the same R1-C46 dead-body rule as the core edges). `thin` mode is unchanged: it has no
+consumer-internal nodes to connect.
+
+Consequences named up front. Repo-scoped graphs gain edges inside consumer roots and nowhere else; core edges,
+node set and schema (0.13) do not move. `check` is unaffected, since consumer roots are outside layering. `impact` and
+`used_by` counts can grow for consumer roots, because a symbol reached through a consumer helper now reaches the helper's callers.
+
 ## D1 — a helper inside a collected test module costs no hop
 
 When the backward walk reaches a function or method that is **not** a test but is defined in a module pytest
@@ -24,7 +47,9 @@ precision fell from 1.00 to 0.67. The rule is the file name, nothing cleverer. A
 the path *into* the tests of its own module: it is never itself a test (`_is_test` is unchanged).
 
 `covers` (the forward walk from a test) applies the same rule, so a test's helpers do not push the symbols they call
-one hop away.
+one hop away. A nested def inside a test or helper is treated the same way: from it the walk also steps to the
+function that contains it (`contains`, the enclosing def only), at no cost. Otherwise `def one(): _vector(...)`
+inside a test would end at `one`.
 
 ## D2 — the answer names the next band
 
@@ -54,6 +79,13 @@ Ground truth is coverage.py with per-test contexts, mapped through the graph's `
 [`research/bench/test_mapping_accuracy.py`](../../research/bench/test_mapping_accuracy.py), on two suites: **codemap's
 own** (as R1-C24 D6) and **bquant at `cf039ef`**. Both tiers on codemap; fast and deep on bquant. Baseline = 0.0.27
 on the same trees and the same coverage data.
+
+**D0 on the graph (bquant `cf039ef`, fast):**
+- **E0a** new `calls`/`references` edges appear only between nodes of consumer roots, each with `resolution:
+  "local"`; core edges, all node ids and `SCHEMA_VERSION` are identical to 0.0.27's graph of the same tree.
+- **E0b** the edges `test_one_set_reproduces_… → _vector` and `test_trades_from_zones_reproduce_the_reference →
+  _run` (names abbreviated) exist.
+- **E0c** two builds are byte-identical; `check` output on bquant and bquearch is unchanged.
 
 **On the bquant cases (fast tier):**
 - **E1** `trades_at_exit`: distance 1, **7 tests** (one direct, six through `_vector`), against 1 now. The 0.0.27
