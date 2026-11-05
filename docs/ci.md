@@ -86,8 +86,8 @@ line: the regression, the interpreter nobody tried, the artifact nobody installe
 Two versions travel with every answer, and they answer different questions:
 
 ```
-_answer format 4 · schema 0.13_          ← the trailer on any markdown answer
-{"ok": true, "answer_format": 4, …}      ← the same fact in a serve/MCP envelope
+_answer format 5 · schema 0.13_          ← the trailer on any markdown answer
+{"ok": true, "answer_format": 5, …}      ← the same fact in a serve/MCP envelope
 codemap 0.0.28 · answer format 5 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
 ```
 
@@ -103,6 +103,10 @@ gate ([architecture contracts](architecture-contracts.md)). `check --build` on a
 its trailer alone. **4** (0.0.24) — `report behavior`: the call-site heading counts every call
 site in the package, not function bodies alone, and a parts line names function bodies, nested functions,
 module level and class bodies ([design](design/call_site_conservation.md)). Nothing outside that report changed shape in 4.
+**5** (0.0.28) — `tests`: the answer names the band after the nearest (`next_band`, a "… N more test(s) at
+distance d" line), its caveat says the nearest band closed the answer, `--all-bands` lists every band with
+distances, and distances move where a test helper or a nested def sits on the path ([test mapping](test-mapping.md)).
+Repo-scoped graphs gain edges inside consumer roots; `check` changes by its trailer alone.
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.
