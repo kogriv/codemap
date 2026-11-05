@@ -936,6 +936,27 @@ every 0.0.28 build and absent from every 0.0.27 build, it is this change, and th
 **Consumers:** `check` on bquant (`cf039ef`) and bquearch (`703696d`): exit 0, output byte-identical apart from the
 trailer, which reads answer format 5.
 
+**0.0.28 published 2026-11-05:** [`codmap` 0.0.28](https://pypi.org/project/codmap/0.0.28/), schema 0.13,
+`ANSWER_FORMAT` 5. From `04fa363`: suite 1186 passed / 3 skipped (1189 collected), CI green on 3.11–3.14, `twine check`
+PASSED. Reconciled from PyPI and the stand:
+
+```
+                         0.0.27                                      0.0.28
+tests act                test_direct; no "more" line                 test_direct; "… 2 more test(s) at distance 2"
+tests act --all-bands    error: unrecognized arguments               test_direct (1), then distance 2
+--format json            no next_band key                            next_band {distance: 2, count: 2}
+--version                codemap 0.0.27 · answer format 4 · …        codemap 0.0.28 · answer format 5 · schema 0.13
+bquant (cf039ef)         exit 0                                      exit 0; identical apart from the trailer
+bquearch gate (703696d)  exit 0                                      exit 0; identical apart from the trailer
+graph, bquant fast       —                                           byte-identical across two builds; vs 0.0.27: nodes and
+                                                                     core edges identical, +1107 edges, all `local`
+deep edge _validate → to_dict   absent (0.0.27, one build)           present in one 0.0.28 build, absent in the other
+```
+
+Every expectation holds. The deep edge is sampling: present in one 0.0.28 build and absent in another, which is the
+outcome written down as "not this change". The index cache struck again, and this time it was not cured by a first call alone: two
+calls with `--refresh-package` were needed before uv saw 0.0.28. Every call in the verification now carries that flag.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
