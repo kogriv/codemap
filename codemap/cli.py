@@ -568,26 +568,50 @@ def _local_nodeids(ids: list[str], args) -> tuple[list[str], str | None]:
     there**: a rewrite that cannot be verified is not printed, and the caveat says which
     directory the untouched path belongs to instead of leaving the reader to find out from
     pytest. The op's own payload keeps the graph-relative id, which is the portable one.
+
+    R1-C83: a graph built on another machine (or another checkout) records a directory
+    that is not here. One base was tried, so a line that ran fine from the repo root still
+    drew "could not be located", and from anywhere else there was no way to name the root.
+    Now ``--source-root`` is the only base when given; otherwise the sidecar's directory if
+    it exists here, then the current one — each path against the first base where that
+    file is, so nothing unverified is printed.
     """
     from codemap.freshness import read_meta
     meta = read_meta(getattr(args, "graph", None) or "") or {}
-    base = meta.get("roots_base")
-    if not base:
-        return ids, ("paths are relative to the build roots' common directory — run from "
-                     "there, or rebuild with this codemap so the sidecar records it")
-    out, resolved = [], 0
+    recorded = meta.get("roots_base")
+    explicit = getattr(args, "source_root", None)
+    if explicit:
+        bases = [explicit]
+    else:
+        bases = [b for b in (recorded,) if b and os.path.isdir(b)] + [os.getcwd()]
+    out, missing = [], 0
     for nid in ids:
         path, sep, tail = nid.partition("::")
-        full = os.path.join(base, path)
-        if os.path.exists(full):
-            out.append(os.path.relpath(full, os.getcwd()) + sep + tail)
-            resolved += 1
+        for b in bases:
+            full = os.path.join(b, path)
+            if os.path.exists(full):
+                out.append(os.path.relpath(full, os.getcwd()) + sep + tail)
+                break
         else:
             out.append(nid)
-    if resolved != len(ids):
-        return out, (f"{len(ids) - resolved} of {len(ids)} path(s) could not be located on "
-                     f"this machine and are printed as the graph stores them — relative to "
-                     f"`{base}`")
+            missing += 1
+    if missing:
+        if explicit:
+            return out, (f"{missing} of {len(ids)} path(s) not found under `--source-root "
+                         f"{explicit}` and are printed as the graph stores them")
+        if not recorded:
+            return out, ("paths are relative to the build roots' common directory — run from "
+                         "there, pass `--source-root`, or rebuild with this codemap so the "
+                         "sidecar records it")
+        tried = " and ".join(f"`{b}`" for b in bases)
+        away = ("" if os.path.isdir(recorded) else
+                f" (the graph was built in `{recorded}`, which is not on this machine)")
+        return out, (f"{missing} of {len(ids)} path(s) could not be located under {tried}{away} "
+                     f"and are printed as the graph stores them — pass `--source-root` with "
+                     f"the directory the graph's paths are relative to")
+    if recorded and not explicit and not os.path.isdir(recorded):
+        return out, (f"the graph was built in `{recorded}`, which is not on this machine; "
+                     f"paths located from the current directory")
     return out, None
 
 
@@ -1114,6 +1138,9 @@ def build_parser() -> argparse.ArgumentParser:
     t.add_argument("--all-bands", action="store_true",
                    help="List every band within --depth, not only the nearest (R1-C80).")
     t.add_argument("--format", choices=["text", "json"], default="text")
+    t.add_argument("--source-root", metavar="DIR",
+                   help="Directory the graph's paths are relative to on this machine, for the "
+                        "printed pytest line (default: the build's own, else the current one).")
     t.set_defaults(func=_cmd_tests)
 
     r = sub.add_parser("report", help="Render a report over the graph.")
@@ -1128,6 +1155,8 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--min-confidence", choices=["low", "medium", "high"], default=None,
                    help="report dead-code: only show candidates at/above this confidence.")
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")
+    r.add_argument("--source-root", metavar="DIR",
+                   help="Where codemap.toml is read for `dead-code` (default: current dir).")
     r.set_defaults(func=_cmd_report)
 
     e = sub.add_parser("export", help="Export a view: rag (JSONL) | vault | mermaid | scip | ctags | docs.")

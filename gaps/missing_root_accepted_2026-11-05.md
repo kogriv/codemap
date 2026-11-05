@@ -1,7 +1,7 @@
 # Гэп: несуществующий корень `--consumer` / `--docs` принимается молча
 
 **Дата:** 2026-11-05. **Источник:** воспроизведение R1-C80 на bquant
-([kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25)). **Статус:** открыто;
+([kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25)). **Статус:** ✅ закрыто 2026-11-05 (0.0.29);
 дизайн — [`docs/design/missing_roots.md`](../docs/design/missing_roots.md), бэклог R1-C84.
 
 ## 1. Что показали

@@ -957,6 +957,23 @@ Every expectation holds. The deep edge is sampling: present in one 0.0.28 build 
 outcome written down as "not this change". The index cache struck again, and this time it was not cured by a first call alone: two
 calls with `--refresh-package` were needed before uv saw 0.0.28. Every call in the verification now carries that flag.
 
+**0.0.29 — the release check, pre-registered before the upload (2026-11-05).** Two items (R1-C84, R1-C83); schema
+**0.13** and `ANSWER_FORMAT` **5** unchanged. Fixture: `pkg/core.py` (`act`), `tests/test_a.py` (`test_a → act`), an
+`examples/` directory; a graph built with `--consumer tests` whose sidecar is then given a `roots_base` that does not
+exist (a graph built elsewhere).
+
+| | tree form | 0.0.28 (expected) | 0.0.29 (expected) |
+|---|---|---|---|
+| R1-C84 | `build pkg --consumer nope` | exit 0 | exit 2, "`--consumer nope`: no such directory" |
+| R1-C84 | `build pkg --consumer tests,examples` | exit 0 | exit 2, hint `--consumer tests --consumer examples` |
+| R1-C83 | `tests act` from the repo root, foreign sidecar | "1 of 1 path(s) could not be located" | no such caveat; "built in … not on this machine" |
+| R1-C83 | `tests act --source-root fix` from the parent | error: unrecognized arguments | `pytest fix/tests/test_a.py::test_a` |
+| version | `codemap --version` | `codemap 0.0.28 · answer format 5 · schema 0.13` | `codemap 0.0.29 · answer format 5 · schema 0.13` |
+
+**Graph:** the fast repo graph of bquant `cf039ef` (four consumers, `docs`) is identical between the two versions
+apart from `provenance.tool`. **Consumers:** `check` on bquant (`cf039ef`) and bquearch (`703696d`): exit 0, output
+byte-identical (same answer format, so the trailer matches too).
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

@@ -1,6 +1,6 @@
 # Design — the `pytest` line of a graph built elsewhere: try the current directory, or take `--source-root`
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C83. **Gap:**
+**Status:** ✅ **done** (2026-11-05, no schema or answer-format change), acceptance reconciled below. Pre-registered in 8966f98. **Backlog:** R1-C83. **Gap:**
 [`gaps/foreign_graph_paths_2026-11-05.md`](../../gaps/foreign_graph_paths_2026-11-05.md).
 
 ## The defect
@@ -56,3 +56,19 @@ Run on the R1-C83 branch. E1, E2, E4a and E7 fail on a305b1d, so the list cannot
 | E8 | The full suite passes; the guards for E1, E2, E3 and E7 go red when the fix is reverted, and a cosmetic control mutation leaves them green |
 
 Surprises are reported in the reconciliation.
+
+## Reconciliation (2026-11-05)
+
+| # | Result |
+|---|---|
+| E1 | ✅ `pytest tests/test_a.py::test_a`, no "could not be located"; the note reads "the graph was built in `/srv/elsewhere/repo`, which is not on this machine; paths located from the current directory" |
+| E2 | ✅ `pytest repo/tests/test_a.py::test_a`, no caveat |
+| E3 | ✅ `--source-root pkg` from the repo root: printed as stored, with "1 of 1 path(s) not found under \`--source-root pkg\`"; the current directory, where it would have resolved, is not tried |
+| E4 | ✅ no sidecar: silent from the root; from the parent, the caveat suggests `--source-root` |
+| E5 | ✅ local graph from the parent: `pytest repo/tests/test_a.py::test_a`, no caveat |
+| E6 | ✅ `--format json` identical with and without `--source-root` |
+| E7 | ✅ `report dead-code --source-root repo` reports whitelist `["pkg.core.unused_thing"]`; without it, `[]` |
+| E8 | ✅ five mutations (no current-directory fallback, flag ignored, current directory tried after an explicit root, `report` flag missing, no "built in" note) each turn a guard red; the cosmetic control stays green. Full suite: in the 0.0.29 release check |
+
+**Surprise:** when a path is found nowhere and the recorded directory is foreign, the first draft named only the
+current directory, so the reader could not tell why the recorded one was skipped. The caveat now names both.

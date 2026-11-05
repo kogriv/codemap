@@ -5,6 +5,29 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.29] - 2026-11-05
+
+**Repo-scope roots are checked, and a graph built elsewhere prints a `pytest` line that runs.** Schema unchanged
+(**0.13**), `ANSWER_FORMAT` unchanged (**5**): no answer changed shape. New refusals exit 2 on input that used to
+pass silently.
+
+- **A `--consumer` / `--docs` root that is not a directory is refused** (R1-C84, design
+  [`docs/design/missing_roots.md`](docs/design/missing_roots.md)). `build`, `scope` and `watch` accepted a
+  missing path, a file, or two roots in one string (`--consumer tests,examples`) with exit 0. The scanner
+  skipped the root, and the provenance listed it as read. On bquant that left a repo graph with no tests. They
+  now exit 2 before the core is extracted, name every bad root, and leave `-o` untouched. `extract_repo` raises
+  `ValueError` on the same problems. A comma-joined pair of existing roots gets the split command as a hint.
+  `refresh` of a graph whose root was deleted since is refused the same way. `watch` reports a refused rebuild
+  as failed instead of "rebuilt". Valid builds are unchanged.
+- **`tests --source-root DIR`, and a graph built elsewhere finds its paths from the current directory**
+  (R1-C83, design [`docs/design/foreign_graph_paths.md`](docs/design/foreign_graph_paths.md)). The `pytest`
+  line was resolved only against the build directory recorded in the sidecar. For a graph built on another
+  machine (bquant builds post-commit elsewhere), a correct line run from the repo root drew "1 of 1 path(s)
+  could not be located", and from anywhere else there was no way to name the root. The CLI now tries the
+  current directory after the recorded one, rewriting only paths it found. `--source-root` makes one directory
+  the only base. `report --source-root` finally reaches the dead-code whitelist: the code already read it, but
+  the flag did not exist. JSON answers are unchanged.
+
 ## [0.0.28] - 2026-11-05
 
 **`tests` finds the tests behind a helper and says when there are more.** Schema unchanged (**0.13**,

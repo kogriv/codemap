@@ -26,6 +26,11 @@ Without `--mode full` the consumer side is per-*file*, so there are no test func
 find; without `--consumer` there are no tests in the graph at all. Both cases say so in
 the answer's caveats rather than returning an empty list.
 
+Pass `--consumer` once per root: `--consumer tests --consumer examples`. A root that does not
+exist or is not a directory is refused (exit 2) before anything is built, and two roots
+written as one string, `--consumer tests,examples`, get that split command as a hint. An
+existing empty directory is accepted; the graph then has nothing from it.
+
 ## What the answer is
 
 Not "every test that touches this symbol" — that is the whole suite for anything
@@ -85,6 +90,21 @@ line named a path that did not exist while looking exactly like one that did:
 - when it cannot be resolved (no sidecar — the graph was moved, or built by an older
   codemap), the path is left as the graph stores it and a caveat names the directory it is
   relative to, rather than leaving the reader to find out from pytest.
+
+**A graph built somewhere else** (another machine, another checkout, a post-commit build
+copied in) records a directory that is not here. The CLI then tries the bases in order:
+the sidecar's directory if it exists here, then the current directory. Each path is
+rewritten against the first base where that file actually is. Run from the repository root,
+the line is right, and a note says the build directory is not on this machine. Anywhere
+else, name the root:
+
+```bash
+codemap tests f --graph g.json --source-root ~/work/repo
+```
+
+With `--source-root`, only that directory is tried. A wrong one is named in the caveat
+rather than quietly corrected by the current directory. `report dead-code --source-root DIR`
+reads its `[dead_code]` whitelist from `DIR/codemap.toml`, as `serve --source-root` does.
 
 The served/MCP payload always keeps the graph-relative id: an answer may be read on a
 machine where this tree does not exist, and a path that is wrong there is worse than one

@@ -8,7 +8,7 @@ and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1189 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1207 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -134,7 +134,8 @@ Optional extras: `mcp` (Model Context Protocol server), `scip` (protobuf, for SC
 # build the canonical graph of a package (its directory name is the package name every id starts with)
 codemap build ./yourpkg -o graph.json
 
-# repo-scoped: add consumers (tests/examples) + docs for blast-radius/impact
+# repo-scoped: add consumers (tests/examples) + docs for blast-radius/impact;
+# one flag per root — a root that is not a directory is refused, exit 2
 codemap build ./yourpkg --deep --mode full --consumer ./tests --docs ./docs -o graph.json
 
 # deep tier: union N independent samples (one build misses a real edge ~1 time in 4)

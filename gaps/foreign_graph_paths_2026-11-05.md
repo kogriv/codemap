@@ -2,7 +2,7 @@
 
 **Дата:** 2026-11-05. **Источник:** bquant (bquant#120, заказ 2): граф собирается post-commit на другой машине
 и копируется в рабочий каталог. Сводка — [kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25).
-**Статус:** открыто; дизайн — [`docs/design/foreign_graph_paths.md`](../docs/design/foreign_graph_paths.md),
+**Статус:** ✅ закрыто 2026-11-05 (0.0.29); дизайн — [`docs/design/foreign_graph_paths.md`](../docs/design/foreign_graph_paths.md),
 бэклог R1-C83.
 
 ## 1. Что показали

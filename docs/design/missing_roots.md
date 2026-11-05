@@ -1,6 +1,6 @@
 # Design — a root that is not a directory is refused, not skipped
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C84. **Gap:**
+**Status:** ✅ **done** (2026-11-05, fix a305b1d, no schema or answer-format change), acceptance reconciled below. Pre-registered in 0e2a9c1. **Backlog:** R1-C84. **Gap:**
 [`gaps/missing_root_accepted_2026-11-05.md`](../../gaps/missing_root_accepted_2026-11-05.md).
 
 ## The defect
@@ -56,3 +56,21 @@ nothing was done.
 | E9 | The full suite passes; the guards for E1, E2, E3 and E5 go red when the fix is reverted, and a cosmetic control mutation leaves them green | mutation run |
 
 Surprises — anything not listed above — are reported in the reconciliation.
+
+## Reconciliation (2026-11-05, a305b1d)
+
+| # | Result |
+|---|---|
+| E1 | ✅ exit 2, `error: \`--consumer nope\`: no such directory`; an existing `g.json` byte-identical after the refusal |
+| E2 | ✅ the hint names `--consumer tests --consumer examples`; `tests,nope` gets no hint |
+| E3 | ✅ `--docs nope` exit 2; `pkg/core.py` → "not a directory"; every bad root is named, not just the first |
+| E4 | ✅ `scope` and `watch` exit 2, `watch` writes nothing; `refresh` after deleting `examples/` exits 2 naming it |
+| E5 | ✅ with `extract` and `extract_repo` patched to fail, `--deep --consumer nope` still refuses cleanly |
+| E6 | ✅ `ValueError` naming the root, for `consumers` and for a file passed as `docs` |
+| E7 | ✅ an empty directory as a consumer or docs root: exit 0 |
+| E8 | ✅ fast repo graphs against 0.0.28, identical apart from `provenance.tool`: codemap at bed0daf (2890 nodes, 8259 edges) and bquant cf039ef with four consumers and `docs` (6016 nodes, 16667 edges). The pre-registration said "byte-identical"; `provenance.tool` names the building commit, so it cannot match, and the comparison excluded that one field and nothing else |
+| E9 | ✅ suite 1196 passed / 3 skipped; six mutations (no problems, library not raising, build not checking, no hint, watch ignoring the exit code, a file counted as a directory) each turn guards red; the cosmetic control stays green |
+
+**Surprise:** `watch` ignored `_cmd_build`'s return value, so any refusal that returns 2 instead of raising, such as
+`--repeat` without `--deep` or now a root deleted while watching, was printed as "rebuilt". A nonzero exit is now
+a failed rebuild (guarded, mutation M5).
