@@ -974,6 +974,27 @@ exist (a graph built elsewhere).
 apart from `provenance.tool`. **Consumers:** `check` on bquant (`cf039ef`) and bquearch (`703696d`): exit 0, output
 byte-identical (same answer format, so the trailer matches too).
 
+**0.0.29 published 2026-11-05:** [`codmap` 0.0.29](https://pypi.org/project/codmap/0.0.29/), schema 0.13,
+`ANSWER_FORMAT` 5. From `6c802d7`: suite 1204 passed / 3 skipped (1207 collected), CI green on 3.11–3.14, `twine check`
+PASSED. Reconciled from PyPI:
+
+```
+                                   0.0.28                                     0.0.29
+build --consumer nope              exit 0                                     exit 2, "`--consumer nope`: no such directory"
+build --consumer tests,examples    exit 0                                     exit 2, hint `--consumer tests --consumer examples`
+tests act, repo root, foreign      "1 of 1 path(s) could not be located"      "the graph was built in … not on this machine"
+tests act --source-root fix        error: unrecognized arguments              pytest fix/tests/test_a.py::test_a
+--version                          codemap 0.0.28 · answer format 5 · …       codemap 0.0.29 · answer format 5 · schema 0.13
+bquant graph (cf039ef, fast)       —                                          identical apart from provenance.tool
+bquant check / bquearch gate       exit 0                                     exit 0; byte-identical, trailer included
+```
+
+Every expectation holds. Two things are not covered by that table. The consumer trees on the check machine are
+copies without `.git`, so their commits could not be printed; they are the same directories as the 0.0.28 check.
+CI on the fix commit (a305b1d) went red on the README test count. The rule written after 0.0.27, "update the count
+in the same commit as the suite", was broken again; 6c802d7 carries the right number. The index cache needed two
+calls again.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
