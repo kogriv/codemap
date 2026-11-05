@@ -1659,19 +1659,18 @@ class Query:
                     if src not in seen and etype in _TEST_WALK_EDGES:
                         seen.add(src)
                         nxt.add(src)
-            # R1-C80 D1: stepping back from a test-module helper costs nothing.
-            todo = sorted(n for n in nxt if n in self._test_helper_ids)
+            # R1-C80 D1 (as measured): a def nested in a test or helper is part of its body, so
+            # it leads to its container at no cost. A module-level helper costs a hop like any
+            # other function: made free, it pulled 72–80% coverage-false tests into the nearest
+            # band through shared helpers (design §"Measured", E6).
+            todo = sorted(n for n in nxt if n in self._test_parent)
             while todo:
-                node = todo.pop()
-                ups = list(self._inbound.get(node, []))
-                if node in self._test_parent:      # a nested helper leads to its container (D1)
-                    ups.append((self._test_parent[node], "calls"))
-                for src, etype in ups:
-                    if src not in seen and etype in _TEST_WALK_EDGES:
-                        seen.add(src)
-                        nxt.add(src)
-                        if src in self._test_helper_ids:
-                            todo.append(src)
+                parent = self._test_parent[todo.pop()]
+                if parent not in seen:
+                    seen.add(parent)
+                    nxt.add(parent)
+                    if parent in self._test_parent:
+                        todo.append(parent)
             if not nxt:
                 break
             frontier = nxt
@@ -1736,9 +1735,8 @@ class Query:
                     if tgt in seen or etype not in _TEST_WALK_EDGES:
                         continue
                     seen.add(tgt)
-                    if tgt in self._test_helper_ids:   # R1-C80 D1: entering a helper is free
-                        frontier.add(tgt)
-                        todo.append(tgt)
+                    if etype == "calls" and tgt in self._test_parent and node == self._test_parent[tgt]:
+                        todo.append(tgt)                  # R1-C80 D1: a nested def is its container's body
                         continue
                     nxt.add(tgt)
                     if self.root_of(tgt) == "core":

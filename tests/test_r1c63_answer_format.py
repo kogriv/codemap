@@ -166,7 +166,7 @@ def test_the_pin_is_over_a_fixture_this_test_owns(pkg):
 # Consumers act on it ("what to run before a change"), and until format 5 its shape could move
 # without any pin noticing: none of the six surfaces above is `tests`. Its own fixture, so the
 # repo-scoped build does not move the pin above.
-TESTS_SHA = "0cc68942719b8050213cc1b03b5ce19c1e9eae858c71bbda8618b6c283b199bd"
+TESTS_SHA = "8035e17477e5da2f2d6260056b8c030c7846bec2e2c8a6778d5e79746f1a92b3"
 
 REPO_FILES = {
     "pkg/__init__.py": "",

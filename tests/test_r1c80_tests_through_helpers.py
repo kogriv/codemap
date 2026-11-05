@@ -69,18 +69,22 @@ def test_D0_not_in_thin_mode_and_not_for_imported_names(tmp_path):
     assert ("tests.test_b.test_b", "pkg.core.act", "imported") in _edges(full, "calls")
 
 
-def test_E1_tests_through_helpers_are_in_the_nearest_band(q):
-    r = q.tests_for("pkg.core.act")
-    got = {t["id"] for t in r["tests"]}
-    assert r["distance"] == 1
-    assert got == {"tests.test_a.test_direct", "tests.test_a.test_through_helper",
-                   "tests.test_a.test_through_two_helpers", "tests.test_a.test_nested"}
-    assert "tests.helpers.shared" not in got            # not a test, and helpers.py is not collected
+def test_E1_tests_behind_a_helper_are_reachable_one_hop_further(q):
+    # As measured (design §"Measured"): a module-level helper costs a hop. Free, it pulled
+    # mostly coverage-false tests into the nearest band through shared helpers.
+    r = q.tests_for("pkg.core.act", all_bands=True)
+    rows = {t["id"]: t["distance"] for t in r["tests"]}
+    assert rows["tests.test_a.test_direct"] == 1
+    assert rows["tests.test_a.test_through_helper"] == 2          # unreachable before D0
+    assert rows["tests.test_a.test_through_two_helpers"] == 3
+    assert rows["tests.test_a.test_nested"] == 2                  # nested def → its test, free
+    assert "tests.helpers.shared" not in rows                     # not a test
 
 
 def test_E7_next_band_is_named_and_null_when_there_is_none(q):
     r = q.tests_for("pkg.core.act")
-    assert r["next_band"] == {"distance": 2, "count": 1}                  # test_far, through wrap
+    assert {t["id"] for t in r["tests"]} == {"tests.test_a.test_direct"}
+    assert r["next_band"] == {"distance": 2, "count": 3}    # through_helper, nested, far
     assert "nearest band at distance 1; looked up to depth 3 for more" in r["caveats"]
     assert q.tests_for("pkg.core.wrap")["next_band"] is None
 
@@ -89,15 +93,13 @@ def test_E8_all_bands_is_the_union_with_distances_and_is_stable(q):
     r = q.tests_for("pkg.core.act", all_bands=True)
     rows = {(t["id"], t["distance"]) for t in r["tests"]}
     assert ("tests.test_a.test_far", 2) in rows and ("tests.test_a.test_direct", 1) in rows
-    assert r["total"] == 5 and r["total_at_distance"] == 4
+    assert r["total"] == 5 and r["total_at_distance"] == 1
     assert r == q.tests_for("pkg.core.act", all_bands=True)
 
 
-def test_E9_covers_reaches_through_a_helper_at_distance_one(q):
-    r = q.covers("tests.test_a.test_through_helper")
-    assert {"id": "pkg.core.act", "distance": 1} in r["symbols"]
-    r = q.covers("tests.test_a.test_through_two_helpers")
-    assert {"id": "pkg.core.act", "distance": 1} in r["symbols"]
+def test_E9_covers_reaches_through_a_helper(q):
+    assert {"id": "pkg.core.act", "distance": 2} in q.covers("tests.test_a.test_through_helper")["symbols"]
+    assert {"id": "pkg.core.act", "distance": 3} in q.covers("tests.test_a.test_through_two_helpers")["symbols"]
 
 
 def test_the_cli_names_the_next_band_and_lists_all_bands(tmp_path, capsys):
@@ -107,11 +109,12 @@ def test_the_cli_names_the_next_band_and_lists_all_bands(tmp_path, capsys):
     store.save(q.graph, str(g))
     assert main(["tests", "act", "--graph", str(g)]) == 0
     out = capsys.readouterr().out
-    assert "… 1 more test(s) at distance 2 — `--all-bands` lists them" in out
+    assert "… 3 more test(s) at distance 2 — `--all-bands` lists them" in out
     assert main(["tests", "act", "--graph", str(g), "--all-bands"]) == 0
     out = capsys.readouterr().out
     assert "test_far   (distance 2)" in out and "more test(s)" not in out
 
 
 def test_E9_covers_enters_a_nested_helper(q):
-    assert {"id": "pkg.core.act", "distance": 1} in q.covers("tests.test_a.test_nested")["symbols"]
+    # test_nested → (free) one → _helper → act: the nested def is the test's own body
+    assert {"id": "pkg.core.act", "distance": 2} in q.covers("tests.test_a.test_nested")["symbols"]
