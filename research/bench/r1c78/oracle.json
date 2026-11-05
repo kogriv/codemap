@@ -1,0 +1,202 @@
+{
+ "bquant": "aca0718",
+ "grimp": "3.18",
+ "trees": {
+  "M1_module_level": {
+   "broken": [
+    "core->analysis",
+    "data->analysis",
+    "indicators->analysis"
+   ],
+   "chains": {
+    "core->analysis": {
+     "chain": [
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 1
+    },
+    "core->data": {
+     "chain": null,
+     "hops": null
+    },
+    "core->indicators": {
+     "chain": null,
+     "hops": null
+    },
+    "core->visualization": {
+     "chain": null,
+     "hops": null
+    },
+    "data->analysis": {
+     "chain": [
+      "bquant.data.loader",
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 2
+    },
+    "data->indicators": {
+     "chain": null,
+     "hops": null
+    },
+    "indicators->analysis": {
+     "chain": [
+      "bquant.indicators.custom.bollinger",
+      "bquant.core.logging_config",
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 3
+    },
+    "indicators->visualization": {
+     "chain": null,
+     "hops": null
+    }
+   }
+  },
+  "M2_function_local": {
+   "broken": [
+    "core->analysis",
+    "data->analysis",
+    "indicators->analysis"
+   ],
+   "chains": {
+    "core->analysis": {
+     "chain": [
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 1
+    },
+    "core->data": {
+     "chain": null,
+     "hops": null
+    },
+    "core->indicators": {
+     "chain": null,
+     "hops": null
+    },
+    "core->visualization": {
+     "chain": null,
+     "hops": null
+    },
+    "data->analysis": {
+     "chain": [
+      "bquant.data.samples.generator",
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 2
+    },
+    "data->indicators": {
+     "chain": null,
+     "hops": null
+    },
+    "indicators->analysis": {
+     "chain": [
+      "bquant.indicators",
+      "bquant.core.logging_config",
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 3
+    },
+    "indicators->visualization": {
+     "chain": null,
+     "hops": null
+    }
+   }
+  },
+  "M3_type_checking": {
+   "broken": [
+    "core->analysis",
+    "data->analysis",
+    "indicators->analysis"
+   ],
+   "chains": {
+    "core->analysis": {
+     "chain": [
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 1
+    },
+    "core->data": {
+     "chain": null,
+     "hops": null
+    },
+    "core->indicators": {
+     "chain": null,
+     "hops": null
+    },
+    "core->visualization": {
+     "chain": null,
+     "hops": null
+    },
+    "data->analysis": {
+     "chain": [
+      "bquant.data.validator",
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 2
+    },
+    "data->indicators": {
+     "chain": null,
+     "hops": null
+    },
+    "indicators->analysis": {
+     "chain": [
+      "bquant.indicators.library.pandas_ta",
+      "bquant.core.logging_config",
+      "bquant.core.config",
+      "bquant.analysis"
+     ],
+     "hops": 3
+    },
+    "indicators->visualization": {
+     "chain": null,
+     "hops": null
+    }
+   }
+  },
+  "base": {
+   "broken": [],
+   "chains": {
+    "core->analysis": {
+     "chain": null,
+     "hops": null
+    },
+    "core->data": {
+     "chain": null,
+     "hops": null
+    },
+    "core->indicators": {
+     "chain": null,
+     "hops": null
+    },
+    "core->visualization": {
+     "chain": null,
+     "hops": null
+    },
+    "data->analysis": {
+     "chain": null,
+     "hops": null
+    },
+    "data->indicators": {
+     "chain": null,
+     "hops": null
+    },
+    "indicators->analysis": {
+     "chain": null,
+     "hops": null
+    },
+    "indicators->visualization": {
+     "chain": null,
+     "hops": null
+    }
+   }
+  }
+ }
+}

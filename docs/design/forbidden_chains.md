@@ -108,3 +108,28 @@ graph matched codemap's truth set on this tree 266 of 266 edges.
 - **A10** `RENDERED_SHA` and `ANSWER_FORMAT` 4 unchanged; bquearch HEAD byte-identical before and after.
 
 At least A1–A3 and A8 on the mutations fail if nothing is done.
+
+## Oracle (committed before any code)
+
+[`research/bench/r1c78/oracle_grimp_chains.py`](../../research/bench/r1c78/oracle_grimp_chains.py) →
+[`oracle.json`](../../research/bench/r1c78/oracle.json), grimp 3.18, bquant `aca0718`, the eight pairs of
+bquant's `forbidden`, every import scope:
+
+| tree | pairs with a chain | shortest chain, hops |
+|---|---|---|
+| as is | none of 8 | — |
+| M1 module level | `core → analysis`, `data → analysis`, `indicators → analysis` | 1, 2, 3 |
+| M2 function-local | the same three | 1, 2, 3 |
+| M3 `TYPE_CHECKING` | the same three | 1, 2, 3 |
+
+So A8 expects: as is, exit 0 with all eight indirect; on each mutation, exactly these three `forbidden` items
+broken (plus `layered` for the edge itself), and codemap's shortest witness for them 1, 2 and 3 hops. The
+other five pairs stay unbroken: `bquant.analysis` (the package module M1 imports) does not itself import
+`indicators` or `data`, so `core → analysis → indicators` is not a chain. Chains run through modules, not
+layers: importing a package module does not import its submodules.
+
+Two notes on the oracle itself. grimp's *choice* among equal-length chains changes between runs (the
+`data → analysis` witness was `loader`, `generator` and `validator` on M1, M2, M3), so A8 compares lengths,
+not chains. And the first oracle run was on the wrong tree: my stand clone did not have `aca0718`, the
+checkout failed without stopping the script, and the run reported `4b1fc13`. The JSON names its revision,
+which is how it showed; it was re-run on `aca0718` with the same result.
