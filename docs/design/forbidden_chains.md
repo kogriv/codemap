@@ -1,0 +1,110 @@
+# Design — `forbidden` with `indirect = true`: no chain of imports from one layer to another
+
+**Status:** 🟡 pre-registered (2026-11-05), no code. **Backlog:** R1-C78. **Gap:**
+[`gaps/forbidden_direct_only_2026-11-05.md`](../../gaps/forbidden_direct_only_2026-11-05.md). **Reference:**
+import-linter's `forbidden` contract, which forbids chains by default (`allow_indirect_imports = False`);
+measured in [`research/tools/import-linter.md`](../../research/tools/import-linter.md).
+
+## The defect
+
+`forbidden = [{from = "data", to = "analysis"}]` judges one edge. A chain `data → core → analysis` passes it.
+In a tree with a strict, fully declared `layers` stack the chain is caught anyway, edge by edge. Outside one
+(plugins, side packages, a `utils` that no layer names) it passes green, and "`data` must not depend on
+`analysis`" cannot be written at all.
+
+## D1 — opt-in per item: `indirect = true`
+
+```toml
+forbidden = [
+    { from = "core", to = "analysis" },                    # one edge, as today
+    { from = "data", to = "analysis", indirect = true },   # no path at all
+]
+```
+
+The default stays direct. Changing what `forbidden` means would change the verdict of every consumer's
+existing contract on the day they bump the pin, which is the R1-C48 lesson: a release that changes a verdict
+nobody asked to change. `indirect = false` is the same as leaving it out.
+
+## D2 — which graph
+
+The same graph the direct rule reads: the **core** import graph, **every import scope** (module level,
+function-local, `if TYPE_CHECKING:`). A chain through a lazy import is a dependency the rule is about; a
+contract that wants only the eager graph can say so later (D8). Every core module may sit inside a chain,
+including modules of the `from` and `to` layers themselves and modules of undeclared layers. Same-layer edges
+count (`data.a → data.b → analysis.x`). Consumer roots (tests, examples) are never in a chain: they are
+outside layering for every rule.
+
+## D3 — what is reported
+
+One violation per broken item, rule `forbidden`, summary
+"`data` must not reach `analysis`, directly or through other modules: N module(s) of `data` reach it".
+
+- `edges`: the **entry edges**: each import `u → v` with `v` in `to`, `u` outside `to`, and `u` reachable
+  from `from` (a direct `from → to` edge is one of them). These are the places the dependency enters the
+  forbidden layer.
+- `modules`: one **witness chain** per entry edge, written `a → b → … → v`: a shortest chain from some
+  module of `from` to `u`, then `v`. Ties go to the lexicographically smallest chain, so the answer is
+  deterministic. More than 25 chains: the first 25 and "… N more".
+
+Why entry edges rather than every chain: the number of chains grows with every module that imports into the
+path, and the reader needs the places to cut, plus one proof for each. The chain says *how far the damage
+reaches*, which is the part import-linter answers better today; the entry edge says *which line to change*,
+which is the part codemap answers.
+
+## D4 — schema
+
+`forbidden[i]` accepts the keys `from`, `to`, `indirect`. `indirect` must be a boolean; anything else is a
+problem under R1-C69 (exit 2, nothing enforced). Before R1-C78, `indirect` is an unknown key and refused,
+so no contract written for the new version can be silently half-read by an old one.
+
+## D5 — applicability unchanged
+
+An indirect item is applicable when both names exist, as a direct one is (R1-C62). Whether a chain is
+possible is not asked.
+
+## D6 — no answer-format change
+
+For a contract without `indirect`, every answer is byte-identical: `RENDERED_SHA` and the satisfied line
+(`forbidden (n of n applicable)`) do not move. The chain answer appears only for a contract that opts in,
+under the existing `edges`/`modules` fields. `ANSWER_FORMAT` stays 4. If the run shows any existing answer
+moving, that is a defect of this change, not a reason to bump.
+
+## D7 — the satisfied line names the kind
+
+When at least one item is indirect, the enforced-rules line reads `forbidden (n of n applicable, k indirect)`.
+A reader of a green run must be able to tell which kind of rule held (the R1-C49-f1 rule: every enforced
+rule names itself). For a contract with no indirect item, the line is unchanged (D6).
+
+## D8 — not now
+
+- an eager-only chain option (`scopes = ["eager"]`);
+- `indirect` for `independent` groups;
+- `protected` (only the listed layers may import this one): the same graph walk in the other direction;
+  separate entry when someone needs it.
+
+## Pre-registered acceptance (committed before the code)
+
+The independent oracle for chains is **grimp** (`find_shortest_chain`): no shared code with codemap, and its
+graph matched codemap's truth set on this tree 266 of 266 edges.
+
+- **A1** toy `pkg` (`data/d.py` imports `core.c`, `core/c.py` imports `analysis.a`):
+  `{from="data", to="analysis", indirect=true}` → exit 2, entry edge `pkg.core.c → pkg.analysis.a`, chain
+  `pkg.data.d → pkg.core.c → pkg.analysis.a`. The same item without `indirect` → exit 0.
+- **A2** the middle import function-local; under `if TYPE_CHECKING:` → exit 2 each.
+- **A3** the chain goes through `pkg/utils/u.py`, `utils` not in any rule, `layers` declared without it →
+  exit 2.
+- **A4** a consumer root (`tests/`) that imports both ends does not create a chain → exit 0.
+- **A5** two chains of length 2 and 3 into the same entry edge → the length-2 one is reported; two equal
+  chains → the lexicographically smaller; two runs byte-identical.
+- **A6** `indirect = "yes"` → exit 2, "must be true or false"; `indirect = false` → the same answer as
+  without the key.
+- **A7** bquant `aca0718`, its contract as it is → output byte-identical to 0.0.26.
+- **A8** bquant `aca0718` with all eight forbidden pairs made indirect: on the tree as it is, and on the
+  three mutations of the import-linter card (`core/config.py` imports `bquant.analysis` at module level, inside
+  a function, under `TYPE_CHECKING`), the set of broken items equals the set of pairs for which grimp finds a
+  chain, and for each broken item the shortest codemap witness has grimp's shortest-chain length. The oracle's
+  sets are computed and committed **before** the codemap run (§«Oracle», added in a commit of its own).
+- **A9** mutation: removing the indirect branch turns A1–A3 red; a cosmetic change leaves them green.
+- **A10** `RENDERED_SHA` and `ANSWER_FORMAT` 4 unchanged; bquearch HEAD byte-identical before and after.
+
+At least A1–A3 and A8 on the mutations fail if nothing is done.
