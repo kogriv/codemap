@@ -216,8 +216,13 @@ def test_every_enforced_rule_names_itself_in_the_passing_line(tmp_path):
     over the contract's own fields, so a rule added later without a line here fails."""
     import dataclasses
     quiet = Query(extract(str(_pkg(tmp_path, {"a": "from .b import x\n", "b": "x = 1\n"}))))
-    skip = {"error", "path"}
+    # `forbidden_indirect` (R1-C78) is not a rule but a flag per `forbidden` item; it has its own
+    # probe below, so skipping it here does not let it go unnamed.
+    skip = {"error", "path", "forbidden_indirect"}
     names = [f.name for f in dataclasses.fields(arch.ArchitectureContract) if f.name not in skip]
+    chained = arch.ArchitectureContract(forbidden=(("core", "data"),), forbidden_indirect=(True,))
+    md = render_check(quiet, chained, arch.check_contract(quiet, chained))
+    assert "forbidden (1 declared, 0 applicable, 1 indirect)" in md, md
     assert "no_type_only_cycles" in names
     for name in names:
         value = {"layers": ("core",), "independent": (("core", "data"),),

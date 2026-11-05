@@ -1,6 +1,6 @@
 # Design — `forbidden` with `indirect = true`: no chain of imports from one layer to another
 
-**Status:** 🟡 pre-registered (2026-11-05), no code. **Backlog:** R1-C78. **Gap:**
+**Status:** ✅ **done** (2026-11-05, fix 5b4d1f6, no schema change, `ANSWER_FORMAT` unchanged), acceptance reconciled below. Pre-registered in 312c104, oracle in e466ee1. **Backlog:** R1-C78. **Gap:**
 [`gaps/forbidden_direct_only_2026-11-05.md`](../../gaps/forbidden_direct_only_2026-11-05.md). **Reference:**
 import-linter's `forbidden` contract, which forbids chains by default (`allow_indirect_imports = False`);
 measured in [`research/tools/import-linter.md`](../../research/tools/import-linter.md).
@@ -133,3 +133,35 @@ Two notes on the oracle itself. grimp's *choice* among equal-length chains chang
 not chains. And the first oracle run was on the wrong tree: my stand clone did not have `aca0718`, the
 checkout failed without stopping the script, and the run reported `4b1fc13`. The JSON names its revision,
 which is how it showed; it was re-run on `aca0718` with the same result.
+
+## Acceptance reconciled (2026-11-05)
+
+Code in 5b4d1f6. Suite on the stand at 5b4d1f6: 1176 passed / 3 skipped / **1 failed**, the R1-C49-f1 guard (see
+below); green after the fix.
+
+| | expected | measured | |
+|---|---|---|---|
+| A1 two-hop chain | exit 2, entry edge, witness; direct → exit 0 | as expected | holds |
+| A2 function-local / `TYPE_CHECKING` middle | exit 2 each | exit 2 each | holds |
+| A3 through undeclared `utils` | exit 2 | exit 2, `layered` silent | holds |
+| A4 consumer root | exit 0 | exit 0, but **vacuously**: codemap's graph has no core → consumer edge at all, even for `import helper` with `tests/helper.py` present, so no chain can pass through one and mutating the filter cannot turn the test red. The test now pins that property instead | holds, vacuous by construction |
+| A5 shortest, then smallest; stable | as stated | as stated | holds |
+| A6 `"yes"` / `false` | exit 2 / as absent | as expected | holds |
+| A7 bquant `aca0718` | byte-identical to 0.0.26 | exit 0 both, 6 lines, byte-identical | holds |
+| A8 against grimp | the oracle's pairs and hops on four trees | base none; M1, M2, M3: `core→analysis` 1, `data→analysis` 2, `indicators→analysis` 3, **agree on all four** ([`a8.json`](../../research/bench/r1c78/a8.json)) | holds |
+| A9 mutation | indirect branch removed → A1–A3 red | A1, A2 ×2, A3, A5 and the structured-answer test red; the tie-break inverted → A5 red; a cosmetic change → all green | holds |
+| A10 pins, bquearch | unchanged | `RENDERED_SHA` green; bquearch `a948d6c` exit 0 both, byte-identical | holds |
+
+### Departures from the design, and slips
+
+- **A one-hop witness is not printed.** D3 promised a witness per entry edge; for a direct edge it is the entry
+  edge again, and the first rendering showed the same line twice. Only chains longer than the edge are listed.
+- **The satisfied line** reads `forbidden (8, 3 indirect)` / `forbidden (8 declared, 5 applicable, 3 indirect)`:
+  D7 wrote "n of n applicable", which is not codemap's count format.
+- **The R1-C49-f1 guard failed on the new field.** It loops over the contract's fields and treats each as a rule;
+  `forbidden_indirect` is a flag on `forbidden` items. It is skipped there, and the skip has its own probe
+  (the label with `indirect`), checked by mutation.
+- **My bquant clone was on the wrong commit twice.** The stand's clone lacked `aca0718`; `git checkout` failed
+  and the script did not stop, so the first consumer comparison and the first oracle run were on `4b1fc13`. The
+  acceptance script now refuses to run on any other revision. The numbers above are from `aca0718`.
+- **A docs example had an invented number** ("12 module(s)") before the run; replaced with the measured output.

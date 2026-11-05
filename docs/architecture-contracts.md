@@ -47,6 +47,7 @@ exhaustive = false
 | `layers` | an import points *up* the ordered stack | the offending `importer → imported` edges |
 | `independent` | two layers in a group import each other | the edges between them |
 | `forbidden` | a declared `from → to` import exists | the edges |
+| `forbidden` with `indirect = true` | any chain of imports leads from `from` to `to`, through any module | the edges where the chain enters `to`, and a shortest chain for each |
 | `no_cycles` | the **eager** import graph has a cycle | the cycles |
 | `no_lazy_cycles` | a cycle is closed only by a function-local import | those cycles |
 | `no_type_only_cycles` | a cycle is closed only by an import under `if TYPE_CHECKING:` | those cycles |
@@ -55,6 +56,40 @@ exhaustive = false
 
 Rules that reference a layer not present in the graph are **inert** — you can write
 the contract ahead of the code.
+
+### No chain at all: `indirect = true` (R1-C78)
+
+A plain `forbidden` item judges one edge, so `data → core → analysis` passes
+`{ from = "data", to = "analysis" }`. When the rule you mean is "`data` must not depend on `analysis`
+by any path", say so on the item:
+
+```toml
+forbidden = [
+  { from = "core", to = "analysis" },                    # one edge
+  { from = "data", to = "analysis", indirect = true },   # no path at all
+]
+```
+
+The chain may pass through any core module, including modules of undeclared layers, and counts
+every import scope (module level, function-local, `if TYPE_CHECKING:`), as the direct rule does.
+Consumer roots (tests, examples) are never part of a chain. A broken item lists the **entry edges**,
+each import where the chain enters `to`, which are the places to cut, and a shortest chain for each,
+which proves it is reachable:
+
+```
+## `forbidden` — `data` must not reach `analysis`, directly or through other modules: 9 module(s) of `data` reach it
+
+- `bquant.core.config` → `bquant.analysis`
+- `bquant.data.loader` → `bquant.core.config` → `bquant.analysis`
+```
+
+(bquant at `aca0718` with one planted import, `core/config.py` → `bquant.analysis`. The first line is the
+entry edge, the second the shortest chain that reaches it. A one-hop chain is the entry edge itself and is
+not repeated.)
+
+A green run names the kind: `forbidden (8, 3 indirect)`. The default stays direct, so an existing
+contract gives the same verdict, byte for byte, until you add the key. A codemap older than 0.0.27
+refuses `indirect` as an unknown key rather than half-reading the item.
 
 An **absent** contract is a no-op success that names the file it looked for. Use
 `--require-contract` to make "no contract" a failure instead.

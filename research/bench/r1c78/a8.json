@@ -1,0 +1,65 @@
+{
+ "all_agree": true,
+ "m1_rendered": "# Architecture check \u2014 `bquant`\n\n\u274c **5 rule(s) broken.**\n\n## `layered` \u2014 1 import(s) point up the layer stack (__main__ \u2192 cli \u2192 visualization \u2192 analysis \u2192 indicators \u2192 data \u2192 core)\n\n- `bquant.core.config` \u2192 `bquant.analysis`\n\n## `forbidden` \u2014 `core` must not reach `analysis`, directly or through other modules: 6 module(s) of `core` reach it\n\n- `bquant.core.config` \u2192 `bquant.analysis`\n\n## `forbidden` \u2014 `data` must not reach `analysis`, directly or through other modules: 9 module(s) of `data` reach it\n\n- `bquant.core.config` \u2192 `bquant.analysis`\n- `bquant.data.loader` \u2192 `bquant.core.config` \u2192 `bquant.analysis`\n\n## `forbidden` \u2014 `indicators` must not reach `analysis`, directly or through other modules: 17 module(s) of `indicators` reach it\n\n- `bquant.core.config` \u2192 `bquant.analysis`\n- `bquant.indicators` \u2192 `bquant.core.logging_config` \u2192 `bquant.core.config` \u2192 `bquant.analysis`\n\n## `no_cycles` \u2014 1 import tangle(s), 4 module(s)\n\n- bquant \u2192 bquant.core.config \u2192 bquant.analysis \u2192 bquant (tangle of 4: bquant, bquant.analysis, bquant.core.config, bquant.core.logging_config)\n\n_`no_cycles` judged **the eager import graph only** \u2014 imports that run at import time. Not judged: **1** cycle(s) closed only by a function-local import (runtime coupling \u2014 `no_lazy_cycles = true` gates them). `report architecture` lists them. 0 import(s) under `TYPE_CHECKING` read as never running._\n",
+ "trees": {
+  "M1_module_level": {
+   "agree": true,
+   "forbidden_broken": {
+    "core->analysis": 1,
+    "data->analysis": 2,
+    "indicators->analysis": 3
+   },
+   "oracle": {
+    "core->analysis": 1,
+    "data->analysis": 2,
+    "indicators->analysis": 3
+   },
+   "rules": [
+    "forbidden",
+    "layered",
+    "no_cycles"
+   ]
+  },
+  "M2_function_local": {
+   "agree": true,
+   "forbidden_broken": {
+    "core->analysis": 1,
+    "data->analysis": 2,
+    "indicators->analysis": 3
+   },
+   "oracle": {
+    "core->analysis": 1,
+    "data->analysis": 2,
+    "indicators->analysis": 3
+   },
+   "rules": [
+    "forbidden",
+    "layered"
+   ]
+  },
+  "M3_type_checking": {
+   "agree": true,
+   "forbidden_broken": {
+    "core->analysis": 1,
+    "data->analysis": 2,
+    "indicators->analysis": 3
+   },
+   "oracle": {
+    "core->analysis": 1,
+    "data->analysis": 2,
+    "indicators->analysis": 3
+   },
+   "rules": [
+    "forbidden",
+    "layered",
+    "no_type_only_cycles"
+   ]
+  },
+  "base": {
+   "agree": true,
+   "forbidden_broken": {},
+   "oracle": {},
+   "rules": []
+  }
+ }
+}

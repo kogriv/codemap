@@ -1,6 +1,6 @@
 # Design — a contract rule that names one layer twice is refused
 
-**Status:** 🟡 pre-registered (2026-11-05), no code. **Backlog:** R1-C79. **Found by:** the gate probe battery
+**Status:** ✅ **done** (2026-11-05, fix 0a8c1aa, no schema change, `ANSWER_FORMAT` unchanged), acceptance reconciled below. Pre-registered in 1dc8ba0. **Backlog:** R1-C79. **Found by:** the gate probe battery
 (R1-C77, [`gate_probe_battery.md`](gate_probe_battery.md), probes C11, C13, C14). **Reference:** import-linter
 rejects repeated layers (their #391, merged 2026-11).
 
@@ -57,3 +57,15 @@ change: the refusal is the existing error path, pinned under format 4.
 - **A5** mutation: removing each of the three checks turns its own test red; a cosmetic change leaves all green.
 
 At least A1–A2 fail if nothing is done.
+
+## Acceptance reconciled (2026-11-05)
+
+| | expected | measured | |
+|---|---|---|---|
+| A1 C11 | exit 2, "`layers` repeats `high`" | as expected | holds |
+| A2 C13, C14 | exit 2, each line | as expected | holds |
+| A3 battery | the three `xfail` pass unmarked, the rest as before | 35 passed | holds |
+| A4 valid contracts | byte-identical | `RENDERED_SHA` green; bquant `aca0718` and bquearch `a948d6c` exit 0 on 0.0.26 and on HEAD, byte-identical | holds |
+| A5 mutation | each check removed → its test red; cosmetic → green | `layers` → C11 red, `independent` → C14 red, `forbidden` → C13 red, each alone; cosmetic → 35 green | holds |
+
+Suite at 0a8c1aa on the stand: 1168 passed / 3 skipped.

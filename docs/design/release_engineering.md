@@ -880,6 +880,23 @@ after a 60 s wait inside the script, and the call in the same pass's next line a
 call a few minutes later gave the line above. The rule from now on: verify the version line last, in its own
 call.
 
+**0.0.27 — the release check, pre-registered before the upload (2026-11-05).** Three items (R1-C77, R1-C78,
+R1-C79); schema **0.13** and **`ANSWER_FORMAT` 4** unchanged. Decided by the codemap session under the owner's
+delegation. Fixture run on 0.0.26 first (rule 4), `PYTHONHASHSEED=7`. Fixture `pkg`: `data/d.py` imports
+`core.c`, `core/c.py` imports `analysis.a`; fixture `gp`: `high/h.py` imports `mid.m`, `mid/m.py` imports
+`high.h`.
+
+| | tree form | 0.0.26 (expected) | 0.0.27 (expected) |
+|---|---|---|---|
+| R1-C78 | `pkg`, `{from="data", to="analysis", indirect=true}` | exit 2, "Contract not read", unknown key `indirect` | exit 2, "`data` must not reach `analysis`", witness `pkg.data.d → pkg.core.c → pkg.analysis.a` |
+| R1-C78 control | `pkg`, the same item without `indirect` | exit 0, `forbidden (1)` | the same |
+| R1-C79 | `gp`, `layers = ["high", "mid", "high", "low"]` | exit 2, `layered`, the **legal** edge `gp.high.h → gp.mid.m` named | exit 2, "Contract not read", "`layers` repeats `high`" |
+| R1-C79 control | `gp`, `layers = ["high", "mid", "low"]` | exit 2, `layered`, `gp.mid.m → gp.high.h` | the same |
+| version | `codemap --version` | `codemap 0.0.26 · …` | `codemap 0.0.27 · answer format 4 · schema 0.13` |
+
+**Consumers:** bquant (HEAD) and bquearch (HEAD): exit 0 on both versions, output byte-identical. Neither uses
+`indirect` or repeats a name, so the two fixture rows and the version line are the nothing-was-done controls.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

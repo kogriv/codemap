@@ -1,6 +1,6 @@
 # Design — the gate probe battery: the questions asked of import-linter, asked of `codemap check`
 
-**Status:** 🟡 pre-registered (2026-11-05), not run. **Backlog:** R1-C77. **Gap:**
+**Status:** ✅ **done** (2026-11-05): 36 probes in the suite, reconciled below; found R1-C79 (fixed). Pre-registered in 312c104. **Backlog:** R1-C77. **Gap:**
 [`gaps/forbidden_direct_only_2026-11-05.md`](../../gaps/forbidden_direct_only_2026-11-05.md) §4. **Source:** the
 import-linter card ([`research/tools/import-linter.md`](../../research/tools/import-linter.md) §0.4), whose 19 gate
 probes found three silent passes there. The same kind of question found R1-C76 here.

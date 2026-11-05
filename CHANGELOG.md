@@ -5,6 +5,29 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.27] - 2026-11-05
+
+**The gate can forbid a chain, and refuses a rule that contradicts itself.** Schema unchanged (**0.13**,
+sixteenth release running). **`ANSWER_FORMAT` unchanged (4):** an existing contract gives byte-identical output
+(checked on bquant and bquearch); the chain answer appears only for a contract that opts in, under the existing
+`edges`/`modules` fields.
+
+- **`forbidden` with `indirect = true` bans every chain of imports** (R1-C78, design
+  [`docs/design/forbidden_chains.md`](docs/design/forbidden_chains.md)). A plain item judges one edge, so
+  `data → core → analysis` passed `{ from = "data", to = "analysis" }`. With the flag, the gate walks the core
+  import graph (every import scope, any module, undeclared layers included) and lists the edges where the chain
+  enters `to`, each with a shortest chain from `from`. A green run says `forbidden (8, 3 indirect)`. On bquant
+  with a planted `core → analysis` import, the broken items and chain lengths match grimp's on all four trees.
+  The default stays direct.
+- **A rule that names one layer twice is refused** (R1-C79, design
+  [`docs/design/self_contradicting_rules.md`](docs/design/self_contradicting_rules.md)). A layer repeated in
+  `layers` overwrote its own rank and inverted the stack: the gate named a legal edge and passed the upward one.
+  A repeated member of an `independent` group, or `from == to` in `forbidden`, could never fire yet counted as
+  applicable. All three are now schema problems, exit 2, the R1-C69 path.
+- **The gate probe battery** (R1-C77, design [`docs/design/gate_probe_battery.md`](docs/design/gate_probe_battery.md)):
+  36 probes in the suite (import shapes, contract shapes, graph currency), the questions first asked of
+  import-linter. It found R1-C79.
+
 ## [0.0.26] - 2026-11-04
 
 **A misspelled contract table no longer passes.** Schema unchanged (**0.13**, fifteenth release running).
