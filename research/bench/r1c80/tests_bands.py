@@ -72,6 +72,9 @@ def truth_from_coverage(covfile: str, q: Query, repo_root: Path) -> tuple[dict[s
 
 def score(covfile, graph, repo_root, out, symbols):
     q = Query(store.load(graph))
+    import os
+    if os.environ.get("R1C80_ABLATE_D1"):      # ablation: D0 edges kept, helpers cost a hop again
+        q._test_helper_ids, q._test_parent, q._test_children = set(), {}, {}
     truth, mapping = truth_from_coverage(covfile, q, Path(repo_root))
     target = q.graph.target
     core = sorted(i for i, n in q.graph.nodes.items()
