@@ -5,6 +5,29 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.28] - 2026-11-05
+
+**`tests` finds the tests behind a helper and says when there are more.** Schema unchanged (**0.13**,
+seventeenth release running). **`ANSWER_FORMAT` 4 → 5:** the `tests` answer changed shape (a `next_band` field,
+a "… N more test(s) at distance d" line, new caveat wording, `--all-bands`), and its distances move where a test
+helper sits on the path. Repo-scoped graphs (`--mode full`) gain edges inside consumer roots; core edges, the
+node set and `check` output are unchanged.
+
+- **A test calling a helper in its own module is an edge** (R1-C80, design
+  [`docs/design/tests_through_helpers.md`](docs/design/tests_through_helpers.md)). Consumer roots had edges
+  into core only, so a test reaching a symbol through `_vector` or `_run` beside it was unreachable at any
+  depth. On bquant, `tests trades_at_exit` returned one test where coverage.py shows eight; the six behind
+  `_vector` are now found. Edges carry `resolution: "local"`.
+- **The answer names the next band**, and `--all-bands` (MCP `all_bands`) lists every band within `--depth`,
+  each test with its distance and confidence. The caveat says the nearest band closed the answer, not
+  "searched N hop(s) back".
+- **A helper still costs a hop, as measured.** Making a module-level test helper free was tried and measured
+  against coverage.py on bquant and codemap: 72–80% of the tests it pulled into the nearest band are not
+  executed by them. It shipped narrowed: only a function nested in a test is free (it is the test's own body).
+  Median precision of the answer stays 1.00 on both suites; hit rate rises slightly.
+- **The `tests` answer is pinned** (`TESTS_SHA`): its shape could move unnoticed before, because none of the six
+  pinned surfaces was `tests`.
+
 ## [0.0.27] - 2026-11-05
 
 **The gate can forbid a chain, and refuses a rule that contradicts itself.** Schema unchanged (**0.13**,

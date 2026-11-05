@@ -1,6 +1,6 @@
 # Design — `tests` through a helper in the test module, and an answer that names the next band
 
-**Status:** 🟡 pre-registered (2026-11-05), no code, no measurement. **Backlog:** R1-C80. **Gap:**
+**Status:** ✅ **done** (2026-11-05; code b458352 + 21e0c80; `ANSWER_FORMAT` 4 → 5, schema unchanged). **D1 was measured, failed E6, and shipped narrowed** — see §Measured. **Backlog:** R1-C80. **Gap:**
 [`gaps/tests_nearest_band_helpers_2026-11-05.md`](../../gaps/tests_nearest_band_helpers_2026-11-05.md).
 **Builds on:** [`test_mapping.md`](test_mapping.md) (R1-C24: nearest band, cutoff 3 measured against coverage.py).
 **Tracking:** [kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25).
@@ -118,3 +118,77 @@ At least E1, E2 and E7 fail if nothing is done.
 - Fixtures resolved by name stay invisible (R1-C24 D4, measured and not built); a test that reaches a symbol only
   through a fixture is still not found.
 - Methods on objects from a factory (R1-C81) are a resolution question, not a band question.
+
+## Measured (2026-11-05) — and D1 narrowed by it
+
+Ground truth: coverage.py with per-test contexts. bquant `cf039ef` ran 4350 passed and 35 skipped in 22 min under coverage.
+codemap `3e311a0` ran 1177 passed. Every coverage context was matched to a graph test: 1198 matched and 8 unmatched on
+bquant, 881 matched and 0 unmatched on codemap. Bench [`research/bench/r1c80/tests_bands.py`](../../research/bench/r1c80/tests_bands.py);
+baselines with the published 0.0.27 on its own graphs, the new code on graphs of the **same** trees.
+
+**First run: D0 + D1 as designed (module-level helpers free).**
+
+| | bquant fast | bquant deep | codemap fast | codemap deep |
+|---|---|---|---|---|
+| answers changed | 25 | 37 | 90 | 129 |
+| median precision, changed answers (**E6 ≥ 0.95**) | **0.89** | **0.86** | **0.87** | **0.73** |
+| median shown, base → new (E5 ≤ 2×) | 2 → 2 | 2 → 3 | 4 → 5 | 5 → 8 |
+| tests added / of them executed by the test | 439 / 122 (28 %) | — | — | 5941 / 1175 (20 %) |
+
+E1 and E2 held: `trades_at_exit` went from 1 test to 7, and `zone_trades` from 13 to 18. **E6 failed on all four.** The added
+tests came mostly through *shared* helpers. One helper called by sixty tests reaches everything it can call, and each test
+runs a fraction of it: `get_sample_data` went from 60 to 273 tests, `collect_samples` from 167 to 501.
+
+**Ablation: D0 alone (helpers cost a hop).** The nearest band did not change on bquant at all (0 answers changed), and on codemap
+3 answers changed. The noise was D1's, not D0's.
+
+**Decision.** D1 is narrowed to a def **nested** in a test or helper: it is the container's own body, and coverage attributes
+its execution to the test. A module-level helper costs a hop again. D0 stays: tests behind a helper go from unreachable to one
+hop further. They are named by `next_band` and listed by `--all-bands`. This is the third of the outcomes bquant asked for
+("at least say N more tests at distance 2"), now chosen by measurement rather than by default.
+
+**Shipped rule (21e0c80):**
+
+| | bquant fast | bquant deep | codemap fast | codemap deep |
+|---|---|---|---|---|
+| answers changed | 6 | 6 | 8 | 10 |
+| old answer not a subset of new | 0 | 0 | 1 | 1 |
+| median precision, all answers (E4) | 1.00 → 1.00 | 1.00 → 1.00 | 1.00 → 1.00 | 1.00 → 1.00 |
+| hit rate | 0.921 → 0.926 | 0.899 → 0.903 | 0.897 → 0.901 | 0.902 → 0.905 |
+| median recall | 0.50 → 0.50 | 0.28 → 0.29 | 0.35 → 0.36 | 0.31 → 0.31 |
+| median shown | 2 → 2 | 2 → 2 | 4 → 4 | 5 → 5 |
+| median precision, changed answers (E6) | **0.26** | **0.26** | 0.78 | 0.83 |
+
+E6 as written still fails on bquant, and the table says why. Each changed answer gained exactly one test. The low medians are
+inherited from answers that were already imprecise before this change: `StrategyRegistry.register` had 0 true tests out of 192. Counted
+over the **added** tests only, 3 of 6 are executed on bquant and 19 of 19 on codemap, where 2 false tests also dropped out
+(`build_mcp_server`, distance 3 → 2, 0 → 8 true). On bquant, 75 of the 215 answers now name a next band.
+
+### Reconciliation
+
+| | expected | measured | |
+|---|---|---|---|
+| E0a new edges only inside consumer roots; nodes, core, schema unchanged | as stated | nodes identical; 1108 edges added, 0 removed; **1 added edge touches a core node** (not yet identified); schema read not checked by the script (key name) | **open: one edge** |
+| E0b `test → _vector`, `test → _run` | exist | `… → _run` edges present in several modules | holds |
+| E0c byte-identical builds; `check` unchanged | as stated | not run in this pass | **to do before release** |
+| E1 `trades_at_exit` 7 at distance 1 | 7 | D1 as designed: 7. Shipped: 1, plus `next_band` 6 at distance 2, which are the six `_vector` tests | fails as written, by decision |
+| E2 `zone_trades` ≥ 15 | ≥ 15 | as designed: 18. Shipped: 13, plus 5 at distance 2 | fails as written, by decision |
+| E3 old ⊆ new except nearer-band replacements | as stated | 0 / 0 / 1 / 1 exceptions, each a nearer band (`build_mcp_server`) | holds |
+| E4 precision ≥ 0.95, hit rate and answered not down, recall up on bquant | as stated | precision 1.00, hit rate up, answered equal; recall up on bquant deep, **equal** on bquant fast | holds but for bquant-fast recall |
+| E5 shown ≤ 2× | as stated | equal on all four | holds |
+| E6 changed answers ≥ 0.95 | as stated | as designed 0.73–0.89, shipped 0.26 / 0.26 / 0.78 / 0.83 (see above) | **fails**; drove the decision |
+| E7 `next_band` always present | as stated | tests + pin | holds |
+| E8 `--all-bands` union, stable | as stated | tests | holds |
+| E9 `covers` through a helper | distance 1 | distance 2 under the shipped rule; a nested def at no cost | changed with D1 |
+| E10 mutation | as stated | D0 removed → 8 tests red; nested step removed → 4 red; `next_band` removed → 3 red; cosmetic → green | holds |
+| E11 format 5, pin, `check` unchanged | as stated | `ANSWER_FORMAT` 5; the six-surface `RENDERED_SHA` does **not** cover `tests`, so it did not move. A new pin `TESTS_SHA` now covers the `tests` answer. `check` comparison to be run before release | holds, with a gap closed |
+
+### Slips
+
+- **The diagnosis was wrong at first** (see the correction above): I wrote "distance 2" without checking the second edge.
+- **My first coverage run of bquant failed at collection.** `hypothesis` is a dev extra that is missing from the environment I borrowed, so the
+  baseline printed "exercised 0". I re-ran it with `hypothesis` on the side path.
+- **The first bench resolved named symbols by suffix.** It picked a different node for `zone_trades` than the CLI does; it now
+  resolves through the session.
+- **The ablation's named-symbol lines were not ablated**: they came from a fresh `Query` built inside the session. The
+  per-symbol numbers were ablated and are the ones quoted.

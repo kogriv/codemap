@@ -1,15 +1,18 @@
 # Test mapping — which tests exercise a symbol
 
 ```bash
-codemap tests build_provenance --graph graph.json
+codemap tests trades_at_exit --graph graph.json
 ```
 
 ```
-# tests for codemap.provenance.build_provenance — confidence: high, 1 hop(s) away
-  tests/test_r1c25_provenance.py::test_building_a_path_free_block_is_enforced_not_hoped
+# tests for bquant.analysis.trading.exit_at.trades_at_exit — confidence: high, 1 hop(s) away
+  tests/unit/test_the_outcome_at_a_given_exit_bar.py::test_empty_frames_carry_the_same_types_on_both_paths
+  … 6 more test(s) at distance 2 — `--all-bands` lists them
 
-pytest tests/test_r1c25_provenance.py::test_building_a_path_free_block_is_enforced_not_hoped
+pytest tests/unit/test_the_outcome_at_a_given_exit_bar.py::test_empty_frames_carry_the_same_types_on_both_paths
 ```
+
+(bquant at `cf039ef`, codemap 0.0.28, run from the repository root.)
 
 The last line is the point: the answer is a command, not a reading exercise.
 
@@ -35,7 +38,30 @@ central. The walk goes **backwards** from the symbol over `calls` / `references`
 | `confidence` | `high` (1–2 hops), `medium` (3), `low` (deeper, only if you ask), `unknown` (nothing found) |
 | `tests[].node_id` | a pytest node id, **relative to the graph's path origin** (see below) |
 | `total_at_distance` / `truncated` | how many were found, and how many the cap hid — never silently |
+| `next_band` | `{distance, count}` of the next band within `--depth`, or `null` when there is none (0.0.28) |
 | `caveats` | what this answer is not (see below) |
+
+### More than the nearest band: `next_band` and `--all-bands` (R1-C80, 0.0.28)
+
+The nearest band is the answer because, measured, it is the precise part. But the answer used to stop
+there and say "searched 1 hop(s) back", which read as a short walk rather than a closed one. Now it names
+the next band, as in the example above: six more tests call `trades_at_exit` through `_vector`, a helper
+function in the same test module, so they sit one hop further. `--all-bands` (MCP: `all_bands: true`)
+lists every band up to `--depth`, each test with its distance and confidence:
+
+```bash
+codemap tests trades_at_exit --graph graph.json --all-bands
+```
+
+Before 0.0.28 those six tests were not one hop further. They were **unreachable**: a test calling a
+helper in its own module produced no edge, so the walk stopped at the helper. Since 0.0.28, in `--mode full`,
+a consumer module's uses of its own top-level functions and classes are edges (`resolution: "local"`).
+
+**Why a helper still costs a hop.** Making a module-level test helper free was tried and measured against
+coverage.py on bquant and on codemap. It moved tests into the nearest band through shared helpers, and
+72–80% of the tests it added were not executed by those tests at all, because a helper used by sixty tests reaches far
+more than each of them runs. A function **nested inside** a test is different. It is the test's own body,
+and from it the walk steps to the test at no cost.
 
 ## The pasted line, and where it runs from
 

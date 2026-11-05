@@ -916,6 +916,26 @@ Every expectation holds. The index cache struck a fourth time, on the first fixt
 exited 1 with no output, the next calls already ran 0.0.27. Re-run alone, it gave the line above; the version
 line was checked last, in its own call.
 
+**0.0.28 — the release check, pre-registered before the upload (2026-11-05).** One item (R1-C80); schema **0.13**
+unchanged, **`ANSWER_FORMAT` 4 → 5**. Fixture: `pkg/core.py` (`act`, `wrap → act`), `tests/test_a.py` with
+`_helper → act`, `test_direct → act`, `test_through_helper → _helper`, `test_far → wrap`; repo-scoped, `--mode full`.
+
+| | tree form | 0.0.27 (expected) | 0.0.28 (expected) |
+|---|---|---|---|
+| R1-C80 | `tests act` | `test_direct` only; no "more" line | `test_direct`, then "… 2 more test(s) at distance 2" |
+| R1-C80 | `tests act --all-bands` | error: unknown option | `test_direct` (1), `test_far` and `test_through_helper` (2) |
+| R1-C80 | `--format json` | no `next_band` key | `next_band: {distance: 2, count: 2}` |
+| version | `codemap --version` | `codemap 0.0.27 · answer format 4 · schema 0.13` | `codemap 0.0.28 · answer format 5 · schema 0.13` |
+
+**Graph (E0):** the fast graph of bquant `cf039ef` is byte-identical across two builds of 0.0.28; against 0.0.27,
+nodes are identical, core-to-core edges are identical, and only `resolution: "local"` edges inside consumer roots
+are added. On deep, one extra core edge appeared in a single build
+(`ZoneAnalysisPipeline._validate → ModelValidationResult.to_dict`). I expect it to be deep-tier sampling, not this change:
+in two more deep builds of 0.0.28 it is present in some and absent in others, or absent in both. If it is present in
+every 0.0.28 build and absent from every 0.0.27 build, it is this change, and the release stops.
+**Consumers:** `check` on bquant (`cf039ef`) and bquearch (`703696d`): exit 0, output byte-identical apart from the
+trailer, which reads answer format 5.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

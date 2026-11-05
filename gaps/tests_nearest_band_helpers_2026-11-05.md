@@ -1,7 +1,7 @@
 # Гэп: `tests` отдаёт ближайшую полосу и молча теряет тесты, которые идут через помощника модуля
 
 **Дата:** 2026-11-05. **Источник:** bquant (bquant#120, заказ 1), первый день codemap в их цикле разработки;
-сводка соседей — [kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25). **Статус:** воспроизведено;
+сводка соседей — [kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25). **Статус:** ✅ закрыто 2026-11-05 (0.0.28): рёбра к своим помощникам (D0), `next_band`, `--all-bands`; бесплатный шаг через помощника измерен и отвергнут (дизайн §Measured);
 дизайн — [`docs/design/tests_through_helpers.md`](../docs/design/tests_through_helpers.md), бэклог R1-C80.
 
 ## 1. Что показали
