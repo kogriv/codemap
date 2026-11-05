@@ -610,7 +610,8 @@ class Session:
         """R1-C24: which tests exercise a symbol, nearest band first, honestly labelled."""
         cap = int(args.get("cap", 25))
         res = self.query.tests_for(
-            self._canon(args["symbol"]), depth=int(args.get("depth", 3)), cap=cap)
+            self._canon(args["symbol"]), depth=int(args.get("depth", 3)), cap=cap,
+            all_bands=bool(args.get("all_bands", False)))
         # These two already say it in their own body (`total_at_distance` + a caveat
         # line). The envelope block is added anyway: a machine consumer should read one
         # vocabulary across every limited op, not learn a per-op dialect.

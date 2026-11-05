@@ -495,8 +495,10 @@ def _cmd_tests(args) -> int:
     session = Session(_graph_from(args))
     op = "covers" if args.covers else "tests"
     key = "test" if args.covers else "symbol"
-    env = session.handle({"op": op, "args": {key: args.name,
-                                             "depth": args.depth, "cap": args.cap}})
+    payload = {key: args.name, "depth": args.depth, "cap": args.cap}
+    if not args.covers:
+        payload["all_bands"] = args.all_bands
+    env = session.handle({"op": op, "args": payload})
     if not env.get("ok"):
         print(env.get("error", "not found"), file=sys.stderr)
         return 1
@@ -512,7 +514,12 @@ def _cmd_tests(args) -> int:
         print(f"# tests for {r['symbol']} — confidence: {r['confidence']}"
               + (f", {r['distance']} hop(s) away" if r["distance"] else ""))
         for row in r["tests"]:
-            print(f"  {row['node_id']}")
+            far = f"   (distance {row['distance']})" if args.all_bands else ""
+            print(f"  {row['node_id']}{far}")
+        nb = r.get("next_band")
+        if nb and not args.all_bands:   # R1-C80 D2
+            print(f"  … {nb['count']} more test(s) at distance {nb['distance']} — "
+                  "`--all-bands` lists them")
     for c in r["caveats"]:
         print(f"  · {c}", file=sys.stderr)
     ids = [row["node_id"] for row in r.get("tests", []) if row.get("node_id")]
@@ -1081,6 +1088,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Hops to search back. Beyond 3 the answer is low-confidence "
                         "(measured: precision 1.00 at 3 hops, 0.33 at 5).")
     t.add_argument("--cap", type=int, default=25, help="Max tests listed (default 25).")
+    t.add_argument("--all-bands", action="store_true",
+                   help="List every band within --depth, not only the nearest (R1-C80).")
     t.add_argument("--format", choices=["text", "json"], default="text")
     t.set_defaults(func=_cmd_tests)
 

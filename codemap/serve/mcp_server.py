@@ -167,13 +167,17 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("callees", {"symbol": symbol, "min_confidence": min_confidence})
 
     @server.tool()
-    def tests(symbol: str, depth: int = 3, cap: int = 25) -> dict:
+    def tests(symbol: str, depth: int = 3, cap: int = 25, all_bands: bool = False) -> dict:
         """Which tests exercise `symbol` — the NEAREST band of test functions that reach
-        it, as runnable pytest node ids. `confidence` is high/medium by distance and
-        `unknown` when nothing is found within `depth`: unknown means unknown, never
-        "untested". Needs a repo-scoped graph (`--consumer tests --mode full`). Raise
-        `depth` above 3 only for low-confidence candidates."""
-        return op("tests", {"symbol": symbol, "depth": depth, "cap": cap})
+        it, as runnable pytest node ids. A helper function inside a test module costs no
+        hop. `next_band` says how many more tests sit at the next distance within `depth`
+        (null if none); `all_bands=true` lists every band, each row with its distance.
+        `confidence` is high/medium by distance and `unknown` when nothing is found within
+        `depth`: unknown means unknown, never "untested". Needs a repo-scoped graph
+        (`--consumer tests --mode full`). Raise `depth` above 3 only for low-confidence
+        candidates."""
+        return op("tests", {"symbol": symbol, "depth": depth, "cap": cap,
+                            "all_bands": all_bands})
 
     @server.tool()
     def covers(test: str, depth: int = 3, cap: int = 25) -> dict:

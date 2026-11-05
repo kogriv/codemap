@@ -113,7 +113,12 @@ SCHEMA_VERSION = "0.13"
 #       nested functions, module-level code and class bodies, plus sites in shadowed
 #       bodies that are not walked; the structured answer gains `by_scope` and
 #       `shadowed_not_walked` (R1-C74, docs/design/call_site_conservation.md).
-ANSWER_FORMAT = 4
+#   5 — `tests` names the band after the nearest (`next_band`, a "… N more test(s) at distance d"
+#       line) and says the nearest band closed the answer instead of "searched N hop(s) back";
+#       `--all-bands` lists every band, each row carrying its distance and confidence; a helper
+#       function inside a collected test module costs no hop in `tests` and `covers`, so
+#       distances move where one sits on the path (R1-C80, docs/design/tests_through_helpers.md).
+ANSWER_FORMAT = 5
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship

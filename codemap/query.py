@@ -262,6 +262,16 @@ class Query:
                 self._outbound.setdefault(e.source, []).append((e.target, e.type))
         self._module_ids = [n.id for n in graph.nodes.values() if n.kind == "module"]
         self._test_ids = {i for i in self.graph.nodes if self._is_test(i)}
+        # R1-C80 D1: non-test functions in a collected test module — transparent to distance.
+        self._test_helper_ids = {i for i in self.graph.nodes if self._is_test_helper(i)}
+        self._test_function_ids = self._test_ids | self._test_helper_ids
+        # D1: a nested def in a test module → the test or helper that contains it.
+        self._test_parent = {e.target: e.source for e in graph.edges
+                             if e.type == "contains" and e.target in self._test_helper_ids
+                             and e.source in self._test_function_ids}
+        self._test_children: dict[str, list[str]] = {}
+        for child, parent in sorted(self._test_parent.items()):
+            self._test_children.setdefault(parent, []).append(child)
 
     # -- lookups -------------------------------------------------------------
 
@@ -1538,14 +1548,8 @@ class Query:
         the artifact does not carry one framework's naming convention, and so an existing
         graph gains the feature with no rebuild.
         """
-        node = self.graph.nodes.get(node_id)
-        if node is None or node.kind != "function" or self.root_of(node_id) != "tests":
-            return False
-        mod = self._module_of(node_id)
-        if mod is None or not mod.file:
-            return False
-        base = mod.file.rsplit("/", 1)[-1]
-        if not (base.startswith("test_") or base.endswith("_test.py")):
+        mod = self._collected_module(node_id)
+        if mod is None:
             return False
         tail = node_id[len(mod.id) + 1:].split(".")
         if not tail or not tail[-1].startswith("test"):
@@ -1553,6 +1557,30 @@ class Query:
         if len(tail) == 1:
             return True
         return len(tail) == 2 and tail[0].startswith("Test")
+
+    def _collected_module(self, node_id: str) -> "Node | None":
+        """The module of a function under a ``tests`` root whose file pytest collects, else None."""
+        node = self.graph.nodes.get(node_id)
+        if node is None or node.kind != "function" or self.root_of(node_id) != "tests":
+            return None
+        mod = self._module_of(node_id)
+        if mod is None or not mod.file:
+            return None
+        base = mod.file.rsplit("/", 1)[-1]
+        if not (base.startswith("test_") or base.endswith("_test.py")):
+            return None
+        return mod
+
+    def _is_test_helper(self, node_id: str) -> bool:
+        """R1-C80 D1: a function in a collected test module that is not itself a test.
+
+        Such a helper exists to be called by the tests beside it, so the walk passes through it
+        without spending a hop: a test that calls ``_vector``, which calls the symbol, exercises
+        the symbol as a test that calls it directly does. conftest.py, ``tests/fixtures/`` and
+        shared helper modules are not collected test modules, so they still cost a hop — that is
+        the shared infrastructure where R1-C24 measured precision falling.
+        """
+        return self._collected_module(node_id) is not None and not self._is_test(node_id)
 
     def pytest_nodeid(self, node_id: str) -> str | None:
         """Graph id → the id you can paste after ``pytest`` (design D5).
@@ -1566,7 +1594,8 @@ class Query:
         tail = node_id[len(mod.id) + 1:]
         return mod.file + ("::" + "::".join(tail.split(".")) if tail else "")
 
-    def _test_caveats(self, *, truncated: int, searched: int, found: bool) -> list[str]:
+    def _test_caveats(self, *, truncated: int, searched: int, found: bool,
+                      nearest: int | None = None) -> list[str]:
         """The two labels every answer carries, plus whatever this graph earns.
 
         Both are required (R1-C13): an over-set because reaching a symbol is not
@@ -1594,12 +1623,15 @@ class Query:
                        "hop(s). 16% of symbols that coverage.py proves are exercised look "
                        "like this — ask for a deeper walk (`depth=6`) for low-confidence "
                        "candidates, but do not read silence as 'untested'")
+        elif nearest is not None:
+            # R1-C80 D2: say that the nearest band closed the answer, not that the walk was short.
+            out.append(f"nearest band at distance {nearest}; looked up to depth {searched} for more")
         else:
-            out.append(f"searched {searched} hop(s) back")
+            out.append(f"searched {searched} hop(s)")
         return out
 
     def tests_for(self, symbol_id: str, *, depth: int = _TEST_MAX_DEPTH,
-                  cap: int = _TEST_CAP) -> dict:
+                  cap: int = _TEST_CAP, all_bands: bool = False) -> dict:
         """Which tests exercise ``symbol_id`` — nearest band first (R1-C24, axis A10).
 
         Distance 1 is not the question: measured on codemap's own repo, only **18%** of
@@ -1619,6 +1651,7 @@ class Query:
         targets = self._member_ids(symbol_id)
         seen = set(targets)
         frontier = set(targets)
+        bands: list[tuple[int, list[str]]] = []
         for dist in range(1, max(1, depth) + 1):
             nxt: set[str] = set()
             for node in sorted(frontier):
@@ -1626,35 +1659,60 @@ class Query:
                     if src not in seen and etype in _TEST_WALK_EDGES:
                         seen.add(src)
                         nxt.add(src)
+            # R1-C80 D1: stepping back from a test-module helper costs nothing.
+            todo = sorted(n for n in nxt if n in self._test_helper_ids)
+            while todo:
+                node = todo.pop()
+                ups = list(self._inbound.get(node, []))
+                if node in self._test_parent:      # a nested helper leads to its container (D1)
+                    ups.append((self._test_parent[node], "calls"))
+                for src, etype in ups:
+                    if src not in seen and etype in _TEST_WALK_EDGES:
+                        seen.add(src)
+                        nxt.add(src)
+                        if src in self._test_helper_ids:
+                            todo.append(src)
             if not nxt:
-                frontier = nxt
                 break
             frontier = nxt
             hits = sorted(n for n in nxt if n in self._test_ids)
             if hits:
-                return self._tests_envelope(symbol_id, hits, dist, cap, dist)
-        return self._tests_envelope(symbol_id, [], None, cap, depth)
+                bands.append((dist, hits))
+                # D2: the nearest band is the answer; one more band is only counted.
+                if len(bands) == 2 and not all_bands:
+                    break
+        return self._tests_envelope(symbol_id, bands, cap, depth, all_bands)
 
-    def _tests_envelope(self, symbol_id, hits, dist, cap, searched) -> dict:
-        shown, truncated = hits[:cap], max(0, len(hits) - cap)
-        return {
+    def _tests_envelope(self, symbol_id, bands, cap, searched, all_bands=False) -> dict:
+        dist, hits = bands[0] if bands else (None, [])
+        rows = ([(t, d) for d, band in bands for t in band] if all_bands
+                else [(t, dist) for t in hits])
+        shown, truncated = rows[:cap], max(0, len(rows) - cap)
+        nxt = bands[1] if len(bands) > 1 else None
+        out = {
             "symbol": symbol_id,
             "tier": (self.graph.provenance or {}).get("tier"),
             "distance": dist,
             # `unknown` — never "none". A confident empty is the failure this project has
             # now shipped five fixes for (#1 risk:"none", #3, #5, #7, R1-C23).
             "confidence": _TEST_CONFIDENCE.get(dist, "low") if dist else "unknown",
-            "tests": [self._test_row(t, dist) for t in shown],
+            "tests": [self._test_row(t, d) for t, d in shown],
             "total_at_distance": len(hits),
+            # R1-C80 D2: the band after the nearest, within `depth` — always present, null if none.
+            "next_band": {"distance": nxt[0], "count": len(nxt[1])} if nxt else None,
             "truncated": truncated,
             "caveats": self._test_caveats(truncated=truncated, searched=searched,
-                                          found=bool(dist)),
+                                          found=bool(dist), nearest=dist),
         }
+        if all_bands:   # D3
+            out["total"] = len(rows)
+        return out
 
     def _test_row(self, node_id: str, dist) -> dict:
         n = self.graph.nodes.get(node_id)
         return {"id": node_id, "node_id": self.pytest_nodeid(node_id),
-                "line": getattr(n, "lineno", None), "distance": dist}
+                "line": getattr(n, "lineno", None), "distance": dist,
+                "confidence": _TEST_CONFIDENCE.get(dist, "low") if dist else "unknown"}
 
     def covers(self, test_id: str, *, depth: int = _TEST_MAX_DEPTH,
                cap: int = _TEST_CAP) -> dict:
@@ -1668,12 +1726,20 @@ class Query:
         frontier = {test_id}
         for dist in range(1, max(1, depth) + 1):
             nxt: set[str] = set()
-            for node in sorted(frontier):
-                for e in self._outbound.get(node, []):
+            todo = sorted(frontier)
+            while todo:
+                node = todo.pop()
+                downs = list(self._outbound.get(node, []))
+                downs += [(c, "calls") for c in self._test_children.get(node, ())]  # D1
+                for e in sorted(downs):
                     tgt, etype = e
                     if tgt in seen or etype not in _TEST_WALK_EDGES:
                         continue
                     seen.add(tgt)
+                    if tgt in self._test_helper_ids:   # R1-C80 D1: entering a helper is free
+                        frontier.add(tgt)
+                        todo.append(tgt)
+                        continue
                     nxt.add(tgt)
                     if self.root_of(tgt) == "core":
                         out.setdefault(tgt, dist)

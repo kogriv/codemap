@@ -269,6 +269,14 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
     # R1-C46: a use inside a body that a later definition replaced is not a use — it
     # would attribute a reference (or a call) to code that never runs, in either mode.
     dead = _shadow_map(tree)[2]
+    # R1-C80 D0: in full mode, a use of the module's own top-level function or class is an
+    # edge too — a test calling `_vector` in its own module. Without it the walk from a core
+    # symbol stopped at the helper. Names that an import also binds are left to the import.
+    local_defs = set()
+    if mode == "full":
+        local_defs = {n.name for n in tree.body
+                      if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))}
+        local_defs -= set(symbol_map) | set(module_aliases)
 
     for node in ast.walk(tree):
         line = getattr(node, "lineno", None)
@@ -276,8 +284,12 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
             continue
         target = None
         use_node = node
+        local = False
         if isinstance(node, ast.Name) and node.id in symbol_map:
             target = index.resolve(symbol_map[node.id])
+        elif (isinstance(node, ast.Name) and node.id in local_defs
+              and isinstance(node.ctx, ast.Load)):
+            target, local = f"{mod_id}.{node.id}", True
         elif isinstance(node, ast.Attribute) and id(node) not in inner_attr_ids:
             dotted = _dotted(node)
             if dotted:
@@ -288,7 +300,9 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
         if not target:
             continue
         src = _source_for(use_node, mod_id, func_ranges) if mode == "full" else mod_id
-        entry = uses.setdefault((src, target), {"called": False, "shapes": []})
+        if local and (src == target or target not in graph.nodes):
+            continue                      # recursion, or a def the shadow rule dropped
+        entry = uses.setdefault((src, target), {"called": False, "shapes": [], "local": local})
         call_node = call_by_func.get(id(use_node))
         if call_node is not None:
             entry["called"] = True
@@ -296,7 +310,7 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
 
     for (src, target), entry in sorted(uses.items()):
         etype = "calls" if entry["called"] else "references"
-        extras = {"resolution": "imported"}
+        extras = {"resolution": "local" if entry["local"] else "imported"}
         if etype == "calls" and entry["shapes"]:
             extras.update(_arg_contract(entry["shapes"]))
         graph.add_edge(Edge(etype, src, target, extras=extras))

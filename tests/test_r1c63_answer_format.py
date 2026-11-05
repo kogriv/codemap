@@ -160,3 +160,48 @@ def test_the_pin_is_over_a_fixture_this_test_owns(pkg):
     """Positive control for the pin: it must not be hashing the live dogfood tree."""
     assert pkg.graph.target == "pkg"
     assert len(pkg.graph.nodes) < 40, "a fixture, not a real package"
+
+
+# -- format 5 (R1-C80): the `tests` answer joins the pinned surfaces ---------------------------
+# Consumers act on it ("what to run before a change"), and until format 5 its shape could move
+# without any pin noticing: none of the six surfaces above is `tests`. Its own fixture, so the
+# repo-scoped build does not move the pin above.
+TESTS_SHA = "0cc68942719b8050213cc1b03b5ce19c1e9eae858c71bbda8618b6c283b199bd"
+
+REPO_FILES = {
+    "pkg/__init__.py": "",
+    "pkg/core.py": "def act():\n    return 1\n\n\ndef wrap():\n    return act()\n",
+    "tests/test_a.py": ("from pkg.core import act, wrap\n\n\n"
+                        "def _helper():\n    return act()\n\n\n"
+                        "def test_direct():\n    assert act() == 1\n\n\n"
+                        "def test_through_helper():\n    assert _helper() == 1\n\n\n"
+                        "def test_far():\n    assert wrap() == 1\n"),
+}
+
+
+@pytest.fixture(scope="module")
+def repo(tmp_path_factory):
+    from codemap.extract import extract_repo
+    root = tmp_path_factory.mktemp("r1c63_tests")
+    for rel, body in REPO_FILES.items():
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body)
+    return Query(extract_repo(str(root / "pkg"), consumers=(str(root / "tests"),), mode="full"))
+
+
+def _tests_answers(query) -> str:
+    session = Session(query.graph)
+    out = []
+    for args in ({"symbol": "pkg.core.act"}, {"symbol": "pkg.core.act", "all_bands": True},
+                 {"symbol": "pkg.core.wrap"}):
+        env = session.handle({"op": "tests", "args": args})
+        out.append(json.dumps(env["result"], sort_keys=True))
+    return "\n@@\n".join(out)
+
+
+def test_the_tests_answer_matches_its_pin(repo):
+    got = hashlib.sha256(_tests_answers(repo).encode()).hexdigest()
+    assert got == TESTS_SHA, (
+        "the `tests` answer changed shape or content — bump ANSWER_FORMAT if structural, "
+        f"and re-pin.\n  expected {TESTS_SHA}\n  got      {got}\n{_tests_answers(repo)}")
