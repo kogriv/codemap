@@ -105,8 +105,13 @@ def extract_repo(
     mode: str = "thin",
     deep: bool = False,
     repeat: int = 1,
+    core_graph: Graph | None = None,
 ) -> Graph:
     """Build a repo-scoped graph: core package + consumer roots + doc roots.
+
+    ``core_graph`` (R1-C86): an already-built core graph — the incremental path updates the
+    core and hands it here, so the consumer and doc scans have one implementation for
+    full and incremental builds.
 
     ``core`` is analysed exactly as the single-package extractor (griffe, plus the
     behavioral pass when ``deep``, unioned over ``repeat`` samples — R1-C45).
@@ -120,7 +125,7 @@ def extract_repo(
     if problems:
         raise ValueError("; ".join(problems))
 
-    graph = extract(core, deep=deep, repeat=repeat)
+    graph = core_graph if core_graph is not None else extract(core, deep=deep, repeat=repeat)
     core_pkg = graph.target
     for node in graph.nodes.values():
         node.extras.setdefault("root", "core")

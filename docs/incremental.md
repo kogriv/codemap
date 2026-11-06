@@ -52,6 +52,17 @@ importer resolves) and deep-tier staleness (jedi reaching a changed target). Whe
 affected set exceeds half the package a full rebuild is cheaper and certainly correct,
 so the build falls back to it (reported as `mode: full`).
 
+**Repo-scoped graphs** (`--consumer` / `--docs`, R1-C86). The core is updated as above.
+The consumer and doc scans are deterministic `ast` passes (~6 s on bquant), so they rerun in full on the updated
+core, followed by the Protocol fan-out. The result equals a full repo build on the fast tier: core edit,
+consumer edit, doc edit, module added, module removed. A consumer- or doc-only edit leaves the core `unchanged`
+and costs only the scans. `watch` with consumers takes the same path, so a deep MCP loop no longer pays for a
+full deep build on every save.
+
+**Where the package sits** (R1-C86 D0). In a git tree the scope's paths are relative to the repository root.
+A package below it (`research/shared`, `src/pkg`) is mapped from there. Before 0.0.33 such a package's edits
+were not seen at all: the build said `unchanged` and kept the old graph.
+
 ## Guarantees
 
 - **Fast tier: byte-identical to a full build.** The incremental result serializes
@@ -154,6 +165,11 @@ against). The check walks the tree, 40–110 ms on the repos measured, so it is 
 seconds (default 10; `0` checks on every call), and `checked_seconds_ago` says how old it is. `reload` checks
 afresh. A cold CLI read of a graph that is behind (`codemap query … --graph`) prints one `[warning]` line on
 stderr. `check` has its own currency line (R1-C85).
+
+A graph built on another machine has a recipe whose directory does not exist here. Since 0.0.34 it is checked
+from its own recorded roots (`provenance.roots`) under the current directory, or `--source-root`; `via` says
+which way the check went. If even that is impossible, a cold CLI read prints one `[note] could not check …`
+with the reason (R1-C90).
 
 ## The automatic loop
 

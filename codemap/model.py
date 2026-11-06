@@ -132,7 +132,10 @@ SCHEMA_VERSION = "0.13"
 #       cached `--currency-ttl` seconds, `checked_seconds_ago`); `stats` shows it beside
 #       `freshness` (R1-C85, docs/design/mcp_graph_currency.md); `review` names the doc pages a
 #       diff changes (`changed_docs`, R1-C89, docs/design/review_docs.md).
-ANSWER_FORMAT = 9
+#  10 — `currency` says how it was checked (`via`: `recipe` or the graph's provenance roots,
+#       R1-C90), so a graph built elsewhere is `current`/`behind` where it was `unknown`; repo-scoped
+#       `build --incremental` is applied (R1-C86).
+ANSWER_FORMAT = 10
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship

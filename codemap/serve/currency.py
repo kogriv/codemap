@@ -33,7 +33,45 @@ def recipe_scope_args(argv: list[str]) -> tuple[str, list[str], list[str]]:
     return ns.path, ns.consumer, ns.docs
 
 
-def graph_currency(graph_path: str, graph_scope_id: str | None) -> dict:
+def _via_roots(graph_scope_id: str, roots: dict | None, target: str | None,
+               base: str | None, why: str) -> dict:
+    """R1-C90: no usable recipe — check from the graph's own recorded roots under ``base``.
+
+    A graph built on another machine records its roots relative to its path base
+    (R1-C25/R1-C31) and its input identity; the scope id depends on file content and
+    relative paths, not on where the tree lives, so the same roots under this directory
+    give a comparable id.
+    """
+    from pathlib import Path
+    b = Path(base or os.getcwd())
+    if roots:
+        core = b / roots.get("core", "")
+        consumers = tuple(b / c for c in roots.get("consumers") or ())
+        docs = tuple(b / d for d in roots.get("docs") or ())
+    elif target:
+        core, consumers, docs = b / target, (), ()
+    else:
+        return {"status": "unknown", "reason": why}
+    if not core.is_dir() or any(not p.is_dir() for p in (*consumers, *docs)):
+        return {"status": "unknown",
+                "reason": f"{why}; the graph's roots are not under {b} "
+                          "(run from the directory the graph's paths are relative to, or "
+                          "pass --source-root)"}
+    try:
+        from codemap.scope import resolve_scope
+        now = resolve_scope(str(core), consumers=tuple(map(str, consumers)),
+                            docs=tuple(map(str, docs)))
+    except (Exception, SystemExit) as exc:
+        return {"status": "unknown", "reason": f"{why}; resolving the roots failed ({exc})"}
+    via = f"provenance roots under {b}"
+    if now["scope_id"] == graph_scope_id:
+        return {"status": "current", "scope_id": graph_scope_id, "via": via}
+    return {"status": "behind", "recorded": graph_scope_id, "current": now["scope_id"],
+            "via": via}
+
+
+def graph_currency(graph_path: str, graph_scope_id: str | None, *, roots: dict | None = None,
+                   target: str | None = None, base: str | None = None) -> dict:
     """Is the graph at ``graph_path`` the tree it would be judged as? (R1-C70)
 
     ``{"status": "current" | "behind" | "unknown", …}``. Design ``check_graph_currency.md`` D1:
@@ -48,10 +86,12 @@ def graph_currency(graph_path: str, graph_scope_id: str | None) -> dict:
                 "reason": "the graph records no input identity (`provenance.scope_id`)"}
     meta = read_meta(graph_path)
     if not meta or not meta.get("argv"):
-        return {"status": "unknown", "reason": "no build recipe beside the graph"}
+        return _via_roots(graph_scope_id, roots, target, base,
+                          "no build recipe beside the graph")
     cwd = meta.get("cwd")
     if not cwd or not os.path.isdir(cwd):
-        return {"status": "unknown", "reason": f"the recorded build directory is gone ({cwd})"}
+        return _via_roots(graph_scope_id, roots, target, base,
+                          f"the recorded build directory is gone ({cwd})")
     try:
         from codemap.scope import diff_scopes, resolve_scope
         path, consumers, docs = recipe_scope_args(meta["argv"])
@@ -61,7 +101,8 @@ def graph_currency(graph_path: str, graph_scope_id: str | None) -> dict:
     except (Exception, SystemExit) as exc:      # argparse exits on a recipe it cannot read
         return {"status": "unknown", "reason": f"the recorded scope could not be resolved ({exc})"}
     if now["scope_id"] == graph_scope_id:
-        return {"status": "current", "scope_id": graph_scope_id}
+        return {"status": "current", "scope_id": graph_scope_id, "via": "recipe"}
     d = diff_scopes(meta.get("scope") or {}, now)
     return {"status": "behind", "recorded": graph_scope_id, "current": now["scope_id"],
-            "added": len(d["added"]), "removed": len(d["removed"]), "changed": len(d["changed"])}
+            "added": len(d["added"]), "removed": len(d["removed"]), "changed": len(d["changed"]),
+            "via": "recipe"}

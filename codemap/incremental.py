@@ -84,7 +84,26 @@ _DEP_EDGE_TYPES = SPLICED_EDGE_TYPES
 _FULL_FALLBACK_FRACTION = 0.5
 
 
-def _path_to_module(rel_path: str, target_pkg: str) -> str | None:
+def _package_prefix(package_path, scope: dict, target_pkg: str) -> str:
+    """The package's path relative to the scope root (R1-C86 D0).
+
+    In git mode the scope root is the repository root, so ``research/shared`` or
+    ``src/pkg``; in fs mode it is the package's parent, so just ``pkg``. Falls back to
+    the package name when the root is unknown or the package is not under it.
+    """
+    import os
+    root = scope.get("root") if scope else None
+    if root:
+        try:
+            rel = os.path.relpath(Path(package_path).resolve(), Path(root).resolve())
+        except ValueError:
+            rel = ""
+        if rel and not rel.startswith(".."):
+            return rel.replace("\\", "/")
+    return target_pkg
+
+
+def _path_to_module(rel_path: str, target_pkg: str, prefix: str | None = None) -> str | None:
     """Map a scope file path to a package module id, or None if it's not package code.
 
     ``bquant/analysis/pipeline.py`` → ``bquant.analysis.pipeline``;
@@ -95,8 +114,13 @@ def _path_to_module(rel_path: str, target_pkg: str) -> str | None:
     p = rel_path.replace("\\", "/")
     if not p.endswith(".py"):
         return None
-    parts = p.split("/")
-    if not parts or parts[0] != target_pkg:
+    prefix = prefix or target_pkg
+    # R1-C86 D0: the scope path is relative to the scope root (the git root in git mode),
+    # and the package may sit below it — `research/shared/m.py` is `shared.m`.
+    if p != prefix + ".py" and not p.startswith(prefix + "/"):
+        return None
+    parts = [target_pkg] + p[len(prefix) + 1:].split("/") if p.startswith(prefix + "/") else []
+    if not parts:
         return None
     if parts[-1] == "__init__.py":
         parts = parts[:-1]
@@ -143,6 +167,11 @@ def _affected_modules(old_graph, new_graph, base_mods, changed_removed, module_o
 def _splice_unaffected(new_graph, old_graph, unaffected, module_of) -> None:
     """Copy the two jedi passes' output for unaffected modules from the old graph."""
     for e in old_graph.edges:
+        # R1-C86: an edge from a node that no longer exists (a removed module's function)
+        # resolves, by longest prefix, to the package's root module — which is unaffected —
+        # and was copied forward. A full build has no such edge.
+        if e.source not in new_graph.nodes:
+            continue
         keep = False
         if e.type == "calls" and e.extras.get("resolution") in _BEHAVIOR_CALL_RES:
             keep = module_of(e.source) in unaffected
@@ -225,9 +254,10 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
             {"mode": "full", "affected": [], "reason": reason}
 
     d = diff_scopes(old_scope, new_scope)
-    changed = {m for p in d["changed"] if (m := _path_to_module(p, target_pkg))}
-    added = {m for p in d["added"] if (m := _path_to_module(p, target_pkg))}
-    removed = {m for p in d["removed"] if (m := _path_to_module(p, target_pkg))}
+    prefix = _package_prefix(package_path, new_scope, target_pkg)
+    changed = {m for p in d["changed"] if (m := _path_to_module(p, target_pkg, prefix))}
+    added = {m for p in d["added"] if (m := _path_to_module(p, target_pkg, prefix))}
+    removed = {m for p in d["removed"] if (m := _path_to_module(p, target_pkg, prefix))}
 
     # No package .py file changed → a single-package graph is unaffected (doc/consumer
     # edits don't touch it). Return the old graph untouched.
@@ -267,6 +297,10 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
         stats = {"runs": 1}
     unaffected = module_ids - affected
     _splice_unaffected(graph, old_graph, unaffected, module_of)
+    # R1-C86 D2: the Protocol fan-out (R1-C81 D2) ran inside add_behavioral_layer, before
+    # the spliced deep calls existed; run it again so they fan out too (idempotent).
+    from codemap.extract.dispatch import add_protocol_dispatch
+    add_protocol_dispatch(graph)
     if repeat > 1:
         # `unstable` describes the artifact a reader holds, not the part this tick
         # touched: recount over recomputed and spliced edges alike.

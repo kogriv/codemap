@@ -513,8 +513,10 @@ class Session:
                                  "compare against"}
             else:
                 from codemap.serve.currency import graph_currency
-                res = graph_currency(self.graph_path,
-                                     (self.graph.provenance or {}).get("scope_id"))
+                prov = self.graph.provenance or {}
+                res = graph_currency(self.graph_path, prov.get("scope_id"),
+                                     roots=prov.get("roots"), target=self.graph.target,
+                                     base=self.source_root)
                 if res.get("status") == "behind":
                     res["hint"] = ("the source tree changed since this graph was built — "
                                    "rebuild it, then `reload` (or run `serve --watch`)")

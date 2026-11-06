@@ -5,6 +5,24 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **`build --incremental` works for repo-scoped graphs** (R1-C86, design
+  [`docs/design/incremental_repo_scope.md`](docs/design/incremental_repo_scope.md)). With `--consumer`/`--docs`,
+  the core is now updated incrementally, and the consumer and doc scans (~6 s on bquant) rerun in full. On the
+  fast tier the result equals a full build for core, consumer and doc edits, added and removed modules. `watch`
+  with consumers, which is how both neighbours run their MCP loops, takes the same path.
+- **Fixed: an incremental build of a package below the git root saw no edit** (R1-C86 D0). In a git tree, scope
+  paths are relative to the repository root, so `research/shared/m.py` never matched the package `shared`. The
+  build said `unchanged`, kept the old graph, and `watch` kept serving it.
+- **Fixed: a removed module's internal calls survived an incremental build** (R1-C86). By longest prefix, they
+  belonged to the package's unaffected root module and were spliced forward.
+- **Deep incremental: spliced callers keep their Protocol fan-out** (R1-C86 D2). The fan-out now runs again after
+  the splice.
+- **A graph built elsewhere is checked from its own roots** (R1-C90, design
+  [`docs/design/currency_without_recipe.md`](docs/design/currency_without_recipe.md)). Without a usable recipe,
+  `currency` resolves the graph's `provenance.roots` under the current directory (or `--source-root`) and
+  reports `current`/`behind` with `via`. A cold CLI read that still cannot check prints one `[note]`.
+- **`ANSWER_FORMAT` 9 → 10** (`currency.via`). Schema unchanged.
+
 ## [0.0.33] - 2026-11-06
 
 **Every served answer says which tree it is about; `review` names changed doc pages.** Schema unchanged

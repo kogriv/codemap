@@ -181,14 +181,19 @@ def test_the_incremental_help_names_the_tier(capsys):
     assert "fast tier" in out and "jedi sample" in out
 
 
-def test_incremental_with_a_consumer_root_is_refused_out_loud(pkg, tmp_path, capsys):
+def test_incremental_with_a_consumer_root_is_applied_and_says_what_it_did(pkg, tmp_path, capsys):
+    """R1-C44 stated a boundary here ("not applied: repo-scoped builds are always full").
+    R1-C86 lifted it: the core is updated incrementally and the scans rerun. What R1-C44
+    guarded still holds — the flag is never swallowed: the build names its mode."""
     cons = tmp_path / "tests"
     cons.mkdir()
     (cons / "test_x.py").write_text("from lonelypkg.core import helper\n\ndef test_h():\n    helper()\n")
     out = tmp_path / "graph.json"
     assert cli.main(["build", str(pkg), "--incremental", "--consumer", str(cons), "-o", str(out)]) == 0
     err = capsys.readouterr().err
-    assert "--incremental was not applied" in err and "repo-scoped" in err
+    assert "--incremental was not applied" not in err and "[incremental] full" in err
+    assert cli.main(["build", str(pkg), "--incremental", "--consumer", str(cons), "-o", str(out)]) == 0
+    assert "[incremental] unchanged" in capsys.readouterr().err
 
 
 def test_the_build_help_says_ids_start_with_the_directory_name(capsys):

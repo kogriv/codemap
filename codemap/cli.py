@@ -98,12 +98,12 @@ def _graph_from(args):
     if getattr(args, "graph", None):
         graph = store.load(args.graph)
         if getattr(args, "func", None) not in (_cmd_check, _cmd_serve):
-            _warn_if_behind(args.graph, graph)
+            _warn_if_behind(args.graph, graph, args)
         return graph
     raise SystemExit("error: need --graph <file> or --build <path>")
 
 
-def _warn_if_behind(path: str, graph) -> None:
+def _warn_if_behind(path: str, graph, args_for_currency=None) -> None:
     """R1-C85 D4: a cold read of a graph behind its tree says so, once, on stderr.
 
     `check` prints its own currency line and `serve` puts it in every envelope; every
@@ -111,11 +111,18 @@ def _warn_if_behind(path: str, graph) -> None:
     current or unknown, so stdout and exit codes never change.
     """
     from codemap.serve.currency import graph_currency
-    c = graph_currency(path, (graph.provenance or {}).get("scope_id"))
+    prov = graph.provenance or {}
+    c = graph_currency(path, prov.get("scope_id"), roots=prov.get("roots"),
+                       target=graph.target, base=getattr(args_for_currency, "source_root", None))
     if c.get("status") == "behind":
-        print(f"[warning] {path} is behind its source tree ({c.get('added', 0)} added, "
-              f"{c.get('changed', 0)} changed, {c.get('removed', 0)} removed since it was "
-              "built) — answers describe the older tree; rebuild", file=sys.stderr)
+        counts = (f" ({c.get('added', 0)} added, {c.get('changed', 0)} changed, "
+                  f"{c.get('removed', 0)} removed since it was built)" if "changed" in c else "")
+        print(f"[warning] {path} is behind its source tree{counts} — answers describe the "
+              "older tree; rebuild", file=sys.stderr)
+    elif c.get("status") == "unknown":
+        # R1-C90 D2: "could not check" is said, once — silence read as "current".
+        print(f"[note] could not check {path} against the source tree: {c.get('reason')}",
+              file=sys.stderr)
 
 
 def _refuse_bad_roots(args) -> bool:
@@ -148,12 +155,11 @@ def _cmd_build(args) -> int:
     if _refuse_bad_roots(args):
         return 2
     if args.consumer or args.docs:
-        if getattr(args, "incremental", False):
-            # R1-C44 / D6: the flag used to be swallowed here without a word. Not an
-            # error — a stated boundary: the incremental path is single-package.
-            print("[note] --incremental was not applied: --consumer/--docs make this a "
-                  "repo-scoped build, which is always full (the incremental path is "
-                  "single-package only)", file=sys.stderr)
+        core_graph = None
+        if getattr(args, "incremental", False) and args.out:
+            # R1-C86 D1: the core is updated incrementally; the consumer and doc scans
+            # (deterministic `ast`, ~6 s on bquant) rerun in full on top of it.
+            core_graph, incr_info = _incremental_core(args, repeat)
         graph = extract_repo(
             args.path,
             consumers=tuple(args.consumer or ()),
@@ -161,6 +167,7 @@ def _cmd_build(args) -> int:
             mode=args.mode,
             deep=args.deep,
             repeat=repeat,
+            core_graph=core_graph,
         )
     elif getattr(args, "incremental", False) and args.out:
         graph, incr_info = _incremental_build(args)
@@ -293,6 +300,54 @@ def _incremental_build(args):
         return extract(args.path, deep=args.deep, repeat=repeat), {"mode": "full", "affected": []}
     return update_graph(old_graph, args.path, old_scope, new_scope, deep=args.deep,
                         repeat=repeat)
+
+
+def _core_subgraph(graph, offset: str = ""):
+    """The core part of a repo-scoped graph: core nodes, and edges whose source is one (R1-C86).
+
+    ``offset`` is the core's parent relative to the graph's path base (R1-C31). A repo
+    build re-roots core files by it, and `extract_repo` will do so again, so it is
+    stripped here or an unchanged core would come back with the prefix twice.
+    """
+    import copy
+    from codemap.model import Graph
+    core = Graph(target=graph.target)
+    core.provenance = dict(graph.provenance or {})
+    core.provenance.pop("roots", None)
+    pre = f"{offset}/" if offset not in ("", ".") else ""
+    for nid, n in graph.nodes.items():
+        if (n.extras or {}).get("root", "core") == "core":
+            n = copy.copy(n)
+            if pre and n.file and n.file.startswith(pre):
+                n.file = n.file[len(pre):]
+            core.nodes[nid] = n
+    core.edges = [e for e in graph.edges if e.source in core.nodes]
+    return core
+
+
+def _incremental_core(args, repeat):
+    """Update the core of an existing repo-scoped graph at ``args.out`` (R1-C86 D1).
+
+    Returns ``(core_graph or None, info)``; None means "build the core in full" (first
+    build, no sidecar scope, a different target, or a graph that was not repo-scoped).
+    """
+    from codemap.freshness import read_meta
+    from codemap.incremental import update_graph
+    from codemap.scope import resolve_scope
+    old_meta = read_meta(args.out)
+    old_scope = (old_meta or {}).get("scope")
+    if not (Path(args.out).exists() and old_scope):
+        return None, {"mode": "full", "affected": []}
+    old_graph = store.load(args.out)
+    if old_graph.target != Path(args.path).resolve().name or \
+            not (old_graph.provenance or {}).get("roots"):
+        return None, {"mode": "full", "affected": []}
+    from codemap.extract.roots import _rel_to
+    consumers, docs = tuple(args.consumer or ()), tuple(args.docs or ())
+    new_scope = resolve_scope(args.path, consumers=consumers, docs=docs)
+    offset = _rel_to(Path(args.path).resolve().parent, roots_base(args.path, consumers, docs))
+    return update_graph(_core_subgraph(old_graph, offset), args.path, old_scope, new_scope,
+                        deep=args.deep, repeat=repeat)
 
 
 def _watch_build_argv(args) -> list[str]:
@@ -1120,7 +1175,8 @@ def build_parser() -> argparse.ArgumentParser:
                         "only changed modules (R1-C9). Byte-identical to a full build on "
                         "the fast tier; on --deep it carries the earlier build's jedi "
                         "sample forward (docs/incremental.md). Much faster on --deep. "
-                        "Single-package only (no --consumer/--docs).")
+                        "With --consumer/--docs the core is updated and the consumer and "
+                        "doc scans rerun in full (R1-C86).")
     b.add_argument("--repeat", type=int, default=1, metavar="N",
                    help="--deep only: run the jedi layer N times and union the samples. "
                         "One deep build is one sample (a real edge was present in 75%% "

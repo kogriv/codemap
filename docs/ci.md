@@ -86,9 +86,9 @@ line: the regression, the interpreter nobody tried, the artifact nobody installe
 Two versions travel with every answer, and they answer different questions:
 
 ```
-_answer format 9 · schema 0.13_          ← the trailer on any markdown answer
-{"ok": true, "answer_format": 9, …}      ← the same fact in a serve/MCP envelope
-codemap 0.0.33 · answer format 9 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
+_answer format 10 · schema 0.13_         ← the trailer on any markdown answer
+{"ok": true, "answer_format": 10, …}      ← the same fact in a serve/MCP envelope
+codemap 0.0.34 · answer format 10 · schema 0.13  ← `codemap --version` (adds @commit from a source tree)
 ```
 
 What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says
@@ -125,6 +125,10 @@ files. A diff whose Python files are all unplaced exits 2 ([design](design/revie
 beside `freshness` ([incremental](incremental.md)). CLI markdown answers are unchanged; a cold read of a graph
 that is behind adds a stderr warning. `review` also names the doc pages a diff changes (`changed_docs`, with
 the symbols each documents) instead of filing their hunks as unresolved ([design](design/review_docs.md)).
+**10** (0.0.34) — `currency` gains `via`: a graph whose build recipe is not usable here (built on another
+machine) is checked from its own provenance roots under the current directory or `--source-root`, and is
+`current` or `behind` where it was `unknown`. A cold CLI read that still cannot check says so in one `[note]`
+([design](design/currency_without_recipe.md)).
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.
