@@ -1710,7 +1710,7 @@ Python-focus** — если задача его нарушает, это отм�
       тип выведен до `PathForecaster`, но `member_values` в Protocol нет, ребра нет; `tests KnnPathForecaster.member_values`
       не видит `test_zone_scale.py::test_scale_neighbours_are_the_band_neighbours`. Направление: атрибут, которого нет
       в Protocol, — по реализациям, у которых он есть, `resolution: "protocol"` (low), как веер D2.
-- [ ] **R1-C89 `review` на правке документации: doc-узлы не названы** (S) — 🆕 (2026-11-06, bquant, после 0.0.32): дифф
+- [ ] **R1-C89 `review` на правке документации: doc-узлы не названы** (S) — 🟡 дизайн [`review_docs.md`](docs/design/review_docs.md), гэп [`review_docs_diff_2026-11-06.md`](gaps/review_docs_diff_2026-11-06.md); 🆕 (2026-11-06, bquant, после 0.0.32): дифф
       cf039ef правит только `docs/api/analysis/*.md` (граф собран с `--docs docs`) → «0 changed symbol(s)» и «Unresolved hunks
       (lines outside any symbol): 3»; doc-файлы опознаны (не в `skipped_files`), но doc-узлы и символы, которые эти страницы
       называют, не показаны. Направление: назвать изменённые doc-страницы и упомянутые в них символы, либо прямо сказать,
