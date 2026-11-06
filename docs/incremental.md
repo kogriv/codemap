@@ -60,7 +60,7 @@ and costs only the scans. `watch` with consumers takes the same path, so a deep 
 full deep build on every save.
 
 **Where the package sits** (R1-C86 D0). In a git tree the scope's paths are relative to the repository root.
-A package below it (`research/shared`, `src/pkg`) is mapped from there. Before 0.0.33 such a package's edits
+A package below it (`research/shared`, `src/pkg`) is mapped from there. Up to and including 0.0.33, such a package's edits
 were not seen at all: the build said `unchanged` and kept the old graph.
 
 ## Guarantees
