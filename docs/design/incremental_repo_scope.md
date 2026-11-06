@@ -1,6 +1,6 @@
 # Design — incremental builds for repo-scoped graphs, and for a package that is not at the git root
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C86. **Gap:**
+**Status:** ✅ **done** (2026-11-06, fix b5c4640 + d95c116; `ANSWER_FORMAT` 10 with R1-C90), acceptance reconciled below. Pre-registered in 3cb2c9c, amended before the rerun in d95c116. **Backlog:** R1-C86. **Gap:**
 [`gaps/incremental_repo_scope_2026-11-06.md`](../../gaps/incremental_repo_scope_2026-11-06.md).
 
 ## D0 — scope paths are mapped relative to where the package sits
@@ -66,3 +66,22 @@ fixture that exercises nested defs and shadowed bodies must be in the splice set
 instead of shipping. A byte-identity test now has a nested def in the unaffected module.
 
 E3 is rerun on the fix commit. E4–E7 held on 508396b and are carried over.
+
+## Reconciliation (2026-11-06; first run 508396b, E3 rerun d95c116)
+
+| # | Result |
+|---|---|
+| E1 | ✅ fixture git repos, package in `research/shared` and `src/shared`: `incremental` mode (0.0.33: `unchanged`, edit not seen), byte-identical to a full build |
+| E2 | ✅ repo-scope fixture: core edit / core add / core remove → `incremental`; consumer edit / doc edit → `unchanged`; each byte-identical to a full repo build apart from `provenance.incremental` |
+| E3 | ❌ on 508396b: 1 of 10 (26 nodes missing `calls_nested`, see the amendment). ✅ on d95c116: **10 of 10** commits from `ec21a0e` to `cf039ef` identical to a full fast repo build (modes: 6 `unchanged`, 4 `incremental` with 7, 3 and 11 modules); the single-package replay over the same commits also 10 of 10 |
+| E4 | ✅ bquant, one-module core edit (`trading/exit_at.py`; 2 modules affected): deep incremental repo build **17.8 s** against **120.4 s** full; fast 12.5 s against 16.9 s |
+| E5 | ✅ bquearch `shared`, deep, an edit in `active_state.py` (8 modules affected): 36 core `protocol` edges before and after; none lost from unaffected callers |
+| E6 | ✅ `watch` with `--consumer`/`--docs` on a core edit: `[incremental] incremental: 1 module(s) recomputed`, `rebuilt in 0.1s` |
+| E7 | ✅ bquant `check` and the bquearch gate identical apart from the trailer (`answer format 10`) |
+| E8 | ✅ suite 1261 passed / 3 skipped; mutations: D0 off, D1 off, offset not stripped, removed-module edge spliced, D2 off, each splice key removed; control green |
+
+**Surprises (three defects older than this item, all in the incremental path since R1-C9):**
+- D0: a package below the git root never saw an edit (`unchanged`), and `watch` kept serving the old graph.
+- A removed module's internal calls were spliced forward through the package's root module.
+- `calls_nested` / `calls_shadowed` were dropped from every unaffected module (found only by replaying a real
+  history; the fixtures never had a nested def in an unaffected module).

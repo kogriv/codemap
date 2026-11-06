@@ -1108,6 +1108,19 @@ bquant check / bquearch gate             exit 0                      exit 0; ide
 
 Every expectation holds.
 
+**0.0.34 — the release check, pre-registered before the upload (2026-11-06).** Two items (R1-C86, R1-C90);
+schema **0.13**, **`ANSWER_FORMAT` 9 → 10**. Trees: a git fixture with the package in `research/shared`; bquant
+`d9a2a4f` / `cf039ef`.
+
+| | tree form | 0.0.33 (expected) | 0.0.34 (expected) |
+|---|---|---|---|
+| R1-C86 D0 | fixture: edit under `research/shared`, `build --incremental` | `[incremental] unchanged` | `[incremental] incremental` (or `full` on a tiny package), graph equals a full build |
+| R1-C86 D1 | bquant `cf039ef`, `build --incremental --consumer … --docs docs` after a one-module edit | `[note] --incremental was not applied …` | `[incremental] incremental: N module(s)` |
+| R1-C90 | bquant graph built at `d9a2a4f`, recipe `cwd` missing, cold `query` from a `cf039ef` clone | nothing on stderr | `[warning] … is behind its source tree …` |
+| version | `codemap --version` | `… answer format 9 …` | `codemap 0.0.34 · answer format 10 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate identical apart from the trailer (format 10).
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

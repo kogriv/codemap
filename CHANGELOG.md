@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.34] - 2026-11-06
+
+**Incremental builds for repo-scoped graphs, three incremental defects fixed, and a graph built elsewhere is
+checked.** Schema unchanged (**0.13**). **`ANSWER_FORMAT` 9 → 10.**
+
 - **`build --incremental` works for repo-scoped graphs** (R1-C86, design
   [`docs/design/incremental_repo_scope.md`](docs/design/incremental_repo_scope.md)). With `--consumer`/`--docs`,
   the core is now updated incrementally, and the consumer and doc scans (~6 s on bquant) rerun in full. On the
