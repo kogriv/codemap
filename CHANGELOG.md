@@ -15,6 +15,9 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   build said `unchanged`, kept the old graph, and `watch` kept serving it.
 - **Fixed: a removed module's internal calls survived an incremental build** (R1-C86). By longest prefix, they
   belonged to the package's unaffected root module and were spliced forward.
+- **Fixed: an incremental build dropped `calls_nested` / `calls_shadowed` from every unaffected module**
+  (R1-C86, found by replaying bquant's history). The splice list missed two keys the same pass stamps. A guard
+  now derives the list from the passes.
 - **Deep incremental: spliced callers keep their Protocol fan-out** (R1-C86 D2). The fan-out now runs again after
   the splice.
 - **A graph built elsewhere is checked from its own roots** (R1-C90, design

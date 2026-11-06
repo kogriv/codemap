@@ -46,3 +46,23 @@ E1, E2, E3 and E4 fail on 0.0.33, so the list cannot pass if nothing was done.
 | E8 | Full suite passes; guards for D0, D1 and D2 go red when reverted; a cosmetic control stays green |
 
 Surprises are reported in the reconciliation.
+
+## Amendment after the first run (2026-11-06, before the rerun)
+
+The first acceptance run on 508396b failed **E3**. In the bquant replay, the incremental graph equalled the full
+one on 1 commit of 10. The first divergence was at `12f09d7` (7 modules recomputed), and every later commit
+inherited it, `unchanged` ones included. Edges and nodes were identical. 26 nodes differed in one extras key,
+`calls_nested`, which was present in the full build and absent in the incremental one.
+
+**Cause, older than this item:** the splice carries a fixed list of node-extras keys owned by the jedi passes
+(`_BEHAVIORAL_EXTRAS`, R1-C9). `calls_nested` (calls inside nested defs, counted on the owner) and
+`calls_shadowed` (on the module node) are stamped by the same pass and were never added to it. So every
+unaffected module with a nested def lost them. The R1-C9 guards build fixtures with no nested def in an
+unaffected module, so the single-package path has carried this since `calls_nested` was introduced. It shows
+on any real tree.
+
+**Fix:** both keys added. A property guard was added as well: whatever `add_behavior` / `add_attrflow` stamp on a
+fixture that exercises nested defs and shadowed bodies must be in the splice set. The next new key fails it
+instead of shipping. A byte-identity test now has a nested def in the unaffected module.
+
+E3 is rerun on the fix commit. E4–E7 held on 508396b and are carried over.

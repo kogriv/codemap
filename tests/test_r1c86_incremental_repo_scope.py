@@ -152,3 +152,44 @@ def test_D2_spliced_deep_callers_keep_their_protocol_fan_out(tmp_path, monkeypat
     assert main(["build", "pkg", "--deep", "--incremental", "-o", "g.json"]) == 0
     assert _mode(capsys) == "incremental"
     assert ("pkg.use.run", "pkg.menu.B.band") in fan()
+
+
+# -- found by the bquant replay (E3): node extras the splice did not carry ---------
+
+def test_every_extras_key_the_jedi_passes_stamp_is_spliced(tmp_path):
+    """Derived, not listed: whatever add_behavior / add_attrflow add to node extras must be
+    in the splice set, or an unaffected module silently loses it (R1-C86 E3)."""
+    from codemap.extract.attrflow import add_attrflow
+    from codemap.extract.behavior import add_behavior
+    from codemap.extract.griffe_extractor import build_structural
+    from codemap.incremental import _BEHAVIORAL_EXTRAS
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "m.py").write_text(
+        "import os\n\n\nclass C:\n    size = 1\n\n    def go(self):\n        return self.size\n\n\n"
+        "def outer():\n    def inner():\n        return os.getcwd()\n    return inner()\n\n\n"
+        "def twice():\n    return len([1])\n\n\ndef twice():\n    return 2\n\n\n"
+        "if True:\n    print(len([]))\n")
+    graph, root, name, sp = build_structural(str(pkg))
+    before = {nid: set(n.extras) for nid, n in graph.nodes.items()}
+    add_behavior(graph, root, name, deep=False, search_path=sp)
+    add_attrflow(graph, root, name, deep=False, search_path=sp)
+    stamped = set().union(*(set(n.extras) - before.get(nid, set()) for nid, n in graph.nodes.items()))
+    assert {"calls_nested", "calls_shadowed", "calls"} <= stamped   # the fixture exercises them
+    assert stamped <= set(_BEHAVIORAL_EXTRAS), stamped - set(_BEHAVIORAL_EXTRAS)
+
+
+def test_an_unaffected_module_with_a_nested_def_survives_an_incremental_build(tmp_path, monkeypatch, capsys):
+    files = _modules("pkg")
+    files["pkg/nested.py"] = ("import os\n\n\ndef outer():\n    def inner():\n        return os.getcwd()\n"
+                              "    return inner()\n")
+    root = _git_repo(tmp_path, files)
+    monkeypatch.chdir(root)
+    assert main(["build", "pkg", "-o", "i.json"]) == 0
+    (root / "pkg" / "m2.py").write_text("def f2():\n    return 22\n")
+    capsys.readouterr()
+    assert main(["build", "pkg", "--incremental", "-o", "i.json"]) == 0
+    assert _mode(capsys) == "incremental"
+    assert main(["build", "pkg", "-o", "f.json"]) == 0
+    assert _same(root / "i.json", root / "f.json")
