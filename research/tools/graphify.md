@@ -443,3 +443,10 @@ The tag depends on context I did not isolate, and the filing says so.
 **Filed 2026-11-04 on the owner's decision:** (B) as [#4989](https://github.com/Graphify-Labs/graphify/issues/4989);
 (A) as a comment on [#2447](https://github.com/Graphify-Labs/graphify/issues/2447#issuecomment-6620870051), with
 the A1 tree, its control, and the `deferred`-stamp suggestion.
+
+**#4989 fixed upstream 2026-11-05** (0.9.103, their #4999, closed by the maintainer). Verified 2026-11-06 with
+0.9.102 as the control, on the minimal reproduction: the builtin call's edge `pkg/a.py:todo() →
+pkg/errors.py:NotImplementedError` (`INFERRED`) is gone, and the imported one (`EXTRACTED`) stays. The real
+tree could not serve as evidence: at its current commit neither version produces such an edge, so the five links
+from the report no longer reproduce. Confirmation posted with that limit stated
+([comment](https://github.com/Graphify-Labs/graphify/issues/4989#issuecomment-6677937879)).
