@@ -34,7 +34,10 @@ _INSTRUCTIONS = (
     "carries a `resolved.ambiguous` flag — check it before trusting the answer. "
     "Any tool that takes a `limit` always returns a `limit` block "
     "`{applied, returned, total, truncated}` — read it before concluding a list is "
-    "complete; `total: null` means the total was not observable, not that it is zero."
+    "complete; `total: null` means the total was not observable, not that it is zero. "
+    "Every response carries `currency`: `behind` means the source tree changed since the "
+    "graph was built, so the answer describes the older tree — say so, or rebuild and "
+    "`reload` before relying on it."
 )
 
 
@@ -113,7 +116,10 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
     def stats() -> dict:
         """Graph overview: target, schema version, node/edge counts by kind/type, and
         `freshness` for the graph ACTUALLY served — `stale: true` (+reason) if the
-        on-disk artifact was rebuilt after this server loaded it. Call `reload` then."""
+        on-disk artifact was rebuilt after this server loaded it. Call `reload` then.
+        `currency` (also in EVERY answer's envelope) is the content check: `behind` means
+        the source tree changed since this graph was built, so answers describe the older
+        tree — rebuild, then `reload`."""
         return op("stats")
 
     @server.tool()

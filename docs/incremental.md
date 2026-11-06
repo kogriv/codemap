@@ -137,6 +137,24 @@ fresh while it's behind the file (issue #3). `reload` returns before/after count
 can see what changed. Together, `build --incremental` + `reload` are the manual form of
 the loop below: rebuild fast, pick up without restarting.
 
+### Every answer says which tree it is about
+
+`freshness` is about time: when the served graph was built, and whether the file on disk is newer. It cannot
+tell whether the **source tree** moved since. A graph can be an hour old and exact, or a minute old and
+behind. Since 0.0.33, every served answer (each MCP tool and each `serve` op) carries `currency`. It is the
+check `check --graph` makes (R1-C70): the served graph's input identity compared with the tree now.
+
+```
+"currency": {"status": "behind", "added": 0, "changed": 3, "removed": 0,
+             "hint": "… rebuild it, then `reload` …", "checked_seconds_ago": 4}
+```
+
+`current`, `behind` or `unknown` (always with a `reason`; a `serve --build` server has no recipe to compare
+against). The check walks the tree, 40–110 ms on the repos measured, so it is reused for `--currency-ttl`
+seconds (default 10; `0` checks on every call), and `checked_seconds_ago` says how old it is. `reload` checks
+afresh. A cold CLI read of a graph that is behind (`codemap query … --graph`) prints one `[warning]` line on
+stderr. `check` has its own currency line (R1-C85).
+
 ## The automatic loop
 
 Two commands, composed by the shell, each doing one half (M3.2):

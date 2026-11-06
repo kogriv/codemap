@@ -96,8 +96,26 @@ def _graph_from(args):
     if getattr(args, "build", None):
         return extract(args.build, deep=getattr(args, "deep", False))
     if getattr(args, "graph", None):
-        return store.load(args.graph)
+        graph = store.load(args.graph)
+        if getattr(args, "func", None) not in (_cmd_check, _cmd_serve):
+            _warn_if_behind(args.graph, graph)
+        return graph
     raise SystemExit("error: need --graph <file> or --build <path>")
+
+
+def _warn_if_behind(path: str, graph) -> None:
+    """R1-C85 D4: a cold read of a graph behind its tree says so, once, on stderr.
+
+    `check` prints its own currency line and `serve` puts it in every envelope; every
+    other reader of `--graph` answered about an older tree without a word. Silent when
+    current or unknown, so stdout and exit codes never change.
+    """
+    from codemap.serve.currency import graph_currency
+    c = graph_currency(path, (graph.provenance or {}).get("scope_id"))
+    if c.get("status") == "behind":
+        print(f"[warning] {path} is behind its source tree ({c.get('added', 0)} added, "
+              f"{c.get('changed', 0)} changed, {c.get('removed', 0)} removed since it was "
+              "built) — answers describe the older tree; rebuild", file=sys.stderr)
 
 
 def _refuse_bad_roots(args) -> bool:
@@ -948,7 +966,8 @@ def _cmd_serve(args) -> int:
     """
     from codemap.serve.session import Session
     session = Session(_graph_from(args), source_root=args.source_root,
-                      graph_path=getattr(args, "graph", None))
+                      graph_path=getattr(args, "graph", None),
+                      currency_ttl=getattr(args, "currency_ttl", 10.0))
     if getattr(args, "watch", False):
         _start_reload_watcher(session, args)
     if getattr(args, "mcp", False):
@@ -1198,6 +1217,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_source(s)
     s.add_argument("--source-root", help="Base dir for the `source` op to read files "
                                          "(node paths are repo-relative; default: cwd).")
+    s.add_argument("--currency-ttl", type=float, default=10.0, metavar="SECONDS",
+                   help="How long a check of the graph against the source tree is reused "
+                        "in answers (`currency`, R1-C85); 0 checks on every call. Default 10.")
     s.add_argument("--mcp", action="store_true",
                    help="Serve over the Model Context Protocol instead of JSON "
                         "(needs the optional 'mcp' extra: pip install 'codemap[mcp]').")

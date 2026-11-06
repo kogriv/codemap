@@ -334,8 +334,14 @@ class Session:
     """A warm, in-memory query surface over one graph."""
 
     def __init__(self, graph: Graph, source_root: str | None = None,
-                 graph_path: str | None = None) -> None:
+                 graph_path: str | None = None, currency_ttl: float = 10.0) -> None:
         self.graph = graph
+        # R1-C85: is the served graph the tree it answers about? Checked like `check
+        # --graph` (R1-C70), cached for `currency_ttl` seconds — the check walks the tree
+        # (40–110 ms median measured) and an envelope is built on every call.
+        self.currency_ttl = currency_ttl
+        self._currency_cache: tuple[float, dict] | None = None
+        self._currency_checks = 0
         self.query = Query(graph)
         # F12: base dir to resolve node.file for the `source` op (node paths are
         # repo-relative, e.g. `bquant/…`). Defaults to cwd; best-effort.
@@ -405,6 +411,8 @@ class Session:
                    "answer_format": ANSWER_FORMAT}
         except Exception as exc:  # a bad arg must not kill the resident process
             return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        # R1-C85: which tree this answer is about. Always present (R1-C28).
+        env["currency"] = self._currency()
         r = self._resolution
         # R1-C44 / D2: three-way, not a truthiness test. "not found" is the one case the
         # block exists for and was the one case `if r and …` threw away.
@@ -477,6 +485,8 @@ class Session:
         fr = freshness(self.graph_path, served_mtime=self._served_mtime)
         if fr is not None:
             out["freshness"] = fr
+        # R1-C85 D3: time (freshness) and content (currency), side by side.
+        out["currency"] = self._currency()
         # R1-C21: same spirit as freshness — say when the graph may be *vacuous* (0 import
         # edges from a layout the extractor didn't understand), rather than letting every
         # downstream conclusion silently inherit the emptiness.
@@ -489,6 +499,27 @@ class Session:
         if diags:
             out["diagnostics"] = diags
         return out
+
+    def _currency(self) -> dict:
+        """The served graph against the tree now, cached for ``currency_ttl`` seconds (R1-C85)."""
+        import time
+        now = time.monotonic()
+        c = self._currency_cache
+        if c is None or now - c[0] >= self.currency_ttl:     # ttl 0: every call
+            self._currency_checks += 1
+            if not self.graph_path:
+                res = {"status": "unknown",
+                       "reason": "served from an in-process build; no build recipe to "
+                                 "compare against"}
+            else:
+                from codemap.serve.currency import graph_currency
+                res = graph_currency(self.graph_path,
+                                     (self.graph.provenance or {}).get("scope_id"))
+                if res.get("status") == "behind":
+                    res["hint"] = ("the source tree changed since this graph was built — "
+                                   "rebuild it, then `reload` (or run `serve --watch`)")
+            c = self._currency_cache = (now, res)
+        return {**c[1], "checked_seconds_ago": round(now - c[0])}
 
     @staticmethod
     def _tool_drift() -> dict | None:
@@ -524,6 +555,7 @@ class Session:
         self.graph = graph
         self.query = Query(graph)
         self._served_mtime = self._current_mtime()
+        self._currency_cache = None      # R1-C85: a new graph is checked afresh
         after = {"nodes": len(graph.nodes), "edges": len(graph.edges)}
         out = {"reloaded": True, "before": before, "after": after,
                "changed": before != after,

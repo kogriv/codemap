@@ -5,6 +5,17 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **Every served answer says whether its graph matches the tree** (R1-C85, design
+  [`docs/design/mcp_graph_currency.md`](docs/design/mcp_graph_currency.md)). bquant's MCP server answered for a
+  month and a half from a graph 118 commits old, and no answer said so. Changes:
+  - every serve/MCP envelope carries `currency`: the R1-C70 check of the **served** graph against the source tree
+    now, `current`, `behind` (with counts and a hint) or `unknown` (with a reason);
+  - the check is cached for `--currency-ttl` seconds (default 10, measured 40–110 ms per check), its age is
+    stated, and `reload` drops the cache;
+  - `stats` shows it beside `freshness`;
+  - a cold CLI read of a graph that is behind warns once on stderr.
+- **`ANSWER_FORMAT` 8 → 9** (the envelope gains a field). Schema unchanged.
+
 ## [0.0.32] - 2026-11-06
 
 **`review` finds a diff's files when the graph was built from a subdirectory; methods outside a Protocol are

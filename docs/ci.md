@@ -86,9 +86,9 @@ line: the regression, the interpreter nobody tried, the artifact nobody installe
 Two versions travel with every answer, and they answer different questions:
 
 ```
-_answer format 8 · schema 0.13_          ← the trailer on any markdown answer
-{"ok": true, "answer_format": 8, …}      ← the same fact in a serve/MCP envelope
-codemap 0.0.32 · answer format 8 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
+_answer format 9 · schema 0.13_          ← the trailer on any markdown answer
+{"ok": true, "answer_format": 9, …}      ← the same fact in a serve/MCP envelope
+codemap 0.0.33 · answer format 9 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
 ```
 
 What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says
@@ -120,6 +120,10 @@ are reachable ([design](design/protocol_dispatch.md)). `check` changes by its tr
 either way (`mapped_paths`). A Python file that cannot be placed is listed in `unplaced_files`, with a bold
 line in the markdown; non-Python files go to `skipped_files`. `unresolved_hunks` keeps only lines in placed
 files. A diff whose Python files are all unplaced exits 2 ([design](design/review_path_base.md)).
+**9** (0.0.33) — every serve/MCP envelope carries `currency`, the served graph checked against the source tree
+(`current` / `behind` / `unknown`, cached `--currency-ttl` seconds, `checked_seconds_ago`); `stats` shows it
+beside `freshness` ([incremental](incremental.md)). CLI markdown answers are unchanged; a cold read of a graph
+that is behind adds a stderr warning.
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.
