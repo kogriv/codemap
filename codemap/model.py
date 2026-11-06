@@ -118,7 +118,10 @@ SCHEMA_VERSION = "0.13"
 #       `--all-bands` lists every band, each row carrying its distance and confidence; a helper
 #       function inside a collected test module costs no hop in `tests` and `covers`, so
 #       distances move where one sits on the path (R1-C80, docs/design/tests_through_helpers.md).
-ANSWER_FORMAT = 5
+#   6 — `review` reads changed lines, not whole hunks; a module's dossier counts direct references
+#       to the module (its importers), not every reference into every member, and has no call-site
+#       contract; module constants gain `accesses` readers (R1-C82, docs/design/review_changed_lines.md).
+ANSWER_FORMAT = 6
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship

@@ -149,6 +149,7 @@ def _own_attr_uses(fnode, graph, modpath, members, imports, modmembers, pkg, scr
     # Attributes that are the callee of a call (``self.foo()``) are *method calls*,
     # handled by the behavioral layer — not field access. Skip exactly those.
     call_funcs = {id(n.func) for n in nodes if isinstance(n, ast.Call)}
+    yield from _module_name_uses(fnode, nodes, graph, modpath, imports, modmembers, pkg)
 
     for node in nodes:
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
@@ -193,6 +194,62 @@ def _own_attr_uses(fnode, graph, modpath, members, imports, modmembers, pkg, scr
             else:
                 # obj.field on a local — deep tier resolves the type, else unresolved.
                 yield from _deep_attr(node, graph, pkg, script)
+
+
+def _bound_names(fnode, nodes) -> tuple[set[str], set[str]]:
+    """(names bound locally in the function, names declared ``global``)."""
+    bound: set[str] = set()
+    a = fnode.args
+    for arg in (*a.posonlyargs, *a.args, *a.kwonlyargs, a.vararg, a.kwarg):
+        if arg is not None:
+            bound.add(arg.arg)
+    glob: set[str] = set()
+    for n in nodes:
+        if isinstance(n, ast.Name) and isinstance(n.ctx, (ast.Store, ast.Del)):
+            bound.add(n.id)
+        elif isinstance(n, (ast.Import, ast.ImportFrom)):
+            bound.update((al.asname or al.name).split(".")[0] for al in n.names)
+        elif isinstance(n, ast.ExceptHandler) and n.name:
+            bound.add(n.name)
+        elif isinstance(n, ast.Global):
+            glob.update(n.names)
+        elif isinstance(n, ast.arg):
+            bound.add(n.arg)                    # lambda parameters
+    return bound - glob, glob
+
+
+def _module_name_uses(fnode, nodes, graph, modpath, imports, modmembers, pkg):
+    """Bare-name reads of a module attribute: ``x in NAMES`` (R1-C82 D3).
+
+    ``from pkg.contracts import NAMES`` gave only an ``export`` edge and a read of the
+    name inside a function gave none, so a module constant had "no consumers" in
+    ``review``/``impact`` while being read everywhere. Resolved through the module's
+    imports or its own members; emitted only onto a real ``attribute`` node. A local
+    binding of the same name shadows it. Unresolved bare names are not counted —
+    nearly all of them are locals and builtins. Fast tier.
+    """
+    bound, glob = _bound_names(fnode, nodes)
+    for n in nodes:
+        if not isinstance(n, ast.Name):
+            continue
+        if isinstance(n.ctx, ast.Load):
+            if n.id in bound:
+                continue
+            access = "read"
+        elif isinstance(n.ctx, ast.Store) and n.id in glob:
+            access = "write"                    # global NAME; NAME = …
+        else:
+            continue
+        if n.id in imports:
+            tgt = imports[n.id]
+            if not tgt.startswith(pkg):
+                continue
+        elif n.id in modmembers:
+            tgt = f"{modpath}.{n.id}"
+        else:
+            continue
+        if _is_attribute_node(graph, tgt):
+            yield tgt, access, "name"
 
 
 def _deep_attr(node, graph, pkg, script):

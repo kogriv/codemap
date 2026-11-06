@@ -86,9 +86,9 @@ line: the regression, the interpreter nobody tried, the artifact nobody installe
 Two versions travel with every answer, and they answer different questions:
 
 ```
-_answer format 5 · schema 0.13_          ← the trailer on any markdown answer
-{"ok": true, "answer_format": 5, …}      ← the same fact in a serve/MCP envelope
-codemap 0.0.28 · answer format 5 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
+_answer format 6 · schema 0.13_          ← the trailer on any markdown answer
+{"ok": true, "answer_format": 6, …}      ← the same fact in a serve/MCP envelope
+codemap 0.0.30 · answer format 6 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
 ```
 
 What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says
@@ -107,6 +107,10 @@ module level and class bodies ([design](design/call_site_conservation.md)). Noth
 distance d" line), its caveat says the nearest band closed the answer, `--all-bands` lists every band with
 distances, and distances move where a test helper or a nested def sits on the path ([test mapping](test-mapping.md)).
 Repo-scoped graphs gain edges inside consumer roots; `check` changes by its trailer alone.
+**6** (0.0.30) — `review`: changed lines are read, not whole hunks with their context; a blank or comment
+line outside every definition names nothing; a module's dossier counts direct references to the module and
+has no call-site contract; module constants read by bare name gain `accesses` readers, so their dossier
+names them ([design](design/review_changed_lines.md)). `check` changes by its trailer alone.
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.

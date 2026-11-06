@@ -51,16 +51,43 @@ def _risk(caller_n: int, consumers: dict[str, int], contract_sites: int,
     return "low", score
 
 
+def _module_dossier(query: Query, sid: str, node) -> dict:
+    """A changed line of module-level code (R1-C82 D2): about the module, not its members.
+
+    The generic dossier sums callers and call sites over every member, which turned a
+    one-line constant edit into "[high] … 123 site(s) — check on signature change". A
+    module has no signature; what module-level code reaches is whoever imports it.
+    """
+    consumers: dict[str, int] = {}
+    for ref in query.references_to(sid, include_members=False):
+        consumers[ref["root"]] = consumers.get(ref["root"], 0) + 1
+    importers = sum(consumers.values())
+    risk, score = _risk(importers, {r: v for r, v in consumers.items() if r != "core"}, 0, False)
+    return {
+        "symbol": sid, "kind": "module", "file": node.file if node else None, "lines": None,
+        "callers": [], "callees": [], "call_contract": [],
+        "columns": {"reads": [], "writes": []},
+        "consumers_by_root": consumers,
+        "module_level": True,
+        "risk": risk, "risk_score": score,
+    }
+
+
 def build_symbol_dossier(query: Query, sid: str) -> dict:
     """Everything a reviewer needs about one changed symbol (F17)."""
     node = query.graph.nodes.get(sid)
     kind = node.kind if node else None
+    if kind == "module":
+        return _module_dossier(query, sid, node)
     callers = query.callers(sid)
     contract = query.call_contract(sid)
     cols = query.columns_of(sid) if kind == "function" else {"reads": [], "writes": []}
     consumers = _consumers_by_root(query, sid)
     touches = bool(cols["reads"] or cols["writes"])
-    risk, score = _risk(len(callers), consumers, len(contract), touches)
+    # R1-C82: an attribute has no callers; its reach is who reads or writes it (the
+    # `accesses` edges D3 added), or a widely read constant would rank "low".
+    reach = sum(consumers.values()) if kind == "attribute" else len(callers)
+    risk, score = _risk(reach, consumers, len(contract), touches)
     return {
         "symbol": sid,
         "kind": kind,
@@ -102,6 +129,11 @@ def build_review(query: Query, *, hunks: list[dict] | None = None,
                     ids.update(got)
                 else:
                     unresolved.append({"file": file, "range": [start, end]})
+            for rng in h.get("soft", []):
+                # D1b: a blank/comment line names its definition, never the module
+                start, end = int(rng[0]), int(rng[-1])
+                _defs, module = query._defs_in_file(file)
+                ids.update(s for s in query.symbols_in_range(file, start, end) if s != module)
     ids = {query.canonical(i) or i for i in ids}
     dossiers = [build_symbol_dossier(query, sid) for sid in sorted(ids)]
     dossiers.sort(key=lambda d: (-d["risk_score"], d["symbol"]))
@@ -154,7 +186,11 @@ def render_review(query: Query, *, hunks: list[dict] | None = None,
     for d in rv["changed"]:
         loc = f" ({d['file']}:{d['lines'][0]})" if d["file"] and d["lines"] else ""
         out.append(f"## [{d['risk']}] {d['symbol']}{loc}")
-        if d["consumers_by_root"]:
+        if d.get("module_level"):
+            n = sum(d["consumers_by_root"].values())
+            out.append(f"- Module-level code changed (outside any definition) — runs on import; "
+                       f"referenced directly by {n} site(s): {d['consumers_by_root'] or '—'}")
+        elif d["consumers_by_root"]:
             out.append(f"- Consumers by root: {d['consumers_by_root']}")
         if d["callers"]:
             out.append(f"- Callers ({len(d['callers'])}): "
@@ -171,27 +207,88 @@ def render_review(query: Query, *, hunks: list[dict] | None = None,
 
 # -- unified-diff hunk parsing (for CLI `codemap review <diff>`) --------------
 
-def parse_unified_diff(text: str) -> list[dict]:
-    """Parse a unified diff → [{file, ranges: [[start,end], …]}] (new-file lines).
+def _soft(text: str) -> bool:
+    """A blank or comment-only line: no code changed on it (R1-C82 D1b)."""
+    t = text.strip()
+    return not t or t.startswith("#")
 
-    Reads ``+++ b/<path>`` targets and ``@@ -a,b +c,d @@`` hunk headers, taking the
-    **new-file** side (``+c,d`` → lines ``c … c+d-1``). Deletions (``d == 0``)
-    anchor a zero-width range at ``c`` so a pure deletion still maps to its site.
+
+def _runs(lines: list[int]) -> list[list[int]]:
+    """Sorted line numbers → [[start, end], …] of consecutive runs."""
+    out: list[list[int]] = []
+    for n in sorted(set(lines)):
+        if out and n == out[-1][1] + 1:
+            out[-1][1] = n
+        else:
+            out.append([n, n])
+    return out
+
+
+def parse_unified_diff(text: str) -> list[dict]:
+    """Parse a unified diff → [{file, ranges, soft}] in new-file line numbers.
+
+    R1-C82 D1: only **changed** lines count. The ``@@ +c,d @@`` header spans the hunk's
+    context too (three lines each side by default), and reading it whole put untouched
+    neighbours — and, through module-level comments, the whole module — into a review of
+    a one-line change. Now ``+`` lines give their own numbers; a run of ``-`` lines with no
+    ``+`` (a pure deletion) anchors a zero-width range at the new-file line where it stood.
+
+    D1b: a changed line that is blank or a comment goes to ``soft`` instead of ``ranges``.
+    Inside a definition it still names that definition; outside every definition it
+    names nothing — a comment between two functions is not a change to the module.
     """
     import re
-    hdr = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
-    files: dict[str, list] = {}
+    hdr = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+    hard: dict[str, list[int]] = {}
+    soft: dict[str, list[int]] = {}
     current = None
+    cur = old_left = new_left = 0       # the header's counts tell body lines from headers
+    pending: list[str] = []             # texts of a run of '-' lines not yet followed by '+'
+
+    def flush():
+        if current and pending:
+            (soft if all(_soft(t) for t in pending) else hard)[current].append(cur)
+        pending.clear()
+
     for ln in text.splitlines():
+        if old_left > 0 or new_left > 0:              # inside a hunk body
+            if ln.startswith("\\"):
+                continue                              # "\ No newline at end of file"
+            tag, body = (ln[:1], ln[1:]) if ln else (" ", "")
+            if tag == "+":
+                pending.clear()                       # a replacement: '+' lines carry it
+                if current:
+                    (soft if _soft(body) else hard)[current].append(cur)
+                cur += 1
+                new_left -= 1
+            elif tag == "-":
+                pending.append(body)
+                old_left -= 1
+            else:                                     # context
+                flush()
+                cur += 1
+                old_left -= 1
+                new_left -= 1
+            if old_left <= 0 and new_left <= 0:
+                flush()
+            continue
         if ln.startswith("+++ "):
             path = ln[4:].strip().split("\t")[0]
             if path.startswith("b/"):
                 path = path[2:]
             current = None if path == "/dev/null" else path
-            files.setdefault(current, [])
-        elif current and (m := hdr.match(ln)):
-            start = int(m.group(1))
-            count = int(m.group(2)) if m.group(2) is not None else 1
-            end = start + count - 1 if count else start
-            files[current].append([start, max(start, end)])
-    return [{"file": f, "ranges": r} for f, r in files.items() if f and r]
+            if current:
+                hard.setdefault(current, [])
+                soft.setdefault(current, [])
+        elif m := hdr.match(ln):
+            old_left = int(m.group(1)) if m.group(1) is not None else 1
+            cur = int(m.group(2))
+            new_left = int(m.group(3)) if m.group(3) is not None else 1
+            if new_left == 0:
+                cur += 1        # "+c,0": the deletion sits after new line c
+    out = []
+    for f in hard:
+        h, so = _runs(hard[f]), _runs(soft.get(f, []))
+        if h or so:
+            out.append({"file": f, "ranges": h, "soft": so})
+    return out

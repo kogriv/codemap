@@ -84,16 +84,18 @@ def test_parse_unified_diff_new_side_ranges():
         "--- a/flowpkg/produce.py\n"
         "+++ b/flowpkg/produce.py\n"
         "@@ -4,2 +4,3 @@ def compute(df):\n"
-        " ctx\n+added\n"
+        " ctx\n+added\n ctx\n"
     )
     hunks = parse_unified_diff(diff)
-    assert hunks == [{"file": "flowpkg/produce.py", "ranges": [[4, 6]]}]
+    # R1-C82 D1: the changed line only — the header's span includes context
+    assert hunks == [{"file": "flowpkg/produce.py", "ranges": [[5, 5]], "soft": []}]
 
 
 def test_parse_diff_then_review_end_to_end(q):
     diff = (
         "+++ b/flowpkg/produce.py\n"
         "@@ -4,2 +4,3 @@\n"
+        " ctx\n+    added = 1\n ctx\n"
     )
     rv = build_review(q, hunks=parse_unified_diff(diff))
     assert any(d["symbol"] == "flowpkg.produce.compute" for d in rv["changed"])
