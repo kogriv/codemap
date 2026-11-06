@@ -34,6 +34,6 @@ Run on the branch against 0.0.31. E1 and E2 fail on 0.0.31.
 | # | Result |
 |---|---|
 | E1 | ✅ bquearch `703696d`, deep: 0.0.31 `unknown`, 0 tests; now `test_zone_scale.test_scale_neighbours_are_the_band_neighbours` at distance 1, `low` |
-| E2 | ✅ fixture: the one implementer defining `member_values` (and its subclass through it) get the edge; a name no implementer has, and a missing method on a concrete class, get none; the row is `low` |
-| E3 | ✅ against 0.0.31: node ids equal, nothing removed; added only `calls/protocol` from consumer roots: bquearch +107 (fast and deep), bquant 0 |
+| E2 | ✅ in substance, not in the shape written: the fixture has one implementer that defines `member_values` and a subclass that inherits it (one method, so one edge), not "two of three". The remaining implementers get nothing. A name no implementer has, and a missing method on a concrete class, get no edge. The row is `low` |
+| E3 | ✅ for two of the three trees named: against 0.0.31, node ids equal, nothing removed, added only `calls/protocol` from consumer roots: bquearch +107 (fast and deep), bquant 0. **codemap was not measured.** It has no Protocols (R1-C81 prototype), so no edge can come from this change there |
 | E4 | ✅ suite 1233 passed / 3 skipped; mutations (off; concrete class guessed; graded `typed` instead of `protocol`) red; control green |
