@@ -1694,7 +1694,7 @@ Python-focus** — если задача его нарушает, это отм�
 - [ ] **R1-C81 метод объекта, построенного фабрикой (`build() -> Protocol`), не разрешается — `tests` отвечает unknown** (M)
       — 🆕 (2026-11-05, bquearch). `ForecasterSpec(...).build().fit(df).member_values(...)`: класс выбирается через
       реестр, аннотация возврата — Protocol. Направление: кандидаты-реализации Protocol с низкой уверенностью.
-- [ ] **R1-C82 `review` поднимает весь модуль до high при правке одной константы модуля** (S–M) — 🟡 дизайн [`review_changed_lines.md`](docs/design/review_changed_lines.md), гэп [`review_module_constant_2026-11-06.md`](gaps/review_module_constant_2026-11-06.md) (2026-11-05,
+- [x] **R1-C82 `review` поднимает весь модуль до high при правке одной константы модуля** (S–M) — ✅ 0.0.30 (2026-11-06), дизайн [`review_changed_lines.md`](docs/design/review_changed_lines.md), гэп [`review_module_constant_2026-11-06.md`](gaps/review_module_constant_2026-11-06.md) (2026-11-05,
       bquearch): правка `SURFACE_NAMES` → `[high] shared.contracts`, 647 мест, «check on signature change», сигнатур
       в диффе нет. Направление: назвать изменённый символ модуля и его потребителей.
 - [x] **R1-C83 CLI без `--source-root`: граф, собранный на другой машине, не находит пути** (S) — ✅ 0.0.29 (2026-11-05), дизайн [`foreign_graph_paths.md`](docs/design/foreign_graph_paths.md), гэп [`foreign_graph_paths_2026-11-05.md`](gaps/foreign_graph_paths_2026-11-05.md) (2026-11-05, bquant,

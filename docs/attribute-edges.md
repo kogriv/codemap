@@ -29,7 +29,7 @@ access; a `@property` is an *attribute* node in griffe, so reading `obj.prop` is
 | `self.field` / `cls.field` | `self.width`, `self.width = 0` | `self` | fast (`ast`) |
 | `ClassName.field` | `Config.width` | `class` | fast |
 | construction kwarg | `Config(width=5)` → write to `Config.width` | `construct` | fast |
-| module attribute by bare name | `from pkg.contracts import NAMES` … `x in NAMES`, or `NAMES` in its own module | `name` | fast |
+| module attribute by bare name | `from pkg.contracts import NAMES` … `x in NAMES`, or `NAMES` in its own module; in a function, at module level or in a class body | `name` | fast |
 | `obj.field` on a typed local | `c = make(); c.width` | `deep` | deep (`jedi`) |
 | `obj.field`, `obj` untyped | `x.field` (x unknown) | — (unresolved counter, no edge) | — |
 
@@ -40,8 +40,9 @@ that resolves a receiver in one build can come back empty in the next.
 A bare name is resolved through the module's imports, or to the module's own member. A parameter or a
 local binding of the same name (assignment, `for`, `with`, `except`, import) shadows it, and `global NAME`
 plus an assignment is a write. An unresolved bare name is not counted: nearly all bare names are locals and
-builtins. Reads at module level or in a class body (`OTHER = NAMES + …`) have no enclosing function, so they
-get no edge (R1-C82).
+builtins. Reads at module level or in a class body (`OTHER = NAMES + …`, an import-time
+`if set(A) != set(NAMES): raise …`) are edges from the **module** or the **class** node; inside a class body,
+names bound in that body shadow (R1-C82).
 Per-function `extras.attr_access` records `out` / `resolved` / `unresolved` counts, so
 the graph reports its own coverage — attribute access is a **lower bound**, like calls.
 

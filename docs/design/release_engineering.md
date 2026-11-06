@@ -995,6 +995,19 @@ CI on the fix commit (a305b1d) went red on the README test count. The rule writt
 in the same commit as the suite", was broken again; 6c802d7 carries the right number. The index cache needed two
 calls again.
 
+**0.0.30 — the release check, pre-registered before the upload (2026-11-06).** One item (R1-C82); schema **0.13**
+unchanged, **`ANSWER_FORMAT` 5 → 6**. Tree: bquearch `a948d6c`, graph of `shared` (fast, `--mode full`), diff
+`git diff --relative=research a948d6c^ a948d6c`, which changes one line, the tuple `SURFACE_NAMES`.
+
+| | tree form | 0.0.29 (expected) | 0.0.30 (expected) |
+|---|---|---|---|
+| R1-C82 | `review` on that diff | 3 symbols; `[high] shared.contracts`, "123 site(s) — check on signature change" | 1 symbol, `[medium] SURFACE_NAMES`, consumers `{'core': 2}` |
+| version | `codemap --version` | `codemap 0.0.29 · answer format 5 · schema 0.13` | `codemap 0.0.30 · answer format 6 · schema 0.13` |
+
+**Graph:** node ids identical to 0.0.29, no edge removed, every added edge `accesses` with `resolution: "name"`
+(bquearch `shared` and bquant `cf039ef`). **Consumers:** `check` on bquant and the bquearch gate: exit 0, output
+identical apart from the trailer, which reads answer format 6.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

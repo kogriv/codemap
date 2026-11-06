@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.30] - 2026-11-06
+
+**`review` names what changed, and a module constant has readers.** Schema unchanged (**0.13**).
+**`ANSWER_FORMAT` 5 → 6.**
+
 - **`review` reads the changed lines, not the hunk** (R1-C82, design
   [`docs/design/review_changed_lines.md`](docs/design/review_changed_lines.md)). On bquearch, a one-line edit of
   the tuple constant `SURFACE_NAMES` came back as `[high] shared.contracts` with "123 site(s) — check on signature
@@ -16,10 +21,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
     has no call-site contract.
 - **Module constants have readers.** A bare-name read of a module attribute inside a function
   (`from pkg.contracts import NAMES` … `x in NAMES`, or in the same module) is now an `accesses` edge with
-  `resolution: "name"`; locals shadow. `impact` and `review` see who reads a constant. A constant's
+  `resolution: "name"`; locals shadow. So is a read at module level or in a class body, with the module or class
+  as the source: bquearch's import-time check `if set(SURFACES) != set(SURFACE_NAMES): raise` is a reader. `impact` and `review` see who reads a constant. A constant's
   risk counts its readers.
-- **`ANSWER_FORMAT` 5 → 6**: the review dossier of a module changed meaning. Schema unchanged (no new edge
-  type). `check` changes by its trailer alone.
+- **`ANSWER_FORMAT` 5 → 6**: the review dossier of a module changed meaning. No new edge type, only a new
+  resolution value `name`, declared in the resolution table. `check` changes by its trailer alone.
 
 ## [0.0.29] - 2026-11-05
 

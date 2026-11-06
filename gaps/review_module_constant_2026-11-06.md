@@ -1,7 +1,7 @@
 # Гэп: `review` на правке одной константы модуля поднимает весь модуль до high, а у самой константы «потребителей нет»
 
 **Дата:** 2026-11-06. **Источник:** bquearch (codemap в их цикле с 703696d), сводка —
-[kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25). **Статус:** открыто; дизайн —
+[kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25). **Статус:** ✅ закрыто 2026-11-06 (0.0.30); дизайн —
 [`docs/design/review_changed_lines.md`](../docs/design/review_changed_lines.md), бэклог R1-C82.
 
 ## 1. Что показали

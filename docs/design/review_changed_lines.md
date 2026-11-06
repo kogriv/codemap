@@ -1,6 +1,6 @@
 # Design — `review` reads changed lines, not hunks; a module constant has readers
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C82. **Gap:**
+**Status:** ✅ **done** (2026-11-06, fix 3a3a703 + D3b e3a49ec; schema 0.13, `ANSWER_FORMAT` 6), acceptance reconciled below. Pre-registered in ab16f1e, amended in 3e18f19. **Backlog:** R1-C82. **Gap:**
 [`gaps/review_module_constant_2026-11-06.md`](../../gaps/review_module_constant_2026-11-06.md).
 
 ## The defect
@@ -95,3 +95,24 @@ table (R1-C39 guard), so the row is added. E5 reported one dropped definition wi
 (`shared.registry.Registry`, commit b7bc7e0). It is examined in the rerun, not explained away.
 
 **E2 and E5 are re-measured on the D3b commit.** E1, E3, E4, E6 and E7 held on 3a3a703 and are rerun as well.
+
+## Reconciliation (2026-11-06, e3a49ec; first run 3a3a703)
+
+| # | First run (3a3a703) | Rerun (e3a49ec) |
+|---|---|---|
+| E1 | ✅ one symbol, `SURFACE_NAMES` | ✅ same |
+| E2 | ❌ one reader (`ModelBundle.__post_init__`), `low` | ✅ readers `ModelBundle.__post_init__` and `shared.gates` (the import-time check), `medium` (score 2) |
+| E3 | ✅ fixture: `gate`, `Spec.check` → `NAMES` by `name`; a parameter and a rebinding shadow | ✅ plus module level and class body (D3b); a class-body binding shadows |
+| E4 | ✅ a comment between functions: 0 symbols, 0 unresolved; an import line: the module, no call-site contract, 1 importer | ✅ same |
+| E5 | 259 → 189 symbols over 30 commits, new ⊆ old in every commit; the checker flagged 1 drop | same numbers. The flag was the checker's: `shared.registry.Registry` (b7bc7e0, on a graph built at b7bc7e0, lines 301–366). The changed lines 325–327 are inside `Registry.add_evidence`, which *is* reported as the innermost symbol. The class came in only through context lines. The checker tested "a changed line inside the span", not "innermost". |
+| E6 | ✅ node ids equal; 0 removed; added all `accesses/name`: bquearch `shared` +525, bquant +261 | ✅ +681 and +301 |
+| E7 | ✅ bquant `check` and the bquearch gate identical apart from the trailer (`answer format 6`) | ✅ same |
+| E8 | ❌ suite: R1-C39 guard, pair `("accesses", "name")` not in the resolution table | ✅ 1217 passed / 3 skipped; mutations: D1 ×2, D1b ×2, D2 ×2, D3 ×2, reach, D3b ×3, table row, each turns a guard red; two cosmetic controls stay green |
+
+**Surprises.**
+- E2 failed for a reason the design itself wrote down: the boundary "not covered: module level and class
+  bodies" excluded the very reader the item came from. D3b was added after the first run, recorded before the
+  rerun (3e18f19).
+- D3 alone did not lift a read constant above `low`, because `_risk` counted core consumers only through
+  callers, and an attribute has none. Its reach is now its readers (guarded).
+- The R1-C39 guard did its job: a new resolution value cannot ship undeclared.
