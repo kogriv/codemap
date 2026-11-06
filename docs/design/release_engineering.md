@@ -1036,6 +1036,24 @@ unchanged, **`ANSWER_FORMAT` 6 → 7**. Tree: bquearch `703696d`, graph as in th
 
 **Consumers:** `check` on bquant and the bquearch gate: exit 0, output identical apart from the trailer (format 7).
 
+**0.0.31 published 2026-11-06:** [`codmap` 0.0.31](https://pypi.org/project/codmap/0.0.31/), schema 0.13,
+`ANSWER_FORMAT` 7. From `221445e` (code identical to `dfcbfe7`, whose suite ran 1225 passed / 3 skipped, 1228
+collected), CI green on 3.11–3.14, `twine check` PASSED. Reconciled from PyPI on bquearch `703696d` (deep, their
+four consumers):
+
+```
+                                   0.0.30                    0.0.31
+implementers PathForecaster        []                        KnnAdaptive, KnnPath, KnnRecursive, KnnStrata, MdnLegs, QuantileBand
+tests KnnRecursiveForecaster.band  unknown, 0 tests          low, 16 tests; test_a_rows_… and test_gate_and_runtime_… at
+                                                             distance 1, low; the dispatch caveat
+--version                          … answer format 6 …       codemap 0.0.31 · answer format 7 · schema 0.13
+bquant check / bquearch gate       exit 0                    exit 0; identical apart from the trailer (format 7)
+```
+
+Every expectation holds. The first probe of `implementers` printed `[]` for both versions. My script read a
+`query` dossier key that does not exist; through the `implementers` op (argument `protocol`), the result is the
+table above.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
