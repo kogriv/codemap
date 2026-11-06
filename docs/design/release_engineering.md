@@ -1054,6 +1054,18 @@ Every expectation holds. The first probe of `implementers` printed `[]` for both
 `query` dossier key that does not exist; through the `implementers` op (argument `protocol`), the result is the
 table above.
 
+**0.0.32 — the release check, pre-registered before the upload (2026-11-06).** Two items (R1-C87, R1-C88);
+schema **0.13**, **`ANSWER_FORMAT` 7 → 8**.
+
+| | tree form | 0.0.31 (expected) | 0.0.32 (expected) |
+|---|---|---|---|
+| R1-C87 | bquearch `a948d6c`, graph from `research/`, plain `git diff` → `review` | "0 changed symbol(s)", exit 0 | `[medium] shared.contracts.SURFACE_NAMES`, suffix-mapping line, exit 0 |
+| R1-C87 | a diff of one foreign Python file | exit 0 | exit 2 |
+| R1-C88 | bquearch `703696d`, deep: `tests KnnPathForecaster.member_values --all-bands` | `unknown`, 0 tests | `test_zone_scale.test_scale_neighbours_…`, `low` |
+| version | `codemap --version` | `… answer format 7 …` | `codemap 0.0.32 · answer format 8 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate identical apart from the trailer (format 8).
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

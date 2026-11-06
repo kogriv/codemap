@@ -1702,10 +1702,10 @@ Python-focus** — если задача его нарушает, это отм�
 - [x] **R1-C84 несуществующий путь `--consumer` принимается молча** (S) — ✅ 0.0.29 (2026-11-05), дизайн [`missing_roots.md`](docs/design/missing_roots.md), гэп [`missing_root_accepted_2026-11-05.md`](gaps/missing_root_accepted_2026-11-05.md) (2026-11-05, найдено при воспроизведении
       R1-C80): `--consumer tests,examples,…` (одной строкой) — один несуществующий путь, сборка exit 0 без предупреждения,
       граф без тестов; `tests` затем говорит «no test functions in this graph». Отказ или громкое предупреждение.
-- [ ] **R1-C87 `review`: путь в диффе от корня репозитория, граф собран из подкаталога** (S) — 🟡 дизайн [`review_path_base.md`](docs/design/review_path_base.md), гэп [`review_diff_path_base_2026-11-06.md`](gaps/review_diff_path_base_2026-11-06.md) (2026-11-06, найдено при
+- [x] **R1-C87 `review`: путь в диффе от корня репозитория, граф собран из подкаталога** (S) — ✅ 0.0.32 (2026-11-06), дизайн [`review_path_base.md`](docs/design/review_path_base.md), гэп [`review_diff_path_base_2026-11-06.md`](gaps/review_diff_path_base_2026-11-06.md) (2026-11-06, найдено при
       воспроизведении R1-C82): `research/shared/contracts.py` при графе из `research/` → «0 changed symbol(s)», «Unresolved hunks:
       1 — inspect manually». Отказ назван, но путь сопоставим (единственный суффикс среди файлов графа, или `roots_base`).
-- [ ] **R1-C88 метод вне Protocol на объекте, типизированном Protocol** (S–M) — 🟡 дизайн [`protocol_outside_method.md`](docs/design/protocol_outside_method.md), гэп [`protocol_outside_method_2026-11-06.md`](gaps/protocol_outside_method_2026-11-06.md); 🆕 (2026-11-06, bquearch, после 0.0.31):
+- [x] **R1-C88 метод вне Protocol на объекте, типизированном Protocol** (S–M) — ✅ 0.0.32 (2026-11-06), дизайн [`protocol_outside_method.md`](docs/design/protocol_outside_method.md), гэп [`protocol_outside_method_2026-11-06.md`](gaps/protocol_outside_method_2026-11-06.md); 🆕 (2026-11-06, bquearch, после 0.0.31):
       `fc = ForecasterSpec(model_type="knn_path", ...).build().fit(df); fc.member_values(...)` (после `hasattr`):
       тип выведен до `PathForecaster`, но `member_values` в Protocol нет, ребра нет; `tests KnnPathForecaster.member_values`
       не видит `test_zone_scale.py::test_scale_neighbours_are_the_band_neighbours`. Направление: атрибут, которого нет

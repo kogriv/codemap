@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.32] - 2026-11-06
+
+**`review` finds a diff's files when the graph was built from a subdirectory; methods outside a Protocol are
+reached.** Schema unchanged (**0.13**). **`ANSWER_FORMAT` 7 → 8.**
+
 - **`review` places a diff's paths when the graph was built from a subdirectory** (R1-C87, design
   [`docs/design/review_path_base.md`](docs/design/review_path_base.md)). A plain `git diff` is relative to the git
   root. bquearch builds from `research/`, so nothing matched, and the answer was "0 changed symbol(s)", which

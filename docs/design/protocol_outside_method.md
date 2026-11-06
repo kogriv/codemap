@@ -1,6 +1,6 @@
 # Design — a method outside a Protocol, called on a Protocol-typed receiver, fans out to the implementers that have it
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C88. **Gap:**
+**Status:** ✅ **done** (2026-11-06, fix 709f89c), acceptance reconciled below. Pre-registered in 3d7c0f3. **Backlog:** R1-C88. **Gap:**
 [`gaps/protocol_outside_method_2026-11-06.md`](../../gaps/protocol_outside_method_2026-11-06.md).
 
 ## D1
@@ -28,3 +28,12 @@ Run on the branch against 0.0.31. E1 and E2 fail on 0.0.31.
 | E2 | Fixture: `member_values` on two of three implementers → `protocol` edges to exactly those two; a name no implementer has → no edge; an unknown attribute on a concrete class → no edge |
 | E3 | Graph against the R1-C87 commit: node ids equal, nothing removed, every added edge is `calls/protocol` from a consumer root (bquearch, bquant, codemap) |
 | E4 | Full suite passes; the guard goes red when D1 is reverted; a cosmetic control stays green |
+
+## Reconciliation (2026-11-06, 709f89c)
+
+| # | Result |
+|---|---|
+| E1 | ✅ bquearch `703696d`, deep: 0.0.31 `unknown`, 0 tests; now `test_zone_scale.test_scale_neighbours_are_the_band_neighbours` at distance 1, `low` |
+| E2 | ✅ fixture: the one implementer defining `member_values` (and its subclass through it) get the edge; a name no implementer has, and a missing method on a concrete class, get none; the row is `low` |
+| E3 | ✅ against 0.0.31: node ids equal, nothing removed; added only `calls/protocol` from consumer roots: bquearch +107 (fast and deep), bquant 0 |
+| E4 | ✅ suite 1233 passed / 3 skipped; mutations (off; concrete class guessed; graded `typed` instead of `protocol`) red; control green |

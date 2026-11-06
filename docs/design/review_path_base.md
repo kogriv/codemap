@@ -1,6 +1,6 @@
 # Design — a diff path is placed in the graph by a unique suffix, or named as not placed
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C87. **Gap:**
+**Status:** ✅ **done** (2026-11-06, fix 0457753; `ANSWER_FORMAT` 8), acceptance reconciled below. Pre-registered in 0dba940. **Backlog:** R1-C87. **Gap:**
 [`gaps/review_diff_path_base_2026-11-06.md`](../../gaps/review_diff_path_base_2026-11-06.md).
 
 ## The defect
@@ -59,3 +59,19 @@ was done.
 | E8 | Full suite passes; guards for D1 (both directions, ambiguity), D2 and D3 go red when reverted; a cosmetic control stays green |
 
 Surprises are reported in the reconciliation.
+
+## Reconciliation (2026-11-06, 709f89c, with R1-C88)
+
+| # | Result |
+|---|---|
+| E1 | ✅ bquearch `a948d6c`, graph from `research/`, plain `git diff`: 0.0.31 "0 changed symbol(s)"; now one symbol `[medium] shared.contracts.SURFACE_NAMES`, line "Diff paths placed in the graph by suffix: `research/shared/contracts.py` → `shared/contracts.py`", exit 0 |
+| E2 | ✅ fixture: graph `research/pkg/m.py`, diff `pkg/m.py` → placed, mapped |
+| E3 | ✅ fixture: `m.py` against `pkg/a/m.py` and `pkg/b/m.py` → unplaced, both named |
+| E4 | ✅ a diff of one foreign Python file: 0.0.31 exit 0; now exit 2 "none of the 1 Python file(s) in the diff is in this graph"; with one placed file added: exit 0 and the bold line |
+| E5 | ⚠️ as written, wrong about existing behaviour: a module-level line in a placed file never went to `unresolved_hunks`; it names the module (M15 fallback, R1-C82 D2). The guard checks what E5 was for: a file not in the graph is unplaced, not unresolved |
+| E6 | ✅ the R1-C82 `--relative` diff: markdown identical to 0.0.31 apart from the trailer |
+| E7 | ✅ a README-only diff: exit 0, "1 non-Python file(s)", no warning |
+| E8 | ✅ suite 1233 passed / 3 skipped; 8 mutations (exact only, each direction off, first candidate chosen, unplaced counted as unresolved, no warning, no exit 2, non-Python counted as unplaced) red; control green |
+
+**Surprise:** E5 above, plus the M15 guard that pinned an unknown file under `unresolved_hunks`: it now pins
+`unplaced_files`.
