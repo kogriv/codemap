@@ -1008,6 +1008,22 @@ unchanged, **`ANSWER_FORMAT` 5 → 6**. Tree: bquearch `a948d6c`, graph of `shar
 (bquearch `shared` and bquant `cf039ef`). **Consumers:** `check` on bquant and the bquearch gate: exit 0, output
 identical apart from the trailer, which reads answer format 6.
 
+**0.0.30 published 2026-11-06:** [`codmap` 0.0.30](https://pypi.org/project/codmap/0.0.30/), schema 0.13,
+`ANSWER_FORMAT` 6. From `3a4a52a` (code identical to `e3a49ec`, whose suite ran 1217 passed / 3 skipped, 1220
+collected), CI green on 3.11–3.14, `twine check` PASSED. Reconciled from PyPI:
+
+```
+                               0.0.29                                          0.0.30
+review, bquearch a948d6c       3 symbols; [high] shared.contracts,             1 symbol; [medium] SURFACE_NAMES,
+                               "123 site(s) — check on signature change"       consumers {'core': 2}
+--version                      codemap 0.0.29 · answer format 5 · …            codemap 0.0.30 · answer format 6 · schema 0.13
+graph, bquearch shared         —                                               node ids equal; 0 removed; +681, all accesses/name
+graph, bquant cf039ef          —                                               node ids equal; 0 removed; +301, all accesses/name
+bquant check / bquearch gate   exit 0                                          exit 0; identical apart from the trailer (format 6)
+```
+
+Every expectation holds.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
