@@ -1,7 +1,7 @@
 # Гэп: ответы MCP не говорят, совпадает ли граф с деревом
 
 **Дата:** 2026-11-06 (найдено 2026-11-05). **Источник:** bquant и bquearch, сводка
-[kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25). **Статус:** открыто; дизайн —
+[kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25). **Статус:** ✅ закрыто 2026-11-06 (0.0.33); дизайн —
 [`docs/design/mcp_graph_currency.md`](../docs/design/mcp_graph_currency.md), бэклог R1-C85.
 
 ## 1. Что показали

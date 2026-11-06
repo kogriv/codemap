@@ -1,6 +1,6 @@
 # Design — every served answer says whether its graph matches the tree
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C85. **Gap:**
+**Status:** ✅ **done** (2026-11-06, fix 737e334; `ANSWER_FORMAT` 9), acceptance reconciled below. Pre-registered in 79a7fd2. **Backlog:** R1-C85. **Gap:**
 [`gaps/mcp_graph_currency_2026-11-06.md`](../../gaps/mcp_graph_currency_2026-11-06.md).
 
 ## D1 — `currency` in every envelope
@@ -57,3 +57,22 @@ done.
 | E8 | Full suite passes; guards for D1, D2 (TTL and invalidation on reload), D3 and D4 go red when reverted; a cosmetic control stays green |
 
 Surprises are reported in the reconciliation.
+
+## Reconciliation (2026-11-06, 93afcd0)
+
+| # | Result |
+|---|---|
+| E1 | ✅ fixture: `stats`, `search`, `query` envelopes say `current`; after an edit, `behind` with `changed: 1` and the hint; `serve --build` says `unknown` with the in-process reason |
+| E2 | ✅ default TTL: 5 calls, 1 check; `--currency-ttl 0`: 3 calls, 3 checks; `checked_seconds_ago` present |
+| E3 | ✅ `reload` drops the cache: after a rebuild and `reload`, the next answer is checked afresh |
+| E4 | ✅ `codemap query --graph` after an edit: one `[warning] … behind its source tree (… 1 changed …)` line, stdout byte-identical; nothing on a current graph; `check` gets no second warning |
+| E5 | ✅ bquant repo graph, 50 `search` calls: median 2.78 ms with the default TTL (1 check), 2.78 ms with an infinite TTL, overhead −0.01 ms; with TTL 0, 73.29 ms per call (51 checks), i.e. an uncached check costs ~70 ms, in line with gap §4 |
+| E6 | ✅ bquant: graph built at `d9a2a4f`, served over `cf039ef` → `behind`, `changed: 4` (four files across the roots; first call 111 ms); rebuilt at `cf039ef` → `current` |
+| E7 | ✅ bquant `check` and the bquearch gate identical apart from the trailer (`answer format 9`) |
+| E8 | ✅ suite 1246 passed / 3 skipped; mutations (no envelope field; disk graph judged instead of served; no cache; TTL ignored; reload keeps the cache; no `stats` field; no CLI warning; `check` warned twice) red; control green |
+
+**Surprises.**
+- A first mutation (`ttl 0` treated as cached) survived. It was equivalent: `now - t >= 0` is always true, so the
+  extra `ttl <= 0` clause did nothing. The clause was removed.
+- A first "served versus disk" mutation was a NameError, which tests nothing. It was replaced with a guard
+  that rebuilds the file on disk without `reload` and requires `behind` for the served graph.

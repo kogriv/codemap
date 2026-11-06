@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.33] - 2026-11-06
+
+**Every served answer says which tree it is about; `review` names changed doc pages.** Schema unchanged
+(**0.13**). **`ANSWER_FORMAT` 8 → 9.**
+
 - **Every served answer says whether its graph matches the tree** (R1-C85, design
   [`docs/design/mcp_graph_currency.md`](docs/design/mcp_graph_currency.md)). bquant's MCP server answered for a
   month and a half from a graph 118 commits old, and no answer said so. Changes:

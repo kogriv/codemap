@@ -1081,6 +1081,18 @@ bquant check / bquearch gate           exit 0                       exit 0; iden
 
 Every expectation holds.
 
+**0.0.33 — the release check, pre-registered before the upload (2026-11-06).** Two items (R1-C85, R1-C89);
+schema **0.13**, **`ANSWER_FORMAT` 8 → 9**. Tree: bquant, a clone at `d9a2a4f` and `cf039ef`.
+
+| | tree form | 0.0.32 (expected) | 0.0.33 (expected) |
+|---|---|---|---|
+| R1-C85 | served graph built at `d9a2a4f`, tree at `cf039ef`, any op | no `currency` field | `currency.status == "behind"`, `changed: 4` |
+| R1-C85 | the same, rebuilt at `cf039ef` | no field | `current` |
+| R1-C89 | `review` of `cf039ef^..cf039ef` (docs only) | 0 symbols, 3 unresolved | `changed_docs`: `evaluation.md`, `trading.md`; 0 unresolved |
+| version | `codemap --version` | `… answer format 8 …` | `codemap 0.0.33 · answer format 9 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate identical apart from the trailer (format 9).
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

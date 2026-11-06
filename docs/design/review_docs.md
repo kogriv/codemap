@@ -1,6 +1,6 @@
 # Design — `review` names the doc pages a diff changes, and what they document
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C89. **Gap:**
+**Status:** ✅ **done** (2026-11-06, fix 93afcd0; ships under `ANSWER_FORMAT` 9), acceptance reconciled below. Pre-registered in 10a1867. **Backlog:** R1-C89. **Gap:**
 [`gaps/review_docs_diff_2026-11-06.md`](../../gaps/review_docs_diff_2026-11-06.md).
 
 ## D1 — a hunk in a doc page names the page
@@ -30,3 +30,12 @@ Run on the branch against 0.0.32. E1 and E2 fail on 0.0.32.
 | E2 | Fixture: a docs page referencing `pkg.m.f`; a diff to it → `changed_docs == [{doc, file, documents: ["pkg.m.f"]}]`, `changed == []` |
 | E3 | A diff of code and a doc page: the code dossiers are identical to those of the code-only diff, the page is in `changed_docs`, and never in `high_risk` |
 | E4 | Full suite passes; guards for D1 and D2 go red when reverted; a cosmetic control stays green |
+
+## Reconciliation (2026-11-06, 93afcd0)
+
+| # | Result |
+|---|---|
+| E1 | ✅ bquant `cf039ef` (`changelogs/…`, `docs/api/analysis/evaluation.md`, `docs/api/analysis/trading.md`): 0.0.32 gave 0 symbols, 3 unresolved, no pages; now 0 symbols, `changed_docs` = `evaluation.md` (15 documented symbols) and `trading.md` (13), `unresolved_hunks` empty, the trace log in `skipped_files` |
+| E2 | ✅ fixture: `changed_docs == [{doc: docs/p.md, file: docs/p.md, documents: [pkg.m.f]}]`, `changed == []` |
+| E3 | ✅ code + page: code dossiers identical to the code-only diff; the page only in `changed_docs`, not in `high_risk` |
+| E4 | ✅ suite 1246 passed / 3 skipped; mutations (off; pages as dossiers; no markdown; no count) red; control green |
