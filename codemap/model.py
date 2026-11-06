@@ -121,7 +121,11 @@ SCHEMA_VERSION = "0.13"
 #   6 — `review` reads changed lines, not whole hunks; a module's dossier counts direct references
 #       to the module (its importers), not every reference into every member, and has no call-site
 #       contract; module constants gain `accesses` readers (R1-C82, docs/design/review_changed_lines.md).
-ANSWER_FORMAT = 6
+#   7 — `tests` row confidence is route-aware: a test reached only through a dispatch
+#       over-approximation (registry or Protocol fan-out) is `low`, and the caveat says so;
+#       Protocol implementers are linked structurally and consumer-root calls on typed receivers
+#       resolve (R1-C81, docs/design/protocol_dispatch.md).
+ANSWER_FORMAT = 7
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship
@@ -176,6 +180,13 @@ RESOLUTIONS: dict[tuple[str, str], dict[str, str]] = {
         "means": "route", "confidence": "heuristic",
         "how": "a factory/getter call fanned out to every member of the family — an "
                "honest over-approximation, not a resolved target"},
+    ("calls", "protocol"): {
+        "means": "route", "confidence": "heuristic",
+        "how": "a call on a Protocol method fanned out to every structural implementer — "
+               "the receiver is one of them, which one is not known (R1-C81)"},
+    ("calls", "typed"): {"means": "route", "confidence": "exact",
+                         "how": "a consumer-root call on an expression typed by a constructor "
+                                "or a return annotation (R1-C81)"},
     ("accesses", "self"): {"means": "route", "confidence": "exact",
                            "how": "`self.attr` inside the class that declares the attribute"},
     ("accesses", "class"): {"means": "route", "confidence": "exact",

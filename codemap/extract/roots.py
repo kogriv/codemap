@@ -134,6 +134,9 @@ def extract_repo(
         _scan_consumer_root(graph, Path(path).resolve(), index, mode, base)
     for path in docs:
         _scan_doc_root(graph, Path(path).resolve(), index, base)
+    # R1-C81 D2 again: consumer `typed` calls onto a Protocol method fan out as well.
+    from codemap.extract.dispatch import add_protocol_dispatch
+    add_protocol_dispatch(graph)
     # R1-C25: the roots are part of what this graph *is* — a core-only graph and a
     # repo-scoped one answer `impact` differently, and `diff` must not silently compare
     # the two. Relative to the graph's own origin, never an absolute location (design D5);
@@ -337,12 +340,154 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
             entry["called"] = True
             entry["shapes"].append(_arg_shape(call_node))  # F7: capture call-site contract
 
+    if mode == "full":
+        # R1-C81 D4: `fc = _spec().build().fit(df); fc.band(…)` — calls on objects whose
+        # type a constructor or a return annotation names.
+        for src, target in _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, dead):
+            if (src, target) not in uses:
+                uses[(src, target)] = {"called": True, "shapes": [], "local": False, "typed": True}
+
     for (src, target), entry in sorted(uses.items()):
         etype = "calls" if entry["called"] else "references"
-        extras = {"resolution": "local" if entry["local"] else "imported"}
+        extras = {"resolution": "typed" if entry.get("typed") else
+                  "local" if entry["local"] else "imported"}
         if etype == "calls" and entry["shapes"]:
             extras.update(_arg_contract(entry["shapes"]))
         graph.add_edge(Edge(etype, src, target, extras=extras))
+
+
+class _Typer:
+    """Types of consumer-side expressions from constructors and return annotations (R1-C81 D4).
+
+    Nothing is guessed: a type is known only when a core class is constructed, or a core
+    function / method's return annotation resolves to a core class in its own module (a
+    member, or a name that module imports), or a local helper's every ``return`` agrees,
+    or a name is assigned exactly once from such an expression.
+    """
+
+    def __init__(self, graph, tree, symbol_map, index):
+        from codemap.extract.dispatch import _ClassIndex
+        self.graph, self.symbol_map, self.index = graph, symbol_map, index
+        self.classes = _ClassIndex(graph)
+        self.exports: dict[tuple[str, str], str] = {}
+        for e in graph.edges:
+            if e.type == "export":
+                self.exports.setdefault((e.source, e.target.rsplit(".", 1)[-1]), e.target)
+        self.helpers = {n.name: n for n in tree.body
+                        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
+        self._helper_types: dict[str, str | None] = {}
+
+    def _module_of(self, nid: str) -> str | None:
+        parts = nid.split(".")
+        for k in range(len(parts) - 1, 0, -1):
+            cand = ".".join(parts[:k])
+            n = self.graph.nodes.get(cand)
+            if n is not None and n.kind == "module":
+                return cand
+        return None
+
+    def _is_class(self, nid) -> bool:
+        n = self.graph.nodes.get(nid) if nid else None
+        return n is not None and n.kind == "class"
+
+    def resolve_annotation(self, ann: str | None, mod: str | None) -> str | None:
+        if not ann or not mod:
+            return None
+        a = ann.strip().strip("'\"")
+        for wrap in ("Optional[", "typing.Optional["):
+            if a.startswith(wrap) and a.endswith("]"):
+                a = a[len(wrap):-1].strip().strip("'\"")
+        if a.endswith(" | None"):
+            a = a[:-len(" | None")].strip()
+        if not a.replace(".", "").replace("_", "").isalnum():
+            return None                         # generics and unions: not resolved
+        for cand in (f"{mod}.{a}", self.exports.get((mod, a.rsplit(".", 1)[-1]))):
+            cand = self.index.resolve(cand) if cand else None
+            if self._is_class(cand):
+                return cand
+        return None
+
+    def returns_of(self, fid: str | None) -> str | None:
+        n = self.graph.nodes.get(fid) if fid else None
+        if n is None or n.kind != "function":
+            return None
+        return self.resolve_annotation(n.extras.get("returns"), self._module_of(fid))
+
+    def helper_type(self, name: str) -> str | None:
+        if name in self._helper_types:
+            return self._helper_types[name]
+        self._helper_types[name] = None          # recursion guard: one level, no cycles
+        rets = [r.value for r in ast.walk(self.helpers[name]) if isinstance(r, ast.Return)]
+        types = {self.type_of(v, {}) if v is not None else None for v in rets}
+        self._helper_types[name] = types.pop() if len(types) == 1 else None
+        return self._helper_types[name]
+
+    def type_of(self, expr, env: dict) -> str | None:
+        if isinstance(expr, ast.Name):
+            return env.get(expr.id)
+        if not isinstance(expr, ast.Call):
+            return None
+        f = expr.func
+        if isinstance(f, ast.Name):
+            if f.id in self.symbol_map:
+                tgt = self.index.resolve(self.symbol_map[f.id])
+                return tgt if self._is_class(tgt) else self.returns_of(tgt)
+            if f.id in self.helpers:
+                return self.helper_type(f.id)
+            return None
+        if isinstance(f, ast.Attribute):
+            return self.returns_of(self.method(self.type_of(f.value, env), f.attr))
+        return None
+
+    def method(self, cls: str | None, name: str) -> str | None:
+        return self.classes.methods(cls).get(name) if cls else None
+
+    def env_of(self, fnode) -> dict:
+        assigned: dict[str, list] = {}
+        for n in ast.walk(fnode):
+            if isinstance(n, ast.Assign):
+                for t in n.targets:
+                    if isinstance(t, ast.Name):
+                        assigned.setdefault(t.id, []).append(n.value)
+                    else:
+                        for x in ast.walk(t):
+                            if isinstance(x, ast.Name):
+                                assigned.setdefault(x.id, []).append(None)
+            elif isinstance(n, (ast.AugAssign, ast.AnnAssign, ast.For, ast.With, ast.NamedExpr)):
+                for x in ast.walk(getattr(n, "target", None) or n):
+                    if isinstance(x, ast.Name) and isinstance(x.ctx, ast.Store):
+                        assigned.setdefault(x.id, []).append(None)
+        env: dict[str, str] = {}
+        for _ in range(3):                      # names typed from names typed earlier
+            for name, vals in assigned.items():
+                if name in env or len(vals) != 1 or vals[0] is None:
+                    continue
+                t = self.type_of(vals[0], env)
+                if t:
+                    env[name] = t
+        return env
+
+
+def _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, dead):
+    """(source id, core method id) for calls on typed receivers in a consumer module."""
+    typer = _Typer(graph, tree, symbol_map, index)
+    out: set[tuple[str, str]] = set()
+    for fnode in ast.walk(tree):
+        if not isinstance(fnode, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        if any(a <= fnode.lineno <= b for a, b in dead):
+            continue
+        env = typer.env_of(fnode)
+        for call in ast.walk(fnode):
+            if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)):
+                continue
+            mid = typer.method(typer.type_of(call.func.value, env), call.func.attr)
+            if mid is None or mid not in graph.nodes:
+                continue
+            src = _source_for(call, mod_id, func_ranges)
+            if src != mid:
+                out.add((src, mid))
+    return sorted(out)
 
 
 def _consumer_imports(tree, index: _CoreIndex):

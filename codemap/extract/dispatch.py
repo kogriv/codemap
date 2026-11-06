@@ -246,3 +246,139 @@ def _literal_key(call):
             and isinstance(call.args[0].value, str):
         return call.args[0].value
     return None
+
+
+# -- R1-C81: structural Protocol implementers and Protocol dispatch -----------------
+
+_PROTOCOL_BASES = ("typing.Protocol", "typing_extensions.Protocol")
+
+
+def _param_shape(signature: str | None):
+    """(positional names, *args?, keyword-only names, **kwargs?) without self/cls; None if unparsable.
+
+    Annotations and defaults are ignored on purpose: a structural match asks whether
+    the same call sites fit, and those are decided by names and kinds.
+    """
+    if not signature or "(" not in signature:
+        return None
+    try:
+        fn = ast.parse("def f" + signature[signature.index("("):] + ": ...").body[0]
+    except (SyntaxError, ValueError):
+        return None
+    a = fn.args
+    pos = [x.arg for x in (*a.posonlyargs, *a.args)]
+    if pos and pos[0] in ("self", "cls"):
+        pos = pos[1:]
+    return (tuple(pos), a.vararg is not None, tuple(x.arg for x in a.kwonlyargs),
+            a.kwarg is not None)
+
+
+class _ClassIndex:
+    """Methods of each class with inheritance, from `contains` / `inherits` edges."""
+
+    def __init__(self, graph):
+        self.graph = graph
+        self.kids: dict[str, list[str]] = {}
+        self.bases: dict[str, list[str]] = {}
+        for e in graph.edges:
+            if e.type == "contains":
+                self.kids.setdefault(e.source, []).append(e.target)
+            elif e.type == "inherits":
+                self.bases.setdefault(e.source, []).append(e.target)
+        self._cache: dict[str, dict[str, str]] = {}
+
+    def methods(self, cls: str, _seen=None) -> dict[str, str]:
+        """{name: function node id}, a base's method overridden by the class's own."""
+        if cls in self._cache:
+            return self._cache[cls]
+        seen = _seen if _seen is not None else set()
+        if cls in seen:
+            return {}
+        seen.add(cls)
+        out: dict[str, str] = {}
+        for b in reversed(self.bases.get(cls, [])):
+            out.update(self.methods(b, seen))
+        for k in self.kids.get(cls, []):
+            n = self.graph.nodes.get(k)
+            if n is not None and n.kind == "function":
+                out[k.rsplit(".", 1)[1]] = k
+        if _seen is None:
+            self._cache[cls] = out
+        return out
+
+    def protocols(self) -> list[str]:
+        return sorted(c for c, bs in self.bases.items()
+                      if any(b in _PROTOCOL_BASES for b in bs) and c in self.graph.nodes)
+
+
+def _protocol_methods(idx: _ClassIndex, proto: str) -> dict[str, str]:
+    return {m: i for m, i in idx.methods(proto).items()
+            if not (m.startswith("__") and m.endswith("__")) or m == "__call__"}
+
+
+def add_structural_implements(graph) -> None:
+    """``implements`` edges by structure, checked by parameter names and kinds (R1-C81 D1).
+
+    Registry families (M9) link only what a ``@Registry.register`` names. A Protocol whose
+    implementations are built by a factory registered some other way — bquearch's
+    ``register = CATALOG.register`` on factory functions — had no implementers at all,
+    so nothing reached a method behind ``build() -> Protocol``. A name-only match was
+    measured and rejected: on bquant it put four swing strategies under a two-method
+    shape Protocol. With names *and* parameters it reproduced bquant's registry exactly.
+    """
+    idx = _ClassIndex(graph)
+    protos = idx.protocols()
+    if not protos:
+        return
+    have = {(e.source, e.target) for e in graph.edges if e.type == "implements"}
+    proto_set = set(protos)
+    classes = sorted(i for i, n in graph.nodes.items() if n.kind == "class" and i not in proto_set
+                     and (n.extras.get("root") in (None, "core")))
+    for p in protos:
+        pm = _protocol_methods(idx, p)
+        if not pm:
+            continue
+        want = {m: _param_shape(graph.nodes[i].signature) for m, i in pm.items()}
+        if any(v is None for v in want.values()):
+            continue                      # a Protocol we cannot read is not matched against
+        for c in classes:
+            if (c, p) in have:
+                continue
+            cm = idx.methods(c)
+            if all(m in cm and _param_shape(graph.nodes[cm[m]].signature) == shape
+                   for m, shape in want.items()):
+                graph.add_edge(Edge("implements", c, p, extras={"via": "structural"}))
+                have.add((c, p))
+
+
+def add_protocol_dispatch(graph) -> None:
+    """A call on a Protocol method fans out to every implementer's method (R1-C81 D2).
+
+    ``resolution = "protocol"``, graded heuristic — the same honest over-approximation
+    as ``registry-candidate``: the receiver is one of these, which one is not known.
+    Idempotent, so it runs after the core passes and again after the consumer scans.
+    """
+    impls: dict[str, list[str]] = {}
+    for e in graph.edges:
+        if e.type == "implements":
+            impls.setdefault(e.target, []).append(e.source)
+    if not impls:
+        return
+    idx = _ClassIndex(graph)
+    fan: dict[str, list[str]] = {}          # protocol method id -> implementer method ids
+    for p, cs in impls.items():
+        for m, pid in _protocol_methods(idx, p).items():
+            tg = sorted({idx.methods(c)[m] for c in cs if m in idx.methods(c)} - {pid})
+            if tg:
+                fan[pid] = tg
+    have = {(e.source, e.target) for e in graph.edges if e.type == "calls"}
+    new = []
+    for e in graph.edges:
+        if e.type != "calls" or e.target not in fan or e.extras.get("resolution") == "protocol":
+            continue
+        for t in fan[e.target]:
+            if (e.source, t) not in have and e.source != t:
+                have.add((e.source, t))
+                new.append(Edge("calls", e.source, t, extras={"resolution": "protocol"}))
+    for ed in sorted(new, key=lambda x: (x.source, x.target)):
+        graph.add_edge(ed)

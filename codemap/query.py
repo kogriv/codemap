@@ -1651,24 +1651,36 @@ class Query:
         targets = self._member_ids(symbol_id)
         seen = set(targets)
         frontier = set(targets)
+        # R1-C81 D3: nodes reached at their distance by at least one path with no
+        # heuristic (dispatch over-approximation) call edge on it.
+        exact = set(targets)
         bands: list[tuple[int, list[str]]] = []
         for dist in range(1, max(1, depth) + 1):
             nxt: set[str] = set()
             for node in sorted(frontier):
                 for src, etype in self._inbound.get(node, []):
-                    if src not in seen and etype in _TEST_WALK_EDGES:
+                    if etype not in _TEST_WALK_EDGES:
+                        continue
+                    if src not in seen:
                         seen.add(src)
                         nxt.add(src)
+                    if src in nxt and node in exact and not self._heuristic_call(src, node, etype):
+                        exact.add(src)
             # R1-C80 D1 (as measured): a def nested in a test or helper is part of its body, so
             # it leads to its container at no cost. A module-level helper costs a hop like any
             # other function: made free, it pulled 72–80% coverage-false tests into the nearest
             # band through shared helpers (design §"Measured", E6).
             todo = sorted(n for n in nxt if n in self._test_parent)
             while todo:
-                parent = self._test_parent[todo.pop()]
+                child = todo.pop()
+                parent = self._test_parent[child]
                 if parent not in seen:
                     seen.add(parent)
                     nxt.add(parent)
+                    if parent in self._test_parent:
+                        todo.append(parent)
+                if parent in nxt and child in exact and parent not in exact:
+                    exact.add(parent)
                     if parent in self._test_parent:
                         todo.append(parent)
             if not nxt:
@@ -1680,9 +1692,16 @@ class Query:
                 # D2: the nearest band is the answer; one more band is only counted.
                 if len(bands) == 2 and not all_bands:
                     break
-        return self._tests_envelope(symbol_id, bands, cap, depth, all_bands)
+        guessed = {t for _, band in bands for t in band if t not in exact}
+        return self._tests_envelope(symbol_id, bands, cap, depth, all_bands, guessed)
 
-    def _tests_envelope(self, symbol_id, bands, cap, searched, all_bands=False) -> dict:
+    def _heuristic_call(self, src: str, node: str, etype: str) -> bool:
+        if etype != "calls" or not self._calls.has_edge(src, node):
+            return False
+        return self._calls.edges[src, node].get("confidence") == "heuristic"
+
+    def _tests_envelope(self, symbol_id, bands, cap, searched, all_bands=False,
+                        guessed=frozenset()) -> dict:
         dist, hits = bands[0] if bands else (None, [])
         rows = ([(t, d) for d, band in bands for t in band] if all_bands
                 else [(t, dist) for t in hits])
@@ -1694,8 +1713,10 @@ class Query:
             "distance": dist,
             # `unknown` — never "none". A confident empty is the failure this project has
             # now shipped five fixes for (#1 risk:"none", #3, #5, #7, R1-C23).
-            "confidence": _TEST_CONFIDENCE.get(dist, "low") if dist else "unknown",
-            "tests": [self._test_row(t, d) for t, d in shown],
+            # R1-C81 D3: a nearest band reached only through dispatch guesses is low, too.
+            "confidence": (("low" if hits and all(t in guessed for t in hits)
+                            else _TEST_CONFIDENCE.get(dist, "low")) if dist else "unknown"),
+            "tests": [self._test_row(t, d, t in guessed) for t, d in shown],
             "total_at_distance": len(hits),
             # R1-C80 D2: the band after the nearest, within `depth` — always present, null if none.
             "next_band": {"distance": nxt[0], "count": len(nxt[1])} if nxt else None,
@@ -1703,15 +1724,21 @@ class Query:
             "caveats": self._test_caveats(truncated=truncated, searched=searched,
                                           found=bool(dist), nearest=dist),
         }
+        n_guessed = sum(1 for t, _ in rows if t in guessed)
+        if n_guessed:
+            out["caveats"].append(
+                f"{n_guessed} test(s) reached only through a dispatch over-approximation "
+                "(a registry or Protocol call fanned out to every implementation) — "
+                "confidence low: the test calls one of them, not necessarily this one")
         if all_bands:   # D3
             out["total"] = len(rows)
         return out
 
-    def _test_row(self, node_id: str, dist) -> dict:
+    def _test_row(self, node_id: str, dist, guessed: bool = False) -> dict:
         n = self.graph.nodes.get(node_id)
+        conf = ("low" if guessed else _TEST_CONFIDENCE.get(dist, "low")) if dist else "unknown"
         return {"id": node_id, "node_id": self.pytest_nodeid(node_id),
-                "line": getattr(n, "lineno", None), "distance": dist,
-                "confidence": _TEST_CONFIDENCE.get(dist, "low") if dist else "unknown"}
+                "line": getattr(n, "lineno", None), "distance": dist, "confidence": conf}
 
     def covers(self, test_id: str, *, depth: int = _TEST_MAX_DEPTH,
                cap: int = _TEST_CAP) -> dict:

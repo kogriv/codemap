@@ -95,8 +95,11 @@ def test_a_test_method_keeps_its_class(q):
 def test_the_nearest_band_is_returned_with_its_confidence(q, sym, dist, conf):
     r = _row(q, sym)
     assert r["distance"] == dist and r["confidence"] == conf
-    assert {t["node_id"] for t in r["tests"]} == {
-        "tests/test_world.py::test_entry", "tests/test_world.py::test_entry_again"}
+    want = {"tests/test_world.py::test_entry", "tests/test_world.py::test_entry_again"}
+    if sym != "entry":
+        # R1-C81 D4: `Engine().run()` is typed by its constructor, and `run` calls `_mid`
+        want.add("tests/test_world.py::TestEngine::test_run")
+    assert {t["node_id"] for t in r["tests"]} == want
 
 
 def test_beyond_the_measured_cutoff_the_default_answer_is_unknown(q):
@@ -139,11 +142,13 @@ def test_the_tier_is_part_of_the_answer(q):
     assert any("fast tier" in c for c in r["caveats"])
 
 
-def test_a_method_on_a_constructed_object_is_a_known_limit(q):
-    """`Engine().run()` in a test resolves to no edge: consumer-root call resolution is
-    name-based. Stated as `unknown` rather than answered wrongly — and it is the dominant
-    residual cause of the 16%."""
-    assert _row(q, "Engine.run")["confidence"] == "unknown"
+def test_a_method_on_a_constructed_object_is_reached(q):
+    """`Engine().run()` in a test was the known limit here: consumer-root resolution was
+    name-based, so the answer was `unknown`. R1-C81 D4 types the receiver by its
+    constructor (and by return annotations), so the test is one hop away."""
+    r = _row(q, "Engine.run")
+    assert r["distance"] == 1 and r["confidence"] == "high"
+    assert [t["node_id"] for t in r["tests"]] == ["tests/test_world.py::TestEngine::test_run"]
 
 
 # -- D5 inverse: what does this test reach ---------------------------------------

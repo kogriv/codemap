@@ -86,9 +86,9 @@ line: the regression, the interpreter nobody tried, the artifact nobody installe
 Two versions travel with every answer, and they answer different questions:
 
 ```
-_answer format 6 · schema 0.13_          ← the trailer on any markdown answer
-{"ok": true, "answer_format": 6, …}      ← the same fact in a serve/MCP envelope
-codemap 0.0.30 · answer format 6 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
+_answer format 7 · schema 0.13_          ← the trailer on any markdown answer
+{"ok": true, "answer_format": 7, …}      ← the same fact in a serve/MCP envelope
+codemap 0.0.31 · answer format 7 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
 ```
 
 What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says
@@ -111,6 +111,11 @@ Repo-scoped graphs gain edges inside consumer roots; `check` changes by its trai
 line outside every definition names nothing; a module's dossier counts direct references to the module and
 has no call-site contract; module constants read by bare name gain `accesses` readers, so their dossier
 names them ([design](design/review_changed_lines.md)). `check` changes by its trailer alone.
+**7** (0.0.31) — `tests`: row confidence is route-aware. A test reached only through a dispatch
+over-approximation (a registry or Protocol call fanned out to every implementation) is `low`, with a caveat.
+Protocol implementers are linked structurally, by method names and parameters, and a consumer-root call on a
+receiver typed by a constructor or a return annotation is an edge, so methods behind `build() -> Protocol`
+are reachable ([design](design/protocol_dispatch.md)). `check` changes by its trailer alone.
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.

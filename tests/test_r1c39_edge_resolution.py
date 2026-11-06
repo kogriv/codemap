@@ -57,6 +57,23 @@ def _consumer_reference_probe(tmp: Path):
     return extract_repo(core, consumers=(use,), mode="full")
 
 
+def _protocol_probe(tmp: Path):
+    """R1-C81: a call on a Protocol method, typed in a consumer, fanned out to its implementer."""
+    core = tmp / "pcore"
+    core.mkdir()
+    (core / "__init__.py").write_text("")
+    (core / "menu.py").write_text(
+        "from typing import Protocol\n\n\n"
+        "class P(Protocol):\n    def band(self, k): ...\n\n\n"
+        "class Impl:\n    def band(self, k):\n        return k\n\n\n"
+        "class Spec:\n    def build(self) -> P:\n        return Impl()\n")
+    use = tmp / "ptests"
+    use.mkdir()
+    (use / "test_p.py").write_text("from pcore.menu import Spec\n\n\n"
+                                   "def test_band():\n    Spec().build().band(1)\n")
+    return extract_repo(core, consumers=(use,), mode="full")
+
+
 @pytest.fixture(scope="module")
 def builds():
     """Every build the table is measured against — fixtures only, so CI needs no target."""
@@ -69,6 +86,7 @@ def builds():
                                    consumers=(FIX / "reporoot" / "usage",),
                                    docs=(FIX / "reporoot" / "docs",), mode="full")
     out["consumer-ref"] = _consumer_reference_probe(tmp)
+    out["protocol"] = _protocol_probe(tmp)
     return out
 
 
@@ -133,10 +151,11 @@ def test_no_grade_is_a_number():
 
 
 def test_the_over_approximation_is_the_only_heuristic(builds):
-    """A factory fanned out across a registry family is the one route that did not find
-    a target — everything else was a binding or an inference."""
+    """A factory fanned out across a registry family, and a Protocol call fanned out to
+    its implementers (R1-C81), are the routes that did not find a target — everything
+    else was a binding or an inference."""
     heuristic = {k for k, v in RESOLUTIONS.items() if v["confidence"] == "heuristic"}
-    assert heuristic == {("calls", "registry-candidate")}
+    assert heuristic == {("calls", "registry-candidate"), ("calls", "protocol")}
     inferred = {k for k, v in RESOLUTIONS.items() if v["confidence"] == "inferred"}
     assert inferred == {("calls", "deep"), ("accesses", "deep")}
 

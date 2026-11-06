@@ -29,7 +29,8 @@ import griffe
 from codemap.extract.attrflow import add_attrflow
 from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
-from codemap.extract.dispatch import add_dispatch, add_family_links
+from codemap.extract.dispatch import (add_dispatch, add_family_links, add_protocol_dispatch,
+                                      add_structural_implements)
 from codemap.extract.gsource import (DOTTED_IMPORT_HINT, NESTED_IMPORT_HINT, module_file,
                                      module_identity)
 from codemap.extract.union import merge_samples
@@ -192,6 +193,9 @@ def add_behavioral_layer(graph, root, module_name, search_path, *, deep: bool,
     add_dispatch(graph, root, module_name)
     # M9 (F4): link registry-family members to the Protocol they satisfy.
     add_family_links(graph)
+    # R1-C81: structural implementers (names + parameters), then Protocol dispatch.
+    add_structural_implements(graph)
+    add_protocol_dispatch(graph)
     # M12 (F6): column/string-key dataflow (reads/writes on `df['col']`).
     add_dataflow(graph, root, module_name)
     # R1-C20 (issue #1): attribute-access edges (accesses: function → attribute).
