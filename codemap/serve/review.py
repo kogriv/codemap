@@ -73,6 +73,34 @@ def _module_dossier(query: Query, sid: str, node) -> dict:
     }
 
 
+def place_files(query: Query, files: list[str]) -> dict:
+    """Diff paths → graph paths: exact, else a unique suffix match either way (R1-C87 D1).
+
+    A diff is relative to the git root; a graph to the common parent of its build roots
+    (R1-C31). Built from a subdirectory, the two differ, and an exact-only match turned a
+    real change into "0 changed symbol(s)". Placed by a suffix at a ``/`` boundary — the
+    diff longer (``research/shared/x.py`` → ``shared/x.py``) or the graph longer — and only
+    when exactly one graph file fits; several are named, not chosen between.
+    """
+    known = {n.file for n in query.graph.nodes.values() if n.file}
+    placed: dict[str, str] = {}
+    mapped: dict[str, str] = {}
+    unplaced: list[dict] = []
+    skipped: list[str] = []
+    for f in dict.fromkeys(files):
+        if f in known:
+            placed[f] = f
+            continue
+        cands = sorted(g for g in known if f.endswith("/" + g) or g.endswith("/" + f))
+        if len(cands) == 1:
+            placed[f] = mapped[f] = cands[0]
+        elif f.endswith((".py", ".pyi")):
+            unplaced.append({"file": f, "candidates": cands})
+        else:
+            skipped.append(f)
+    return {"placed": placed, "mapped": mapped, "unplaced": unplaced, "skipped": skipped}
+
+
 def build_symbol_dossier(query: Query, sid: str) -> dict:
     """Everything a reviewer needs about one changed symbol (F17)."""
     node = query.graph.nodes.get(sid)
@@ -109,7 +137,8 @@ def build_review(query: Query, *, hunks: list[dict] | None = None,
 
     Returns ``{changed: [dossier…], summary}`` with dossiers risk-sorted (highest
     first). ``summary`` carries the symbol count, union blast-radius by root, and
-    the count of unresolved hunks (module-level / unknown files) so nothing is
+    the count of unresolved hunks (lines in placed files outside any symbol) and, apart
+    from them, the diff files not in the graph (R1-C87) so nothing is
     silently dropped.
 
     ``base_graph`` (R1-C5): a 'before' graph to API-diff against. Hunk-based review
@@ -119,9 +148,12 @@ def build_review(query: Query, *, hunks: list[dict] | None = None,
     """
     ids = set(symbols or [])
     unresolved = []
+    placement = place_files(query, [h["file"] for h in hunks or []])
     if hunks:
         for h in hunks:
-            file = h["file"]
+            file = placement["placed"].get(h["file"])
+            if file is None:
+                continue                  # R1-C87 D2: reported as unplaced, not as unresolved
             for rng in h.get("ranges", []):
                 start, end = int(rng[0]), int(rng[-1])
                 got = query.symbols_in_range(file, start, end)
@@ -147,6 +179,9 @@ def build_review(query: Query, *, hunks: list[dict] | None = None,
         "blast_by_root": union_by_root,
         "high_risk": [d["symbol"] for d in dossiers if d["risk"] == "high"],
         "unresolved_hunks": unresolved,
+        "mapped_paths": placement["mapped"],
+        "unplaced_files": placement["unplaced"],
+        "skipped_files": placement["skipped"],
     }
     result = {"changed": dossiers, "summary": summary}
     if base_graph is not None:
@@ -161,8 +196,20 @@ def render_review(query: Query, *, hunks: list[dict] | None = None,
     rv = build_review(query, hunks=hunks, symbols=symbols, base_graph=base_graph)
     s = rv["summary"]
     out = ["# Change-set review", ""]
+    if s["unplaced_files"]:
+        names = ", ".join(u["file"] + (f" (ambiguous: {', '.join(u['candidates'])})"
+                                       if u["candidates"] else "") for u in s["unplaced_files"])
+        out.append(f"**{len(s['unplaced_files'])} Python file(s) in the diff are not in this graph "
+                   f"— nothing in them was reviewed**: {names}. Build the graph over them, or check "
+                   f"the diff's path base (`git diff --relative=<dir>`).")
     out.append(f"**{s['changed_symbols']} changed symbol(s)**; "
                f"blast by root: {s['blast_by_root'] or '—'}.")
+    if s["mapped_paths"]:
+        out.append("_Diff paths placed in the graph by suffix: " + ", ".join(
+            f"`{a}` → `{b}`" for a, b in sorted(s["mapped_paths"].items())) + "._")
+    if s["skipped_files"] and not s["changed_symbols"] and not s["unplaced_files"]:
+        out.append(f"_{len(s['skipped_files'])} non-Python file(s) in the diff, not part of a "
+                   f"code graph: {', '.join(s['skipped_files'])}._")
     if "api_diff" in rv:
         ad = rv["api_diff"]["summary"]
         out.append(f"**API diff vs baseline:** {ad['breaking_total']} breaking, "
@@ -170,7 +217,7 @@ def render_review(query: Query, *, hunks: list[dict] | None = None,
     if s["high_risk"]:
         out.append(f"**Review first (high risk):** {', '.join(s['high_risk'])}")
     if s["unresolved_hunks"]:
-        out.append(f"_Unresolved hunks (module-level / unknown file): "
+        out.append(f"_Unresolved hunks (lines outside any symbol): "
                    f"{len(s['unresolved_hunks'])} — inspect manually._")
     out.append("")
     if "api_diff" in rv:

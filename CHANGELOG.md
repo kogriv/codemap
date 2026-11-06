@@ -5,6 +5,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **`review` places a diff's paths when the graph was built from a subdirectory** (R1-C87, design
+  [`docs/design/review_path_base.md`](docs/design/review_path_base.md)). A plain `git diff` is relative to the git
+  root. bquearch builds from `research/`, so nothing matched, and the answer was "0 changed symbol(s)", which
+  reads as "nothing touched". Now:
+  - a path is placed by a unique suffix in either direction, and the mapping is shown;
+  - an ambiguous path is named with its candidates;
+  - a Python file that cannot be placed is listed in bold, apart from unresolved lines;
+  - a diff where no Python file is in the graph exits 2.
+- **`ANSWER_FORMAT` 7 → 8** (review summary fields). Schema unchanged.
+
 ## [0.0.31] - 2026-11-06
 
 **Methods behind a Protocol are reachable, and `tests` says when it guessed.** Schema unchanged (**0.13**).

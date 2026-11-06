@@ -757,6 +757,15 @@ def _cmd_review(args) -> int:
         print(json.dumps(build_review(q, hunks=hunks, base_graph=base), indent=2, sort_keys=True))
     else:
         print(render_review(q, hunks=hunks, base_graph=base), end="")
+    # R1-C87 D3: Python files in the diff and none of them in the graph is not "nothing
+    # touched" — it is a diff this graph cannot review.
+    from codemap.serve.review import place_files
+    pl = place_files(q, [h["file"] for h in hunks])
+    if pl["unplaced"] and not pl["placed"]:
+        print(f"error: none of the {len(pl['unplaced'])} Python file(s) in the diff is in this "
+              "graph — nothing was reviewed (check the diff's path base or the graph's roots)",
+              file=sys.stderr)
+        return 2
     return 0
 
 

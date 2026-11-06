@@ -66,7 +66,9 @@ def test_review_summary_counts_and_sorts(q):
 
 def test_review_reports_unresolved_hunks(q):
     rv = build_review(q, hunks=[{"file": "flowpkg/nope.py", "ranges": [[1, 9]]}])
-    assert rv["summary"]["unresolved_hunks"] == [{"file": "flowpkg/nope.py", "range": [1, 9]}]
+    # R1-C87: a file not in the graph is "unplaced", apart from unresolved lines in known files
+    assert rv["summary"]["unresolved_hunks"] == []
+    assert rv["summary"]["unplaced_files"] == [{"file": "flowpkg/nope.py", "candidates": []}]
     assert rv["summary"]["changed_symbols"] == 0
 
 

@@ -86,9 +86,9 @@ line: the regression, the interpreter nobody tried, the artifact nobody installe
 Two versions travel with every answer, and they answer different questions:
 
 ```
-_answer format 7 · schema 0.13_          ← the trailer on any markdown answer
-{"ok": true, "answer_format": 7, …}      ← the same fact in a serve/MCP envelope
-codemap 0.0.31 · answer format 7 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
+_answer format 8 · schema 0.13_          ← the trailer on any markdown answer
+{"ok": true, "answer_format": 8, …}      ← the same fact in a serve/MCP envelope
+codemap 0.0.32 · answer format 8 · schema 0.13   ← `codemap --version` (adds @commit from a source tree)
 ```
 
 What each format number changed: **1** — the first numbered format (0.0.21). **2** (0.0.22) — `pack` says
@@ -116,6 +116,10 @@ over-approximation (a registry or Protocol call fanned out to every implementati
 Protocol implementers are linked structurally, by method names and parameters, and a consumer-root call on a
 receiver typed by a constructor or a return annotation is an edge, so methods behind `build() -> Protocol`
 are reachable ([design](design/protocol_dispatch.md)). `check` changes by its trailer alone.
+**8** (0.0.32) — `review`: a diff path that does not match the graph exactly is placed by a unique suffix,
+either way (`mapped_paths`). A Python file that cannot be placed is listed in `unplaced_files`, with a bold
+line in the markdown; non-Python files go to `skipped_files`. `unresolved_hunks` keeps only lines in placed
+files. A diff whose Python files are all unplaced exits 2 ([design](design/review_path_base.md)).
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.
