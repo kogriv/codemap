@@ -130,7 +130,8 @@ SCHEMA_VERSION = "0.13"
 #       placed files; nothing placed is exit 2 (R1-C87, docs/design/review_path_base.md).
 #   9 — every serve/MCP envelope carries `currency` (the served graph against the tree now,
 #       cached `--currency-ttl` seconds, `checked_seconds_ago`); `stats` shows it beside
-#       `freshness` (R1-C85, docs/design/mcp_graph_currency.md).
+#       `freshness` (R1-C85, docs/design/mcp_graph_currency.md); `review` names the doc pages a
+#       diff changes (`changed_docs`, R1-C89, docs/design/review_docs.md).
 ANSWER_FORMAT = 9
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set

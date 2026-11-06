@@ -14,7 +14,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
     stated, and `reload` drops the cache;
   - `stats` shows it beside `freshness`;
   - a cold CLI read of a graph that is behind warns once on stderr.
-- **`ANSWER_FORMAT` 8 → 9** (the envelope gains a field). Schema unchanged.
+- **`review` names the doc pages a diff changes** (R1-C89, design [`docs/design/review_docs.md`](docs/design/review_docs.md)).
+  On bquant, a diff of `docs/api/analysis/*.md` against a graph built with `--docs docs` gave "0 changed
+  symbol(s)" and "Unresolved hunks: 3". The pages are graph nodes without lines. Now `changed_docs` lists each
+  page with the symbols it documents, and the markdown says to check that the pages still describe the code.
+  Doc pages stay out of the risk ranking.
+- **`ANSWER_FORMAT` 8 → 9** (the envelope gains `currency`; review gains `changed_docs`). Schema unchanged.
 
 ## [0.0.32] - 2026-11-06
 

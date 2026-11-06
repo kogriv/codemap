@@ -101,6 +101,14 @@ def place_files(query: Query, files: list[str]) -> dict:
     return {"placed": placed, "mapped": mapped, "unplaced": unplaced, "skipped": skipped}
 
 
+def _doc_entry(query: Query, doc_id: str) -> dict:
+    """A changed doc page and the symbols it documents (R1-C89)."""
+    node = query.graph.nodes.get(doc_id)
+    documents = sorted({e.target for e in query.graph.edges
+                        if e.source == doc_id and e.type == "references"})
+    return {"doc": doc_id, "file": node.file if node else None, "documents": documents}
+
+
 def build_symbol_dossier(query: Query, sid: str) -> dict:
     """Everything a reviewer needs about one changed symbol (F17)."""
     node = query.graph.nodes.get(sid)
@@ -149,11 +157,17 @@ def build_review(query: Query, *, hunks: list[dict] | None = None,
     ids = set(symbols or [])
     unresolved = []
     placement = place_files(query, [h["file"] for h in hunks or []])
+    # R1-C89: a doc page is a node without lines; its hunks name the page, not nothing.
+    doc_of = {n.file: n.id for n in query.graph.nodes.values() if n.kind == "doc" and n.file}
+    docs: set[str] = set()
     if hunks:
         for h in hunks:
             file = placement["placed"].get(h["file"])
             if file is None:
                 continue                  # R1-C87 D2: reported as unplaced, not as unresolved
+            if file in doc_of:
+                docs.add(doc_of[file])
+                continue
             for rng in h.get("ranges", []):
                 start, end = int(rng[0]), int(rng[-1])
                 got = query.symbols_in_range(file, start, end)
@@ -179,11 +193,13 @@ def build_review(query: Query, *, hunks: list[dict] | None = None,
         "blast_by_root": union_by_root,
         "high_risk": [d["symbol"] for d in dossiers if d["risk"] == "high"],
         "unresolved_hunks": unresolved,
+        "changed_docs": len(docs),
         "mapped_paths": placement["mapped"],
         "unplaced_files": placement["unplaced"],
         "skipped_files": placement["skipped"],
     }
-    result = {"changed": dossiers, "summary": summary}
+    result = {"changed": dossiers, "summary": summary,
+              "changed_docs": [_doc_entry(query, d) for d in sorted(docs)]}
     if base_graph is not None:
         from codemap.serve.apidiff import build_apidiff
         result["api_diff"] = build_apidiff(base_graph, query.graph)
@@ -204,6 +220,13 @@ def render_review(query: Query, *, hunks: list[dict] | None = None,
                    f"the diff's path base (`git diff --relative=<dir>`).")
     out.append(f"**{s['changed_symbols']} changed symbol(s)**; "
                f"blast by root: {s['blast_by_root'] or '—'}.")
+    if rv["changed_docs"]:
+        out.append(f"**{len(rv['changed_docs'])} changed doc page(s)** — check they still "
+                   f"describe the code:")
+        for d in rv["changed_docs"]:
+            names = d["documents"]
+            more = f" (+{len(names) - 8} more)" if len(names) > 8 else ""
+            out.append(f"- `{d['file'] or d['doc']}` documents {', '.join(names[:8]) or '—'}{more}")
     if s["mapped_paths"]:
         out.append("_Diff paths placed in the graph by suffix: " + ", ".join(
             f"`{a}` → `{b}`" for a, b in sorted(s["mapped_paths"].items())) + "._")

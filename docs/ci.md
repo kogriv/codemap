@@ -123,7 +123,8 @@ files. A diff whose Python files are all unplaced exits 2 ([design](design/revie
 **9** (0.0.33) — every serve/MCP envelope carries `currency`, the served graph checked against the source tree
 (`current` / `behind` / `unknown`, cached `--currency-ttl` seconds, `checked_seconds_ago`); `stats` shows it
 beside `freshness` ([incremental](incremental.md)). CLI markdown answers are unchanged; a cold read of a graph
-that is behind adds a stderr warning.
+that is behind adds a stderr warning. `review` also names the doc pages a diff changes (`changed_docs`, with
+the symbols each documents) instead of filing their hunks as unresolved ([design](design/review_docs.md)).
 
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.
