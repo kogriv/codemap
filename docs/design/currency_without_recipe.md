@@ -41,8 +41,8 @@ E1, E3 and E4 fail on 0.0.33.
 | # | Result |
 |---|---|
 | E1 | ✅ fixture, recipe `cwd` rewritten to a missing directory: `current` with `via: provenance roots under …`; after an edit, `behind` |
-| E2 | ✅ fixture: a copy of the tree elsewhere, checked with that copy as the base → `current` (fs mode). On a git tree the same holds: bquant `cf039ef` graph with a broken recipe, checked from another clone → `current` (E3 below) |
-| E3 | ✅ bquant: graph built at `d9a2a4f`, recipe `cwd` invalid, checked from a clone at `cf039ef` → `behind` via provenance roots (0.0.33: `unknown`); the `cf039ef` graph → `current`. Cold CLI on the old graph: 0.0.33 printed nothing; now `[warning] … is behind its source tree — answers describe the older tree; rebuild` |
+| E2 | ✅ for the fs mode only: in the fixture, a copy of the tree elsewhere, checked with that copy as the base → `current`. **Not verified in git mode across locations:** the bquant checks in E3 ran in the same clone the graphs were built in (checked out at another commit), not in a second clone |
+| E3 | ✅ bquant: graph built at `d9a2a4f`, recipe `cwd` invalid, checked from the same clone checked out at `cf039ef` → `behind` via provenance roots (0.0.33: `unknown`); the `cf039ef` graph → `current`. Cold CLI on the old graph: 0.0.33 printed nothing; now `[warning] … is behind its source tree — answers describe the older tree; rebuild` |
 | E4 | ✅ roots not under the base: one `[note] could not check … the graph's roots are not under …`; stdout unchanged; nothing printed once run from the root |
 | E5 | ✅ suite as above; mutations (no fallback, base ignored, no note) red; control green |
 
