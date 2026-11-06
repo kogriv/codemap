@@ -1066,6 +1066,21 @@ schema **0.13**, **`ANSWER_FORMAT` 7 → 8**.
 
 **Consumers:** `check` on bquant and the bquearch gate identical apart from the trailer (format 8).
 
+**0.0.32 published 2026-11-06:** [`codmap` 0.0.32](https://pypi.org/project/codmap/0.0.32/), schema 0.13,
+`ANSWER_FORMAT` 8. From `5bbe37f` (code identical to `709f89c`, whose suite ran 1233 passed / 3 skipped, 1236
+collected), CI green on 3.11–3.14, `twine check` PASSED. Reconciled from PyPI:
+
+```
+                                       0.0.31                       0.0.32
+review, plain git diff (a948d6c)       0 changed symbol(s), exit 0  [medium] shared.contracts.SURFACE_NAMES, exit 0
+review, a foreign Python file only     exit 0                       exit 2
+tests KnnPathForecaster.member_values  unknown                      low; test_scale_neighbours_are_the_band_neighbours
+--version                              … answer format 7 …          codemap 0.0.32 · answer format 8 · schema 0.13
+bquant check / bquearch gate           exit 0                       exit 0; identical apart from the trailer (format 8)
+```
+
+Every expectation holds.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
