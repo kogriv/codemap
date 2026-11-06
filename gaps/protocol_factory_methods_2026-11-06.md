@@ -1,7 +1,7 @@
 # Гэп: метод объекта, построенного фабрикой с возвратом Protocol, недостижим; `tests` отвечает unknown
 
 **Дата:** 2026-11-06. **Источник:** bquearch (сводка [kogriv/codemap#25](https://github.com/kogriv/codemap/issues/25)).
-**Статус:** открыто; дизайн — [`docs/design/protocol_dispatch.md`](../docs/design/protocol_dispatch.md), бэклог R1-C81.
+**Статус:** ✅ закрыто 2026-11-06 (0.0.31); дизайн — [`docs/design/protocol_dispatch.md`](../docs/design/protocol_dispatch.md), бэклог R1-C81.
 
 ## 1. Что показали
 

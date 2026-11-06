@@ -1691,7 +1691,7 @@ Python-focus** — если задача его нарушает, это отм�
       `--depth 6` ничего не добавляет (это потолок поиска, не объединение), а подпись говорит «searched 1 hop(s)».
       `zone_trades` → 13 без главного параметризованного теста через `_run`. Ответ «что прогнать» неполон и молчит.
       Направления: помощник внутри тестового модуля прозрачен для расстояния; ответ называет, сколько тестов дальше.
-- [ ] **R1-C81 метод объекта, построенного фабрикой (`build() -> Protocol`), не разрешается — `tests` отвечает unknown** (M) — 🟡 дизайн [`protocol_dispatch.md`](docs/design/protocol_dispatch.md), гэп [`protocol_factory_methods_2026-11-06.md`](gaps/protocol_factory_methods_2026-11-06.md)
+- [x] **R1-C81 метод объекта, построенного фабрикой (`build() -> Protocol`), не разрешается — `tests` отвечает unknown** (M) — ✅ 0.0.31 (2026-11-06), дизайн [`protocol_dispatch.md`](docs/design/protocol_dispatch.md), гэп [`protocol_factory_methods_2026-11-06.md`](gaps/protocol_factory_methods_2026-11-06.md)
       — 🆕 (2026-11-05, bquearch). `ForecasterSpec(...).build().fit(df).member_values(...)`: класс выбирается через
       реестр, аннотация возврата — Protocol. Направление: кандидаты-реализации Protocol с низкой уверенностью.
 - [x] **R1-C82 `review` поднимает весь модуль до high при правке одной константы модуля** (S–M) — ✅ 0.0.30 (2026-11-06), дизайн [`review_changed_lines.md`](docs/design/review_changed_lines.md), гэп [`review_module_constant_2026-11-06.md`](gaps/review_module_constant_2026-11-06.md) (2026-11-05,

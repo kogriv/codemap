@@ -1024,6 +1024,18 @@ bquant check / bquearch gate   exit 0                                          e
 
 Every expectation holds.
 
+**0.0.31 — the release check, pre-registered before the upload (2026-11-06).** One item (R1-C81); schema **0.13**
+unchanged, **`ANSWER_FORMAT` 6 → 7**. Tree: bquearch `703696d`, graph as in their MCP script (`shared`, `--deep
+--mode full`, four consumers).
+
+| | tree form | 0.0.30 (expected) | 0.0.31 (expected) |
+|---|---|---|---|
+| R1-C81 | `implementers PathForecaster` | `[]` | the 6 menu forecasters |
+| R1-C81 | `tests KnnRecursiveForecaster.band` | `unknown`, 0 tests | answered; `test_a_rows_scenarios_…` and `test_gate_and_runtime_…` at distance 1, `low`, with the dispatch caveat |
+| version | `codemap --version` | `codemap 0.0.30 · answer format 6 · schema 0.13` | `codemap 0.0.31 · answer format 7 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate: exit 0, output identical apart from the trailer (format 7).
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

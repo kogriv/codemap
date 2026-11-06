@@ -1,6 +1,6 @@
 # Design — a call on a Protocol reaches its implementers; a test's chain is typed by return annotations
 
-**Status:** 🟡 pre-registered (expectations below, committed before code). **Backlog:** R1-C81. **Gap:**
+**Status:** ✅ **done** (2026-11-06, fix dfcbfe7; schema 0.13, `ANSWER_FORMAT` 7), acceptance reconciled below. Pre-registered in 4f0b765. **Backlog:** R1-C81. **Gap:**
 [`gaps/protocol_factory_methods_2026-11-06.md`](../../gaps/protocol_factory_methods_2026-11-06.md).
 
 ## The defect
@@ -75,3 +75,25 @@ bquant `cf039ef` (deep, four consumers + `docs`) with the coverage.py contexts m
 | E9 | Full suite passes; guards for D1 (incl. the parameter check), D2, D3 and D4 each go red when reverted; a cosmetic control mutation stays green |
 
 Surprises are reported in the reconciliation.
+
+## Reconciliation (2026-11-06, dfcbfe7)
+
+| # | Result |
+|---|---|
+| E1 | ✅ bquearch: `PathForecaster` ← KnnAdaptive, KnnPath, KnnRecursive, KnnStrata, MdnLegs, QuantileBand (6); `RuntimeForecaster` ← the same without QuantileBand (5). bquant: structural adds 1 `implements` edge, every registry link kept |
+| E2 | ✅ deep and fast: `tests KnnRecursiveForecaster.band` answers; both named tests are rows at distance 1 |
+| E3 | ✅ those rows are `low`; caveat "N test(s) reached only through a dispatch over-approximation" |
+| E4 | ✅ fixture guards (typed chain, `Optional[...]`, local helper; no edge for an unannotated return or a reassigned name; a same-names class with other parameters is not an implementer) |
+| E5 | ✅ with the prototype's definition (implementer methods whose Protocol method has callers): 12 methods, 11 `unknown` on 0.0.30, **11** answered now. Counted over every implementer method, it is 40, of which 38 were `unknown` and 23 now answer |
+| E6 | ✅ coverage.py truth. bquant fast: answered 215 → 503, median precision 1.00 → 1.00, hit rate 0.926 → 0.928, changed answers 293 (median precision 1.00, mean 0.85), old ⊆ new in all of them. codemap fast: answered 263 → 318, median precision 1.00 → 1.00, hit rate 0.901 → 0.918, changed 55 (mean 0.96). On deep, 48 (bquant) and 42 (codemap) changed answers are not supersets: the nearest band moved closer (distance 2 → 1) and the old rows went to the next band. No answer reads `high` while every row is a guess (0 on both) |
+| E7 | ✅ node ids identical; nothing removed. Added: bquearch +11 `implements/structural`, +346 `calls/typed`, +379 (fast) / +415 (deep) `calls/protocol`; bquant +1 structural and +972 typed; codemap +170 typed. bquant deep also differs by 4 `deep` edges (3 `accesses`, 1 `calls`), which is sampling, not this change: fast is clean |
+| E8 | ✅ bquant `check` and the bquearch gate identical apart from the trailer (`answer format 7`) |
+| E9 | ✅ suite 1225 passed / 3 skipped; mutations: D1 (off; names only), D2 (core; repo), D3 (route; top-level), D4 (off; reassignment guessed; no `Optional`; no helpers), each red; cosmetic control green |
+
+**Surprises.**
+- D4 is bigger than the item: bquant's tests answer for 288 more symbols (fluent builder chains typed by
+  return annotations), with precision unchanged. The R1-C24 guard that pinned "`Engine().run()` is a known limit"
+  went red and now pins the opposite.
+- The first E6 run scored codemap at 0 symbols. The scoring root was the worktree path, while coverage had been
+  recorded under the repo path. Rerun with the recorded root; the numbers above are from the rerun.
+- E5's first count used a wider definition than the prototype. Both counts are given.

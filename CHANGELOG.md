@@ -5,6 +5,26 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.31] - 2026-11-06
+
+**Methods behind a Protocol are reachable, and `tests` says when it guessed.** Schema unchanged (**0.13**).
+**`ANSWER_FORMAT` 6 → 7.**
+
+- **Methods behind `build() -> Protocol` are reachable** (R1-C81, design
+  [`docs/design/protocol_dispatch.md`](docs/design/protocol_dispatch.md)). On bquearch, `tests` answered `unknown`
+  for every model method behind the `PathForecaster` Protocol, which is built by a factory through a registry
+  alias. Four changes:
+  - Protocol implementers are linked **by structure**: every method, with the same parameter names and kinds.
+    A name-only match was measured and rejected, because it put four swing strategies under a two-method shape
+    Protocol on bquant. With parameters, it reproduced bquant's registry links and added one class that does
+    implement the Protocol.
+  - A call on a Protocol method **fans out** to each implementer (`resolution: "protocol"`, heuristic).
+  - In a test, a call on a receiver typed by a constructor or a **return annotation** is an edge
+    (`resolution: "typed"`). `Engine().run()`, the known limit of `tests` since R1-C24, is now one hop away.
+  - `tests` **row confidence is route-aware**: a test reached only through a dispatch guess (registry or
+    Protocol) is `low`, with a caveat.
+- **`ANSWER_FORMAT` 6 → 7** (tests confidence). Schema unchanged: no new edge type, two new resolution values.
+
 ## [0.0.30] - 2026-11-06
 
 **`review` names what changed, and a module constant has readers.** Schema unchanged (**0.13**).

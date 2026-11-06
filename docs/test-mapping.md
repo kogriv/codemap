@@ -40,7 +40,7 @@ central. The walk goes **backwards** from the symbol over `calls` / `references`
 | field | meaning |
 |---|---|
 | `distance` | how many hops back the nearest tests were found |
-| `confidence` | `high` (1–2 hops), `medium` (3), `low` (deeper, only if you ask), `unknown` (nothing found) |
+| `confidence` | `high` (1–2 hops), `medium` (3), `low` (deeper, only if you ask, or reached only through a dispatch over-approximation), `unknown` (nothing found) |
 | `tests[].node_id` | a pytest node id, **relative to the graph's path origin** (see below) |
 | `total_at_distance` / `truncated` | how many were found, and how many the cap hid — never silently |
 | `next_band` | `{distance, count}` of the next band within `--depth`, or `null` when there is none (0.0.28) |
@@ -156,9 +156,27 @@ spot — is the one this project has now shipped fixes for five times ([#1](http
 [#3](https://github.com/kogriv/codemap/issues/3), [#5](https://github.com/kogriv/codemap/issues/5),
 [#7](https://github.com/kogriv/codemap/issues/7), and R1-C23).
 
-The dominant cause of that 16% is known and stated rather than hidden: **a method called
-on an object the test constructed**. Consumer-root call resolution is name-based, so
-`Engine().run()` in a test produces no edge to `Engine.run`.
+Until 0.0.31 the dominant cause of that 16% was **a method called on an object the test
+constructed**: consumer-root call resolution was name-based, so `Engine().run()` in a test
+produced no edge to `Engine.run`. Now a receiver is typed when a constructor or a return
+annotation names its class: `Engine().run()`, `fc = make().fit(df); fc.band(…)` with
+`make() -> Model` and `fit(...) -> "Model"`, and a local helper whose every `return` agrees.
+Such edges carry `resolution: "typed"`. Nothing is guessed: an unannotated return or a name
+assigned twice gives no edge (R1-C81).
+
+## Protocols and dispatch guesses
+
+A Protocol's implementers are linked by structure: a class that has every Protocol method
+with the same parameter names and kinds `implements` it, whether or not it inherits it or
+a registry names it. A call on a Protocol method, from core or from a test, then fans out
+to every implementer's method (`resolution: "protocol"`). That is an over-approximation, the
+same kind as a registry `registry-candidate`: the receiver is one of them, and which one is
+not known.
+
+So a test reached **only** through such a fan-out is `low`, whatever its distance, and the
+answer says how many rows are like that ("reached only through a dispatch
+over-approximation"). A test with at least one exact path keeps its distance's confidence.
+If every test in the nearest band is a guess, the answer's own confidence is `low` as well.
 
 ## The inverse
 
