@@ -246,6 +246,14 @@ recognised). Each was checked against the G16/G5 probe (2.15: exit 0; the branch
 by mutation. One trap found on the way: rich parses `[...]` in error messages as markup, so the #395 message
 names the INI section and TOML table without brackets.
 
+**Rebased 2026-11-06** (owner's decision). Upstream merged the drop of Python 3.10 and a Python-versions doc,
+so both PRs turned `CONFLICTING`. The only conflict was `docs/release_notes.md`, and both lines were kept. Both
+branches were checked against upstream `main` in the same environment: ruff, `ruff format --check` and mypy
+were clean, and the set of failing tests was identical to upstream's. That set is seven functional UI tests in
+`tests/functional/test_ui.py` that run a subprocess and fail on the check machine on upstream itself. Our new
+tests pass (+1 and +6). Both PRs are `MERGEABLE` again. They have had no review yet, and CI has not run for a
+first-time contributor.
+
 ## Coverage vs codemap
 
 | task | import-linter 2.15 | codemap |
