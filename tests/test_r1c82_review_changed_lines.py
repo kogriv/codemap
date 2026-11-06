@@ -40,7 +40,10 @@ GATES = (
     "def other():\n    return contracts.LIMIT\n\n\n"
     "def shadow(NAMES):\n    return NAMES\n\n\n"
     "def rebound():\n    NAMES = ()\n    return NAMES\n\n\n"
-    "def uses_spec():\n    return contracts.use()\n"
+    "def uses_spec():\n    return contracts.use()\n\n\n"
+    "if set(NAMES) != {\"a\", \"b\"}:\n    raise RuntimeError(\"drift\")\n\n\n"   # import-time check
+    "class Holder:\n    ALL = NAMES\n\n\n"
+    "class Own:\n    NAMES = ()\n    X = NAMES\n"
 )
 
 
@@ -139,10 +142,22 @@ def test_E3_a_local_binding_shadows(q):
 def test_E2_the_constant_dossier_names_its_readers(q):
     rv = build_review(q, hunks=parse_unified_diff(ONE_CONSTANT))
     (d,) = rv["changed"]
-    assert d["consumers_by_root"] == {"core": 2}       # gate, Spec.check
+    assert d["consumers_by_root"] == {"core": 4}       # gate, Spec.check, gates (import time), Holder
     assert d["risk"] != "low"
 
 
 def test_D3_a_function_is_not_an_attribute(q):
     # `use()` called by bare name stays in the calls layer
     assert not any(t == "pkg.contracts.use" for _, t, _ in _accesses(q))
+
+
+# -- D3b: module level and class bodies (amendment after the first run) -------
+
+def test_D3b_an_import_time_check_is_a_reader(q):
+    assert ("pkg.gates", "pkg.contracts.NAMES", "name") in _accesses(q)
+
+
+def test_D3b_a_class_body_read_and_its_shadow(q):
+    es = _accesses(q)
+    assert ("pkg.gates.Holder", "pkg.contracts.NAMES", "name") in es
+    assert not any(s == "pkg.gates.Own" for s, _, _ in es)

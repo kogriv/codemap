@@ -106,6 +106,16 @@ def add_attrflow(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                 edges.add((node_id, attr_id, access, resolution))
             if counts["out"]:
                 graph.nodes[node_id].extras["attr_access"] = counts
+        # R1-C82 D3b: module-level code and class bodies read constants too — the
+        # import-time check `if set(SURFACES) != set(SURFACE_NAMES): raise` is exactly
+        # the reader a review of SURFACE_NAMES must name. Source: the module / class.
+        for src_id, scope, cls_bound in _non_function_scopes(tree, modpath):
+            if src_id not in graph.nodes:
+                continue
+            for attr_id, access in _scope_name_reads(scope, cls_bound, graph, modpath,
+                                                     imports, modmembers, pkg):
+                if attr_id != src_id:
+                    edges.add((src_id, attr_id, access, "name"))
 
     for src, attr_id, access, resolution in sorted(edges):
         graph.add_edge(Edge("accesses", src, attr_id,
@@ -250,6 +260,60 @@ def _module_name_uses(fnode, nodes, graph, modpath, imports, modmembers, pkg):
             continue
         if _is_attribute_node(graph, tgt):
             yield tgt, access, "name"
+
+
+_SCOPE_BARRIERS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)
+
+
+def _scope_walk(stmts):
+    """Every node of ``stmts`` that belongs to this scope — not into defs, classes, lambdas."""
+    todo = list(stmts)
+    while todo:
+        n = todo.pop()
+        yield n
+        if isinstance(n, _SCOPE_BARRIERS):
+            # decorators, defaults and bases are evaluated in the enclosing scope
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                todo.extend(n.decorator_list)
+                todo.extend(d for d in (*n.args.defaults, *n.args.kw_defaults) if d is not None)
+            elif isinstance(n, ast.ClassDef):
+                todo.extend((*n.decorator_list, *n.bases, *(k.value for k in n.keywords)))
+            continue
+        todo.extend(ast.iter_child_nodes(n))
+
+
+def _non_function_scopes(tree, modpath):
+    """(source id, nodes, names bound in that scope or None) for the module and each class body."""
+    yield modpath, list(_scope_walk(tree.body)), None
+
+    def classes(stmts, prefix):
+        for st in stmts:
+            if isinstance(st, ast.ClassDef):
+                cid = f"{prefix}.{st.name}"
+                nodes = list(_scope_walk(st.body))
+                bound = {n.id for n in nodes if isinstance(n, ast.Name)
+                         and isinstance(n.ctx, (ast.Store, ast.Del))}
+                yield cid, nodes, bound
+                yield from classes(st.body, cid)
+    yield from classes(tree.body, modpath)
+
+
+def _scope_name_reads(nodes, cls_bound, graph, modpath, imports, modmembers, pkg):
+    for n in nodes:
+        if not (isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)):
+            continue
+        if cls_bound is not None and n.id in cls_bound:
+            continue
+        if n.id in imports:
+            tgt = imports[n.id]
+            if not tgt.startswith(pkg):
+                continue
+        elif n.id in modmembers:
+            tgt = f"{modpath}.{n.id}"
+        else:
+            continue
+        if _is_attribute_node(graph, tgt):
+            yield tgt, "read"
 
 
 def _deep_attr(node, graph, pkg, script):
