@@ -1093,6 +1093,21 @@ schema **0.13**, **`ANSWER_FORMAT` 8 → 9**. Tree: bquant, a clone at `d9a2a4f`
 
 **Consumers:** `check` on bquant and the bquearch gate identical apart from the trailer (format 9).
 
+**0.0.33 published 2026-11-06:** [`codmap` 0.0.33](https://pypi.org/project/codmap/0.0.33/), schema 0.13,
+`ANSWER_FORMAT` 9. From `c7a7e6a` (code identical to `93afcd0`, whose suite ran 1246 passed / 3 skipped, 1249
+collected), CI green on 3.11–3.14, `twine check` PASSED. Reconciled from PyPI:
+
+```
+                                         0.0.32                      0.0.33
+served graph d9a2a4f over tree cf039ef   no currency field           currency: behind, changed 4
+rebuilt at cf039ef                       no currency field           currency: current
+review cf039ef^..cf039ef (docs only)     0 symbols, 3 unresolved     changed_docs: evaluation.md, trading.md; 0 unresolved
+--version                                … answer format 8 …         codemap 0.0.33 · answer format 9 · schema 0.13
+bquant check / bquearch gate             exit 0                      exit 0; identical apart from the trailer (format 9)
+```
+
+Every expectation holds.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
