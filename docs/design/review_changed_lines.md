@@ -75,3 +75,23 @@ was done.
 | E8 | Full suite passes; the guards for D1, D1b, D2 and D3 go red when each is reverted, and a cosmetic control mutation leaves them green |
 
 Surprises are reported in the reconciliation.
+
+## Amendment after the first run (2026-11-06, before the rerun)
+
+The first acceptance run on 3a3a703 did not meet **E2**. `SURFACE_NAMES` got one reader,
+`ModelBundle.__post_init__`, and stayed `low`. The reader I expected in `gates` is not in a function. It is
+module-level code that runs on import (`gates.py:209–212`: `from contracts import … SURFACE_NAMES`, then
+`if set(SURFACES) != set(SURFACE_NAMES): raise …`). That is the very check bquearch relies on, and the boundary
+I wrote down ("not covered: reads at module level or in a class body") cut it off. A boundary that excludes the
+case the item came from is not a boundary; it is the defect again.
+
+**D3b.** Bare-name reads in module-level code and in a class body (outside its methods) are `accesses` edges
+too. The source is the **module** or the **class** node. In a class body, names bound in the body shadow; at
+module level, names resolve through imports and the module's own members as in D3. Same gate: the target must be
+an `attribute` node.
+
+**Also from the first run.** The suite caught the new pair `("accesses", "name")` missing from the resolution
+table (R1-C39 guard), so the row is added. E5 reported one dropped definition with a changed line inside
+(`shared.registry.Registry`, commit b7bc7e0). It is examined in the rerun, not explained away.
+
+**E2 and E5 are re-measured on the D3b commit.** E1, E3, E4, E6 and E7 held on 3a3a703 and are rerun as well.

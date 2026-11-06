@@ -184,6 +184,9 @@ RESOLUTIONS: dict[tuple[str, str], dict[str, str]] = {
                                 "how": "`Class(...).attr` — the constructor names the owner"},
     ("accesses", "deep"): {"means": "route", "confidence": "inferred",
                            "how": "owner type inferred by jedi (deep tier only)"},
+    ("accesses", "name"): {"means": "route", "confidence": "exact",
+                           "how": "a module attribute read by bare name — through an import "
+                                  "or in its own module; a local binding shadows it (R1-C82)"},
     ("references", "annotation"): {"means": "site", "confidence": "exact",
                                    "how": "the symbol appears in a type annotation"},
     ("references", "name"): {"means": "site", "confidence": "exact",

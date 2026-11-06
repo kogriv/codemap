@@ -186,7 +186,8 @@ codemap serve --graph graph.json --watch
   (Ca/Ce/instability), god-objects & call-hubs, per-function complexity (cyclomatic / MI)
   blended with structural coupling.
 - **Impact / blast radius** — who uses X, across the whole repo (core + tests + docs).
-- **Change review** — a diff → the symbols it touches, their callers, signature-change surface,
+- **Change review** — a diff → the symbols its changed lines touch (context lines and comments
+  between definitions are not changes), their callers or readers, signature-change surface,
   touched columns, cross-root consumers, risk rank.
 - **Dispatch seams** — registry/factory families and the Protocol each impl satisfies.
 - **Dataflow** — producers/consumers of a string-keyed DataFrame column.

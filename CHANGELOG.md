@@ -5,6 +5,22 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+- **`review` reads the changed lines, not the hunk** (R1-C82, design
+  [`docs/design/review_changed_lines.md`](docs/design/review_changed_lines.md)). On bquearch, a one-line edit of
+  the tuple constant `SURFACE_NAMES` came back as `[high] shared.contracts` with "123 site(s) — check on signature
+  change", plus an untouched neighbour constant. The constant itself was `[low]` with no consumers. Three causes,
+  three fixes:
+  - the diff's context lines no longer count as changes;
+  - a blank or comment line between definitions names nothing;
+  - a module's dossier counts direct references to the module (its importers), not every member's callers, and
+    has no call-site contract.
+- **Module constants have readers.** A bare-name read of a module attribute inside a function
+  (`from pkg.contracts import NAMES` … `x in NAMES`, or in the same module) is now an `accesses` edge with
+  `resolution: "name"`; locals shadow. `impact` and `review` see who reads a constant. A constant's
+  risk counts its readers.
+- **`ANSWER_FORMAT` 5 → 6**: the review dossier of a module changed meaning. Schema unchanged (no new edge
+  type). `check` changes by its trailer alone.
+
 ## [0.0.29] - 2026-11-05
 
 **Repo-scope roots are checked, and a graph built elsewhere prints a `pytest` line that runs.** Schema unchanged
