@@ -343,13 +343,13 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
     if mode == "full":
         # R1-C81 D4: `fc = _spec().build().fit(df); fc.band(…)` — calls on objects whose
         # type a constructor or a return annotation names.
-        for src, target in _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, dead):
+        for src, target, res in _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, dead):
             if (src, target) not in uses:
-                uses[(src, target)] = {"called": True, "shapes": [], "local": False, "typed": True}
+                uses[(src, target)] = {"called": True, "shapes": [], "local": False, "typed": res}
 
     for (src, target), entry in sorted(uses.items()):
         etype = "calls" if entry["called"] else "references"
-        extras = {"resolution": "typed" if entry.get("typed") else
+        extras = {"resolution": entry["typed"] if entry.get("typed") else
                   "local" if entry["local"] else "imported"}
         if etype == "calls" and entry["shapes"]:
             extras.update(_arg_contract(entry["shapes"]))
@@ -373,6 +373,11 @@ class _Typer:
         for e in graph.edges:
             if e.type == "export":
                 self.exports.setdefault((e.source, e.target.rsplit(".", 1)[-1]), e.target)
+        # R1-C88: Protocol → its implementers, for a method the Protocol does not declare
+        self.implementers: dict[str, list[str]] = {}
+        for e in graph.edges:
+            if e.type == "implements":
+                self.implementers.setdefault(e.target, []).append(e.source)
         self.helpers = {n.name: n for n in tree.body
                         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
         self._helper_types: dict[str, str | None] = {}
@@ -442,6 +447,19 @@ class _Typer:
     def method(self, cls: str | None, name: str) -> str | None:
         return self.classes.methods(cls).get(name) if cls else None
 
+    def outside_protocol(self, cls: str | None, name: str) -> list[str]:
+        """``name`` absent from Protocol ``cls``: the implementers' methods that have it (R1-C88).
+
+        bquearch calls ``fc.member_values(…)`` after a ``hasattr`` check on an object typed
+        ``PathForecaster``; only some implementations define it. Fanned out like a Protocol
+        call (heuristic), and never for a concrete class — a missing attribute there is not
+        guessed.
+        """
+        if not cls or cls not in self.implementers or self.method(cls, name):
+            return []
+        return sorted({m for c in self.implementers[cls]
+                       if (m := self.classes.methods(c).get(name))})
+
     def env_of(self, fnode) -> dict:
         assigned: dict[str, list] = {}
         for n in ast.walk(fnode):
@@ -469,7 +487,7 @@ class _Typer:
 
 
 def _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, dead):
-    """(source id, core method id) for calls on typed receivers in a consumer module."""
+    """(source id, core method id, resolution) for calls on typed receivers in a consumer module."""
     typer = _Typer(graph, tree, symbol_map, index)
     out: set[tuple[str, str]] = set()
     for fnode in ast.walk(tree):
@@ -481,12 +499,16 @@ def _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, dead):
         for call in ast.walk(fnode):
             if not (isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)):
                 continue
-            mid = typer.method(typer.type_of(call.func.value, env), call.func.attr)
-            if mid is None or mid not in graph.nodes:
-                continue
+            recv = typer.type_of(call.func.value, env)
+            mid = typer.method(recv, call.func.attr)
             src = _source_for(call, mod_id, func_ranges)
-            if src != mid:
-                out.add((src, mid))
+            if mid is None:
+                for m in typer.outside_protocol(recv, call.func.attr):
+                    if m != src:
+                        out.add((src, m, "protocol"))
+                continue
+            if mid in graph.nodes and src != mid:
+                out.add((src, mid, "typed"))
     return sorted(out)
 
 

@@ -178,6 +178,11 @@ answer says how many rows are like that ("reached only through a dispatch
 over-approximation"). A test with at least one exact path keeps its distance's confidence.
 If every test in the nearest band is a guess, the answer's own confidence is `low` as well.
 
+A method the Protocol does **not** declare, called on a receiver typed as that Protocol (`fc.member_values(…)`
+after a `hasattr` check), fans out the same way, to the implementers that define it, and is `low` too. On a
+concrete class, a missing method is not guessed. This applies to calls in tests; in core code the receiver is
+whatever jedi resolves (R1-C88).
+
 ## The inverse
 
 ```bash

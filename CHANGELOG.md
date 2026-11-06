@@ -13,6 +13,10 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   - an ambiguous path is named with its candidates;
   - a Python file that cannot be placed is listed in bold, apart from unresolved lines;
   - a diff where no Python file is in the graph exits 2.
+- **A method outside a Protocol, on a Protocol-typed receiver, reaches the implementers that have it**
+  (R1-C88, design [`docs/design/protocol_outside_method.md`](docs/design/protocol_outside_method.md)). bquearch
+  calls `fc.member_values(…)` on a `PathForecaster` after `hasattr`, and only some models define it. In tests,
+  this is now a `protocol` fan-out to those models, `low` in `tests`. A concrete class is not guessed.
 - **`ANSWER_FORMAT` 7 → 8** (review summary fields). Schema unchanged.
 
 ## [0.0.31] - 2026-11-06

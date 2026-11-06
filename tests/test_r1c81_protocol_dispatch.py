@@ -185,3 +185,33 @@ def test_D2_core_callers_fan_out_in_a_single_package_build(tmp_path):
     fan = {(e.source, e.target) for e in g.edges
            if e.type == "calls" and e.extras.get("resolution") == "protocol"}
     assert (P + "evaluate", P + "KnnB.band") in fan
+
+
+# -- R1-C88: a method outside the Protocol --------------------------------------
+
+def test_R1C88_a_method_outside_the_protocol_fans_out_to_those_that_have_it(tmp_path):
+    root = tmp_path
+    (root / "pkg").mkdir()
+    (root / "pkg" / "__init__.py").write_text("")
+    (root / "pkg" / "menu.py").write_text(
+        MENU + "\n\nclass KnnC(Base):\n    def fit(self, frame) -> 'KnnC':\n        return self\n\n"
+        "    def member_values(self, q, k):\n        return []\n\n\n"
+        "class KnnD(KnnC):\n    def fit(self, frame) -> 'KnnD':\n        return self\n\n\n"
+        "def _knnb_member_values(self, q, k):\n    return []\n\n\nKnnB.member_values = _knnb_member_values\n")
+    (root / "tests").mkdir()
+    (root / "tests" / "test_m.py").write_text(
+        "from pkg.menu import Spec, KnnA\n\n\n"
+        "def test_outside():\n    fc = Spec().build().fit([1])\n    fc.member_values(1, 3)\n\n\n"
+        "def test_nobody_has_it():\n    Spec().build().nothing_like_this()\n\n\n"
+        "def test_concrete_missing():\n    KnnA().member_values(1, 3)\n")
+    q = Query(extract_repo(str(root / "pkg"), consumers=(str(root / "tests"),), mode="full"))
+    fan = {(s.rsplit(".", 1)[1], t) for s, t in _calls(q, "protocol") if s.startswith("tests.")}
+    assert ("test_outside", P + "KnnC.member_values") in fan
+    # KnnC defines it and KnnD inherits it (one method, one edge); KnnA/KnnB do not have it
+    # as a method in the graph (KnnB's is a module-level assignment), so they get nothing
+    assert {t for s, t in fan if s == "test_outside" and t.endswith(".member_values")} == {
+        P + "KnnC.member_values"}
+    assert P + "KnnD" in q.implementers(P + "PathForecaster")
+    assert not any(s in ("test_nobody_has_it", "test_concrete_missing") for s, _ in fan)
+    r = q.tests_for(P + "KnnC.member_values")
+    assert {t["id"]: t["confidence"] for t in r["tests"]} == {"tests.test_m.test_outside": "low"}
