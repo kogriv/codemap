@@ -219,8 +219,10 @@ def _cmd_build(args) -> int:
                    cwd=os.getcwd(), target=graph.target, scope=scope,
                    roots_base=base)
         if incr_info is not None:
+            # R1-C92: a full build that had a reason says it — computed, never shown, before.
+            why = f" ({incr_info['reason']})" if incr_info.get("reason") else ""
             print(f"[incremental] {incr_info['mode']}: "
-                  f"{len(incr_info['affected'])} module(s) recomputed", file=sys.stderr)
+                  f"{len(incr_info['affected'])} module(s) recomputed{why}", file=sys.stderr)
         print(args.out)
     else:
         print(store.dumps(graph))
@@ -303,8 +305,12 @@ def _incremental_build(args):
         return extract(args.path, deep=args.deep, repeat=getattr(args, "repeat", None) or 1), \
             {"mode": "full", "affected": []}
     old_graph = store.load(args.out)
-    new_scope = resolve_scope(args.path)
     repeat = getattr(args, "repeat", None) or 1
+    why = _sidecar_mismatch(old_meta, old_graph)
+    if why:
+        return extract(args.path, deep=args.deep, repeat=repeat), \
+            {"mode": "full", "affected": [], "reason": why}
+    new_scope = resolve_scope(args.path)
     if old_graph.target != Path(args.path).resolve().name:
         return extract(args.path, deep=args.deep, repeat=repeat), {"mode": "full", "affected": []}
     return update_graph(old_graph, args.path, old_scope, new_scope, deep=args.deep,
@@ -334,6 +340,22 @@ def _core_subgraph(graph, offset: str = ""):
     return core
 
 
+def _sidecar_mismatch(old_meta, old_graph) -> str | None:
+    """R1-C92 D1: the sidecar is the incremental baseline only if it describes this graph.
+
+    `meta.scope` and the graph's `provenance.scope_id` are written by one build and are
+    equal for a pair that belongs together. A graph replaced from outside (an atomic `mv`
+    of a fresh build) with the old sidecar left beside it made the next incremental build
+    diff against another tree: a graph 0 next to meta 1 missed every edit between 0 and 1
+    and still said `incremental`.
+    """
+    meta_id = ((old_meta or {}).get("scope") or {}).get("scope_id")
+    graph_id = (old_graph.provenance or {}).get("scope_id")
+    if meta_id and graph_id and meta_id != graph_id:
+        return "the sidecar describes another build than the graph"
+    return None
+
+
 def _incremental_core(args, repeat):
     """Update the core of an existing repo-scoped graph at ``args.out`` (R1-C86 D1).
 
@@ -351,6 +373,9 @@ def _incremental_core(args, repeat):
     if old_graph.target != Path(args.path).resolve().name or \
             not (old_graph.provenance or {}).get("roots"):
         return None, {"mode": "full", "affected": []}
+    why = _sidecar_mismatch(old_meta, old_graph)
+    if why:
+        return None, {"mode": "full", "affected": [], "reason": why}
     from codemap.extract.roots import _rel_to
     consumers, docs = tuple(args.consumer or ()), tuple(args.docs or ())
     new_scope = resolve_scope(args.path, consumers=consumers, docs=docs)

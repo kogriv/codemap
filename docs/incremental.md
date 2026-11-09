@@ -130,6 +130,19 @@ were not seen at all: the build said `unchanged` and kept the old graph.
 - **Scope-driven.** Change detection is the content-hash scope manifest (`codemap
   scope`), not mtimes — a touched-but-unchanged file triggers nothing.
 
+### Replacing a graph file: move its sidecar with it
+
+`graph.json.meta.json` is the incremental baseline: the next `--incremental` build diffs the tree against
+`meta.scope`, not against the graph. A loop that builds into `graph.next.json` and moves it into place moves
+`graph.next.json.meta.json` with it. Since 0.0.36 (R1-C92) a pair that does not belong together is detected:
+the sidecar's `scope.scope_id` differs from the graph's `provenance.scope_id`. The build then runs in full and
+says so, `[incremental] full: 0 module(s) recomputed (the sidecar describes another build than the graph)`.
+`currency` ignores such a sidecar and checks from the graph's own roots. Before that, a graph left beside a
+newer sidecar missed every edit between the two and still reported `incremental`.
+
+Every full build inside `--incremental` now prints its reason in the same way, including a different codemap
+version, tier or sample count.
+
 ## Serving a fresh graph without a restart
 
 A long-lived `codemap serve` (or `serve --mcp`) caches the graph it loaded at start.

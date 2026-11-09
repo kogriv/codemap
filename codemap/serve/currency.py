@@ -88,6 +88,12 @@ def graph_currency(graph_path: str, graph_scope_id: str | None, *, roots: dict |
     if not meta or not meta.get("argv"):
         return _via_roots(graph_scope_id, roots, target, base,
                           "no build recipe beside the graph")
+    # R1-C92 D2: a sidecar left beside a replaced graph describes another build — its
+    # recipe and its baseline would answer for a tree this graph never saw.
+    meta_id = (meta.get("scope") or {}).get("scope_id")
+    if meta_id and meta_id != graph_scope_id:
+        return _via_roots(graph_scope_id, roots, target, base,
+                          "the sidecar describes another build than the graph")
     cwd = meta.get("cwd")
     if not cwd or not os.path.isdir(cwd):
         return _via_roots(graph_scope_id, roots, target, base,
