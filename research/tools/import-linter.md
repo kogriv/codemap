@@ -266,6 +266,18 @@ our branches):
 | P2 | a `layers` contract with `exhaustiv = true`: 2.15 exit 0 kept; 2.16 exit nonzero, names `exhaustiv` and suggests `exhaustive` |
 | P3 | the same contract spelled correctly: kept, exit 0, on both versions |
 
+**Reconciliation (2026-11-09):**
+
+| # | Result |
+|---|---|
+| P1 | ✅ 2.15: "Contracts: 0 kept, 0 broken.", exit 0. 2.16: "No contracts found in the configuration." plus where contracts go, exit 1 |
+| P2 | ✅ 2.15: "L KEPT", exit 0, the option silently ignored. 2.16: `exhaustiv: Unrecognized option. Did you mean 'exhaustive'?`, exit 1 |
+| P3 | ❌ as written, and the fault is in the fixture: `exhaustive` without `containers` is refused on both versions ("not supported for contracts without containers"). That is the same behaviour on both and not a regression. Rerun with `containers = ["gp"]`: kept, exit 0, on both versions |
+
+**Surprise:** P2 on 2.15 shows the defect more sharply than filed. The misspelled option was not just ignored. The
+contract it sat in would have been refused if spelled correctly (no `containers`), and instead it was reported
+as kept.
+
 ## Coverage vs codemap
 
 | task | import-linter 2.15 | codemap |
@@ -274,7 +286,7 @@ our branches):
 | T5 arch: layers, forbidden | ✅ direct and indirect | ✅ direct |
 | T5 arch: cycles | ◐ `acyclic_siblings` only | ✅ eager / type-only / lazy, each a rule |
 | T5 arch: independence, protected | ✅ | ◐ independent groups; no `protected` |
-| gate refuses a bad contract | ◐ required keys, types, booleans; **not** unknown optional keys or zero contracts | ◐ unknown keys refused (R1-C69); a misspelled table passes without `--require-contract` (R1-C76) |
+| gate refuses a bad contract | ✅ since 2.16 (our #395/#396): unknown options and zero contracts refused; 2.15: ◐ | ◐ unknown keys refused (R1-C69); a misspelled table passes without `--require-contract` (R1-C76) |
 | determinism | ✅ | ✅ |
 
 ## Разбор
