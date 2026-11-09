@@ -450,3 +450,13 @@ pkg/errors.py:NotImplementedError` (`INFERRED`) is gone, and the imported one (`
 tree could not serve as evidence: at its current commit neither version produces such an edge, so the five links
 from the report no longer reproduce. Confirmation posted with that limit stated
 ([comment](https://github.com/Graphify-Labs/graphify/issues/4989#issuecomment-6677937879)).
+
+**Re-check of the #2447 comment on 0.9.104, pre-registered 2026-11-09.** The comment describes 0.9.102. Since
+then 0.9.103 and 0.9.104 shipped, so the comment may be stale. Same A1 tree, `extract . --code-only`,
+`GRAPHIFY_BACKEND=none`, empty `HOME`, clean venvs; 0.9.102 is the control.
+
+| # | Expectation |
+|---|---|
+| Q1 | 0.9.102 (control) reproduces the comment: `imports` link `y.py → X`, no `imports_from` `y.py → x.py`, report "None detected." under Import Cycles |
+| Q2 | 0.9.104: one of two outcomes, reported as observed — (a) unchanged from Q1, and the comment stands; (b) the function-local import shows as a file-level dependency (`imports_from`, or a deferred stamp) and/or the report lists the 2-file cycle, and the comment gets a follow-up saying so |
+| Q3 | Module-level control (import moved to the top of `y.py`): the 2-file cycle is listed on both versions |
