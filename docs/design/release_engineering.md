@@ -1148,6 +1148,23 @@ built by 0.0.34.
 
 **Consumers:** `check` on bquant and the bquearch gate identical apart from the version.
 
+**0.0.35 published 2026-11-09:** [`codmap` 0.0.35](https://pypi.org/project/codmap/0.0.35/), schema 0.13,
+`ANSWER_FORMAT` 10. From `5e550e8` (code identical to `b784d0c`, whose suite ran 1270 passed / 3 skipped, 1273
+collected), CI green on 3.11–3.14, `twine check` PASSED. CI on `b784d0c` itself was red: the README test count was
+not updated in the fix commit, the third time this rule was broken (0.0.27, 0.0.29). The release commit carries
+the count. Reconciled from PyPI:
+
+```
+                                            0.0.34                              0.0.35
+bquant graph (cf039ef, built by 0.0.34)     exact 9053, unknown 1107            exact 10160, no unknown
+same graph stamped 0.0.99, cold query       stderr empty                        one [warning] … built by codemap 0.0.99 …
+  stdout                                    2379 bytes                          identical to the unstamped read
+--version                                   codemap 0.0.34 · answer format 10   codemap 0.0.35 · answer format 10 · schema 0.13
+bquant check / bquearch gate                exit 0                              exit 0; identical apart from the version
+```
+
+Every expectation holds.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
