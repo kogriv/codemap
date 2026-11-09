@@ -5,6 +5,24 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.36] - 2026-11-09
+
+**A graph and its sidecar must describe one build.** Schema unchanged (**0.13**). **`ANSWER_FORMAT` stays 10:** a
+matched pair behaves exactly as before.
+
+- **Fixed: an incremental build next to a foreign sidecar lost edits** (R1-C92, design
+  [`docs/design/sidecar_pair.md`](docs/design/sidecar_pair.md); asked by bquearch). The incremental baseline is
+  `graph.json.meta.json`, not the graph. A graph replaced from outside with the old sidecar left beside it
+  diffed against another tree: a graph from state 0 next to a sidecar from state 1 missed every edit in between
+  and still said `incremental`. A pair whose `scope_id`s differ is now a full build, with the reason given.
+- **Every full build inside `--incremental` prints its reason**: `[incremental] full: 0 module(s) recomputed
+  (builder-changed)`. This covers a different codemap version, tier or sample count, and a mismatched sidecar.
+  The reasons were computed and never shown; bquant saw a 153 s "incremental" build after a version change with
+  no word why.
+- **`currency` ignores a foreign sidecar** (R1-C92 D2) and checks from the graph's provenance roots, so a
+  replaced graph gets neither another build's recipe nor its counts.
+- `docs/incremental.md`: whoever replaces a graph file moves its sidecar with it.
+
 ## [0.0.35] - 2026-11-09
 
 **Every route the extractor emits is graded, and a graph from a newer codemap says so.** Schema unchanged

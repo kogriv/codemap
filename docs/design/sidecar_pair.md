@@ -1,6 +1,6 @@
 # Design — a graph and its sidecar must describe one build, or the sidecar is not used
 
-**Status:** pre-registered (2026-11-09). **Backlog:** R1-C92. **Gap:**
+**Status:** ✅ **done** (2026-11-09, fix 6798a3c; `ANSWER_FORMAT` stays 10), acceptance reconciled below. Pre-registered in 8f525ea. **Backlog:** R1-C92. **Gap:**
 [`gaps/sidecar_pair_mismatch_2026-11-09.md`](../../gaps/sidecar_pair_mismatch_2026-11-09.md).
 
 ## D1 — incremental builds check the pair
@@ -42,3 +42,24 @@ E1, E2, E4 and E5 fail on 0.0.35.
 | E8 | Full suite passes; mutations go red: D1 check removed, D1 reason not printed, D2 check removed; a cosmetic control stays green |
 
 Surprises go into the reconciliation.
+
+## Reconciliation (2026-11-09, 6798a3c)
+
+| # | Result |
+|---|---|
+| E1 | ✅ 0.0.35: `[incremental] incremental: 1 module(s) recomputed`, `f1 → f3` missing, not equal to a full build. Fix: `[incremental] full: 0 module(s) recomputed (the sidecar describes another build than the graph)`, equal to a full build |
+| E2 | ✅ 0.0.35: `incremental: 2 module(s)`, and the graph happened to equal a full build (the safe direction). Fix: full with the reason |
+| E3 | ✅ matched pair: `incremental: 1 module(s) recomputed`, equal to a full build (unit test). Checked against a full build, not byte-compared with 0.0.35's output |
+| E4 | ✅ `--consumer tests --mode full`, mismatched pair: 0.0.35 `incremental`, `f1 → f3` missing; fix full with the reason, equal to a full build |
+| E5 | ✅ graph 0 + sidecar 1: 0.0.35 `behind` `via: recipe` with **0 added, 0 changed, 0 removed**, a self-contradicting answer whose counts come from the foreign baseline. Fix: `behind` via provenance roots, no counts |
+| E6 | ✅ `watch` over a mismatched pair: the first rebuild logs `[incremental] full … (the sidecar describes another build than the graph)` |
+| E7 | ✅ bquant `check` and the bquearch gate identical to 0.0.35 apart from the version |
+| E8 | ✅ suite 1275 passed / 3 skipped (1278 collected); mutations red: D1 check off, reason not printed, D2 off; control green |
+
+**Surprises.** E5 on 0.0.35 shows the wrong counts in their most confusing form: behind, yet nothing changed.
+On my side, the first mutation loop ran before the fix was committed. `git checkout -- codemap` restored HEAD,
+which threw away D1 and D2 along with the mutant, so the next three mutants "did not apply". Detected by that
+output, the code was restored, committed, and the loop rerun with `git checkout HEAD -- <file>`.
+**Corroboration (bquant, same day):** the first `--incremental` after moving the pin from 0.0.34 to 0.0.35 took
+153 s against the usual ~35, and nothing said why. That was the existing `builder-changed` full build; with D1
+the reason is printed.

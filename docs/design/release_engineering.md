@@ -1165,6 +1165,18 @@ bquant check / bquearch gate                exit 0                              
 
 Every expectation holds.
 
+**0.0.36 — the release check, pre-registered before the upload (2026-11-09).** One item (R1-C92); schema
+**0.13**, **`ANSWER_FORMAT` stays 10**. Tree: a six-module fixture, graph from state 0 next to the sidecar from
+state 1, then an edit.
+
+| | tree form | 0.0.35 (expected) | 0.0.36 (expected) |
+|---|---|---|---|
+| D1 | mismatched pair, `build --incremental` | `[incremental] incremental: 1 module(s)`, edge `f1 → f3` missing | `[incremental] full … (the sidecar describes another build than the graph)`, equal to a full build |
+| reason | a 0.0.35 graph and sidecar, `build --incremental` with 0.0.36 | — | `[incremental] full: 0 module(s) recomputed (builder-changed)` |
+| version | `codemap --version` | `codemap 0.0.35 · answer format 10 · schema 0.13` | `codemap 0.0.36 · answer format 10 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate identical apart from the version.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
