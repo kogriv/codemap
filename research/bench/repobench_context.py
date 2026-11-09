@@ -184,6 +184,15 @@ def score_graph(graph, seed, module_id):
 
 
 def run_repo(job):
+    try:
+        return _run_repo(job)
+    except Exception as e:  # one broken repository must not end the run; it is counted
+        name, picks = job[0], job[1]
+        return [{"repo": name, "split": r["split"], "shard": r["shard"], "index": r["index"],
+                 "stage": "error", "why": f"{type(e).__name__}: {e}"[:200]} for r in picks]
+
+
+def _run_repo(job):
     name, picks, work, cm = job
     repo = Path(work) / "repos" / name.replace("/", "__")
     env = {**os.environ, "GIT_TERMINAL_PROMPT": "0"}
@@ -227,6 +236,9 @@ def run_repo(job):
         ctx = row["context"]
         if len(ctx) < 2:
             out.append(dict(rec, stage="A4"))
+            continue
+        if not 0 <= row["gold_snippet_index"] < len(ctx):  # dataset quirk, found on the first run
+            out.append(dict(rec, stage="A4-gold", gold=row["gold_snippet_index"], k=len(ctx)))
             continue
         text = "\n".join(kept) + "\n"
         filled = False
