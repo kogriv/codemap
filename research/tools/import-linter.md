@@ -254,6 +254,18 @@ were clean, and the set of failing tests was identical to upstream's. That set i
 tests pass (+1 and +6). Both PRs are `MERGEABLE` again. They have had no review yet, and CI has not run for a
 first-time contributor.
 
+**Merged 2026-11-06.** #395 at 7f97289, #396 at 74c0be5, both merged by the maintainer; #392 and #393 closed.
+Both are in **2.16** (PyPI, 2026-11-06), listed in its release notes.
+
+**Released-package check, pre-registered 2026-11-09** (clean venvs from PyPI, a minimal package, nothing from
+our branches):
+
+| # | Expectation |
+|---|---|
+| P1 | `[[tool.importlinter.contract]]` (singular) in `pyproject.toml`: 2.15 exit 0 "0 kept, 0 broken"; 2.16 exit nonzero, the message says no contracts are defined |
+| P2 | a `layers` contract with `exhaustiv = true`: 2.15 exit 0 kept; 2.16 exit nonzero, names `exhaustiv` and suggests `exhaustive` |
+| P3 | the same contract spelled correctly: kept, exit 0, on both versions |
+
 ## Coverage vs codemap
 
 | task | import-linter 2.15 | codemap |
