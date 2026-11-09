@@ -1,6 +1,6 @@
 # Does the graph rank the context a completion needs? RepoBench without a model (R1-C93)
 
-**Status:** pre-registered 2026-11-09, before the measured run. Harness:
+**Status:** ✅ **done** (2026-11-09, reconciled below: negative result). Pre-registered in c2f66d6, before the measured run. Harness:
 [`bench/repobench_context.py`](bench/repobench_context.py) (committed with or after this text, before the run).
 
 ## 0. Question, and what this is not
@@ -111,6 +111,78 @@ split, with the interval of the difference excluding 0. I predict that holds at 
 
 Anything not listed goes under surprises in the reconciliation.
 
-## 4. Reconciliation
+## 4. Reconciliation (2026-11-09, harness 2533e1f, codemap 0.0.35 @2533e1f)
 
-Not run yet.
+Per-row results: [`bench/repobench_context_results.jsonl`](bench/repobench_context_results.jsonl) (1760 drawn rows
+from 448 repositories; no code). `report` prints every table below from that file.
+
+**Before the measured run.** The first attempt (f77a5dc) crashed before writing any result: one
+`cross_file_random` row has `gold_snippet_index` outside its candidate list. 2533e1f counts such rows as stage
+`A4-gold` (one row) and turns any per-repository exception into a counted stage `error` (none occurred). No result
+was seen before the fix.
+
+**`cross_file_first`**: 300 eligible of 857 drawn (35 %), 193 repositories, 7.6 candidates on average. Drops: A3
+288, A2 127, A5 75, A1 55, A6 6, size 6.
+
+| ranker | acc@1 [95 %] | acc@3 | graph − ranker [95 %] |
+|---|---|---|---|
+| graph | 0.183 [0.140, 0.230] | 0.513 | — |
+| global | 0.173 [0.133, 0.218] | 0.470 | +0.010 [−0.026, +0.047] |
+| random (observed; expected 0.218) | 0.203 [0.158, 0.252] | 0.580 | −0.020 [−0.059, +0.018] |
+| jaccard | 0.163 [0.123, 0.205] | 0.523 | +0.020 [−0.038, +0.081] |
+| **unused** | **0.350** [0.294, 0.409] | 0.697 | −0.167 [−0.220, −0.113] |
+| recency | 0.117 [0.080, 0.155] | 0.457 | +0.067 [+0.023, +0.113] |
+| unused+graph | 0.340 [0.287, 0.397] | 0.663 | −0.157 [−0.203, −0.112] |
+
+**`cross_file_random`**: 300 eligible of 856 drawn (35 %), 187 repositories, 7.3 candidates. Drops: A3 275,
+A2 106, A5 105, A1 61, A6 2, size 6, A4-gold 1.
+
+| ranker | acc@1 [95 %] | acc@3 | graph − ranker [95 %] |
+|---|---|---|---|
+| graph | 0.270 [0.221, 0.320] | 0.683 | — |
+| global | 0.263 [0.213, 0.316] | 0.660 | +0.007 [−0.038, +0.052] |
+| random (expected 0.228) | 0.200 [0.154, 0.250] | 0.597 | +0.070 [+0.020, +0.122] |
+| jaccard | 0.283 [0.234, 0.332] | 0.603 | −0.013 [−0.075, +0.050] |
+| unused | 0.117 [0.082, 0.153] | 0.470 | +0.153 [+0.096, +0.211] |
+| **recency** | **0.500** [0.439, 0.560] | 0.803 | −0.230 [−0.296, −0.163] |
+| unused+graph | 0.110 [0.076, 0.146] | 0.477 | +0.160 [+0.110, +0.210] |
+
+Without the candidates (`pack`'s own question, gold among all nodes outside the file): recall@10 / @20 = 0.107 /
+0.203 on `first`, 0.277 / 0.367 on `random`.
+
+| # | Result |
+|---|---|
+| P1 | ✅ 35 % on both splits, inside 30–60 %. A3 is the largest drop: 288 of 557 (`first`), 275 of 556 (`random`) |
+| P2 | ❌ `first`: graph − random −0.020 [−0.059, +0.018]. The graph is not better than chance on first uses |
+| P3 | ✅ `first`: graph 0.183 < unused 0.350 |
+| P4 | ✅ `random`: recency 0.500 is the strongest ranker; graph 0.270 is below it |
+| P5 | ❌ graph − global includes 0 on both splits (+0.010, +0.007). **The seed adds nothing measurable**; on `random` the gain over chance (+0.070) is the gain of global centrality |
+| P6 | ✅ C1: untruncated +0.197 [+0.140, +0.254] on `first` (≥ 0.15), +0.147 on `random`. The scoring is wired to the graph, and what the graph knows about the line is the line itself |
+| P7 | ✅ C2: the two full runs give identical per-row results |
+| P8 | ❌ unused+graph − unused −0.010 [−0.048, +0.026] on `first`. The graph does not even break the cheap rule's ties well |
+
+**Verdict.** On this benchmark codemap's seeded rank **does not help** pick the definition a completion needs. On
+first uses it is at chance, a one-line rule ("an imported name not used yet") doubles it, and on repeat uses
+"the most recently used name" doubles it. Where the rank beats chance, global centrality does the same. The one
+expectation I was least sure of (P8) failed too. This is a negative result, and it stands as one: no rescoring,
+no subset was chosen after the fact to change it.
+
+**Exploratory, not pre-registered.** Restricted to rows whose gold has a node (216 / 217): `first` graph 0.185 vs
+random 0.204, `random` graph 0.313 vs global 0.304. The picture does not change, so the 28 % of rows where gold
+has no node is not what holds the graph down.
+
+**Surprises.**
+- **Coverage is the bigger finding.** Only 35 % of drawn rows survive, and the largest drop (about half of all
+  drops) is A3: the file is not inside a regular package (scripts at the root, directories without
+  `__init__.py`). codemap cannot build such a repository at all. In 28 % of eligible rows the gold candidate
+  lies outside the built package and has no node. For research-code repositories like RepoBench's, the
+  package-only build is the binding limit, before any question of ranking.
+- **A6: codemap's build crashed on 8 rows of 5 repositories.** Three repositories: `Could not resolve alias …`
+  for a name re-exported from an uninstalled third-party package. One: a facade-layout refusal. One: a
+  non-UTF-8 source file. A build should degrade on these, not exit non-zero.
+- A5 (the truncated file still does not parse after one `pass`) dropped 75 + 105 rows, more than expected: an
+  open bracket or a string at the cut needs more than a block body.
+
+**What follows.** The rank is not worth tuning for this task. The two build gaps go to the backlog as their own
+items (R1-C94: repositories without a regular package; R1-C95: build crashes on an unresolvable alias and on
+non-UTF-8 source). R1-C61's paid door gains nothing from this run: it gives no reason to open it.
