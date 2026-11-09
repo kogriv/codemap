@@ -460,3 +460,14 @@ then 0.9.103 and 0.9.104 shipped, so the comment may be stale. Same A1 tree, `ex
 | Q1 | 0.9.102 (control) reproduces the comment: `imports` link `y.py → X`, no `imports_from` `y.py → x.py`, report "None detected." under Import Cycles |
 | Q2 | 0.9.104: one of two outcomes, reported as observed — (a) unchanged from Q1, and the comment stands; (b) the function-local import shows as a file-level dependency (`imports_from`, or a deferred stamp) and/or the report lists the 2-file cycle, and the comment gets a follow-up saying so |
 | Q3 | Module-level control (import moved to the top of `y.py`): the 2-file cycle is listed on both versions |
+
+**Reconciliation (2026-11-09):**
+
+| # | Result |
+|---|---|
+| Q1 | ✅ 0.9.102: `imports` both ways, `imports_from` only `x.py → y.py` and without `reverse_import`; report "None detected." |
+| Q2 | ✅ (a) 0.9.104 is identical to 0.9.102 on the A1 tree: same links, same stamps, "None detected." The comment on #2447 stands; no follow-up posted |
+| Q3 | ✅ module-level import: `reverse_import` on `x.py → y.py` and the 2-file cycle listed, on both versions |
+
+No surprises in Graphify. One in my procedure: `extract` alone writes no `GRAPH_REPORT.md`; the report comes from
+`cluster-only`, as in §1. The first pass read only `graph.json` and the report was produced in a second step.
