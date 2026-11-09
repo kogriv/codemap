@@ -128,13 +128,21 @@ Each `(edge type, resolution)` pair now has a **grade** — an ordinal, never a 
 
 | Grade | What produced the edge | Values |
 |---|---|---|
-| `exact` | a binding read from the source | `self`, `module`, `imported`, `registry`, `flat`, `string-key`, `annotation`, `name`, `doc` |
+| `exact` | a binding read from the source | `self`, `module`, `local`, `imported`, `typed`, `class`, `construct`, `registry`, `flat`, `string-key`, `annotation`, `name`, `doc` |
 | `inferred` | a type-inference engine (jedi, deep tier) | `deep` |
-| `heuristic` | a name match, not a binding — an honest over-approximation | `registry-candidate` |
+| `heuristic` | a name match, not a binding — an honest over-approximation | `registry-candidate`, `protocol` |
 
-The vocabulary is closed (`codemap/model.py: RESOLUTIONS`) and guarded in both directions: a
-value the table does not know fails the suite, and so does a row that stops appearing in any
-build. The grade is **derived, not stored** — the graph bytes do not move, and there is no
+The vocabulary is closed (`codemap/model.py: RESOLUTIONS`) and guarded in both directions: every
+builder refuses a graph with a value the table does not know, so every build in the suite checks
+it, and a row that stops appearing in any build fails the suite. Until 0.0.35 the first direction
+was checked over a fixed list of builds. R1-C80's `local` (a consumer helper called inside its own
+module) was missing from both the table and the list, so from 0.0.28 to 0.0.34 those edges read
+as `unknown`, and `min_confidence` dropped them (R1-C91, [design](design/route_vocabulary_drift.md)).
+
+A graph read by an older codemap than the one that built it is graded leniently: a route the
+reader does not know is `unknown`. The `graph_from_newer_tool` diagnostic says so, with both
+versions and the unknown routes counted. It appears in `stats`, report headers and a cold `--graph`
+read. A long-running server on old code is the usual cause, and a restart fixes it. The grade is **derived, not stored** — the graph bytes do not move, and there is no
 second copy to disagree with the first.
 
 One caveat the table states rather than hides: on `references` the field answers a different

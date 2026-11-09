@@ -1715,7 +1715,7 @@ Python-focus** — если задача его нарушает, это отм�
       (lines outside any symbol): 3»; doc-файлы опознаны (не в `skipped_files`), но doc-узлы и символы, которые эти страницы
       называют, не показаны. Направление: назвать изменённые doc-страницы и упомянутые в них символы, либо прямо сказать,
       что правки документации вне области `review`.
-- [ ] **R1-C91 route `local` без строки в таблице; граф от более новой версии читается молча** (M) — дизайн [`route_vocabulary_drift.md`](docs/design/route_vocabulary_drift.md), гэп [`route_vocabulary_drift_2026-11-09.md`](gaps/route_vocabulary_drift_2026-11-09.md); 🆕 (2026-11-09, bquant):
+- [x] **R1-C91 route `local` без строки в таблице; граф от более новой версии читается молча** (M) — ✅ 0.0.35 (2026-11-09), дизайн [`route_vocabulary_drift.md`](docs/design/route_vocabulary_drift.md), гэп [`route_vocabulary_drift_2026-11-09.md`](gaps/route_vocabulary_drift_2026-11-09.md); 🆕 (2026-11-09, bquant):
       с 0.0.28 рёбра `calls:local` / `references:local` (R1-C80) получают grade unknown (1107 на bquant), `min_confidence` их
       отбрасывает, сторож R1-C39 слеп к фикстурам вне своего списка; сервер на 0.0.27 читает граф 0.0.34 без слова (unknown 2380).
 - [x] **R1-C85 MCP-граф не сверяется с деревом** (M) — ✅ 0.0.33 (2026-11-06), дизайн [`mcp_graph_currency.md`](docs/design/mcp_graph_currency.md), гэп [`mcp_graph_currency_2026-11-06.md`](gaps/mcp_graph_currency_2026-11-06.md); 🆕 (2026-11-05, bquant и bquearch): сервер bquant отдавал граф

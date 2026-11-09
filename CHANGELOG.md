@@ -5,6 +5,26 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.35] - 2026-11-09
+
+**Every route the extractor emits is graded, and a graph from a newer codemap says so.** Schema unchanged
+(**0.13**). **`ANSWER_FORMAT` stays 10:** no answer changes layout or field meaning.
+
+- **Fixed: consumer-helper edges were graded `unknown` since 0.0.28** (R1-C91, design
+  [`docs/design/route_vocabulary_drift.md`](docs/design/route_vocabulary_drift.md); reported by bquant).
+  R1-C80's route `local` (a test calling, or naming, a helper defined in its own module) never got a row in
+  `RESOLUTIONS`. On bquant that was 1107 edges per repo graph. `stats` counted them as `unknown`, and
+  `callers` / `callees` / `impact` with `min_confidence` dropped them. They are now `exact`, the consumer form
+  of `module`. Graphs built by 0.0.28–0.0.34 are graded correctly without a rebuild. `tests` was not affected.
+- **The builders check the route table** (R1-C91 D2). `extract`, `extract_repo` and `update_graph` refuse a
+  graph carrying a route the table does not know. Every build in the suite now guards the table, not a fixture
+  list someone has to remember to extend.
+- **`graph_from_newer_tool` diagnostic** (R1-C91 D3, D4). A graph built by a newer codemap than the one reading
+  it loads silently, because the schema is the same, and its unknown routes read as `unknown`. The new
+  warning names both versions and counts the unknown routes. It appears in `stats`, report headers, `build`
+  and the API / audit reports, and a cold `--graph` read prints it once on stderr. A server already running old
+  code cannot show it; restart it.
+
 ## [0.0.34] - 2026-11-06
 
 **Incremental builds for repo-scoped graphs, three incremental defects fixed, and a graph built elsewhere is

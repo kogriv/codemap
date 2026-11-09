@@ -1136,6 +1136,18 @@ bquant check / bquearch gate                exit 0                              
 
 Every expectation holds.
 
+**0.0.35 — the release check, pre-registered before the upload (2026-11-09).** One item (R1-C91); schema
+**0.13**, **`ANSWER_FORMAT` stays 10**. Trees: a fixture repo with a test-module helper; bquant's graph at `cf039ef`
+built by 0.0.34.
+
+| | tree form | 0.0.34 (expected) | 0.0.35 (expected) |
+|---|---|---|---|
+| D1 | bquant graph, `stats` `confidence.by_grade` | `unknown: 1107` | no `unknown`; `exact` + 1107 |
+| D3/D4 | the same graph with `provenance.tool.version` set to `0.0.99`, cold `query … --graph` | stderr empty | one `[warning] … built by codemap 0.0.99 …` line; stdout identical |
+| version | `codemap --version` | `codemap 0.0.34 · answer format 10 · schema 0.13` | `codemap 0.0.35 · answer format 10 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate identical apart from the version.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

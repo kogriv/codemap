@@ -1,6 +1,6 @@
 # Design — every route the extractor emits is graded, and a graph from a newer codemap says so
 
-**Status:** pre-registered (2026-11-09). **Backlog:** R1-C91. **Gap:**
+**Status:** ✅ **done** (2026-11-09, fix b784d0c; `ANSWER_FORMAT` stays 10), acceptance reconciled below. Pre-registered in 66feb01. **Backlog:** R1-C91. **Gap:**
 [`gaps/route_vocabulary_drift_2026-11-09.md`](../../gaps/route_vocabulary_drift_2026-11-09.md).
 
 ## D1 — the missing rows
@@ -60,3 +60,22 @@ E1, E2, E4 and E5 fail on 0.0.34.
 | E7 | Full suite passes; mutations go red: D1 row removed, D2 check removed (with D1 removed), D3 version comparison off, D3 route evidence off, D4 off. A cosmetic control stays green |
 
 Surprises go into the reconciliation.
+
+## Reconciliation (2026-11-09, b784d0c)
+
+| # | Result |
+|---|---|
+| E1 | ✅ fixture: `calls:local` and `references:local` graded `exact`, no `unknown` in `by_grade`; `callers(helper, min_confidence="exact")` includes the test. On 0.0.34 the same edges are `unknown` (shown on the real graph, E2) |
+| E2 | ✅ bquant graph at `cf039ef` built by 0.0.34: 0.0.34 reads `exact` 9053, `unknown` 1107; the fix reads `exact` **10160** = 9053 + 1107, no `unknown`; no `graph_from_newer_tool` |
+| E3 | ✅ stamped `0.0.99`: diagnostic with `built_by` 0.0.99, `unrecognised` empty; one edge renamed to `future` → `{"calls:future": 1}`; cold `query --graph`: one `[warning]` line, stdout identical (test) |
+| E4 | ✅ table cut to 0.0.27's rows: `calls:typed` 972 + `calls:local` 671 + `references:local` 436 + `accesses:name` 301 = **2380**, bquant's number |
+| E5 | ✅ with D1 reverted, the R1-C80 tests and the new R1-C39 probe fail at build time: `this build emitted route(s) its table does not know: {'calls:local': 4}` |
+| E6 | ✅ bquant `check` and the bquearch gate identical to 0.0.34 apart from the version; no newer-tool warning on same-version graphs |
+| E7 | ✅ suite 1270 passed / 3 skipped (1273 collected); mutations red: D1 row removed, D1+D2 removed, D3 version off, D3 routes off, D4 off; control green |
+
+**Surprise (environment, and a limit worth stating):** the first local run of E2 reported the running codemap as
+**0.0.23**, and the diagnostic fired on the 0.0.34 graph. The development venv held stale installed metadata
+from an old editable install, and `codemap.__version__` reads the installed metadata. A reinstall fixed it.
+The limit: the version D3 compares against is the installed distribution's. A stale editable install makes D3
+fire falsely, and the same stale version is stamped into every graph that install builds. That second part is
+older than this item.
