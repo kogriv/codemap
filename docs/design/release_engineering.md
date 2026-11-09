@@ -1177,6 +1177,23 @@ state 1, then an edit.
 
 **Consumers:** `check` on bquant and the bquearch gate identical apart from the version.
 
+**0.0.36 published 2026-11-09:** [`codmap` 0.0.36](https://pypi.org/project/codmap/0.0.36/), schema 0.13,
+`ANSWER_FORMAT` 10. From `affe643`. The release commit `0c4bcc0` was red in CI: a test written for R1-C91 named
+the reader's version as the literal `0.0.35`. After the version bump the fixture graph was stamped 0.0.36 and
+read as newer. The stand run had passed because it ran before the bump. The test now reads the version from the
+graph (`affe643`, test-only); CI green on 3.11–3.14, `twine check` PASSED. Reconciled from PyPI:
+
+```
+                                            0.0.35                              0.0.36
+graph 0 + sidecar 1, edit, --incremental    [incremental] incremental: 1 module [incremental] full … (the sidecar describes another build than the graph)
+  edge f1 → f3                              missing                             present
+0.0.35 pair, --incremental by 0.0.36        —                                   [incremental] full: 0 module(s) recomputed (builder-changed)
+--version                                   codemap 0.0.35 · answer format 10   codemap 0.0.36 · answer format 10 · schema 0.13
+bquant check / bquearch gate                exit 0                              exit 0; identical apart from the version (stand, 6798a3c)
+```
+
+Every expectation holds.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
