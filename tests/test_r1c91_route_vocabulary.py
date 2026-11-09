@@ -96,7 +96,10 @@ def test_E3_unknown_routes_are_listed_with_counts(repo):
     graph = _build(repo)
     e = next(e for e in graph.edges if e.extras.get("resolution") == "imported")
     e.extras["resolution"] = "future"
-    d = newer_tool_diagnostic(graph, running="0.0.35")
+    # Read the reader's version from the graph itself: a literal here went stale the moment
+    # the package version moved past it, and the graph then read as "newer" (0.0.36 release CI).
+    built = graph.provenance["tool"]["version"]
+    d = newer_tool_diagnostic(graph, running=built)
     assert d["unrecognised"] == {f"{e.type}:future": 1}
     assert "rebuild it with this codemap" in d["message"], "not newer: the remedy is a rebuild"
 
