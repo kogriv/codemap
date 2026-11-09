@@ -57,6 +57,25 @@ def _consumer_reference_probe(tmp: Path):
     return extract_repo(core, consumers=(use,), mode="full")
 
 
+def _consumer_local_probe(tmp: Path):
+    """R1-C91: a consumer helper called and named inside its own module (`local`, R1-C80).
+
+    The route shipped in 0.0.28 without a row, and this list did not contain a build that
+    emitted it, so both directions of the closed-vocabulary check stayed green for six
+    releases. The builders now check every graph (D2); this probe keeps the reverse
+    direction — every row observed — honest for `local`.
+    """
+    core = tmp / "lcore"
+    core.mkdir()
+    (core / "__init__.py").write_text("")
+    (core / "m.py").write_text("def act():\n    return 1\n")
+    use = tmp / "ltests"
+    use.mkdir()
+    (use / "test_m.py").write_text("from lcore.m import act\n\n\ndef _helper():\n    return act()\n\n\n"
+                                   "def test_it():\n    _helper()\n\n\nHOOKS = [_helper]\n")
+    return extract_repo(core, consumers=(use,), mode="full")
+
+
 def _protocol_probe(tmp: Path):
     """R1-C81: a call on a Protocol method, typed in a consumer, fanned out to its implementer."""
     core = tmp / "pcore"
@@ -87,6 +106,7 @@ def builds():
                                    docs=(FIX / "reporoot" / "docs",), mode="full")
     out["consumer-ref"] = _consumer_reference_probe(tmp)
     out["protocol"] = _protocol_probe(tmp)
+    out["consumer-local"] = _consumer_local_probe(tmp)
     return out
 
 

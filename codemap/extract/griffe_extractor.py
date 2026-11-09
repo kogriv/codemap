@@ -35,7 +35,7 @@ from codemap.extract.gsource import (DOTTED_IMPORT_HINT, NESTED_IMPORT_HINT, mod
                                      module_identity)
 from codemap.extract.union import merge_samples
 from codemap.provenance import build_provenance
-from codemap.model import Edge, Graph, Node
+from codemap.model import Edge, Graph, Node, check_routes
 
 # griffe object kinds we turn into definition nodes (aliases handled separately).
 _NODE_KINDS = {"module", "class", "function", "attribute"}
@@ -266,6 +266,7 @@ def extract(package_path: str | Path, *, deep: bool = False, repeat: int = 1) ->
     graph.provenance = build_provenance(tier="deep" if deep else "fast",
                                         inputs=graph.provenance.get("inputs"),
                                         samples=stats)
+    check_routes(graph)       # R1-C91 D2: every build guards the route table
     return graph
 
 

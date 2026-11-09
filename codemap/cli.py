@@ -99,8 +99,17 @@ def _graph_from(args):
         graph = store.load(args.graph)
         if getattr(args, "func", None) not in (_cmd_check, _cmd_serve):
             _warn_if_behind(args.graph, graph, args)
+        _warn_if_newer_tool(args.graph, graph)
         return graph
     raise SystemExit("error: need --graph <file> or --build <path>")
+
+
+def _warn_if_newer_tool(path: str, graph) -> None:
+    """R1-C91 D4: a cold read of a graph from a newer codemap says so, once, on stderr."""
+    from codemap.diagnostics import newer_tool_diagnostic
+    d = newer_tool_diagnostic(graph)
+    if d:
+        print(f"[warning] {path}: {d['message']} {d['consequence']}", file=sys.stderr)
 
 
 def _warn_if_behind(path: str, graph, args_for_currency=None) -> None:

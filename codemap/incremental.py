@@ -312,4 +312,6 @@ def update_graph(old_graph: Graph, package_path, old_scope: dict, new_scope: dic
         stats = {"runs": repeat, "unstable": _count_seen(graph)}
     graph.provenance = build_provenance(tier=tier, inputs=graph.provenance.get("inputs"),
                                         incremental=True, samples=stats)
+    from codemap.model import check_routes
+    check_routes(graph)           # R1-C91 D2: the splice carries old edges forward
     return graph, {"mode": "incremental", "affected": sorted(affected)}

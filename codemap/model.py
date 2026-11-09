@@ -194,6 +194,9 @@ RESOLUTIONS: dict[tuple[str, str], dict[str, str]] = {
         "means": "route", "confidence": "heuristic",
         "how": "a call on a Protocol method fanned out to every structural implementer — "
                "the receiver is one of them, which one is not known (R1-C81)"},
+    ("calls", "local"): {"means": "route", "confidence": "exact",
+                         "how": "a consumer-root call to a def at the level of the same module "
+                                "(R1-C80); the consumer-root form of `module`"},
     ("calls", "typed"): {"means": "route", "confidence": "exact",
                          "how": "a consumer-root call on an expression typed by a constructor "
                                 "or a return annotation (R1-C81)"},
@@ -214,6 +217,9 @@ RESOLUTIONS: dict[tuple[str, str], dict[str, str]] = {
                              "how": "the symbol is named as a value (dict entry, default=…)"},
     ("references", "doc"): {"means": "site", "confidence": "exact",
                             "how": "a documentation file names the symbol"},
+    ("references", "local"): {"means": "route", "confidence": "exact",
+                              "how": "a consumer root names a def at the level of the same module "
+                                     "without calling it (R1-C80)"},
     ("references", "imported"): {"means": "route", "confidence": "exact",
                                  "how": "a consumer root names an imported core symbol"},
     ("reads", "string-key"): {"means": "route", "confidence": "exact",
@@ -245,7 +251,7 @@ def resolution_of(edge, *, strict: bool = True) -> dict[str, str] | None:
     ``None`` is a legitimate answer (``contains`` has no route), and it is distinct from
     a value the table does not know. Under ``strict`` that one raises — a silent unknown
     is how an open vocabulary pretends to be closed — and this is the form the guard test
-    and the extractor use. Reading a *foreign* graph passes ``strict=False`` and gets an
+    uses; the builders check a whole graph with :func:`check_routes` (R1-C91). Reading a *foreign* graph passes ``strict=False`` and gets an
     ``unknown`` grade instead: refusing to open an artifact from another version is a
     worse answer than saying which part of it this build cannot grade.
     """
@@ -266,6 +272,30 @@ def confidence_of(edge, *, strict: bool = True) -> str | None:
     """Grade of ``edge``: exact | inferred | heuristic, or ``None`` when it has no route."""
     row = resolution_of(edge, strict=strict)
     return row["confidence"] if row else None
+
+
+def unrecognised_routes(graph) -> dict[str, int]:
+    """``{"type:resolution": edges}`` for every pair this build's table does not know (R1-C91)."""
+    out: dict[str, int] = {}
+    for e in graph.edges:
+        value = e.extras.get("resolution")
+        if value is not None and (e.type, value) not in RESOLUTIONS:
+            key = f"{e.type}:{value}"
+            out[key] = out.get(key, 0) + 1
+    return dict(sorted(out.items()))
+
+
+def check_routes(graph) -> None:
+    """Refuse a graph this build produced with a route its own table does not grade (R1-C91 D2).
+
+    Called by every builder, so every build in the suite guards the table — not a fixture
+    list someone has to remember to extend. That list missed R1-C80's `local` for six
+    releases, and every repo graph carried 1107 edges graded `unknown` on one tree.
+    """
+    unknown = unrecognised_routes(graph)
+    if unknown:
+        raise KeyError(f"this build emitted route(s) its table does not know: {unknown} — add "
+                       "them to RESOLUTIONS (codemap/model.py) with their meaning and grade")
 
 
 # The subset of EDGE_TYPES an incremental build splices from the old graph for modules

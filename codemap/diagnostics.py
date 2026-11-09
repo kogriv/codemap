@@ -24,6 +24,7 @@ MODULE_COUNT_MISMATCH = "module_count_mismatch"
 SCOPE_MEMBERSHIP = "scope_membership"
 DEEP_TIER_UNSTABLE = "deep_tier_unstable"
 INCREMENTAL_DEEP_SPLICE = "incremental_deep_splice"
+GRAPH_FROM_NEWER_TOOL = "graph_from_newer_tool"
 
 #: A ``warning`` invalidates the conclusions a surface draws from the graph — read them as
 #: unknown. A ``note`` states a fact about how the graph was built and invalidates nothing.
@@ -370,13 +371,66 @@ def module_count_diagnostic(graph) -> dict | None:
     }
 
 
+def _version_tuple(v) -> tuple[int, ...] | None:
+    import re
+    m = re.match(r"(\d+(?:\.\d+)*)", str(v or ""))
+    return tuple(int(x) for x in m.group(1).split(".")) if m else None
+
+
+def _running_version() -> str | None:
+    import codemap
+    return getattr(codemap, "__version__", None)
+
+
+def newer_tool_diagnostic(graph, running: str | None = None) -> dict | None:
+    """Say when the graph was built by a newer codemap than the one reading it (R1-C91 D3).
+
+    Same schema, so it loads without a word — and the reader grades every route it does
+    not know as `unknown`, which `min_confidence` then drops. Measured on a consumer's
+    server: code 0.0.27 over a 0.0.34 graph, 2380 edges `unknown`, and `tool_restart_needed`
+    silent because it compares the running code with the *installed* one, never with the
+    graph. Either piece of evidence fires it: a newer recorded version, or routes this
+    build's table cannot grade (an uninstalled source tree has no version to compare).
+    """
+    from codemap.model import unrecognised_routes
+    running = running if running is not None else _running_version()
+    built_by = ((graph.provenance or {}).get("tool") or {}).get("version")
+    b, r = _version_tuple(built_by), _version_tuple(running)
+    newer = b is not None and r is not None and b > r
+    unknown = unrecognised_routes(graph)
+    if not newer and not unknown:
+        return None
+    edges = sum(unknown.values())
+    parts = []
+    if newer:
+        parts.append(f"this graph was built by codemap {built_by}, and codemap {running} is "
+                     "reading it")
+    if unknown:
+        listed = ", ".join(f"{k} ({n})" for k, n in unknown.items())
+        parts.append(f"{edges} edge(s) carry routes this codemap does not know: {listed}")
+    # Not newer, yet unknown routes: an older graph with a route since retired, or an
+    # uninstalled reader — rebuilding with this codemap is the remedy either way.
+    remedy = (f"read it with codemap {built_by} or newer (restart a long-running server)"
+              if newer else "rebuild it with this codemap")
+    return {
+        "code": GRAPH_FROM_NEWER_TOOL,
+        "severity": WARNING,
+        "built_by": built_by,
+        "running": running,
+        "unrecognised": unknown,
+        "consequence": ("Edges with an unknown route are graded `unknown` and dropped by "
+                        "`min_confidence`; answers keep the shape of the older code."),
+        "message": "; ".join(parts) + f" — {remedy}.",
+    }
+
+
 def diagnostics(graph) -> list[dict]:
     """Every diagnostic that applies to ``graph`` (empty list when it looks sound)."""
     checks = (import_graph_diagnostic(graph), namespace_target_diagnostic(graph),
               cross_root_diagnostic(graph), schema_diagnostic(graph),
               unread_inputs_diagnostic(graph), module_count_diagnostic(graph),
               scope_membership_diagnostic(graph), deep_tier_diagnostic(graph),
-              incremental_splice_diagnostic(graph))
+              incremental_splice_diagnostic(graph), newer_tool_diagnostic(graph))
     return [d for d in checks if d is not None]
 
 

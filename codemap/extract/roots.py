@@ -152,6 +152,8 @@ def extract_repo(
         "docs": sorted(_rel_to(Path(p).resolve(), base) for p in docs),
         "mode": mode,
     }})
+    from codemap.model import check_routes
+    check_routes(graph)           # R1-C91 D2
     return graph
 
 
