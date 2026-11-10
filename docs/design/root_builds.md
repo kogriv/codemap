@@ -70,4 +70,5 @@ as exact when an `imports` edge goes from the importing module to the deepest kn
 |---|---|
 | E4′ | With the corrected counter, over the 12 probe repositories: exact pairs rise from 0.0.37 to the fix by at least 3×; TAOISM ≥ 150 of its pairs and genome ≥ 25. lx-music does not fall below 0.0.37 |
 | E4″ | A minimal root tree (`python/net.py`, `teeslice/model.py` importing `from python.net import f`): 0.0.37 has no edge from `teeslice.model`; the fix `imports repo.teeslice.model → repo.python.net` (`flat`). A sibling with the same head wins over the root |
+| E4‴ | The same rule reaches calls: in that tree a call to `f()` in `teeslice.model` is `calls → repo.python.net.f` (0.0.37: unresolved). The qualified import map (`qualify_target`) applies D3 with D2's order, so calls and `imports` edges agree |
 | E6′ | bquant and bquearch: graphs still identical to 0.0.37 apart from the version. bquearch builds `shared`, which has an `__init__.py`? If it is a namespace target, D3 may add edges there; any difference is listed and reported to them before release |
