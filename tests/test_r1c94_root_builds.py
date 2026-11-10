@@ -164,3 +164,21 @@ def test_a_regular_package_target_is_not_root_anchored(tmp_path):
     graph = extract(str(tmp_path / "pkg"))
     assert not any(t.startswith("pkg.python") for s, t in _edges(graph, "imports")
                    if s == "pkg.teeslice.model"), "`python` is not on sys.path for a package"
+
+
+def test_a_flat_in_practice_package_is_still_not_root_anchored(tmp_path):
+    """R1-C72: a package that imports its own modules by bare name is flat in practice, so the
+    sibling inference applies. The root anchor must not: the package directory's *parent* is
+    on sys.path, not the directory itself, so a nested `from python.net import f` cannot reach
+    `pkg/python/net.py`."""
+    _write(tmp_path, {
+        "pkg/__init__.py": "", "pkg/helper.py": "X = 1\n", "pkg/tool.py": "from helper import X\n",
+        "pkg/python/__init__.py": "", "pkg/python/net.py": "def f():\n    return 1\n",
+        "pkg/teeslice/__init__.py": "",
+        "pkg/teeslice/model.py": "from python.net import f\n\n\ndef model():\n    return f()\n",
+    })
+    graph = extract(str(tmp_path / "pkg"))
+    assert ("pkg.tool", "pkg.helper") in _edges(graph, "imports"), "flat in practice"
+    assert not any(t.startswith("pkg.python") for s, t in _edges(graph, "imports")
+                   if s == "pkg.teeslice.model")
+    assert ("pkg.teeslice.model.model", "pkg.python.net.f") not in _edges(graph, "calls")
