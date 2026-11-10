@@ -126,3 +126,41 @@ def test_an_unknown_tail_falls_back_to_the_deepest_known_module(tmp_path, target
                       "repo/main.py": f"import {target}\n"})
     graph = extract(str(tmp_path / "repo"))
     assert ("repo.main", "repo.engine") in _edges(graph, "imports")
+
+
+# -- D3 (amendment): imports anchored at a namespace root ------------------------------------
+
+ANCHORED = {
+    "repo/python/net.py": "def f():\n    return 1\n",
+    "repo/teeslice/model.py": "from python.net import f\n\n\ndef model():\n    return f()\n",
+    "repo/other/python.py": "def g():\n    return 2\n",
+    "repo/other/user.py": "from python import g\n\n\ndef use():\n    return g()\n",
+}
+
+
+def test_E4b_a_nested_module_importing_from_the_root_resolves(tmp_path):
+    _write(tmp_path, ANCHORED)
+    graph = extract(str(tmp_path / "repo"))
+    flat = {(e.source, e.target) for e in graph.edges
+            if e.type == "imports" and e.extras.get("resolution") == "flat"}
+    assert ("repo.teeslice.model", "repo.python.net") in flat
+    assert ("repo.teeslice.model.model", "repo.python.net.f") in _edges(graph, "calls"), "E4‴"
+
+
+def test_E4b_a_sibling_with_the_same_head_wins_over_the_root(tmp_path):
+    _write(tmp_path, ANCHORED)
+    graph = extract(str(tmp_path / "repo"))
+    assert ("repo.other.user", "repo.other.python") in _edges(graph, "imports")
+    assert ("repo.other.user", "repo.python") not in _edges(graph, "imports")
+    assert ("repo.other.user.use", "repo.other.python.g") in _edges(graph, "calls")
+
+
+def test_a_regular_package_target_is_not_root_anchored(tmp_path):
+    files = {k.replace("repo/", "pkg/"): v for k, v in ANCHORED.items()}
+    files["pkg/__init__.py"] = ""
+    for d in ("python", "teeslice", "other"):
+        files[f"pkg/{d}/__init__.py"] = ""
+    _write(tmp_path, files)
+    graph = extract(str(tmp_path / "pkg"))
+    assert not any(t.startswith("pkg.python") for s, t in _edges(graph, "imports")
+                   if s == "pkg.teeslice.model"), "`python` is not on sys.path for a package"

@@ -90,7 +90,7 @@ def test_mutation_without_the_stdlib_exclusion_the_twin_is_rewritten_again(tmp_p
 def test_mutation_without_the_import_map_gate_the_call_is_internal_again(tmp_path):
     """D2: with the import map ungated, `logging.getLogger()` is rewritten into the package
     even though no flat edge was emitted, and it stops counting as external."""
-    with mock.patch("codemap.extract.behavior.flat_inference_applies", lambda g, p: True):
+    with mock.patch("codemap.extract.gsource.flat_inference_applies", lambda g, p: True):
         g = _tree(tmp_path / "m", {"logging": TWIN, "a": A, "b": "from tpkg import a\n"})
     assert g.nodes["tpkg.a.g"].extras["calls"].get("external", 0) == 0
     assert [e.target for e in g.edges if e.type == "calls" and e.source == "tpkg.a.g"] == \

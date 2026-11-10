@@ -32,8 +32,8 @@ from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import (add_dispatch, add_family_links, add_protocol_dispatch,
                                       add_structural_implements)
-from codemap.extract.gsource import (DOTTED_IMPORT_HINT, NESTED_IMPORT_HINT, module_file,
-                                     module_identity)
+from codemap.extract.gsource import (DOTTED_IMPORT_HINT, NESTED_IMPORT_HINT, KnownModules,
+                                     deepest_module, flat_resolve, module_file, module_identity)
 from codemap.extract.union import merge_samples
 from codemap.provenance import build_provenance
 from codemap.model import Edge, Graph, Node, check_routes
@@ -704,7 +704,9 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
         (n.id for n in graph.nodes.values() if n.kind == "module"), key=len, reverse=True
     )
 
-    known_modules = set(module_ids)
+    root_node = graph.nodes.get(target_pkg)
+    known_modules = KnownModules(module_ids, target_pkg if root_node is not None
+                                 and root_node.file is None else None)
     # R1-C72 (design ``flat_inference_in_packages.md`` D1, revised): the flat inference is for
     # a directory that is itself on sys.path. The evidence is a bare import that can only be a
     # sibling — it names a module beside the importer (not the importer itself) and is no
@@ -712,7 +714,6 @@ def _resolve_edges(graph, target_pkg, aliases, imports) -> None:
     # rewritten; without it, `import warnings` beside `_pytest/warnings.py` is the standard
     # library and nothing is. A namespace root needs no evidence. Decided from the collected
     # imports before anything is emitted, so edge order is kept.
-    root_node = graph.nodes.get(target_pkg)
     flat_ok = (root_node is not None and root_node.file is None) or any(
         (sib := _flat_sibling(src, t, known_modules)) is not None and sib != src
         and t.split(".", 1)[0] not in sys.stdlib_module_names
@@ -796,18 +797,14 @@ def _flat_sibling(src_module: str, target_path: str, known_modules: set[str]) ->
     **beside the importer**. Measured on two real packages (codemap, bquant): fires zero
     times, so a correctly-laid-out package cannot be disturbed by it.
     """
-    if "." not in src_module:
-        return None  # a top-level module has no package for siblings to live in
-    parent = src_module.rsplit(".", 1)[0]
-    head = f"{parent}.{target_path.split('.', 1)[0]}"
-    if head not in known_modules:
+    # R1-C94: the gate is the head (D2: beside the importer; D3: on a namespace root, directly
+    # under the root); the answer is the deepest module the path names.
+    # `from engine.dataset import get` depends on `engine.dataset`, not on `engine`.
+    full = flat_resolve(target_path, src_module, known_modules)
+    if full is None:
         return None
-    # R1-C94 / design D2: the gate is the head; the answer is the deepest module the path
-    # names. `from engine.dataset import get` depends on `engine.dataset`, not on `engine`.
-    full = f"{parent}.{target_path}"
-    while full != head and full not in known_modules:
-        full = full.rsplit(".", 1)[0]
-    return full
+    anchor_len = len(full) - len(target_path)            # "<parent-or-root>."
+    return deepest_module(full, full[:anchor_len] + target_path.split(".", 1)[0], known_modules)
 
 
 def _containing_module(symbol_path: str, module_ids: list[str]) -> str | None:

@@ -97,6 +97,58 @@ def module_imports(mod, modpath: str, known_modules) -> dict[str, str]:
             for name, target in imports.items()}
 
 
+class KnownModules(frozenset):
+    """The module ids the flat inference may resolve to, plus the root anchor (R1-C94 D3).
+
+    ``root_anchor`` is the target package id when the target is a namespace root (no
+    ``__init__.py``: the repository-root case, whose directory is on ``sys.path``), else
+    None. Then an import whose head names a module directly under the root resolves there
+    when no sibling of the importer matches first.
+    """
+
+    root_anchor: str | None = None
+
+    def __new__(cls, ids=(), root_anchor: str | None = None):
+        self = super().__new__(cls, ids)
+        self.root_anchor = root_anchor
+        return self
+
+
+def flat_known_modules(graph, core_pkg: str, modules) -> KnownModules:
+    """``known_modules`` for the import map: empty unless the flat inference applies."""
+    if not flat_inference_applies(graph, core_pkg):
+        return KnownModules()
+    root = graph.nodes.get(core_pkg)
+    return KnownModules(modules, core_pkg if root is not None and root.file is None else None)
+
+
+def deepest_module(path: str, stop: str, known_modules) -> str:
+    """The longest prefix of ``path`` that is a known module, not shorter than ``stop``."""
+    while path != stop and path not in known_modules:
+        path = path.rsplit(".", 1)[0]
+    return path
+
+
+def flat_resolve(target: str, modpath: str, known_modules) -> str | None:
+    """The module-qualified form of a flat-layout import target, or None (R1-C21, R1-C94).
+
+    Sibling first (D2: the head names a module beside the importer), then — on a namespace
+    root only — the root (D3: the head names a module directly under the target). The
+    nearer one wins, as ``sys.path[0]`` (the script's own directory) wins at runtime.
+    Returns the qualified *path* (``<parent>.<target>``), not truncated to a module.
+    """
+    if "." not in modpath:
+        return None
+    head = target.split(".", 1)[0]
+    parent = modpath.rsplit(".", 1)[0]
+    if f"{parent}.{head}" in known_modules:
+        return f"{parent}.{target}"
+    anchor = getattr(known_modules, "root_anchor", None)
+    if anchor and parent != anchor and f"{anchor}.{head}" in known_modules:
+        return f"{anchor}.{target}"
+    return None
+
+
 def qualify_target(target: str, modpath: str, known_modules) -> str:
     """One import target, package-qualified if it names a flat-layout sibling (R1-C21).
 
@@ -106,10 +158,10 @@ def qualify_target(target: str, modpath: str, known_modules) -> str:
     """
     if "." not in modpath:
         return target
-    parent, pkg = modpath.rsplit(".", 1)[0], modpath.split(".", 1)[0] + "."
-    if not target.startswith(pkg) and f"{parent}.{target.split('.', 1)[0]}" in known_modules:
-        return f"{parent}.{target}"
-    return target
+    pkg = modpath.split(".", 1)[0] + "."
+    if target.startswith(pkg):
+        return target
+    return flat_resolve(target, modpath, known_modules) or target
 
 
 def flat_inference_applies(graph, core_pkg: str) -> bool:

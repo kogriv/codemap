@@ -29,8 +29,8 @@ from pathlib import Path
 
 import griffe
 
-from codemap.extract.gsource import (NESTED_IMPORT_HINT, flat_inference_applies, module_file,
-                                     module_imports, qualify_target)
+from codemap.extract.gsource import (NESTED_IMPORT_HINT, flat_known_modules, flat_resolve,
+                                     module_file, module_imports, qualify_target)
 from codemap.model import Edge
 
 _BUILTINS = set(vars(__import__("builtins")))
@@ -55,7 +55,7 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
     modules = _index_modules(griffe_root)
     # R1-C21 flat-layout sibling lookup — empty, so it never fires, in a core that imports
     # itself by name (R1-C72): there `import warnings` is the standard library.
-    known_modules = set(modules) if flat_inference_applies(graph, target_pkg) else frozenset()
+    known_modules = flat_known_modules(graph, target_pkg, modules)  # R1-C94 D3: + root anchor
     project = _jedi_project(search_path) if deep else None
     # R1-C30-f1: a call to a re-exported name points at a name that is not a definition.
     # The structural pass already recorded where each re-export really leads.
@@ -289,12 +289,7 @@ def _flat_qualify(full_name: str, modpath: str, known_modules) -> str | None:
     Same guard as the import-edge rule: only a name that is not already package-internal,
     and only when its head names a module sitting **beside** the caller.
     """
-    if "." not in modpath:
-        return None
-    parent = modpath.rsplit(".", 1)[0]
-    head = full_name.split(".", 1)[0]
-    candidate = f"{parent}.{head}"
-    return f"{parent}.{full_name}" if candidate in known_modules else None
+    return flat_resolve(full_name, modpath, known_modules)  # R1-C94: sibling, then root
 
 
 def _resolve_jedi(call, script, target_pkg, *, modpath="", known_modules=frozenset()):
