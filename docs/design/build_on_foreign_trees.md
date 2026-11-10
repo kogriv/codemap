@@ -1,6 +1,6 @@
 # Design — `build` never imports the target, and degrades instead of crashing on foreign trees
 
-**Status:** pre-registered 2026-11-10, before code. **Backlog:** R1-C96 (never imports), R1-C95 (degrades).
+**Status:** ✅ **done** (2026-11-10, fix b4a09ad; `ANSWER_FORMAT` stays 10), acceptance reconciled below. Pre-registered in 45592b2, before code. **Backlog:** R1-C96 (never imports), R1-C95 (degrades).
 **Gaps:** [`gaps/build_imports_compiled_modules_2026-11-10.md`](../../gaps/build_imports_compiled_modules_2026-11-10.md),
 [`gaps/build_crashes_on_foreign_trees_2026-11-10.md`](../../gaps/build_crashes_on_foreign_trees_2026-11-10.md).
 
@@ -60,3 +60,26 @@ E1, E2, E3, E4 and E5 fail on 0.0.36.
 | E7 | Full suite passes. Mutations go red: D1 flag removed (marker test), `module_file` guard removed, D3 guard removed, D2 `compiled` listing removed. A cosmetic control stays green |
 
 Surprises go into the reconciliation.
+
+## Reconciliation (2026-11-10, b4a09ad)
+
+| # | Result |
+|---|---|
+| E1 | ✅ 0.0.36 under the interpreter that compiled the probe: marker **created** by the `.pyc` and by the `.so`, fast tier and `--deep`, then exit 1 (`'utf-8' codec can't decode …`). Fix: no marker in all four, exit 0, `pkg.user.use` present |
+| E2 | ✅ fix: `inputs.compiled` lists `pkg/evil.pyc` / `pkg/evil.cpython-312-x86_64-linux-gnu.so`, and the note is on stderr. 0.0.36: no graph |
+| E3 | ✅ with one wrong prediction. On the machine where griffe's default picks `md.cp38-win32.pyd`: 0.0.36 exit 1 (`UnicodeDecodeError`); fix exit 0, `charset_normalizer.md` holds its classes from `md.py`. `compiled` is **not** empty as predicted: it lists `md__mypyc.cp38-win32.pyd`, a second module of that tree that has no source at all. Listing it is correct; the prediction missed the file |
+| E4 | ✅ 0.0.36 exit 1, `Could not resolve alias pkg.utils.file_io.PathHandler …`; fix exit 0, `pkg.user.Mine.go` a node, no call edge from it |
+| E5 | ✅ detectron2 (UniRef), mmdet3d (SPGroup3D), vendored pip, charset_normalizer: 0.0.36 exit 1, fix exit 0 (charset_normalizer with the note). AccoMontage-3: still exit 1, and the text names `sys.path` |
+| E6 | ✅ bquant `check` and the bquearch gate identical apart from the version. bquant's graph is identical except `provenance.tool`: the dev build carries `commit`/`dirty`, and its `version` read 0.0.35 from stale editable metadata (the stand script's reinstall step did not find `uv`). Nodes, edges and every other field are equal |
+| E7 | ✅ suite 1284 passed / 3 skipped (1287 collected). Mutations red: D1 flag off on the target load (2 tests), D1 off on both loads together with the `module_file` guard (5), D3 guard off (1), `compiled` listing off (3), refusal text reverted (1); cosmetic control green |
+
+**Surprises.**
+- **Two guards cannot be killed by a mutation, and that is stated, not hidden.** The `module_file` guard alone
+  stays green: with D1, griffe never hands a compiled file to any layer, so the guard is a second line that
+  nothing reaches today. It stays as defence in depth. The E3 unit test also stays green when D1 is off: a
+  win32 `.pyd` is not importable on Linux, so inspection fails and griffe falls back to `md.py` anyway. The
+  crash only appears on a filesystem whose order puts the `.pyd` last, and the real-tree E3 run above is the
+  check that saw it.
+- **The defect is older than 0.0.10.** Every release probed (0.0.10, 0.0.20, 0.0.36) imports a sourceless
+  module under the matching interpreter. Under Python 3.14 the same probe showed no marker only because the
+  `.pyc` had been compiled for 3.12.

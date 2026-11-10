@@ -31,6 +31,7 @@ tree, and a claim without its qualifiers cannot be checked.
 | `source.commit` / `ref` / `dirty` | the target's VCS state, when the target is in a git repo. `dirty` covers **the scanned roots only**, not the whole repo |
 | `inputs.python_files` | how many `.py` files the walk found — the input half of the conservation check below |
 | `inputs.skipped` | files that produced **no module**, each with a reason (`syntax` / `encoding` / `io` / `unread`). Absent when there are none |
+| `inputs.compiled` | compiled module files (`.so`, `.pyd`, `.pyc` outside `__pycache__`) with **no** `.py` of the same module beside them. codemap never imports the target, so each is a module the graph does not contain; the note `compiled_modules_not_loaded` says so (R1-C96). Absent when there are none |
 | `inputs.aliased_modules` | modules skipped because their real file was already read under another name (a directory symlink). Absent when there are none |
 | `inputs.unlisted` | `{count, sample, outside_root}` — files this graph was built from that the input manifest does not list. Present whenever a manifest resolved, **including `count: 0`**; absent means the build could not compare, which is *unknown*, not clean |
 | `roots` | present on a repo-scoped build (`--consumer` / `--docs`): core, consumers, docs, mode — each **relative to the graph's path origin**, never absolute (see below) |

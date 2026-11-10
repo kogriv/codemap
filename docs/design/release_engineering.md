@@ -1194,6 +1194,17 @@ bquant check / bquearch gate                exit 0                              
 
 Every expectation holds.
 
+**0.0.37 — the release check, pre-registered before the upload (2026-11-10).** Two items (R1-C96, R1-C95);
+schema **0.13**, **`ANSWER_FORMAT` stays 10**.
+
+| | tree form | 0.0.36 (expected) | 0.0.37 (expected) |
+|---|---|---|---|
+| R1-C96 | `pkg/evil.pyc` (sourceless, writes a marker on import), `build` | marker created, exit 1 | no marker, exit 0, `[note] 1 compiled module(s) without source were not loaded` |
+| R1-C95 | base class re-exported from an absent package (7-line tree) | exit 1, `Could not resolve alias` | exit 0 |
+| version | `codemap --version` | `codemap 0.0.36 · answer format 10 · schema 0.13` | `codemap 0.0.37 · answer format 10 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate identical apart from the version.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

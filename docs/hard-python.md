@@ -72,6 +72,21 @@ a clean bill of health. Now:
 [`provenance.inputs.skipped`](provenance.md), so a consumer holding only `graph.json` is
 told too.
 
+### A compiled module without source
+
+codemap never imports the target, and since 0.0.37 that holds for compiled modules too. Before it,
+griffe's default inspection *imported* a module it could not read from source: a `.so` or `.pyd`
+extension, or a sourceless `.pyc` beside the package. Importing runs code, so `build` on a tree with
+such a file ran that file (R1-C96). Now such a module is not loaded, and it is named:
+
+```
+[note] 1 compiled module(s) without source were not loaded: pkg/evil.pyc The graph does not contain them: …
+```
+
+The list is in [`provenance.inputs.compiled`](provenance.md). A compiled copy **beside** its source
+(`md.py` + `md.cp38-win32.pyd`, common in vendored `site-packages`) is not listed: the module is built from
+`md.py`, whichever file the directory listing returns first.
+
 ### Syntax newer than the interpreter you run on
 
 **codemap parses a target with the `ast` of the Python it is running on.** It never imports

@@ -5,6 +5,32 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.37] - 2026-11-10
+
+**`build` never imports the target, and degrades instead of crashing on foreign trees.** Schema unchanged
+(**0.13**). **`ANSWER_FORMAT` stays 10:** a tree without compiled modules and without the alias shape below
+builds byte for byte as before.
+
+- **Security: `build` executed compiled modules of the tree it analysed** (R1-C96, design
+  [`docs/design/build_on_foreign_trees.md`](docs/design/build_on_foreign_trees.md); found while analysing
+  R1-C93's build failures). The README promises codemap never imports the target, but `griffe.load` ran
+  with griffe's default `allow_inspection=True`. A module griffe cannot read from source (a `.so`/`.pyd`
+  extension, or a sourceless `.pyc` beside the package) was imported, which runs its code. A marker probe
+  confirmed it on 0.0.10, 0.0.20 and 0.0.36 under Python 3.12, fast tier and `--deep`. **Anyone who ran
+  `build`, `serve --watch`, `refresh` or a build hook on an untrusted tree on 0.0.36 or earlier ran any such
+  file in it.** Inspection is now off. Compiled modules without source are listed in
+  `provenance.inputs.compiled`, with the note `compiled_modules_not_loaded`.
+- **Fixed: a base class re-exported from an absent package crashed the build** (R1-C95 D3). `class
+  Mine(PathHandler)`, with `PathHandler` imported from the package's own module that re-exports it from an
+  uninstalled third-party package (detectron2's `utils/file_io.py` does this), raised `Could not resolve
+  alias`. The base is now skipped: `self.<inherited>()` stays unresolved, the rest of the class resolves.
+- **Fixed: a compiled copy beside its source crashed the build** (R1-C95). With `md.py` and
+  `md.cp38-win32.pyd` side by side, griffe could pick the `.pyd` (directory order), and the behavior layer read
+  it as UTF-8. The module is now built from `md.py` on any filesystem, and no layer reads a non-`.py` file as
+  source.
+- The facade refusal (R1-C57) now also names the other cause: a module imported through `sys.path` (a script
+  layout, R1-C94).
+
 ## [0.0.36] - 2026-11-09
 
 **A graph and its sidecar must describe one build.** Schema unchanged (**0.13**). **`ANSWER_FORMAT` stays 10:** a
