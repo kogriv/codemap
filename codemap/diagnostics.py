@@ -25,6 +25,7 @@ SCOPE_MEMBERSHIP = "scope_membership"
 DEEP_TIER_UNSTABLE = "deep_tier_unstable"
 INCREMENTAL_DEEP_SPLICE = "incremental_deep_splice"
 GRAPH_FROM_NEWER_TOOL = "graph_from_newer_tool"
+COMPILED_MODULES_NOT_LOADED = "compiled_modules_not_loaded"
 
 #: A ``warning`` invalidates the conclusions a surface draws from the graph — read them as
 #: unknown. A ``note`` states a fact about how the graph was built and invalidates nothing.
@@ -190,6 +191,27 @@ def unread_inputs_diagnostic(graph) -> dict | None:
             f"{len(skipped)} input file(s) produced no module ({listed}): {sample}"
             + (" …" if len(skipped) > 5 else "")
         ),
+    }
+
+
+def compiled_modules_diagnostic(graph) -> dict | None:
+    """Compiled modules without source were not loaded (R1-C96 / design D2).
+
+    A **note**: everything the graph holds is right. Until 0.0.36 griffe *imported* such a
+    module (its default ``allow_inspection``), which ran the target's code; codemap promises
+    it never imports the target, so the module is listed instead of read.
+    """
+    compiled = ((graph.provenance or {}).get("inputs") or {}).get("compiled") or []
+    if not compiled:
+        return None
+    sample = ", ".join(compiled[:5]) + (" …" if len(compiled) > 5 else "")
+    return {
+        "code": COMPILED_MODULES_NOT_LOADED,
+        "severity": NOTE,
+        "compiled": compiled,
+        "consequence": ("The graph does not contain them: codemap never imports the target, "
+                        "and a compiled module has no source to read."),
+        "message": f"{len(compiled)} compiled module(s) without source were not loaded: {sample}",
     }
 
 
@@ -430,7 +452,8 @@ def diagnostics(graph) -> list[dict]:
               cross_root_diagnostic(graph), schema_diagnostic(graph),
               unread_inputs_diagnostic(graph), module_count_diagnostic(graph),
               scope_membership_diagnostic(graph), deep_tier_diagnostic(graph),
-              incremental_splice_diagnostic(graph), newer_tool_diagnostic(graph))
+              incremental_splice_diagnostic(graph), newer_tool_diagnostic(graph),
+              compiled_modules_diagnostic(graph))
     return [d for d in checks if d is not None]
 
 

@@ -27,6 +27,8 @@ import ast
 import math
 from pathlib import Path
 
+import griffe
+
 from codemap.extract.gsource import (NESTED_IMPORT_HINT, flat_inference_applies, module_file,
                                      module_imports, qualify_target)
 from codemap.model import Edge
@@ -360,7 +362,15 @@ def _class_members(mod, class_stack, modules) -> dict:
             bmod = modules.get(".".join(modparts))
             if bmod and cname in bmod.members:
                 bclass = bmod.members[cname]
-                for name in bclass.members:
+                try:
+                    inherited = list(bclass.members)
+                except (griffe.AliasResolutionError, griffe.CyclicAliasError):
+                    # R1-C95 / design D3: the base is the package's re-export of a class
+                    # from a package nobody loaded. Its members are unknown, so
+                    # `self.<inherited>()` stays unresolved, as for a base imported straight
+                    # from that package; the build goes on.
+                    continue
+                for name in inherited:
                     owners.setdefault(name, bclass.canonical_path)  # own already set → keep
     return owners
 

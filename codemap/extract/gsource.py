@@ -38,11 +38,16 @@ DOTTED_IMPORT_HINT = re.compile(r"^import\s[^\n#]*\w\.\w", re.MULTILINE)
 
 
 def module_file(obj) -> Path | None:
-    """The single source file behind a griffe object, or ``None`` if it has none."""
+    """The single source file behind a griffe object, or ``None`` if it has none.
+
+    Only ``.py``/``.pyi`` count as source (R1-C96 / design D2): a compiled module handed
+    over by griffe is not read as text by any layer, whatever griffe chose.
+    """
     fp = getattr(obj, "filepath", None)
     if fp is None or isinstance(fp, list):
         return None
-    return Path(fp)
+    fp = Path(fp)
+    return fp if fp.suffix in (".py", ".pyi") else None
 
 
 def is_namespace_dir(obj) -> bool:

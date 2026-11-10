@@ -105,12 +105,16 @@ def _load_with_siblings(module_name: str, search_path: Path):
     Returns ``(root, siblings)``; ``siblings`` is what had to be pulled in, and it is
     recorded in the input report so a reader can see the load was not self-contained.
     """
+    # R1-C96: `allow_inspection=False` on every load. griffe's default imports a module it
+    # cannot read from source (`.so`, `.pyd`, a sourceless `.pyc`), which runs the target's
+    # code; codemap promises it never imports the target. griffe now skips such a module
+    # (LoadingError, caught per submodule) and `_input_report` lists it as `compiled`.
     collection = griffe.ModulesCollection()
     siblings: list[str] = []
     for _ in range(_MAX_SIBLING_LOADS + 1):
         try:
             return griffe.load(module_name, search_paths=[str(search_path)],
-                               try_relative_path=False,
+                               try_relative_path=False, allow_inspection=False,
                                modules_collection=collection), siblings
         except griffe.AliasResolutionError as exc:
             top = exc.alias.target_path.split(".")[0]
@@ -119,13 +123,15 @@ def _load_with_siblings(module_name: str, search_path: Path):
             if not _package_on_path(top, search_path):
                 raise ValueError(
                     f"`{module_name}` re-exports `{exc.alias.target_path}`, and "
-                    f"`{top}` is not beside it in {search_path}. This is the facade "
-                    f"layout (a public package re-exporting a private one): build from "
-                    f"a tree that holds both, or point codemap at the implementation "
-                    f"package instead."
+                    f"`{top}` is not beside it in {search_path}. Either this is the "
+                    f"facade layout (a public package re-exporting a private one): build "
+                    f"from a tree that holds both, or point codemap at the implementation "
+                    f"package instead. Or the package imports `{top}` through sys.path "
+                    f"(a script layout, where `{top}` sits somewhere inside the tree): "
+                    f"codemap does not build that layout yet (R1-C94)."
                 ) from exc
             griffe.load(top, search_paths=[str(search_path)], try_relative_path=False,
-                        modules_collection=collection)
+                        allow_inspection=False, modules_collection=collection)
             siblings.append(top)
     raise ValueError(
         f"`{module_name}` still had unresolved re-exports after loading "
@@ -292,6 +298,37 @@ def _enumerate_sources(pkg_dir: Path) -> list[Path]:
     return out
 
 
+#: Module files griffe could only import, never read (R1-C96). `.pyc` in `__pycache__` is
+#: a cache of a `.py` and is not a module of its own.
+_COMPILED_SUFFIXES = (".so", ".pyd", ".pyc")
+
+
+def _compiled_without_source(pkg_dir: Path, root: Path) -> list[str]:
+    """Compiled module files inside the package with no ``.py`` of the same module beside
+    them (R1-C96 / design D2). codemap never imports the target, so each is a module the
+    graph does not contain. A compiled copy beside its source is not listed: the module is
+    built from the source.
+    """
+    out = []
+    seen: set[str] = set()
+    for dirpath, dirnames, filenames in os.walk(pkg_dir, followlinks=True):
+        real = os.path.realpath(dirpath)
+        if real in seen:
+            dirnames[:] = []
+            continue
+        seen.add(real)
+        dirnames[:] = sorted(d for d in dirnames if d != "__pycache__")
+        names = set(filenames)
+        for n in sorted(filenames):
+            if not n.endswith(_COMPILED_SUFFIXES):
+                continue
+            stem = n.split(".", 1)[0]          # md.cp38-win32.pyd -> md
+            if f"{stem}.py" in names or f"{stem}.pyi" in names:
+                continue
+            out.append(_rel(Path(dirpath) / n, root))
+    return out
+
+
 def _skip_reason(path: Path) -> str:
     """Why this file produced no module — asked only of files that produced none."""
     try:
@@ -322,6 +359,9 @@ def _input_report(graph, pkg_dir: Path, root: Path, walk) -> dict:
     report: dict = {"python_files": len(py)}
     if skipped:
         report["skipped"] = skipped
+    compiled = _compiled_without_source(pkg_dir, root)
+    if compiled:
+        report["compiled"] = compiled
     if walk.aliased:
         report["aliased_modules"] = [
             {"id": mid, "same_as": owner} for mid, owner in sorted(walk.aliased)
