@@ -1231,6 +1231,21 @@ Every expectation holds.
 
 **Consumers:** `check` on bquant and the bquearch gate identical, graphs identical apart from the version.
 
+**0.0.38 published 2026-11-10:** [`codmap` 0.0.38](https://pypi.org/project/codmap/0.0.38/), schema 0.13,
+`ANSWER_FORMAT` 10. From `1533110`: the suite ran after the version bump (1297 passed / 3 skipped, 1300
+collected), CI green, `twine check` PASSED. Reconciled from PyPI:
+
+```
+                                              0.0.37                         0.0.38
+namespace subdir pkg/layers/act.py            unread, no node, no call       pkg.layers.act.act, call resolved
+from engine.dataset import get (root repo/)   imports → repo.engine          imports → repo.engine.dataset
+from python.net import f (nested, root repo)  no edge, no call               imports → repo.python.net, calls → …f
+--version                                     codemap 0.0.37 · format 10     codemap 0.0.38 · answer format 10 · schema 0.13
+bquant check / bquearch gate                  exit 0                         exit 0; graphs identical (6b5f1bf)
+```
+
+Every expectation holds.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
