@@ -61,6 +61,15 @@ a package by directory. Imports between them are resolved by codemap's flat-layo
 inference (edges labelled resolution="flat"), not by packaging.
 ```
 
+### A directory without `__init__.py` inside a package
+
+Python 3 imports `pkg/layers/act.py` as `pkg.layers.act` even when `pkg/layers/` has no
+`__init__.py` (a namespace subpackage, PEP 420). griffe does not load it, on purpose: its author
+reads such a directory as a user error or a folder of scripts. Until 0.0.38 codemap dropped every
+module in it, with an `unread` entry. Now codemap reads it statically with griffe's `visit`:
+`pkg.layers` is a module with `file: null`, and the files in it are modules with their real paths.
+A directory or file whose name Python cannot import (`my-dir/`, `a.b.py`) stays `unread`.
+
 ## Consumer roots
 
 `--consumer tests` exists so `impact` can answer *"who uses this across the whole repo — core, tests,
@@ -145,8 +154,14 @@ and any consumer recomputes it from the graph it already holds.
     (`_pytest.doctest → _pytest.doctest` among them).
   - Limits: a twin of a *third-party* name in a package that also has other bare sibling imports is
     still rewritten. `sys.stdlib_module_names` differs slightly between Python versions.
-- **Only siblings.** The head of the import must name a module beside the importer;
-  deeper `sys.path` games are out of scope.
+- **Siblings, and on a namespace root the root** (R1-C94). The head of the import must name a module
+  beside the importer; on a namespace target (a repository root built as such) it may instead name a
+  module directly under the root, which is what `python -m pkg.mod` from the root or `PYTHONPATH=.`
+  makes importable. The sibling wins when both match. A regular package is never root-anchored: its
+  parent, not the directory itself, is on `sys.path`. Other `sys.path` games are out of scope.
+- **The edge names the module imported** (R1-C94). `from engine.dataset import get` is
+  `imports … → engine.dataset`, and `from common import config` (a submodule) is `→ common.config`.
+  Until 0.0.38 both pointed at the head (`engine`, `common`).
 - **No runtime `sys.path` reasoning** — `sys.path.insert`, `.pth` files and editable-install
   shims are outside the source-only contract. The flat layout is the one `sys.path`
   assumption codemap makes, and it is labelled.

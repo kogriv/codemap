@@ -1219,6 +1219,18 @@ bquant check / bquearch gate                exit 0                              
 
 Every expectation holds.
 
+**0.0.38 — the release check, pre-registered before the upload (2026-11-10).** One item (R1-C94); schema
+**0.13**, **`ANSWER_FORMAT` stays 10**.
+
+| | tree form | 0.0.37 (expected) | 0.0.38 (expected) |
+|---|---|---|---|
+| D1 | `pkg/layers/act.py` without `pkg/layers/__init__.py`, called from `pkg/net.py` | `unread`, no `pkg.layers*` | `pkg.layers.act.act` and the call |
+| D2 | root `repo/`: `from engine.dataset import get` | `imports repo.main → repo.engine` | `→ repo.engine.dataset` (`flat`) |
+| D3 | root `repo/`: `teeslice/model.py` `from python.net import f` | no edge, call unresolved | `imports → repo.python.net`, `calls → repo.python.net.f` |
+| version | `codemap --version` | `codemap 0.0.37 · answer format 10 · schema 0.13` | `codemap 0.0.38 · answer format 10 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate identical, graphs identical apart from the version.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

@@ -5,6 +5,25 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.38] - 2026-11-10
+
+**A repository root builds with its modules and its import edges.** Schema unchanged (**0.13**).
+**`ANSWER_FORMAT` stays 10:** no layout or field meaning changes. Graphs change only where modules were dropped
+or flat import edges pointed at the wrong module; bquant's and bquearch's graphs are identical to 0.0.37.
+
+- **Fixed: a directory without `__init__.py` inside a package was dropped** (R1-C94 D1, design
+  [`docs/design/root_builds.md`](docs/design/root_builds.md)). griffe skips it on purpose; Python imports it as a
+  namespace subpackage. codemap now reads it statically (griffe's `visit`, no import). On 12 RepoBench repositories
+  built from the root: `unread` files 59 → 0, modules 632 → 707.
+- **Fixed: a dotted flat import pointed at the head** (R1-C94 D2). `from engine.dataset import get` gave
+  `imports … → engine`; it is now `→ engine.dataset`, and `from common import config` is `→ common.config`.
+- **New: on a namespace root, imports anchored at the root resolve** (R1-C94 D3). A module in a subdirectory
+  importing a package at the repository root (`from python.net import f`) gets its `imports` edge and its calls,
+  labelled `resolution="flat"`. A sibling with the same name wins; a regular package is never root-anchored.
+  Exact import edges on the 12 repositories: 28 → 694.
+- Correction recorded in `research/repobench_context.md`: R1-C93's "codemap cannot build such a repository at all"
+  was never measured; the harness, not codemap, required a regular package.
+
 ## [0.0.37] - 2026-11-10
 
 **`build` never imports the target, and degrades instead of crashing on foreign trees.** Schema unchanged

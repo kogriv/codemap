@@ -1,6 +1,6 @@
 # Design — namespace subdirectories inside a package, and flat imports that name the module they import
 
-**Status:** pre-registered 2026-11-10, before code. **Backlog:** R1-C94. **Gap:**
+**Status:** ✅ **done** (2026-11-10; D1+D2 3cf4fcb, D3 c3e32a5; `ANSWER_FORMAT` stays 10), reconciled below. Pre-registered in dedb88a, amended in e92a7e5/badef5a after the first acceptance run, before D3's code. **Backlog:** R1-C94. **Gap:**
 [`gaps/root_builds_lose_modules_and_targets_2026-11-10.md`](../../gaps/root_builds_lose_modules_and_targets_2026-11-10.md).
 
 ## D1 — a directory without `__init__.py` inside the package is a namespace subpackage
@@ -72,3 +72,50 @@ as exact when an `imports` edge goes from the importing module to the deepest kn
 | E4″ | A minimal root tree (`python/net.py`, `teeslice/model.py` importing `from python.net import f`): 0.0.37 has no edge from `teeslice.model`; the fix `imports repo.teeslice.model → repo.python.net` (`flat`). A sibling with the same head wins over the root |
 | E4‴ | The same rule reaches calls: in that tree a call to `f()` in `teeslice.model` is `calls → repo.python.net.f` (0.0.37: unresolved). The qualified import map (`qualify_target`) applies D3 with D2's order, so calls and `imports` edges agree |
 | E6′ | bquant and bquearch: graphs still identical to 0.0.37 apart from the version. bquearch builds `shared`, which has an `__init__.py`? If it is a namespace target, D3 may add edges there; any difference is listed and reported to them before release |
+
+## Reconciliation (2026-11-10)
+
+**First run (3cf4fcb, D1+D2).** E1–E3, E5–E7 held. **E4 failed:** genome 6 of 37, TAOISM 0 of 212. That led to
+the amendment above, D3, and a corrected counter.
+
+**Second run (6b5f1bf, D1–D3), 12 probe repositories built from the root:**
+
+| repository | 0.0.37 unread / modules / exact imports | fix |
+|---|---|---|
+| AA | 0 / 10 / 12 of 12 | 0 / 10 / 12 of 12 |
+| Agent4Rec | 6 / 50 / 1 of 14 | 0 / 59 / 13 of 15 |
+| FinRock | 0 / 18 / 0 of 36 | 0 / 18 / 36 of 36 |
+| G-CASCADE | 0 / 161 / 2 of 85 | 0 / 161 / 85 of 85 |
+| SkyScript | 0 / 41 / 5 of 66 | 0 / 41 / 66 of 66 |
+| TACO | 0 / 11 / 7 of 8 | 0 / 11 / 8 of 8 |
+| TAOISM | 22 / 28 / 0 of 110 | 0 / 52 / 331 of 331 |
+| VTimeLLM | 5 / 18 / 0 of 24 | 0 / 24 / 37 of 37 |
+| diffusion_reward | 9 / 138 / 0 of 27 | 0 / 152 / **0 of 27** |
+| genome | 10 / 32 / 1 of 43 | 0 / 45 / 50 of 51 |
+| lx-music-api-server-python | 0 / 36 / 0 of 38 | 0 / 36 / 38 of 38 |
+| polygrad-world-models | 7 / 89 / 0 of 15 | 0 / 98 / 18 of 18 |
+| **total** | **59 / 632 / 28** | **0 / 707 / 694** |
+
+The denominators differ between columns: a pair counts only when its importing module is in the graph, and
+D1 adds modules.
+
+| # | Result |
+|---|---|
+| E1 | ✅ unit: `pkg.layers` (`file: null`), `pkg.layers.act.act`, the call and the import resolve, no `skipped`; a package below a namespace directory and a relative import inside it resolve too; incremental equals full after an edit there |
+| E2 | ✅ unit: `repo.main → repo.engine.dataset` (`flat`); the bare sibling import is unchanged |
+| E3 | ✅ unit: `my-dir/x.py` and `a.b.py` stay `unread`; a sourceless `.pyc` in a namespace directory is listed as compiled and not imported |
+| E4 | ❌ first run (see above). E4′ ✅: exact pairs 28 → 694 (≥ 3× predicted), TAOISM 331 of 331 (≥ 150), genome 50 of 51 (≥ 25), lx-music 0 → 38 (not below). E4″ ✅, E4‴ ✅ (unit: root-anchored import and call; the sibling wins) |
+| E5 | ✅ `unread` 59 → 0, modules 632 → 707, no build fails; TAOISM `python/layers/` 17 `unread` → 0 (the gap's 22 counted all of TAOISM) |
+| E6 / E6′ | ✅ bquant `check` and the bquearch gate identical; both graphs identical to 0.0.37: no node and no edge differs. bquearch's `shared` has no dotted flat import that D2 or D3 changes |
+| E7 | ✅ suite 1297 passed / 3 skipped (1300 collected). Mutations red: D1 walk off (4), D2 head again (2–3), name filter off (1), D3 anchor off (1), root before sibling (5), anchor on a regular package in the import map (1) and in the edge pass (2); cosmetic control green |
+
+**Surprises.**
+- **diffusion_reward stays at 0 of 27.** Its repository directory and its package share a name
+  (`diffusion_reward/diffusion_reward/`). Built from the root, `diffusion_reward.models.x` starts with the target's
+  own name, so it is read as package-qualified against the root, where it does not exist. Neither D2 nor D3 sees
+  it. It is a common layout (`repo/pkg/`), and the usual way to build it is the inner package, so this goes to
+  the backlog (R1-C97) rather than into this item.
+- An R1-C72 guard patched `behavior.flat_inference_applies` by name. The gate now lives in
+  `gsource.flat_known_modules`, and the patch moved with it; the test's meaning is unchanged.
+- E4's first counter scored `from common import config` (a submodule) against `common`. It took the fix's more
+  precise edge for a regression.
