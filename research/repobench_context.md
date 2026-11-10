@@ -174,15 +174,20 @@ has no node is not what holds the graph down.
 **Surprises.**
 - **Coverage is the bigger finding.** Only 35 % of drawn rows survive, and the largest drop (about half of all
   drops) is A3: the file is not inside a regular package (scripts at the root, directories without
-  `__init__.py`). codemap cannot build such a repository at all. In 28 % of eligible rows the gold candidate
-  lies outside the built package and has no node. For research-code repositories like RepoBench's, the
-  package-only build is the binding limit, before any question of ranking.
+  `__init__.py`). ~~codemap cannot build such a repository at all.~~ **Correction (2026-11-10): that sentence
+  was not measured and is likely wrong.** A3 is this harness's own criterion: it builds only a regular package
+  around the file. codemap itself builds directories without `__init__.py` (namespace targets, flat-layout
+  inference, [`docs/flat-layout.md`](../docs/flat-layout.md)), and those rows were never handed to it. What
+  codemap does on them is R1-C94's first question. In 28 % of eligible rows the gold candidate lies outside the
+  built package and has no node; that part stands, for the package-only build this harness used.
 - **A6: codemap's build crashed on 8 rows of 5 repositories.** Three repositories: `Could not resolve alias …`
   for a name re-exported from an uninstalled third-party package. One: a facade-layout refusal. One: a
-  non-UTF-8 source file. A build should degrade on these, not exit non-zero.
+  non-UTF-8 source file. A build should degrade on these, not exit non-zero. (Diagnosed later, R1-C95/R1-C96:
+  the "non-UTF-8 file" was a compiled `.pyd` beside its `.py`, and the analysis found that `build` imported
+  compiled modules; both fixed in 0.0.37.)
 - A5 (the truncated file still does not parse after one `pass`) dropped 75 + 105 rows, more than expected: an
   open bracket or a string at the cut needs more than a block body.
 
 **What follows.** The rank is not worth tuning for this task. The two build gaps go to the backlog as their own
-items (R1-C94: repositories without a regular package; R1-C95: build crashes on an unresolvable alias and on
-non-UTF-8 source). R1-C61's paid door gains nothing from this run: it gives no reason to open it.
+items (R1-C94: repositories without a regular package, whose premise is corrected above; R1-C95: build crashes,
+fixed in 0.0.37 together with R1-C96). R1-C61's paid door gains nothing from this run: it gives no reason to open it.
