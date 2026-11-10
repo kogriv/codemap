@@ -40,3 +40,34 @@ E1, E2, E4 and E5 fail on 0.0.37.
 | E7 | Full suite passes. Mutations go red: D1 walk off, D2 returning the head again; a cosmetic control stays green |
 
 Surprises go into the reconciliation.
+
+## Amendment 2026-11-10, after the first acceptance run (3cf4fcb) — pre-registered before D3's code
+
+The first run held for D1 and failed E4 for D2: genome 6 of 37, TAOISM **0** of 212, where ≥ 30 and ≥ 150 were
+predicted. The shape D2 does not cover: a module **inside a subdirectory** importing a package that sits at the
+**root** (`teeslice/sgx_resnet_cifar.py`: `from python.common_net import …`, with `python/` at the root). That is
+not a sibling import; it works because the repository root is on `sys.path` (`python -m teeslice.x` from the root,
+or `PYTHONPATH=.`). One "regression" the run showed is not one: on `lx-music`, `from common import config`
+(a submodule) used to point at `common` and now points at `common.config`. The run's own counter scored the old
+edge as exact. The counter is fixed below.
+
+### D3 — on a namespace target, an import may be anchored at the root
+
+When the built directory has no `__init__.py` (the namespace target, the repository-root case), a target whose
+head names a module directly under the target resolves to the deepest known module of `<target>.<path>`,
+labelled `resolution="flat"`. The sibling rule (D2) is tried first: if both match, the nearer one wins, as
+`sys.path[0]` being the script's own directory would make it win at runtime. On a regular package target nothing
+changes, since that directory is not on `sys.path` (R1-C72's argument).
+
+### Counter, corrected
+
+A statement's target is, per imported name, `<module>.<name>` if that is a module, else `<module>`. A pair counts
+as exact when an `imports` edge goes from the importing module to the deepest known module of that target.
+
+### Expectations for the second run (replace E4's numbers; everything else stands)
+
+| # | Expectation |
+|---|---|
+| E4′ | With the corrected counter, over the 12 probe repositories: exact pairs rise from 0.0.37 to the fix by at least 3×; TAOISM ≥ 150 of its pairs and genome ≥ 25. lx-music does not fall below 0.0.37 |
+| E4″ | A minimal root tree (`python/net.py`, `teeslice/model.py` importing `from python.net import f`): 0.0.37 has no edge from `teeslice.model`; the fix `imports repo.teeslice.model → repo.python.net` (`flat`). A sibling with the same head wins over the root |
+| E6′ | bquant and bquearch: graphs still identical to 0.0.37 apart from the version. bquearch builds `shared`, which has an `__init__.py`? If it is a namespace target, D3 may add edges there; any difference is listed and reported to them before release |
