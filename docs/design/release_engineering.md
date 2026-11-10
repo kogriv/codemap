@@ -1205,6 +1205,20 @@ schema **0.13**, **`ANSWER_FORMAT` stays 10**.
 
 **Consumers:** `check` on bquant and the bquearch gate identical apart from the version.
 
+**0.0.37 published 2026-11-10:** [`codmap` 0.0.37](https://pypi.org/project/codmap/0.0.37/), schema 0.13,
+`ANSWER_FORMAT` 10. From `cd9295f`: the suite ran after the version bump (1284 passed / 3 skipped, 1287
+collected), CI green on 3.11–3.14, `twine check` PASSED. Reconciled from PyPI under Python 3.12:
+
+```
+                                            0.0.36                              0.0.37
+sourceless pkg/evil.pyc, build              marker created, exit 1              no marker, exit 0, [note] 1 compiled module(s) …
+base re-exported from an absent package     exit 1, Could not resolve alias     exit 0
+--version                                   codemap 0.0.36 · answer format 10   codemap 0.0.37 · answer format 10 · schema 0.13
+bquant check / bquearch gate                exit 0                              exit 0; identical apart from the version (b4a09ad)
+```
+
+Every expectation holds.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
