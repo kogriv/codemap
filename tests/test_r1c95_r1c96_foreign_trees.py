@@ -164,3 +164,22 @@ def test_the_cli_build_exits_zero_and_prints_the_note(pyc_tree, tmp_path, capsys
     assert "[note] 1 compiled module(s) without source were not loaded: pkg/evil.pyc" in err
     assert not marker.exists()
     assert sys.modules.get("pkg.evil") is None
+
+
+def test_orphan_pyc_in_pycache_is_not_listed(tmp_path):
+    """A cache of a deleted module is not a module (asked by bquearch, 2026-11-10): Python does
+    not import a sourceless `.pyc` from `__pycache__`, and listing it would be noise."""
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "live.py").write_text("def f():\n    return 1\n")
+    gone = pkg / "gone.py"
+    gone.write_text("X = 1\n")
+    py_compile.compile(str(gone), doraise=True)    # -> pkg/__pycache__/gone.cpython-XY.pyc
+    py_compile.compile(str(pkg / "live.py"), doraise=True)
+    gone.unlink()
+    assert any((pkg / "__pycache__").glob("gone.*.pyc"))
+    graph = extract(str(pkg))
+    assert "compiled" not in graph.provenance["inputs"]
+    assert not [d for d in diagnostics(graph) if d["code"] == COMPILED_MODULES_NOT_LOADED]
+    assert "pkg.gone" not in graph.nodes and "pkg.live.f" in graph.nodes
