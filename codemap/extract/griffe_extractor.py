@@ -18,6 +18,7 @@ Emits (M0 + M1 + M1.5):
 from __future__ import annotations
 
 import ast
+import keyword
 import multiprocessing
 import os
 import sys
@@ -146,6 +147,71 @@ def _package_on_path(name: str, search_path: Path) -> bool:
         or (search_path / f"{name}.py").is_file() or (search_path / f"{name}.pyi").is_file()
 
 
+def _importable_name(name: str) -> bool:
+    return name.isidentifier() and not keyword.iskeyword(name)
+
+
+def _visit_source(name: str, path: Path, parent, root):
+    """Read one source file into a griffe module under ``parent``; None if it cannot be read
+    (it then keeps its ``skipped`` entry with the reason ``_skip_reason`` finds)."""
+    try:
+        code = path.read_text(encoding="utf-8")
+        return griffe.visit(name, path, code, parent=parent,
+                            lines_collection=root.lines_collection,
+                            modules_collection=root.modules_collection)
+    except (OSError, UnicodeDecodeError, SyntaxError, ValueError):
+        return None
+
+
+def _load_namespace_subdirs(root, pkg_dir: Path) -> None:
+    """Load the namespace subpackages griffe leaves out (R1-C94 / design D1).
+
+    griffe does not load a directory without ``__init__.py`` below a regular package: its
+    author treats that as a user error or a folder of scripts (comment in griffe's
+    ``_load_submodule``). Python 3 imports it as a namespace subpackage (PEP 420), and
+    research code is laid out that way all the time; codemap used to drop every module in
+    it, with an ``unread`` entry. Here such a directory becomes a namespace module and each
+    importable ``.py`` in it is read with ``griffe.visit`` — static, public API, no import.
+    Names Python cannot import (``my-dir``, ``a.b.py``) stay out, as they do for Python.
+    """
+    seen: set[str] = set()
+
+    def walk(module, directory: Path) -> None:
+        real = os.path.realpath(directory)
+        if real in seen:
+            return
+        seen.add(real)
+        for child in sorted(directory.iterdir()):
+            name = child.name
+            if child.is_dir():
+                if name == "__pycache__" or name.startswith(".") or not _importable_name(name):
+                    continue
+                member = module.members.get(name)
+                if member is None:
+                    if not any(child.rglob("*.py")):
+                        continue
+                    init = child / "__init__.py"
+                    sub = (_visit_source(name, init, module, root) if init.is_file()
+                           else griffe.Module(name, filepath=[child], parent=module,
+                                              lines_collection=root.lines_collection,
+                                              modules_collection=root.modules_collection))
+                    if sub is None:
+                        continue
+                    module.set_member(name, sub)
+                    walk(sub, child)
+                elif not member.is_alias and member.is_module:
+                    walk(member, child)
+            elif child.suffix == ".py" and child.stem != "__init__":
+                stem = child.stem
+                if not _importable_name(stem) or stem in module.members:
+                    continue
+                sub = _visit_source(stem, child, module, root)
+                if sub is not None:
+                    module.set_member(stem, sub)
+
+    walk(root, pkg_dir)
+
+
 def build_structural(package_path: str | Path):
     """The cheap, deterministic base: griffe load + definition nodes + structural
     edges (contains / imports / inherits / decorated_by / export). No behavioral
@@ -171,6 +237,9 @@ def build_structural(package_path: str | Path):
     # answer here is invisible downstream — it is well-formed, complete and about the
     # wrong tree — so it fails loudly instead.
     _assert_is_the_target(getattr(root, "filepath", None), pkg_dir, module_name)
+    # R1-C94 / design D1: griffe skips a directory without __init__.py inside a regular
+    # package on purpose; Python imports it as a namespace subpackage. Read those too.
+    _load_namespace_subdirs(root, pkg_dir)
 
     graph = Graph(target=module_name)
     walk = _Walk()
@@ -730,8 +799,15 @@ def _flat_sibling(src_module: str, target_path: str, known_modules: set[str]) ->
     if "." not in src_module:
         return None  # a top-level module has no package for siblings to live in
     parent = src_module.rsplit(".", 1)[0]
-    candidate = f"{parent}.{target_path.split('.', 1)[0]}"
-    return candidate if candidate in known_modules else None
+    head = f"{parent}.{target_path.split('.', 1)[0]}"
+    if head not in known_modules:
+        return None
+    # R1-C94 / design D2: the gate is the head; the answer is the deepest module the path
+    # names. `from engine.dataset import get` depends on `engine.dataset`, not on `engine`.
+    full = f"{parent}.{target_path}"
+    while full != head and full not in known_modules:
+        full = full.rsplit(".", 1)[0]
+    return full
 
 
 def _containing_module(symbol_path: str, module_ids: list[str]) -> str | None:
