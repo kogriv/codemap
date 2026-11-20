@@ -80,6 +80,14 @@ Where it stands today: schema **0.11**, ~**369 tests** green, a warm serve surfa
 Sourcegraph / Glean and other precise-code-intelligence tools light up over codemap's graph.
 It interoperates outward rather than locking its graph away.
 
+> **Update, 2026-11-20 (0.0.38).** The paragraph above is a snapshot from launch (August 2026) and is kept as
+> written. At 0.0.38: schema **0.13**, **1300 tests**, **31 operations** (28 as MCP tools). Since launch codemap
+> has gained an architecture gate (`codemap check`), a two-snapshot API diff, the tests-for-symbol question, and
+> builds of trees that are not a regular package (a repository root, namespace subdirectories). Release 0.0.37
+> fixed a security defect: earlier versions could execute compiled modules (`.so`, `.pyd`, sourceless `.pyc`)
+> found in the analysed tree. Do not run codemap 0.0.36 or older on a tree you do not trust. Current numbers
+> always live in the [README](../../README.md).
+
 ## Where it sits in the field
 
 I didn't want to assert a niche — I wanted to measure into one. So the series' research track

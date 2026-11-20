@@ -92,15 +92,26 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P7 — two graphs agreed (OntoIndex) | ✅ EN + RU | [OntoIndex card](../tools/ontoindex.md), [comparison](../comparison.md) matrix; [positioning](../positioning.md) build-story #7 |
 | P8 — eight of twelve (methods) | ✅ EN + RU | [narrowing_audit](../../docs/design/narrowing_audit.md), [deterministic_rendering](../../docs/design/deterministic_rendering.md), gaps [flow_entry_points](../../gaps/flow_entry_points_2026-09-10.md) + [cycle_rotation](../../gaps/cycle_rotation_nondeterminism_2026-09-12.md), issues #19 + #20; [positioning](../positioning.md) build-story #8 |
 | P9 — true and worthless (axis B4) | ✅ EN + RU | [third_shape_2026-09-12](../../gaps/third_shape_2026-09-12.md) §6 (pre-registration + reconciliation), [stub_files](../../docs/design/stub_files.md), [cycle_tangles](../../docs/design/cycle_tangles.md), BACKLOG R1-C55…R1-C58; [positioning](../positioning.md) build-story #9 |
-| P10 — the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
-| P11 — next tool | 🔲 later | lands when the next R2 разбор does |
+| P10 — jevgrep | ✅ EN + RU | [jevgrep card](../tools/jevgrep.md); [positioning](../positioning.md) build-story #10 (written into that layer on 2026-11-20, after the post) |
+| P11 — grafema, and ourselves | ✅ EN + RU | [grafema card](../tools/grafema.md); [positioning](../positioning.md) build-story #11 |
+| P12 — Graphify | ✅ EN + RU | [Graphify card](../tools/graphify.md); [positioning](../positioning.md) build-story #12 |
+| P13 — import-linter | ✅ EN + RU | [import-linter card](../tools/import-linter.md); [positioning](../positioning.md) build-story #13 |
+| next — the `pack` line (V2, V3, V4, RepoBench) and the hole the measurement found | ✍️ BACKLOG R1-C99 | [pack_usefulness](../pack_usefulness.md), [pack_direction](../pack_direction.md), [pack_agent_pilot](../pack_agent_pilot.md), [repobench_context](../repobench_context.md); gaps of R1-C94 and R1-C96 |
+| next — Understand-Anything | 🔲 BACKLOG R1-C101 | [Understand-Anything card](../tools/understand-anything.md) (measured 2026-10-15; in the series only as one number in post 12) |
+| the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
+| rag_for_git | 🔲 not yet a story | the card stops at Stage A of three (BACKLOG R1-C102) |
 
 A post's number is its filename slot, assigned **on publication** — a planned post takes the next
 free number when it actually lands, not when it is sketched. Which is why the role-provenance story
-has now been P5, P6, P7, P9 and P10 without a word of it being written: waiting costs it a number each time
+has now been P5, P6, P7, P9, P10 and, in this table, P14 without a word of it being written: waiting costs it a number each time
 a post that *did* have an episode goes out first. That is the rule working, not failing.
 
-**P10 is the only writing left, and it is deliberately not forced.** It needs an episode that
+**Two posts have their episodes and are owed: the `pack` line (R1-C99) and Understand-Anything (R1-C101).**
+This table said "P10 blocked, P11 later" for two months after P10–P13 had shipped, and nothing in the series
+recorded V2–V4 or RepoBench at all. A review of the track on 2026-11-20 found both; the table is not guarded,
+so it is re-read at each review rather than trusted.
+
+**The role-provenance story is deliberately not forced.** It needs an episode that
 actually *happened* — a provenance split that changed a real decision. Inventing one would break
 the single rule the series rests on. Capture it opportunistically while dogfooding, into `gaps/`,
 then promote to [positioning.md](../positioning.md) §Future stories, then write the post.
@@ -123,11 +134,12 @@ eight of them were one defect — and whose last section exists because a consum
 instance twenty-four hours after the audit declared the mechanism closed. Nor P9, which came from a
 pre-registered run against three third-party packages: the list held five predictions, two of them were
 refuted, and the four findings that mattered were not on it at all. **Six published posts,
-none of them writable from its sketch** — which is the argument for not forcing P10.
+none of them writable from its sketch** — which is the argument for not forcing the role-provenance story.
+P10–P13 kept the pattern: none of them was on the sketch list either.
 
 Sketch for the one that remains:
 
-- **P10 — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
+- **The role-provenance story — "Impact that knows tests from core."** *"48 things could break, medium risk"* vs
   *"12 non-test references — 2 in core, 7 in docs — and 53 in tests."* Beats: multi-root
   provenance → dead-code without the dominant false-positive source → impact tagged by role
   → why an agent needs "what breaks in *core*" → the honest limit (one-hop by default).
@@ -140,8 +152,8 @@ Sketch for the one that remains:
 - [ ] Positioning line near the top; the standing invitation at the foot ("measured your
       tool and I got it wrong? open an issue").
 - [ ] Current facts, read off [`README.md`](../../README.md)'s status line at the time of writing and never
-      copied from an older post — at 2026-09-12 (after 0.0.20): **schema 0.13 / 972 tests / 31 ops — 28 MCP
-      tools**.
+      copied from an older post — at 2026-11-20 (after 0.0.38): **schema 0.13 / 1300 tests / 31 ops — 28 MCP
+      tools**. (Before that it said 0.0.20 / 972 tests for over two months.)
       This checklist line is itself a snapshot and **was stale for two weeks** (it still said 0.12 / 587
       tests after five releases). The README's count is guarded in CI; this one is not, so it gets re-read
       rather than trusted.

@@ -1108,6 +1108,43 @@ merely aliases — what `attrs/__init__.pyi` has and a hand-written fixture did 
 - "My guard test passed with the fix mutated off, because my hand-written fixture did not carry the defect's
   shape. A fixture is a claim too, and it has to be verified against the old version." → build-story #9
 
+## Build-story #10 — "A tool that asks a model about every file; on my scope mine won, and the scope is the caveat" (jevgrep)
+
+**Facts:** [`tools/jevgrep.md`](tools/jevgrep.md). **Post:** [10](blog/10-asks-a-model-about-every-file.md).
+*(Written into this layer on 2026-11-20, after the post: the post went out on 2026-10-14 without its build-story
+here, and the gap was found in a review of the track. Every line below reproduces from the card and the post.)*
+
+### The setup
+The most different tool measured so far: no index, no graph, no build. It walks the tree and asks a hosted
+decision model one yes/no question per file. Three packages, 7 MB, 7 s to install. Same 280-file scope as the
+other cards, five questions with a symbol name in each, eight predictions and four controls committed before the
+first paid request, a stop rule at $3.50. Seventeen real searches cost $1.14.
+
+### The surprising measurement
+Three of the eight predictions failed, all in the tool's favour. "Which files call X" was predicted as a haystack
+(precision below 0.5); it returned 26–27 files, 21 of 22 callers, precision about 0.8. It cost less than the
+bytes suggested. Where it was weak, it was weak in one place: documents (3 of 7, 2 of 24), and no call shape at all
+on the signature-change question.
+
+### The turn
+The table says codemap is more exact, faster, free and repeatable, and that sentence is circular: the answer key
+is codemap's own graph. Only T2 has an independent check (three implementations with no shared code, 58 / 58 / 60
+callers). The post spends its weight on the other half: **when you would pick the other tool** (not Python, no
+build step, a question without a symbol name, a one-off).
+
+### The lesson (reusable)
+A comparison against your own truth measures agreement, not correctness. Say so in the table, not in a footnote.
+And the scope you chose is part of the result.
+
+### What we take, what we keep
+- **Take:** a `doctor` that checks semantics on a fixture with a known answer, not only that dependencies import;
+  disclosure of what a failed request did not reach.
+- **Keep:** local, free, deterministic, offline. Adopting any part of the mechanism would cost exactly that.
+
+**Quotable:**
+- "One is a starting set of files to read; the other is an answer you can build a check on." → build-story #10
+- "Three of my eight predictions failed, and all three failed in the tool's favour." → build-story #10
+
 ## Build-story #11 — "I tested a rival's gate for silent passes, then pointed the probe at mine" (grafema, and ourselves)
 
 **Facts:** [`tools/grafema.md`](tools/grafema.md) §1–§7, gap
