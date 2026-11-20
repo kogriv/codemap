@@ -143,7 +143,7 @@ Qodo — [переименование](https://www.qodo.ai/formerly-qodo-merge/
 Graphite — [AI reviews](https://graphite.com/docs/ai-reviews), [индекс](https://graphite.com/docs/code-indexing), [покупка Cursor](https://cursor.com/blog/graphite);
 SourceCraft Code Assistant — [условия](https://yandex.ru/legal/cloud_terms_code_assistant/), [ревью](https://sourcecraft.dev/portal/docs/en/code-assistant/operations/src-review), [MCP](https://sourcecraft.dev/portal/docs/en/sourcecraft/operations/work-with-mcp);
 GigaCode — [продукт](https://gitverse.ru/features/gigacode/), [агент](https://gitverse.ru/docs/ai/gigacode-on-gitverse/gigacode-agent);
-PT Application Inspector — [продукт](https://www.ptsecurity.com/ru-ru/products/ai/);
+PT Application Inspector — [продукт](https://ptsecurity.com/products/ai/) (сертификат национального УЦ: в Chrome и Firefox возможно предупреждение);
 Solar appScreener — [продукт](https://rt-solar.ru/products/solar_appscreener/);
 Svace — [продукт](https://www.ispras.ru/technologies/svace/).
 
