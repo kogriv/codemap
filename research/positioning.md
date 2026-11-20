@@ -1320,11 +1320,53 @@ or a "not measured".
 - "The measurement that was supposed to tell me whether the graph helps told me instead that my analyzer executed
   code it promised never to import." → build-story #14
 
+## Build-story #15 — "The model wrote the prose and not one relationship; the stars are still right" (Understand-Anything)
+
+**Facts:** [`tools/understand-anything.md`](tools/understand-anything.md) §0–§4 and the update of 2026-11-20.
+**Post:** [15](blog/15-the-model-wrote-the-prose.md).
+*(Written on 2026-11-20, five weeks after the measurement; found missing in the review of the track.)*
+
+### The setup
+86 314 ★ when measured (the most-starred tool measured up to then; Graphify, a month later, has more), 93 392
+five weeks on, and a different kind of thing: an agent skill whose knowledge graph is mostly written by model subagents. The authors moved rule lookup
+into scripts (inventory, import map, structure) and say why in the source. Two properties were read from source
+and predicted before the run: only module-top-level imports are read, and `from .. import Name` never reaches the
+package `__init__.py`.
+
+### The surprising measurement
+The deterministic layer is exactly as honest as it claims: byte-identical over four runs, 215 of 216 edges real,
+definition counts equal to Python's `ast`. And it sees **0 of 45** import cycles, because every cycle on this tree
+closes through an import that is not at top level. The file-analyzer agent is told not to re-resolve imports from
+source, so the blind spot is locked in by instruction. Then the pilot with a model in the loop (9 files, $0.71,
+108 s): summaries, 4 layers, a 7-step tour, and **not one** `calls`, `inherits` or `depends_on` edge, where codemap
+has 4 cross-file call pairs. The orchestrator skipped three of the seven phases' agents and said so in its report.
+
+### The turn
+The question the card asked was the wrong one for this tool. It answers none of the structural questions codemap
+is measured on, and it has more stars than almost any tool that does answer them, because what it produces is what a newcomer asks first: a tour, a
+summary, a map that includes the Dockerfile. And the one defect filed upstream (#727) was fixed within a week by a
+community contributor's PR.
+
+### The lesson (reusable)
+A benchmark of answers cannot score a tool whose product is explanation; say which question you asked before you
+say who won. And a consumer forbidden to check its producer turns the producer's blind spot into the system's.
+
+### What we take, what we keep
+- **Take:** the symbol-loss gate on incremental updates (refuse to publish a loss you cannot explain); the habit of
+  naming, in the source, the failure that moved each step out of the model.
+- **Keep:** imports read wherever they occur, labelled by scope; nothing in the chain forbidden to check the step
+  before it.
+
+**Quotable:**
+- "On nine files the model wrote summaries, layers and a tour, and not a single relationship." → build-story #15
+- "codemap answers questions; this tool explains a codebase. The stars say which one more people want." →
+  build-story #15
+
 ## Future stories (skeletons — fill on разбор)
 
-- **#15 …** next tool from R2.2 (CodeSlicer, ast-index, CodeWiki, Foglamp in the queue). Same shape: setup → the surprising measurement → head-to-head → lesson →
+- **#16 …** next tool from R2.2 (CodeSlicer, ast-index, CodeWiki, Foglamp in the queue). Same shape: setup → the surprising measurement → head-to-head → lesson →
   take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code, #6 CodeGraph, #7 OntoIndex, #10 jevgrep, #11 grafema,
-  #12 Graphify, #13 import-linter done; #4, #5, #8, #9, #14 are about ourselves, and #11 is both.)
+  #12 Graphify, #13 import-linter, #15 Understand-Anything done; #4, #5, #8, #9, #14 are about ourselves, and #11 is both.)
 - **The determinism story.** ✅ Told twice, neither time as sketched: #4 (a determinism *test* went red and
   the tool was fine) and #8 (the artifact was byte-stable and the *rendering* was not). The sketch asked for
   "graph diff caught X" and the episodes that happened were both sharper than that.

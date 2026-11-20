@@ -28,8 +28,9 @@ One rule threads all of them: **measurements, not verdict.**
 | 12 | **The most-starred code graph got my imports right and my cycles wrong. Then it found a hole in mine.** — Graphify: byte-identical runs, 99.6 % import precision, 90 % recall, and a cycle report that sees 2 of 45 because a lazy import makes no dependency; a prediction from its source that came out half right; and its correct answers found a bug in codemap, fixed in 0.0.25. | [EN](12-right-imports-wrong-cycles.md) | [RU](12-right-imports-wrong-cycles.ru.md) |
 | 13 | **The reference gate agreed with my graph to the last edge. Then the question I asked it caught me too.** — import-linter: grimp's graph equals the 266-edge truth exactly and its verdicts match codemap's on a real contract; three configuration typos pass without checking (two filed, one already fixed); the third question, asked of codemap, found the same hole, fixed in 0.0.26. | [EN](13-the-reference-gate.md) | [RU](13-the-reference-gate.ru.md) |
 | 14 | **I measured whether my graph finds the right context four times. The fourth measurement found a hole in my tool instead.** — `pack` against git history, in both directions, with an agent in the loop and on RepoBench: one product change, three answers of no, and the crash rows of the last run led to a security defect (fixed in 0.0.37) and to a sentence of mine that had never been measured (fixed in 0.0.38). | [EN](14-four-measurements-and-a-hole.md) | [RU](14-four-measurements-and-a-hole.ru.md) |
+| 15 | **A code tool with 86,000 stars lets a model write the graph. On nine files the model wrote the prose and not one relationship. The stars are still right.** — Understand-Anything: a deterministic layer that is byte-identical and 99.5 % precise and sees 0 of 45 cycles, a model pilot ($0.71) that added summaries, layers and a tour and no call edge, and the question my benchmark could not ask. | [EN](15-the-model-wrote-the-prose.md) | [RU](15-the-model-wrote-the-prose.ru.md) |
 
-Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14** (the detective story needs no
+Suggested reading order for a newcomer: **1 → 0 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12 → 13 → 14 → 15** (the detective story needs no
 prior knowledge of codemap and explains the method the rest depend on). Chronological
 readers can start at 0. Posts 4, 5, 6, 8, 9, 11, 13 and 14 are the ones where the method is turned on the author — 4 on a
 claim of his, 5 on the limits of how he was testing it, 6 on three differentiators he had to give up, 8 on
@@ -98,16 +99,16 @@ Legend: 🔲 not started · ✍️ drafting (out of repo) · ✅ published here
 | P12 — Graphify | ✅ EN + RU | [Graphify card](../tools/graphify.md); [positioning](../positioning.md) build-story #12 |
 | P13 — import-linter | ✅ EN + RU | [import-linter card](../tools/import-linter.md); [positioning](../positioning.md) build-story #13 |
 | P14 — the `pack` line (V2, V3, V4, RepoBench) and the hole the measurement found | ✅ EN + RU | [pack_usefulness](../pack_usefulness.md), [pack_direction](../pack_direction.md), [pack_agent_pilot](../pack_agent_pilot.md), [repobench_context](../repobench_context.md); gaps of R1-C94 and R1-C96 |
-| next — Understand-Anything | 🔲 BACKLOG R1-C101 | [Understand-Anything card](../tools/understand-anything.md) (measured 2026-10-15; in the series only as one number in post 12) |
+| P15 — Understand-Anything | ✅ EN + RU | [Understand-Anything card](../tools/understand-anything.md); [positioning](../positioning.md) build-story #15 |
 | the role-provenance story | 🔲 **blocked** | has the facts (M8–M12), needs a concrete before/after episode. R1-C24 (`codemap tests`) is the likeliest source of one |
 | rag_for_git | 🔲 not yet a story | the card stops at Stage A of three (BACKLOG R1-C102) |
 
 A post's number is its filename slot, assigned **on publication** — a planned post takes the next
 free number when it actually lands, not when it is sketched. Which is why the role-provenance story
-was planned as P5, P6, P7, P9 and P10, and P11–P14 went out ahead of it too, without a word of it being written: waiting costs it a number each time
+was planned as P5, P6, P7, P9 and P10, and P11–P15 went out ahead of it too, without a word of it being written: waiting costs it a number each time
 a post that *did* have an episode goes out first. That is the rule working, not failing.
 
-**One post has its episode and is owed: Understand-Anything (R1-C101).** The `pack` line shipped as P14.
+**No post with an episode in hand is owed now.** The `pack` line shipped as P14 and Understand-Anything as P15.
 This table said "P10 blocked, P11 later" for two months after P10–P13 had shipped, and nothing in the series
 recorded V2–V4 or RepoBench at all. A review of the track on 2026-11-20 found both; the table is not guarded,
 so it is re-read at each review rather than trusted.
@@ -136,7 +137,7 @@ instance twenty-four hours after the audit declared the mechanism closed. Nor P9
 pre-registered run against three third-party packages: the list held five predictions, two of them were
 refuted, and the four findings that mattered were not on it at all. **Six published posts,
 none of them writable from its sketch** — which is the argument for not forcing the role-provenance story.
-P10–P13 kept the pattern: none of them was on the sketch list either.
+P10–P15 kept the pattern: none of them was on the sketch list either.
 
 Sketch for the one that remains:
 

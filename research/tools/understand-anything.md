@@ -474,3 +474,8 @@ card's reach. The pilot (§4) is the first look into that part: on 9 files, Sonn
 - **Adds a second instance to R1-C61's door, now priced:** the pilot measured what a model in the
   loop costs here (§4). The full run stays the owner's decision.
 - **Reported upstream:** [#727](https://github.com/Egonex-AI/Understand-Anything/issues/727) for `from .. import Name`. The `try:` / nested half is their #692.
+  *Update 2026-11-20:* #727 was fixed upstream within a week: a community contributor's PR
+  [#728](https://github.com/Egonex-AI/Understand-Anything/pull/728) ("resolve `from . import NAME` to the package
+  `__init__.py`") was merged on 2026-10-22 and the issue closed as completed. #692 (imports under `try:`, inside
+  functions and under `TYPE_CHECKING`) is still open. **Not re-measured:** every figure above describes f2d0164.
+  Stars at the time of this note: 93 392.
