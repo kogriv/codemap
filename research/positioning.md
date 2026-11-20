@@ -1266,11 +1266,65 @@ graph, it is the configuration that tells it what to check.
 - "That is the second time a question I wrote for someone else's gate found a hole in mine. I am starting to
   think that is what such questions are for." → build-story #13
 
+## Build-story #14 — "Four measurements of whether my graph finds the right context; the fourth found a hole in my tool instead" (ourselves)
+
+**Facts:** V2 [`pack_usefulness.md`](pack_usefulness.md) §6, V3 [`pack_direction.md`](pack_direction.md) §7, V4
+[`pack_agent_pilot.md`](pack_agent_pilot.md) §3–§4.1, RepoBench [`repobench_context.md`](repobench_context.md) §4;
+gaps [`build_imports_compiled_modules`](../gaps/build_imports_compiled_modules_2026-11-10.md),
+[`root_builds_lose_modules_and_targets`](../gaps/root_builds_lose_modules_and_targets_2026-11-10.md); design
+[`root_builds`](../docs/design/root_builds.md). **Post:** [14](blog/14-four-measurements-and-a-hole.md).
+*(Written on 2026-11-20, ten days after the last of it. It should have been written hot; the review of the track
+found it missing.)*
+
+### The setup
+`pack` is the budgeted slice of the graph an agent gets for a task. It was proven deterministic and in budget,
+never useful. Four oracles, each pre-registered: git co-change on 108 commits (V2); the same with two-way walks
+and a second repository as holdout (V3); a paid agent pilot, twice (V4); and RepoBench, the first oracle someone
+else built (R1-C93).
+
+### The surprising measurements
+- **V2:** `pack` 0.189 recall@10 against `grep` 0.354, and **exactly 0.000** on tests over 53 commits: the walk went
+  only from the seed to what it uses. But 47 files only `pack` found.
+- **V3:** walking both ways doubled and tripled recall (+0.226 [+0.153, +0.301] on bquant, +0.397 on the holdout)
+  and shipped as the default in 0.0.22, by a rule written before the run. The same rule closed V4: against `grep`
+  on bquant +0.061 [−0.019, +0.141].
+- **V4:** the owner reopened the closed door, and the text says so (I had proposed the step without saying it was
+  closed). Offered `pack`, the agent called it **1 time in 40**. Handed `pack`'s output, it did no better than grep
+  output of the same size: −0.027, seventeen tasks equal, three lower, none higher. $10.66 for both pilots.
+- **RepoBench:** on first uses the seeded rank is at chance (0.183 against random 0.203); the rule "an imported
+  name not used yet" gets 0.350, and on repeat uses "the most recently used name" gets 0.500. The seed adds
+  nothing over global centrality. The leak control (+0.197 on the untruncated file) shows the scoring was wired.
+
+### The turn
+Eight rows in five repositories crashed codemap's build. Diagnosing one "non-UTF-8 file" found a compiled `.pyd`
+beside its `.py`, and behind it the real defect: griffe's default `allow_inspection=True` makes it **import**
+modules it cannot read from source, so codemap executed compiled modules of the analysed tree, against the
+README's "never imports the target". Confirmed on 0.0.10, 0.0.20 and 0.0.36; fixed in 0.0.37. And a sentence in my
+own surprises section ("codemap cannot build such a repository at all") turned out unmeasured: twelve such
+repositories all built, and the probe found two real holes, fixed in 0.0.38 (exact import edges 28 → 694).
+
+### The lesson (reusable)
+A measurement that fails to show usefulness still pays, through what the harness breaks on. Read the crash rows
+before the result table. And a sentence in a surprises section is a claim like any other: it needs a measurement
+or a "not measured".
+
+### What we take, what we keep
+- **Take:** two-way `pack` by default (V3's one positive); a degrade-not-crash build on foreign trees; source-only as
+  a tested property, not a README sentence.
+- **Keep:** negative results published as they came; a door's rule written down, and the text saying when it was
+  bypassed.
+
+**Quotable:**
+- "Offered the tool, the agent used it once in forty runs. The difference I measured was between two arms that did
+  the same thing." → build-story #14
+- "The measurement that was supposed to tell me whether the graph helps told me instead that my analyzer executed
+  code it promised never to import." → build-story #14
+
 ## Future stories (skeletons — fill on разбор)
 
-- **#14 …** next tool from R2.2 (CodeSlicer, ast-index, CodeWiki, Foglamp in the queue). Same shape: setup → the surprising measurement → head-to-head → lesson →
+- **#15 …** next tool from R2.2 (CodeSlicer, ast-index, CodeWiki, Foglamp in the queue). Same shape: setup → the surprising measurement → head-to-head → lesson →
   take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code, #6 CodeGraph, #7 OntoIndex, #10 jevgrep, #11 grafema,
-  #12 Graphify, #13 import-linter done; #4, #5, #8, #9 are about ourselves, and #11 is both.)
+  #12 Graphify, #13 import-linter done; #4, #5, #8, #9, #14 are about ourselves, and #11 is both.)
 - **The determinism story.** ✅ Told twice, neither time as sketched: #4 (a determinism *test* went red and
   the tool was fine) and #8 (the artifact was byte-stable and the *rendering* was not). The sketch asked for
   "graph diff caught X" and the episodes that happened were both sharper than that.
