@@ -28,7 +28,7 @@
 
 ## 1. Подходы — таксономия, перерисованная под то, к чему сошлось поле
 
-В `00_landscape.md` семейства выделены по устройству (август 2026). Поле с тех пор сошлось к одному типу —
+В `00_landscape.md` семейства выделены по устройству (август 2026, дополнения — до октября). Поле с тех пор сошлось к одному типу —
 «контекст для ИИ + граф + MCP в одном инструменте», — поэтому здесь подходы разложены по тому, **как они
 получают ответ**.
 
@@ -41,7 +41,7 @@
 | 5 | Точные индексы кода (code intelligence) | компилятор/LSP строит индекс | LSP, SCIP/LSIF, Sourcegraph, Kythe, Glean | ◐ SCIP как формат экспорта | нужен работающий язык-сервер и окружение; индекс бинарный, не сравнивается между версиями |
 | 6 | Статический граф кода для агентов (MCP) | разбор исходника в граф | codemap, CodeGraph, GitNexus, graphlens, OntoIndex, grafema, Graphify (кодовый слой) | ✅ все перечисленные | у каждого свои: см. §2 — чаще всего ленивые импорты и вопросы о графе целиком |
 | 7 | Языки запросов и структурный поиск | DSL или шаблон по AST/потокам данных | CodeQL, Semgrep, ast-grep, Joern | ✖ по описаниям | мощно, но вопрос надо уметь сформулировать; не про контекст для агента |
-| 8 | Архитектурные гейты | контракт слоёв проверяется в CI | import-linter (grimp), codemap check, гарантии grafema | ✅ [import-linter](tools/import-linter.md), grafema | самое слабое место — не граф, а конфигурация: опечатка проходит без проверки |
+| 8 | Архитектурные гейты | контракт слоёв проверяется в CI | import-linter (grimp), codemap check, гарантии grafema | ✅ [import-linter](tools/import-linter.md), grafema | самое слабое место — не граф, а конфигурация: опечатка проходила без проверки (import-linter 2.15, grafema 0.4.1; в import-linter 2.16 исправлено нашими PR #395/#396, у codemap — в 0.0.23 и 0.0.26) |
 | 9 | Граф и объяснение пишет модель | субагенты пишут связи, слои, экскурсию | Understand-Anything; вики-генераторы | ✅ [карточка](tools/understand-anything.md) (детерминированный слой + пилот) | на пилоте модель не написала ни одной связи; не детерминирован по построению |
 | 10 | Платформы качества и анализаторы | правила, потоки данных, история git | SonarQube, CodeScene, Snyk Code, Semgrep, CodeQL, PVS-Studio | ◐ по документации (§2.6) | T4 не заявляет никто; архитектурные правила — только SonarQube |
 | 11 | Боты ИИ-ревью | модель читает дифф, у части — с графом репозитория | CodeRabbit, Greptile, ревью в Copilot, Qodo, Graphite Agent | ◐ по документации (§2.6) | T4–T5 не заявлены; радиус правки заявлен, не измерен |
@@ -56,18 +56,23 @@
 | инструмент | циклов видно | почему | источник |
 |---|---|---|---|
 | grimp (import-linter) | **45 из 45** | читает импорты в любом месте | [карточка](tools/import-linter.md) |
-| codemap | 45 из 45 | то же, с пометкой области (модуль / функция / TYPE_CHECKING) | эталон |
+| codemap 0.0.4 и новее | 45 из 45 | то же, с пометкой области (модуль / функция / TYPE_CHECKING) | эталон |
+| codemap до R1-C29 (до 0.0.4) | **1 из 45** и печатал «import graph is acyclic» | читал только импорты верхнего уровня | BACKLOG R1-C29, issue #11 |
 | grafema | 8 из 45 | читает все области по замыслу, но три дефекта Python-пути (с двумя исправленными — 42 из 45) | [карточка](tools/grafema.md) |
-| Graphify | 2 из 45 | импорт внутри функции не даёт зависимости модуля | [карточка](tools/graphify.md) |
+| Graphify | 2 из 45 в его отчёте (3 с учётом меток `reverse_import`; по всем связям с метками — 28, из них 4 ложных) | импорт внутри функции не даёт зависимости модуля | [карточка](tools/graphify.md) |
 | Understand-Anything | **0 из 45** | читает только импорты верхнего уровня; агенту запрещено перепроверять | [карточка](tools/understand-anything.md) |
-| CodeGraph 1.6.0 | сообщает 136, настоящих 41 | идёт по рёбрам вызовов, разрешённым по имени | [карточка](tools/codegraph.md), [перемер](codegraph_remeasure.md) |
-| CodeGraph 1.6.2 | сообщает 25, настоящих 16 | после исправлений автора | [перемер](codegraph_remeasure.md) |
+| CodeGraph 1.6.0 | сообщает 136, настоящих 13 из 45 (точность 9,6 %, полнота 28,9 %) | идёт по рёбрам вызовов, разрешённым по имени | [карточка](tools/codegraph.md), [перемер](codegraph_remeasure.md) |
+| CodeGraph 1.6.2 | сообщает 25, настоящих 16 (точность 64 %, полнота 35,6 %) | после исправлений автора | [перемер](codegraph_remeasure.md) |
 
-Причина почти всех потерь одна: **на этом дереве каждый цикл замыкается через импорт не на верхнем уровне
-модуля** (ленивый импорт внутри функции). Граф, который такие импорты пропускает, не просто меньше — он
+Причина почти всех потерь одна: **на этом дереве ни один цикл не замыкается только импортами верхнего уровня
+модуля**: 44 цикла требуют импорта внутри функции, один — импорта под `if TYPE_CHECKING:`.
+В опубликованных до 2026-10-15 таблицах стояло «41 цикл»: это эталон с другого коммита (bquant@f4992d7), он
+прожил в таблицах семь недель и исправлен перемером. Граф, который такие импорты пропускает, не просто меньше — он
 сообщает «циклов нет» о дереве с 45 циклами.
 
-Оговорка: дерево одно и принадлежит автору codemap; это одна форма кода, а не выборка.
+Оговорка: дерево одно и принадлежит автору codemap; это одна форма кода, а не выборка. GitNexus, OntoIndex и
+graphlens с этими 45 не сверялись (у OntoIndex «Import Cycles» смешивает кольца ссылок документов и вызовов, у
+graphlens вопроса T5 нет) — в таблицу они не входят.
 
 ### 2.2 Точность, когда ответ есть, высокая у всех
 
@@ -81,14 +86,15 @@ Understand-Anything 99.5 %. Разница не в точности, а в **п�
 | побайтово тот же результат на том же входе | инструменты |
 |---|---|
 | да | codemap (быстрый режим), Graphify, детерминированный слой Understand-Anything, набор рёбер grafema |
-| нет | граф OntoIndex, БД graphlens, ответы jevgrep (модель), граф Understand-Anything целиком (по построению) |
+| нет | граф OntoIndex, ответы jevgrep (модель) |
+| не проверялось | БД graphlens (SQLite, побайтово не сравнивается, повторяемость не мерилась); граф Understand-Anything целиком (недетерминирован по построению, разброс не измерен) |
 
 Для агента и CI это не мелочь: ответ, который меняется без изменения кода, нельзя сравнить между версиями.
 
 ### 2.4 Две пустые колонки
 
-T4 (как именно вызывают функцию: позиционно, по имени, через распаковку) и T5 (слои, циклы) — пустые почти у
-всех измеренных инструментов, включая 68-тысячезвёздный CodeGraph, который оказался быстрее codemap (пост 6).
+T4 (как именно вызывают функцию: позиционно, по имени, через распаковку) пуста у всех измеренных инструментов,
+кроме codemap. T5 (слои, циклы) есть частично у пяти и полностью у import-linter. Обе колонки слабы у большинства, включая 68-тысячезвёздный CodeGraph, который оказался быстрее codemap (пост 6).
 Точечный вопрос начинается с символа; вопрос о графе целиком — нет, и инструменты, построенные вокруг поиска,
 до него не доходят.
 
@@ -122,6 +128,24 @@ T4 (как именно вызывают функцию: позиционно, �
 | PT Application Inspector (Positive Technologies) | безопасность | потоки данных + символьное исполнение; граф кода — для отсева недостижимого | — | не указано | не указана; сертификат ФСТЭК |
 | Solar appScreener (Солар) | безопасность | SAST/DAST/SCA, ИИ-разбор | — | не указано | не указана; сертификат ФСТЭК |
 | Svace (ИСП РАН) | безопасность | символьное исполнение, межпроцедурный анализ | — | не указано | по запросу; реестр российского ПО |
+
+Страницы поставщиков, прочитанные 2026-11-20:
+SonarQube — [что это](https://docs.sonarsource.com/what-is-sonarqube.md), [архитектура](https://docs.sonarsource.com/sonarqube-cloud/architecture), [Vortex](https://docs.sonarsource.com/agent-centric-development-cycle/inside-your-agent-the-agentic-loop/sonar-vortex-context.md), [MCP](https://docs.sonarsource.com/sonarqube-mcp-server/reference/tools.md), [цены](https://www.sonarsource.com/plans-and-pricing/);
+CodeScene — [hotspots](https://codescene.io/docs/guides/technical/hotspots.html), [архитектура](https://codescene.io/docs/guides/architectural/architectural-analyses.html), [MCP](https://github.com/codescene-oss/codescene-mcp-server), [цены](https://codescene.com/pricing);
+Snyk Code — [документация](https://docs.snyk.io/scan-with-snyk/snyk-code), [MCP](https://docs.snyk.io/integrations/snyk-studio-agentic-integrations), [тарифы](https://snyk.io/plans/);
+Semgrep — [документация](https://docs.semgrep.dev/), [Pro engine](https://docs.semgrep.dev/semgrep-code/semgrep-pro-engine-intro), [MCP](https://docs.semgrep.dev/semgrep-appsec-platform/mcp), [цены](https://semgrep.dev/pricing);
+CodeQL — [о CodeQL](https://codeql.github.com/docs/codeql-overview/about-codeql/), [граф вызовов](https://codeql.github.com/docs/codeql-language-guides/navigating-the-call-graph/), [GitHub Advanced Security](https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security);
+PVS-Studio — [продукт](https://pvs-studio.com/en/pvs-studio/), [о компании](https://pvs-studio.com/en/about/);
+CodeRabbit — [документация](https://docs.coderabbit.ai/), [Blast Radius](https://docs.coderabbit.ai/security/blast-radius), [цены](https://www.coderabbit.ai/pricing);
+Greptile — [документация](https://www.greptile.com/docs), [MCP](https://www.greptile.com/docs/mcp-v2/tools), [цены](https://www.greptile.com/pricing);
+Copilot code review — [документация](https://docs.github.com/en/copilot/concepts/agents/code-review);
+Qodo — [переименование](https://www.qodo.ai/formerly-qodo-merge/), [Context Engine](https://docs.qodo.ai/developer-tools/context-engine-mcp), [PR-Agent](https://github.com/qodo-ai/pr-agent);
+Graphite — [AI reviews](https://graphite.com/docs/ai-reviews), [индекс](https://graphite.com/docs/code-indexing), [покупка Cursor](https://cursor.com/blog/graphite);
+SourceCraft Code Assistant — [условия](https://yandex.ru/legal/cloud_terms_code_assistant/), [ревью](https://sourcecraft.dev/portal/docs/en/code-assistant/operations/src-review), [MCP](https://sourcecraft.dev/portal/docs/en/sourcecraft/operations/work-with-mcp);
+GigaCode — [продукт](https://gitverse.ru/features/gigacode/), [агент](https://gitverse.ru/docs/ai/gigacode-on-gitverse/gigacode-agent);
+PT Application Inspector — [продукт](https://www.ptsecurity.com/ru-ru/products/ai/);
+Solar appScreener — [продукт](https://rt-solar.ru/products/solar_appscreener/);
+Svace — [продукт](https://www.ispras.ru/technologies/svace/).
 
 Что из этого следует для обзора:
 
@@ -159,7 +183,8 @@ T4 (как именно вызывают функцию: позиционно, �
 
 - Все измерения — на одном Python-дереве автора codemap. Одна форма кода, не выборка.
 - Эталон построен codemap; независимое подтверждение есть для графа импортов (grimp — точное совпадение) и
-  для вызывающих одного класса (три реализации без общего кода: 58 / 58 / 60), не для всего.
+  для вызывающих одного класса (глубокий режим codemap: три реализации без общего кода — 58 / 58 / 60; в быстром
+  режиме на август codemap и OntoIndex — 57 и 57), не для всего.
 - Автор обзора — автор одного из инструментов. Поэтому в серии публикуется и то, где codemap проигрывает
   (скорость CodeGraph, звёзды Understand-Anything, `pack` против `grep`), и дефекты, найденные в codemap
   вопросами, написанными для чужих инструментов (посты 11, 12, 13).
