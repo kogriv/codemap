@@ -650,6 +650,24 @@ languages = ["python"]
 interface = ["cli"]
 watch = { kind = "pypi", name = "wily" }
 
+[[tool]]
+id = "fallow"
+name = "fallow"
+url = "https://github.com/fallow-rs/fallow"
+license = "MIT"
+languages = ["typescript", "javascript"]
+interface = ["cli", "mcp", "lsp"]
+watch = { kind = "npm", name = "fallow" }
+
+[[tool]]
+id = "roam-code"
+name = "roam-code"
+url = "https://github.com/Cranot/roam-code"
+license = "Apache-2.0"
+languages = ["multi"]
+interface = ["cli", "mcp"]
+watch = { kind = "pypi", name = "roam-code" }
+
 [[claim]]
 tool = "griffe"
 need = "api-diff"
@@ -681,6 +699,24 @@ status = "read"
 checked = "2026-08-02"
 evidence = "research/04_python_graph_arch_peers.md#radon--wily--complexity-metrics"
 summary = "Tracks radon-style metrics across git history."
+
+[[claim]]
+tool = "fallow"
+need = "frontend-dead-exports"
+status = "read"
+summary = "Per its README: Rust analyzer for TypeScript and JavaScript that builds one repository graph and reports unused code, circular dependencies and architecture-boundary violations, with an `audit` command that fails only on findings a change introduces."
+
+[[claim]]
+tool = "fallow"
+need = "duplicates"
+status = "read"
+summary = "Per its README: duplication detection for TypeScript and JavaScript, also CSS and Vue, Svelte and Astro components."
+
+[[claim]]
+tool = "roam-code"
+need = "repo-overview"
+status = "read"
+summary = "Per its package description: local codebase intelligence for AI coding agents, with a structural repo map, change-safety gates and an MCP interface; says local analysis needs no API keys and sends no source code."
 
 [[claim]]
 tool = "aider-repo-map"

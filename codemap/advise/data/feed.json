@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "as_of": "2026-11-21T09:45:21Z",
+  "as_of": "2026-11-21T09:58:15Z",
   "latest": {
     "aider-repo-map": {
       "version": "0.86.2",
@@ -241,9 +241,35 @@
       "version": "1.25.0",
       "date": "2023-10-11",
       "seen": "2026-11-21"
+    },
+    "fallow": {
+      "version": "3.45.0",
+      "date": "2026-11-20",
+      "seen": "2026-11-21"
+    },
+    "roam-code": {
+      "version": "14.1.0",
+      "date": "2026-09-09",
+      "seen": "2026-11-21"
     }
   },
   "news": [
+    {
+      "date": "2026-11-21",
+      "kind": "new-tool",
+      "tool": "roam-code",
+      "text": "roam-code 14.1.0 on PyPI describes itself as local codebase intelligence for AI coding agents with change-safety gates and an MCP interface.",
+      "source": "https://pypi.org/project/roam-code/",
+      "verified": false
+    },
+    {
+      "date": "2026-11-21",
+      "kind": "new-tool",
+      "tool": "fallow",
+      "text": "fallow is an MIT-licensed Rust analyzer for TypeScript and JavaScript offering CLI, MCP and LSP interfaces, per its README.",
+      "source": "https://github.com/fallow-rs/fallow",
+      "verified": false
+    },
     {
       "date": "2026-11-21",
       "kind": "card",

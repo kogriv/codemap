@@ -11,8 +11,8 @@ Its lab measures neighbouring code-intelligence tools on one shared truth and ke
 `advise` (MCP) and `codemap advise` answer the agent's next question when the graph cannot: other
 languages, duplicates, security patterns, complexity, DB query counts. For each need it gives codemap's own
 coverage, proved by a named test, and the other tools. Every claim is marked `measured`, `probed`, `read`
-(nobody here ran it) or `rejected`, with its version, date and evidence. Today: 21 needs, 51 tools, claims
-23 measured · 18 probed · 58 read · 9 rejected. The inventory is [`research/matrix.md`](research/matrix.md),
+(nobody here ran it) or `rejected`, with its version, date and evidence. Today: 21 needs, 53 tools, claims
+23 measured · 18 probed · 61 read · 9 rejected. The inventory is [`research/matrix.md`](research/matrix.md),
 the guide is [`docs/advise.md`](docs/advise.md), and `codemap advise --refresh` fetches the current catalog
 without a release.
 
