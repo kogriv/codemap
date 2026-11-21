@@ -81,3 +81,58 @@ jevgrep is left out: it needs a paid key and uploads source; its Python card sta
 | E6 | Before this work `advise --lang rust` has **0** claims measured on Rust; after, ≥ 2 tools × ≥ 2 needs | yes |
 | E7 | The guards bite: a recipe naming an unknown tool, a `why` with a number but no evidence, and a Rust claim without `measured_on` each fail the suite (mutations) | yes |
 | E8 | Nothing about Python answers changes: `advise` without a language filter renders the same rows for every Python need | no (stays) |
+
+## D7 — audit axes (R1-C112, added 2026-11-21 before any audit run)
+
+The R1–R5 numbers answer *navigation*, where rust-analyzer is the truth by construction: no tool can beat it there,
+so navigation alone gives no reason to install anything. The owner's question is the right one: **where does a lab
+tool give what the native tools do not?** A recipe is a row per audit axis, and a lab tool enters a row only with a
+measured gain.
+
+| Axis | Native coverage | Predicted gap |
+|---|---|---|
+| security, dependencies | cargo-audit, cargo-deny, cargo-vet, cargo-geiger | none |
+| API compatibility | cargo-semver-checks | none |
+| correctness, lint | rustc, clippy, miri | none |
+| unused dependencies | cargo-machete, cargo-udeps | none |
+| **dead code** | rustc `dead_code` | a `pub` item of a *library* crate that no workspace crate uses is never reported (in a binary crate it is). In an application workspace of internal library crates this is most of the dead code |
+| **architecture** | Cargo forbids crate cycles; cargo-modules draws the module graph | module cycles inside a crate; no layer rule on modules at all (no import-linter analogue) |
+| **change impact** | a point call hierarchy in rust-analyzer | no transitive closure, no diff → touched code → tests |
+| **duplication** | clippy `match_same_arms`, `if_same_then_else` (local) | no cross-file or near-miss clones |
+
+Complexity × churn hotspots stay out until a measured tool claims them.
+
+**Truth per axis**, all on ripgrep at the pinned commit, with plants made by a script in a copy (never the clean tree):
+
+- *Dead code.* Plants: P1 a private unused fn in a library crate (rustc must flag it: control); P2 a `pub` unused fn
+  in a library crate (the gap); traps that are alive: P3 a `pub` fn used only by another workspace crate, P4 an impl
+  method reached only through `dyn`, P5 a fn reached only through a generic bound, P6 a fn called only from a
+  `macro_rules!` expansion; P7 a fn used only by `#[cfg(test)]` code (reported as its own class). On the natural tree,
+  every item a tool reports dead is checked against rust-analyzer `textDocument/references`: an item with a
+  reference outside its own declaration is a **false death**.
+- *Architecture.* Plants: a two-module cycle inside one crate, and a declared layer rule broken by one `use`.
+  Natural: module cycles from the cargo-modules truth (strongly connected components).
+- *Change impact.* The transitive caller closure from rust-analyzer for the R2 targets, and for a real ripgrep
+  commit the functions its diff touches, closed over callers.
+- *Duplication.* Plants of three kinds: an exact copy of a 15+ line fn in another file, a copy with renamed
+  identifiers, and a copy with inserted and reordered statements.
+
+**Tools measured** are those that claim the axis in their docs or CLI; the inventory is written into the results
+before a run. Expected candidates from the catalog: dead code — CodeGraph, OntoIndex, a GitNexus Cypher query (no
+incoming calls); architecture — CodeGraph's cycle finder, GitNexus `check`; impact — GitNexus `impact` and
+`detect_changes`, CodeGraph `impact`, graphlens, OntoIndex, roam-code; duplication — jscpd.
+
+**Practical check.** The finished recipe is applied once on the owner's private Rust workspace (project D), from a
+clean copy, read-only. Its results go to the owner privately and never into this repository or the catalog.
+
+### Expectations for D7
+
+| # | Expectation | Fails if nothing was done? |
+|---|---|---|
+| E9 | The native gap is real: on the planted copy rustc flags P1 and does not flag P2 | yes |
+| E10 | Every tool with a dead-code answer is scored for false deaths on the natural tree. Prediction: a dead list built on GitNexus's call edges has ≥ 30 % false deaths (its R2 recall was low); CodeGraph's is lower but not zero | yes (prediction) |
+| E11 | At least one tool reports at least one of the alive traps P3–P6 as dead. Prediction: P4 (`dyn`) and P6 (macro) | yes (prediction) |
+| E12 | Cycles: the planted cycle is found by the native graph (cargo-modules) — prediction: native covers cycles. The layer rule: no native tool can state it; which lab tool can is recorded, possibly none | yes |
+| E13 | Impact recall against the closure, per tool. Prediction: the R2 order holds (CodeGraph above GitNexus) and no tool reaches the closure exactly | yes (prediction) |
+| E14 | Duplication: jscpd finds the exact and renamed copies and misses the reordered one. Prediction: no graph tool finds any clone | yes (prediction) |
+| E15 | The recipe has one row per axis of the table above. A row recommending a lab tool cites a measured number; a row without one says plainly that no lab tool is needed | yes |
