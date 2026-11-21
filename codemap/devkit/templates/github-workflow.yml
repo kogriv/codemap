@@ -1,0 +1,14 @@
+# codemap-devkit:ci v{{devkit_version}} — managed by the codemap devkit; the pin (codmap=={{codemap_version}}) is this project's decision
+name: codemap
+on: [push, pull_request]
+jobs:
+  architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "codmap=={{codemap_version}}"
+      - run: codemap build {{package}} -o {{graph}}
+      - run: codemap check --graph {{graph}} --root . --require-contract

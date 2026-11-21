@@ -1,0 +1,1 @@
+codemap: the code graph of `{{package}}` is {{currency}}. Use the MCP server `codemap` for structure questions: `callers` instead of grep, `impact` before changing a public symbol, `codemap review` on the diff before a merge — the codemap block in {{agents_file}} has the rules. Devkit v{{devkit_version}}{{devkit_note}}.

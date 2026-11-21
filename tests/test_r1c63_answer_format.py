@@ -44,7 +44,9 @@ from codemap.serve.session import Session
 # Re-pinned with a bump to 3 (2026-11-03, R1-C69/R1-C70): the refusal of an invalid contract and
 # the three states of the `check --graph` currency line join the pinned surfaces.
 # Re-pinned with a bump to 4 (2026-11-03, R1-C74): `report behavior` names its scopes.
-RENDERED_SHA = "32a160c89e31af252873c0703d0e903397c6d470013fad5889b9194e2a3a2eb8"
+# Re-pinned without a bump (2026-11-21, R1-C108): wording only — the refusal of an invalid contract
+# lists its known keys, and `allowed` is one of them now.
+RENDERED_SHA = "866e4409733e5c3e144f07453b68128e0fdfb615799bdd41d79bb423f194b88e"
 
 FILES = {
     "__init__.py": "",

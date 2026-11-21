@@ -1,0 +1,1 @@
+serve --mcp --graph ${CLAUDE_PROJECT_DIR:-.}/{{graph}} --source-root ${CLAUDE_PROJECT_DIR:-.} --watch

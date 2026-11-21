@@ -8,7 +8,7 @@ mechanical.
 
 from __future__ import annotations
 
-from codemap.arch import ArchitectureContract, Violation, applicability
+from codemap.arch import ArchitectureContract, Violation, allowed_unused, applicability
 
 _EDGE_CAP = 25   # offending edges listed per rule before "+N more"
 
@@ -128,6 +128,9 @@ def build_check(query, contract: ArchitectureContract, violations: list[Violatio
             for v in violations
         ],
         "scope": _not_judged(query, contract),
+        # R1-C108: only when `allowed` is declared — pairs it lists that nothing uses today.
+        **({"allowed_unused": [list(p) for p in allowed_unused(query, contract)]}
+           if contract.allowed is not None and not contract.error else {}),
     }
 
 
@@ -203,6 +206,8 @@ def _render_verdict(query, contract: ArchitectureContract, violations: list[Viol
             if k:   # R1-C78 D7: a green run says which kind of rule held
                 count = count[:-1] + f", {k} indirect)"
             rules.append(count)
+        if contract.allowed is not None:
+            rules.append(_rule_count("allowed", appl))
         if contract.no_cycles:
             rules.append("no_cycles")
         if contract.no_lazy_cycles:
@@ -215,7 +220,8 @@ def _render_verdict(query, contract: ArchitectureContract, violations: list[Viol
             rules.append("no_phantom_rules")
         return (f"# Architecture check — `{target}`\n\n"
                 f"✅ **Contract satisfied.** Rules enforced: {', '.join(rules)}.\n"
-                + _phantom_note(appl, contract) + _render_scope(query, contract))
+                + _phantom_note(appl, contract) + _unused_note(query, contract)
+                + _render_scope(query, contract))
 
     out = [f"# Architecture check — `{target}`", "",
            f"❌ **{len(violations)} rule(s) broken.**", ""]
@@ -232,7 +238,23 @@ def _render_verdict(query, contract: ArchitectureContract, violations: list[Viol
         out.append("")
     return ("\n".join(out).rstrip() + "\n"
             + _phantom_note(applicability(query, contract), contract)
+            + _unused_note(query, contract)
             + _render_scope(query, contract))
+
+
+def _unused_note(query, contract: ArchitectureContract) -> str:
+    """Pairs ``allowed`` lists that no import uses any more (R1-C108 D3), or nothing.
+
+    A note and not a violation: removing a dependency must never turn the gate red. Silent
+    when there are none, and when ``allowed`` is not declared — this text is diffed.
+    """
+    unused = allowed_unused(query, contract)
+    if not unused:
+        return ""
+    names = ", ".join(f"`{a}` → `{b}`" for a, b in unused[:10])
+    more = f" and {len(unused) - 10} more" if len(unused) > 10 else ""
+    return (f"\n_{len(unused)} allowed pair(s) are no longer used — {names}{more}. The ratchet "
+            "can tighten: `codemap devkit ratchet --tighten` removes them._\n")
 
 
 def _render_scope(query, contract: ArchitectureContract) -> str:

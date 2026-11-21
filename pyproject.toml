@@ -63,6 +63,10 @@ where = ["."]
 include = ["codemap*"]
 exclude = ["tests*"]
 
+# R1-C108: the devkit's templates ship in the wheel (rendered by `codemap devkit`).
+[tool.setuptools.package-data]
+"codemap.devkit" = ["templates/*"]
+
 [tool.pytest.ini_options]
 # Packages under tests/fixtures are *inputs* to the extractor, not tests. One of them
 # (tmworld, R1-C24) deliberately contains a file pytest would otherwise collect, because

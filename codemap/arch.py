@@ -18,6 +18,9 @@ integration gate reads). All rules operate on the **core** module import graph
     forbidden = [{ from = "core", to = "analysis" }]
     # ...or no chain of imports at all, through any module (R1-C78):
     #   forbidden = [{ from = "data", to = "analysis", indirect = true }]
+    # the ratchet (R1-C108): when present, every import between two layers must be a
+    # listed pair — any other is a violation; `codemap devkit ratchet` writes it from a graph.
+    #   allowed = [{ from = "analysis", to = "core" }]
     # the import graph must be acyclic *at import time* (the eager graph).
     no_cycles = true
     # also gate the coupling a lazy import hides: cycles closed only by an import
@@ -67,6 +70,9 @@ class ArchitectureContract:
     # written ahead of the code is a documented, legitimate use (see the module docstring)
     # and failing on it by default would turn that practice red on somebody else's tree.
     no_phantom_rules: bool = False
+    # R1-C108 (design ``devkit.md`` D3): the ratchet. ``None`` = not declared; ``()`` = declared
+    # empty, which allows no cross-layer import at all. The two must stay apart.
+    allowed: tuple[tuple[str, str], ...] | None = None
     error: str | None = None
     # R1-C35: the file this contract was looked for in. "No contract found" is only
     # actionable next to *where* we looked — a reader in the wrong directory cannot tell
@@ -77,7 +83,7 @@ class ArchitectureContract:
         return not (self.layers or self.independent or self.forbidden
                     or self.no_cycles or self.no_lazy_cycles
                     or self.no_type_only_cycles or self.exhaustive
-                    or self.no_phantom_rules)
+                    or self.no_phantom_rules or self.allowed is not None)
 
 
 @dataclass(frozen=True)
@@ -85,7 +91,7 @@ class Violation:
     """One broken rule, with the concrete import edges (or cycle) that break it."""
 
     rule: str            # layered | independent | forbidden | no_cycles | no_lazy_cycles
-    #                      | no_type_only_cycles | exhaustive
+    #                      | no_type_only_cycles | exhaustive | no_phantom_rules | allowed
     summary: str         # human one-liner
     edges: tuple[tuple[str, str], ...] = field(default=())   # offending (importer, imported)
     modules: tuple[str, ...] = field(default=())             # for exhaustive / cycles
@@ -133,7 +139,7 @@ def _near_miss_tables(data: dict) -> str | None:
 
 #: R1-C69: the closed schema of ``[architecture]``. A key outside it is an error, not a skip.
 _FLAGS = ("no_cycles", "no_lazy_cycles", "no_type_only_cycles", "exhaustive", "no_phantom_rules")
-_KNOWN_KEYS = ("layers", "independent", "forbidden") + _FLAGS
+_KNOWN_KEYS = ("layers", "independent", "forbidden", "allowed") + _FLAGS
 
 
 def _is_str_list(v) -> bool:
@@ -214,10 +220,45 @@ def contract_problems(section) -> list[str]:
                 elif not missing and item["from"] == item["to"]:
                     # R1-C79: rules read cross-layer edges, so this can never fire.
                     problems.append(f"`forbidden[{i}]`: `from` and `to` are both `{item['from']}`")
+    if "allowed" in section:
+        problems.extend(_allowed_problems(section["allowed"]))
     for flag in _FLAGS:
         if flag in section and not isinstance(section[flag], bool):
             problems.append(f"`{flag}` must be true or false, got {type(section[flag]).__name__} "
                             f"`{section[flag]!r}`")
+    return problems
+
+
+def _allowed_problems(items) -> list[str]:
+    """Schema of ``allowed`` (R1-C108 D3): ``{ from, to }`` tables, ``from ≠ to``, no repeats."""
+    if not isinstance(items, list):
+        return ["`allowed` must be a list of `{ from = \"…\", to = \"…\" }` tables"]
+    problems: list[str] = []
+    seen: set[tuple[str, str]] = set()
+    for i, item in enumerate(items):
+        if not isinstance(item, dict):
+            problems.append(f"`allowed[{i}]` must be a table `{{ from = \"…\", to = \"…\" }}`")
+            continue
+        extra = sorted(set(item) - {"from", "to"})
+        missing = [k for k in ("from", "to") if k not in item]
+        wrong = [k for k in ("from", "to") if k in item and not isinstance(item[k], str)]
+        if extra:
+            problems.append(f"`allowed[{i}]` has unknown key(s) " + ", ".join(f"`{k}`" for k in extra))
+        if missing:
+            problems.append(f"`allowed[{i}]` is missing " + ", ".join(f"`{k}`" for k in missing))
+        if wrong:
+            problems.append(f"`allowed[{i}]`: " + ", ".join(f"`{k}`" for k in wrong)
+                            + " must be a string")
+            continue
+        if missing:
+            continue
+        pair = (item["from"], item["to"])
+        if pair[0] == pair[1]:
+            # Rules read cross-layer edges only, so a pair of one layer can never be used.
+            problems.append(f"`allowed[{i}]`: `from` and `to` are both `{pair[0]}`")
+        elif pair in seen:
+            problems.append(f"`allowed[{i}]` repeats `{pair[0]}` → `{pair[1]}`")
+        seen.add(pair)
     return problems
 
 
@@ -254,6 +295,8 @@ def parse_contract(section: dict) -> ArchitectureContract:
         no_type_only_cycles=bool(section.get("no_type_only_cycles", False)),
         exhaustive=bool(section.get("exhaustive", False)),
         no_phantom_rules=bool(section.get("no_phantom_rules", False)),
+        allowed=(None if "allowed" not in section
+                 else tuple((str(i["from"]), str(i["to"])) for i in section["allowed"])),
     )
 
 
@@ -280,6 +323,8 @@ def applicability(query, contract: ArchitectureContract) -> dict:
     present = _graph_layers(query)
     named = set(contract.layers) | {m for grp in contract.independent for m in grp}
     named |= {n for pair in contract.forbidden for n in pair}
+    allowed = contract.allowed or ()
+    named |= {n for pair in allowed for n in pair}
     return {
         "layers": {"declared": len(contract.layers),
                    "applicable": sum(1 for x in contract.layers if x in present)},
@@ -289,6 +334,9 @@ def applicability(query, contract: ArchitectureContract) -> dict:
         "forbidden": {"declared": len(contract.forbidden),
                       "applicable": sum(1 for (a, b) in contract.forbidden
                                         if a in present and b in present)},
+        # R1-C108: always present (R1-C28); zero when the contract declares no `allowed`.
+        "allowed": {"declared": len(allowed),
+                    "applicable": sum(1 for (a, b) in allowed if a in present and b in present)},
         "absent_names": tuple(sorted(n for n in named if n not in present)),
     }
 
@@ -305,6 +353,30 @@ def _core_layer_edges(query) -> list[tuple[str, str, str, str]]:
             out.append((u, v, lu, lv))
     return out
 
+
+
+def layer_pairs(query) -> dict[tuple[str, str], list[tuple[str, str]]]:
+    """Every cross-layer core import, grouped by ``(from_layer, to_layer)`` (R1-C108).
+
+    All import scopes count — module level, function-local, ``TYPE_CHECKING``, stub: each is a
+    dependency of one layer on the other, which is what the ratchet holds still. The same
+    reading feeds the rule and ``codemap devkit ratchet``, so a generated list is green.
+    """
+    pairs: dict[tuple[str, str], list[tuple[str, str]]] = {}
+    for u, v, lu, lv in _core_layer_edges(query):
+        pairs.setdefault((lu, lv), []).append((u, v))
+    return pairs
+
+
+def allowed_unused(query, contract: ArchitectureContract) -> list[tuple[str, str]]:
+    """Pairs ``allowed`` lists that no import uses today — a ratchet that can tighten (D3).
+
+    Reported, never a violation: removing a dependency must not turn the gate red.
+    """
+    if contract.allowed is None:
+        return []
+    used = set(layer_pairs(query))
+    return [p for p in contract.allowed if p not in used]
 
 
 def _tangle_line(tangle: dict) -> str:
@@ -435,6 +507,22 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
                 "forbidden",
                 f"`{frm}` must not import `{to}`",
                 edges=tuple(sorted(bad)),
+            ))
+
+    # -- allowed: the ratchet — every cross-layer import must be a listed pair (R1-C108) --
+    if contract.allowed is not None:
+        listed = set(contract.allowed)
+        bad = tuple(sorted(
+            (u, v) for (u, v, lu, lv) in edges if (lu, lv) not in listed))
+        if bad:
+            new_pairs = sorted({(lu, lv) for (u, v, lu, lv) in edges if (lu, lv) not in listed})
+            names = ", ".join(f"`{a}` → `{b}`" for a, b in new_pairs[:10])
+            more = f" and {len(new_pairs) - 10} more" if len(new_pairs) > 10 else ""
+            violations.append(Violation(
+                "allowed",
+                f"{len(bad)} import(s) between layers not listed in `allowed` "
+                f"({len(new_pairs)} pair(s): {names}{more})",
+                edges=bad,
             ))
 
     # -- no_cycles: no cycle among imports that run at import time ---------------

@@ -1,0 +1,9 @@
+# codemap-devkit:ci v{{devkit_version}} — managed by the codemap devkit; add to .gitlab-ci.yml:
+#   include: { local: .gitlab/codemap-ci.yml }
+# The pin (codmap=={{codemap_version}}) is this project's decision.
+codemap-architecture:
+  image: python:3.12-slim
+  script:
+    - pip install "codmap=={{codemap_version}}"
+    - codemap build {{package}} -o {{graph}}
+    - codemap check --graph {{graph}} --root . --require-contract

@@ -226,7 +226,9 @@ def test_every_enforced_rule_names_itself_in_the_passing_line(tmp_path):
     assert "no_type_only_cycles" in names
     for name in names:
         value = {"layers": ("core",), "independent": (("core", "data"),),
-                 "forbidden": (("core", "data"),)}.get(name, True)
+                 "forbidden": (("core", "data"),),
+                 # R1-C108: the ratchet must list the tree's one cross-layer import to pass.
+                 "allowed": (("a", "b"),)}.get(name, True)
         contract = arch.ArchitectureContract(**{name: value})
         assert not contract.is_empty(), f"{name} alone must be a contract"
         md = render_check(quiet, contract, arch.check_contract(quiet, contract))

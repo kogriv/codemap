@@ -1020,6 +1020,74 @@ def _cmd_check(args) -> int:
     return _check_exit(violations, currency, allow_stale)
 
 
+def _cmd_devkit(args) -> int:
+    """R1-C108: `codemap devkit …` — design ``docs/design/devkit.md``."""
+    from pathlib import Path as _P
+    root = _P(args.root)
+    cmd = args.devkit_cmd
+    if cmd == "init":
+        from codemap.devkit.install import init
+        return init(root, package=args.package, consumers=args.consumer, docs=args.docs,
+                    agents_file=args.agents_file, claude_hooks=args.claude_hooks, codex=args.codex,
+                    ci=args.ci, hook=args.hook, build=args.build, ratchet=args.ratchet,
+                    dry_run=args.dry_run, force=args.force)
+    if cmd == "update":
+        from codemap.devkit.install import update
+        return update(root, force=args.force, repin=args.repin, dry_run=args.dry_run)
+    if cmd == "status":
+        from codemap.devkit.install import status
+        return status(root, args.format)
+    if cmd == "ratchet":
+        return _devkit_ratchet(root, args)
+    if cmd == "brief":
+        from codemap.devkit.hooks import brief
+        return brief(root.resolve())
+    if cmd == "touched":
+        from codemap.devkit.hooks import touched
+        return touched(root.resolve())
+    if cmd == "index":
+        from codemap.devkit.hooks import index
+        return index(root.resolve(), args.graph)
+    if cmd == "usage":
+        import json as _json
+
+        from codemap.devkit.usage import count, render, transcripts_dir
+        d = _P(args.transcripts) if args.transcripts else transcripts_dir(root)
+        r = count(d, args.days)
+        print(_json.dumps(r, indent=2, sort_keys=True) if args.format == "json" else render(r), end="")
+        return 0
+    raise SystemExit(f"error: unknown devkit command {cmd}")
+
+
+def _devkit_ratchet(root, args) -> int:
+    from codemap.arch import layer_pairs
+    from codemap.devkit.ratchet import RatchetError, edit_region
+    from codemap.devkit.state import load_state
+    st = load_state(root) or {}
+    graph = args.graph or str(root / st.get("graph", ".codemap/graph.json"))
+    q = Query(store.load(graph))
+    used = sorted(layer_pairs(q))
+    try:
+        res = edit_region(root, used, tighten=args.tighten, dry_run=args.dry_run)
+    except RatchetError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    verb = "would change" if args.dry_run else "changed"
+    if not res.added and not res.removed:
+        print(f"codemap.toml: the `allowed` region already matches the graph ({len(used)} pair(s) used).")
+        return 0
+    print(f"codemap.toml {verb}: {len(res.added)} pair(s) added, {len(res.removed)} removed "
+          f"({len(used)} pair(s) used by the graph).")
+    for a, b in res.removed:
+        print(f"  - {a} → {b}   (no import uses it any more)")
+    for a, b in res.added:
+        print(f"  + {a} → {b}")
+    if res.added and not res.created_region:
+        print("  Adding pairs weakens the gate: each one is a dependency the gate will no longer flag. "
+              "Give each a reason comment, or remove the import instead.")
+    return 0
+
+
 def _cmd_diff(args) -> int:
     """Two-graph API diff → added/removed/changed + breaking-change (R1-C5).
 
@@ -1405,6 +1473,58 @@ def build_parser() -> argparse.ArgumentParser:
                     help="With --graph: do not fail when the graph is behind its source tree "
                          "(R1-C70); the 'behind' line is still printed.")
     ck.set_defaults(func=_cmd_check)
+
+    # R1-C108: the devkit — adopt codemap in a repository and keep the adoption current.
+    dk = sub.add_parser("devkit", help="Install, update and check codemap's adoption in a repository "
+                                       "(agent rules, MCP, hooks, the ratchet contract).")
+    dks = dk.add_subparsers(dest="devkit_cmd", required=True)
+    di = dks.add_parser("init", help="First install into a repository (or `update` if already installed).")
+    di.add_argument("--root", default=".", help="Repository root (default: cwd).")
+    di.add_argument("--package", required=True, help="The package directory, relative to the root.")
+    di.add_argument("--consumer", action="append", default=[],
+                    help="Repo-scope root that uses the package (tests/, scripts/). Repeatable.")
+    di.add_argument("--docs", action="append", default=[], help="Docs root (*.md). Repeatable.")
+    di.add_argument("--agents-file", default=None,
+                    help="File for the agent rules block (default: AGENTS.md, or CLAUDE.md when only it exists).")
+    di.add_argument("--claude-hooks", action="store_true",
+                    help="Also install Claude Code hooks (SessionStart brief, PostToolUse touched).")
+    di.add_argument("--codex", action="store_true", help="Also write the MCP entry in .codex/config.toml.")
+    di.add_argument("--ci", choices=["github", "gitlab"], default=None, help="Also write a CI gate.")
+    di.add_argument("--no-hook", dest="hook", action="store_false", help="Do not install the post-commit hook.")
+    di.add_argument("--no-build", dest="build", action="store_false",
+                    help="Do not build the graph now (the contract is then not written).")
+    di.add_argument("--ratchet", action="store_true",
+                    help="Add the `allowed` region to an existing `[architecture]` contract.")
+    di.add_argument("--dry-run", action="store_true", help="Report what would change; write nothing.")
+    di.add_argument("--force", action="store_true",
+                    help="Overwrite hand-edited regions and foreign artifacts in the devkit's place.")
+    du = dks.add_parser("update", help="Bring every managed artifact to the installed devkit version.")
+    du.add_argument("--root", default=".")
+    du.add_argument("--force", action="store_true")
+    du.add_argument("--repin", action="store_true", help="Move the pin to the codemap running this command.")
+    du.add_argument("--dry-run", action="store_true")
+    dst = dks.add_parser("status", help="What is current, outdated, edited by hand or missing (exit 1 if any).")
+    dst.add_argument("--root", default=".")
+    dst.add_argument("--format", choices=["text", "json"], default="text")
+    dr_ = dks.add_parser("ratchet", help="Write the contract's `allowed` region from the graph, "
+                                         "or remove pairs nothing uses (--tighten).")
+    dr_.add_argument("--root", default=".")
+    dr_.add_argument("--graph", default=None, help="Graph to read (default: the devkit's, .codemap/graph.json).")
+    dr_.add_argument("--tighten", action="store_true", help="Remove allowed pairs no import uses any more.")
+    dr_.add_argument("--dry-run", action="store_true")
+    db = dks.add_parser("brief", help="SessionStart hook: graph currency and the rule, as plain text.")
+    db.add_argument("--root", default=".")
+    dt = dks.add_parser("touched", help="PostToolUse hook: what depends on the edited module (stdin: hook JSON).")
+    dt.add_argument("--root", default=".")
+    dx = dks.add_parser("index", help="Write the per-module digest the hooks read.")
+    dx.add_argument("--root", default=".")
+    dx.add_argument("--graph", default=None)
+    dus = dks.add_parser("usage", help="codemap tool calls against grep in local Claude Code transcripts.")
+    dus.add_argument("--root", default=".")
+    dus.add_argument("--days", type=int, default=7)
+    dus.add_argument("--transcripts", default=None, help="Transcripts directory (default: Claude Code's for --root).")
+    dus.add_argument("--format", choices=["markdown", "json"], default="markdown")
+    dk.set_defaults(func=_cmd_devkit)
 
     return p
 

@@ -1,0 +1,6 @@
+# >>> codemap-devkit v{{devkit_version}} — managed by the codemap devkit; Codex reads this file in trusted projects only
+[mcp_servers.codemap]
+command = {{pin_command_toml}}
+args = [{{pin_args_toml}}"serve", "--mcp", "--graph", "{{graph}}", "--source-root", ".", "--watch"]
+cwd = ".."
+# <<< codemap-devkit

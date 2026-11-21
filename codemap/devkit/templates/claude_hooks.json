@@ -1,0 +1,10 @@
+{
+  "SessionStart": [
+    {"matcher": "startup|resume|clear|compact",
+     "hooks": [{"type": "command", "command": "{{pin_shell}} devkit brief --root \"${CLAUDE_PROJECT_DIR}\"", "timeout": 20}]}
+  ],
+  "PostToolUse": [
+    {"matcher": "Edit|Write",
+     "hooks": [{"type": "command", "command": "{{pin_shell}} devkit touched --root \"${CLAUDE_PROJECT_DIR}\"", "timeout": 20}]}
+  ]
+}

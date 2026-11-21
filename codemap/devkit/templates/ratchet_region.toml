@@ -1,0 +1,6 @@
+# >>> codemap-devkit allowed v{{devkit_version}} — the ratchet: every import between two layers must be listed here.
+#     `codemap devkit ratchet` wrote this list from the graph. Add a pair by hand only with a comment giving the
+#     reason; `codemap devkit ratchet --tighten` only ever removes pairs that no import uses any more.
+allowed = [
+{{pairs}}]
+# <<< codemap-devkit allowed

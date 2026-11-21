@@ -1,0 +1,5 @@
+# The architecture contract of `{{package_name}}`, run by `codemap check --graph {{graph}} --root . --require-contract`.
+# The codemap devkit (v{{devkit_version}}) wrote it from the graph: every rule below holds on the tree it was
+# written on, so the gate starts green and turns red on a new problem, never on an old one.
+[architecture]
+{{flags}}
