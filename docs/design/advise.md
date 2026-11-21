@@ -91,7 +91,7 @@ Knowledge moves faster than releases. Two files ship in the package and are also
 
 `codemap advise --refresh` downloads both from the repository's `main` on GitHub (or `--from` a base URL) into
 the user cache (`$XDG_CACHE_HOME/codemap/advise/`, default `~/.cache/…`). They are accepted only when they
-parse, pass the same schema checks as the packaged ones, and are newer (`as_of`). Afterwards `advise` reads
+parse, pass the same schema checks as the packaged ones, and are newer (`as_of`, an ISO timestamp in both files: two catalogs on one day must still order). Afterwards `advise` reads
 whichever of packaged and cached is newer, and says which. A failed download leaves the packaged copy in use
 and says why; exit stays 0. A plain GET of two public files; nothing is sent. The MCP tool never downloads on
 its own: refresh is explicit (CLI, or the agent running it).
@@ -175,6 +175,10 @@ Written before any code. Reconciled below after the run; anything unlisted is a 
 | E11 | ✅ The routine was created and its first run was fired by hand (158 s, Sonnet 5.5). It pushed `scout/2026-11-21`: two tools new to the catalog (fallow, roam-code), `read` only, with two `verified: false` news items; the README counts were updated and the advise tests passed there. No private names. Maintainer review checked both repositories (license, description, languages) and merged. Corrections: roam-code `languages = ["multi"]` became the real list, a `multi-lang-graph` claim was added, and the news is now verified. **Found by the run:** the GitHub API refuses anonymous calls from the cloud (15 × 403); the watcher now falls back to the version tags over `git ls-remote`, or the HEAD commit. `--report` imported codemap only with `PYTHONPATH`, and now puts the checkout on the path. The cloud image has two interpreters, so the prompt names `python -m pip`. |
 
 **Surprises beyond E8/E9:**
+- **Delivery defect, found reconciling E11.** The matrix `as_of` was a date. After a same-day scouting merge,
+  `--refresh` would have taken the newer feed but not the matrix. The feed names the two new tools, the pair
+  then fails its schema, and the whole cache was refused. Both files now carry an ISO timestamp, which 0.0.40
+  already reads, and a guard keeps it so. The fix ships through the data on `main`, so no release is needed.
 - A dotted Python name such as `a.b.c` first read as a C file. Without a path separator, only a single-dot
   name with an extension of two letters or more is now a file. The test lists both forms.
 - `news(days=10**6)` overflowed the date ordinal; the window is clamped.

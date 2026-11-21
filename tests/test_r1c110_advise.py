@@ -378,3 +378,10 @@ def test_readme_counts_are_the_catalog(cat):
             f"{c['read']} read · {c['rejected']} rejected")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert " ".join(want.split()) in " ".join(readme.split()), f"README must say: {want}"
+
+
+def test_matrix_as_of_is_a_timestamp(raw):
+    """Two catalogs published on one day must order: a date-only `as_of` let a same-day matrix look not newer,
+    and the newer feed that names its tools was then refused as a pair (found reconciling E11)."""
+    assert "T" in raw[0]["meta"]["as_of"] and raw[0]["meta"]["as_of"].endswith("Z")
+    assert "T" in raw[1]["as_of"] and raw[1]["as_of"].endswith("Z")

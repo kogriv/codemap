@@ -1,6 +1,6 @@
 [meta]
 schema = 1
-as_of = "2026-11-21"
+as_of = "2026-11-21T10:03:40Z"
 stale_after_days = 180
 repo = "https://github.com/kogriv/codemap"
 
