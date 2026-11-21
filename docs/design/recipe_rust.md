@@ -136,3 +136,31 @@ clean copy, read-only. Its results go to the owner privately and never into this
 | E13 | Impact recall against the closure, per tool. Prediction: the R2 order holds (CodeGraph above GitNexus) and no tool reaches the closure exactly | yes (prediction) |
 | E14 | Duplication: jscpd finds the exact and renamed copies and misses the reordered one. Prediction: no graph tool finds any clone | yes (prediction) |
 | E15 | The recipe has one row per axis of the table above. A row recommending a lab tool cites a measured number; a row without one says plainly that no lab tool is needed | yes |
+
+### D7 reconciled (2026-11-21)
+
+Tree: ripgrep 15.2.0 `e89fff89` plus `plant.py`. Truth scripts: `truth_refs.py` (rust-analyzer references and
+document symbols; two runs byte-identical), `truth_modules.py`, `truth_ra.py`. Results: `research/tools/_rust/results/audit/`.
+Hand checks: 10 of 10 sampled false deaths are real production calls; 12 sampled "unused" functions are public
+builder or accessor methods with no caller in the workspace.
+
+| # | Result | Verdict |
+|---|---|---|
+| E9 | rustc flags P1 and P2b and not P2. On the clean tree it flags nothing: everything below is beyond the compiler | holds |
+| E10 | False deaths: CodeGraph library `findDeadCode()` 4.5 % (36 of 806), GitNexus no-callers Cypher 14.9 % (280 of 1 878), roam-code `dead` 54.8 % (108 of 197). Recall on the 95 unreferenced functions: 84, 86, 48. After dropping test entries and trait-impl methods, the share of true candidates: 43 %, 17 %, 24 % | prediction for GitNexus (≥ 30 %) **fails**; CodeGraph lower and non-zero holds. **Surprise:** the only product dead-code command (roam-code) is the worst |
+| E11 | Alive traps reported dead: P6 (macro) by all three; P4 (`dyn`) and P5 (generic) by GitNexus; P3 (cross-crate) by roam-code; P7 (test-only) by GitNexus and roam-code | holds |
+| E12 | `cargo-modules --acyclic` is item-level: it fails on a type and its own method in 8 of 9 library crates of the clean tree, so it cannot gate module cycles. Truth: 6 file-level components (5 natural, 1 grown by the plant). CodeGraph `cycles`: 3 exact, 2 inside a larger component, 1 missed, plant found. GitNexus `check --cycles`: 2 exact, 1 partial, 3 missed, plant found. roam-code `cycles`: 0 of 6, plus one false cycle from a name mislink. Layer rule: no native tool and neither CodeGraph nor GitNexus can state one; roam-code `fitness` misses the planted break and fires on a control dependency Cargo makes impossible | prediction "native covers cycles" **fails**: the native graph has the edges but no usable check |
+| E13 | Impact at depth 2 against the closure, pooled over 5 targets: CodeGraph P 0.90 R 0.78; GitNexus P 0.72 R 0.28; roam-code P 1.00 R 0.13. Two runs identical | holds |
+| E14 | jscpd finds the exact copy only, by default after skipping every file over 1 000 lines (83 of 100 files). roam-code `clones` finds exact and renamed, and keeps the renamed one after a rename to an unrelated name. roam-code `duplicates` finds all three only while they share a name prefix; renamed, two drop out | prediction **fails** twice: jscpd misses renamed copies, and a graph tool (roam-code `clones`) does find clones. **Surprise:** `duplicates` clusters by name |
+| E15 | Recipe rows below; the catalog table and its guards come with R1-C111's `[[recipe]]` | open |
+
+**The recipe for Rust, by axis** (what each row would tell an agent):
+
+| Axis | Use | A lab tool adds | Watch out |
+|---|---|---|---|
+| security, deps, API, lint, unused deps | cargo-audit / cargo-deny, cargo-semver-checks, clippy, cargo-machete | nothing | — |
+| dead code | rustc for private items; for `pub` items across crates, rust-analyzer references (scriptable, exact) | CodeGraph's dead list is the closest (5 % false deaths) but is library-only, not in its CLI or MCP | never act on a GitNexus or roam-code dead list: 15 % and 55 % of it is live code; macro-called functions are reported dead by all; in a published library crate an unused `pub` item is API |
+| module cycles | no usable native check | CodeGraph `cycles` (exits 1, a CI gate): 5 of 6 components found or covered | GitNexus finds half; roam-code none |
+| module layers | nothing native | nothing measured works | a script over cargo-modules edges is the honest option |
+| change impact | rust-analyzer call hierarchy, one level at a time | CodeGraph `impact` in one call: 78 % of the depth-2 closure at 90 % precision | GitNexus 28 %, roam-code 13 %: a short impact list on Rust does not mean a small blast radius |
+| duplication | nothing native | roam-code `clones` (exact and renamed copies) | not `duplicates` (name-driven); jscpd only exact copies and skips files over 1 000 lines unless told |

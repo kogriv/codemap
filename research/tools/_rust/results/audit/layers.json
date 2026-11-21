@@ -1,0 +1,43 @@
+{
+ "codegraph": "no layer rule",
+ "gitnexus": "no layer rule (`check` offers --cycles only)",
+ "native": "no tool states a module layer rule inside a crate (Cargo forbids crate cycles; cargo-deny bans crates, not modules)",
+ "roam": {
+  "how": "roam-code 14.1.0 `fitness` with three dependency rules in .roam/fitness.yaml",
+  "reading": "the planted break (lines.rs uses sink::SinkContextKind) is missed; the control matcher -> searcher fires on a call edge fmt -> finish that Cargo makes impossible (grep-matcher does not depend on grep-searcher)",
+  "rules": [
+   {
+    "name": "lines must not depend on sink (planted break)",
+    "status": "PASS",
+    "type": "dependency",
+    "violations": 0
+   },
+   {
+    "name": "lines must not depend on printer (control, not broken)",
+    "status": "PASS",
+    "type": "dependency",
+    "violations": 0
+   },
+   {
+    "name": "matcher must not depend on searcher (control, not broken)",
+    "status": "FAIL",
+    "type": "dependency",
+    "violations": 1
+   }
+  ],
+  "violations": [
+   {
+    "confidence": "high",
+    "reason": "dependency-rule violation (no explicit severity; inferred)",
+    "value": {
+     "edge_kind": "call",
+     "message": "fmt -> finish",
+     "rule": "matcher must not depend on searcher (control, not broken)",
+     "source": "crates/matcher/src/lib.rs:306",
+     "target": "crates/searcher/src/searcher/core.rs",
+     "type": "dependency"
+    }
+   }
+  ]
+ }
+}

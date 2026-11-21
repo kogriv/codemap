@@ -1,0 +1,55 @@
+{
+ "codegraph": "no clone feature",
+ "gitnexus": "no clone feature",
+ "jscpd": {
+  "default": {
+   "pairs": 75,
+   "planted_found": [
+    "audit_c1_exact"
+   ]
+  },
+  "how": "jscpd 4.3.0 --format rust; default skips files over 1000 lines (83 of 100 sources, 20 231 of 53 212 lines); rerun with --max-lines 100000 --max-size 10mb",
+  "wide": {
+   "pairs": 333,
+   "planted_found": [
+    "audit_c1_exact"
+   ]
+  }
+ },
+ "native": "none: clippy match_same_arms / if_same_then_else are local to one function",
+ "plants": {
+  "audit_c1_exact": "exact copy",
+  "audit_c2_renamed": "identifiers renamed",
+  "audit_c3_reordered": "statements inserted and reordered",
+  "original": "lines::preceding_by_pos (28 lines)"
+ },
+ "precision_on_the_natural_tree": "not scored: no objective truth for natural clones",
+ "roam_clones": {
+  "after_renaming_c2_c3": [
+   "audit_c1_exact",
+   "mk_hop_index",
+   "preceding_by_pos"
+  ],
+  "cluster_with_original": [
+   "audit_c1_exact",
+   "audit_c2_renamed",
+   "preceding_by_pos"
+  ],
+  "clusters_on_tree": 147,
+  "how": "roam-code 14.1.0 `clones` (AST structural hashing)"
+ },
+ "roam_duplicates": {
+  "after_renaming_c2_c3": [
+   "audit_c1_exact",
+   "preceding_by_pos"
+  ],
+  "cluster_with_original": [
+   "audit_c1_exact",
+   "audit_c2_renamed",
+   "audit_c3_reordered",
+   "preceding_by_pos"
+  ],
+  "how": "roam-code 14.1.0 `duplicates` (\"semantic\")",
+  "reading": "the planted copies are clustered by their shared name prefix: renamed to unrelated names, the renamed and the reordered copies drop out"
+ }
+}

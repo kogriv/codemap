@@ -1,0 +1,95 @@
+{
+ "how": {
+  "codegraph": "CodeGraph 1.6.4 `cycles --json` (file imports; exits 1 when any)",
+  "gitnexus": "GitNexus 1.6.12 `check --cycles --json` (elementary cycles, merged to components here)",
+  "native": "cargo-modules 0.27.0 dependencies --acyclic: item-level, fails on every impl (type <-> its method) on the clean tree for 8 of 9 library crates; unusable as a module-cycle gate. Truth: its uses edges folded to file modules, SCCs (score_cycles.py).",
+  "roam": "roam-code 14.1.0 `cycles` (symbol import/call SCCs; only multi-file ones kept)"
+ },
+ "roam_extra_explained": "json.rs <-> path.rs: symbol cycle write_message -> finish -> write, where `write` is bound to PathPrinter::write instead of io::Write::write (a name mislink)",
+ "tools": {
+  "codegraph": {
+   "components": 5,
+   "per_truth_component": {
+    "crates/core/flags/complete/fish.rs + crates/core/flags/doc/help.rs + crates/core/flags/doc/man.rs + crates/core/flags/mod.rs + crates/core/flags/parse.rs": "covered by a larger component",
+    "crates/core/flags/hiargs.rs + crates/core/search.rs": "missed",
+    "crates/globset/src/glob.rs + crates/globset/src/lib.rs": "exact",
+    "crates/ignore/src/dir.rs + crates/ignore/src/gitignore.rs + crates/ignore/src/lib.rs + crates/ignore/src/overrides.rs + crates/ignore/src/pathutil.rs + crates/ignore/src/types.rs + crates/ignore/src/walk.rs": "exact",
+    "crates/printer/src/hyperlink/aliases.rs + crates/printer/src/hyperlink/mod.rs + crates/printer/src/util.rs": "covered by a larger component",
+    "crates/searcher/src/audit_plants.rs + crates/searcher/src/lines.rs + crates/searcher/src/searcher/core.rs + crates/searcher/src/searcher/glue.rs + crates/searcher/src/searcher/mod.rs + crates/searcher/src/sink.rs + crates/searcher/src/testutil.rs": "exact"
+   },
+   "planted_pair_in_one_component": true,
+   "unmatched_components": []
+  },
+  "gitnexus": {
+   "components": 3,
+   "per_truth_component": {
+    "crates/core/flags/complete/fish.rs + crates/core/flags/doc/help.rs + crates/core/flags/doc/man.rs + crates/core/flags/mod.rs + crates/core/flags/parse.rs": "missed",
+    "crates/core/flags/hiargs.rs + crates/core/search.rs": "missed",
+    "crates/globset/src/glob.rs + crates/globset/src/lib.rs": "missed",
+    "crates/ignore/src/dir.rs + crates/ignore/src/gitignore.rs + crates/ignore/src/lib.rs + crates/ignore/src/overrides.rs + crates/ignore/src/pathutil.rs + crates/ignore/src/types.rs + crates/ignore/src/walk.rs": "partly: 6 of 7 files",
+    "crates/printer/src/hyperlink/aliases.rs + crates/printer/src/hyperlink/mod.rs + crates/printer/src/util.rs": "exact",
+    "crates/searcher/src/audit_plants.rs + crates/searcher/src/lines.rs + crates/searcher/src/searcher/core.rs + crates/searcher/src/searcher/glue.rs + crates/searcher/src/searcher/mod.rs + crates/searcher/src/sink.rs + crates/searcher/src/testutil.rs": "exact"
+   },
+   "planted_pair_in_one_component": true,
+   "unmatched_components": []
+  },
+  "roam": {
+   "components": 1,
+   "per_truth_component": {
+    "crates/core/flags/complete/fish.rs + crates/core/flags/doc/help.rs + crates/core/flags/doc/man.rs + crates/core/flags/mod.rs + crates/core/flags/parse.rs": "missed",
+    "crates/core/flags/hiargs.rs + crates/core/search.rs": "missed",
+    "crates/globset/src/glob.rs + crates/globset/src/lib.rs": "missed",
+    "crates/ignore/src/dir.rs + crates/ignore/src/gitignore.rs + crates/ignore/src/lib.rs + crates/ignore/src/overrides.rs + crates/ignore/src/pathutil.rs + crates/ignore/src/types.rs + crates/ignore/src/walk.rs": "missed",
+    "crates/printer/src/hyperlink/aliases.rs + crates/printer/src/hyperlink/mod.rs + crates/printer/src/util.rs": "missed",
+    "crates/searcher/src/audit_plants.rs + crates/searcher/src/lines.rs + crates/searcher/src/searcher/core.rs + crates/searcher/src/searcher/glue.rs + crates/searcher/src/searcher/mod.rs + crates/searcher/src/sink.rs + crates/searcher/src/testutil.rs": "missed"
+   },
+   "planted_pair_in_one_component": false,
+   "unmatched_components": [
+    [
+     "crates/printer/src/json.rs",
+     "crates/printer/src/path.rs"
+    ]
+   ]
+  }
+ },
+ "truth_components": [
+  [
+   "crates/core/flags/complete/fish.rs",
+   "crates/core/flags/doc/help.rs",
+   "crates/core/flags/doc/man.rs",
+   "crates/core/flags/mod.rs",
+   "crates/core/flags/parse.rs"
+  ],
+  [
+   "crates/core/flags/hiargs.rs",
+   "crates/core/search.rs"
+  ],
+  [
+   "crates/globset/src/glob.rs",
+   "crates/globset/src/lib.rs"
+  ],
+  [
+   "crates/ignore/src/dir.rs",
+   "crates/ignore/src/gitignore.rs",
+   "crates/ignore/src/lib.rs",
+   "crates/ignore/src/overrides.rs",
+   "crates/ignore/src/pathutil.rs",
+   "crates/ignore/src/types.rs",
+   "crates/ignore/src/walk.rs"
+  ],
+  [
+   "crates/printer/src/hyperlink/aliases.rs",
+   "crates/printer/src/hyperlink/mod.rs",
+   "crates/printer/src/util.rs"
+  ],
+  [
+   "crates/searcher/src/audit_plants.rs",
+   "crates/searcher/src/lines.rs",
+   "crates/searcher/src/searcher/core.rs",
+   "crates/searcher/src/searcher/glue.rs",
+   "crates/searcher/src/searcher/mod.rs",
+   "crates/searcher/src/sink.rs",
+   "crates/searcher/src/testutil.rs"
+  ]
+ ]
+}

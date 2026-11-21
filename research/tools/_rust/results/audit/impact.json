@@ -1,0 +1,432 @@
+{
+ "tools": {
+  "codegraph": {
+   "grep_cli::escape": {
+    "extra": [],
+    "missed": [],
+    "precision": 1.0,
+    "recall": 1.0,
+    "tool": 16,
+    "tp": 16,
+    "truth": 16
+   },
+   "grep_matcher::Matcher::find_at": {
+    "extra": [],
+    "missed": [
+     "crates/matcher/src/lib.rs find_at",
+     "crates/searcher/src/searcher/core.rs find",
+     "crates/searcher/src/testutil.rs empty_line1",
+     "crates/searcher/src/testutil.rs empty_line2",
+     "crates/searcher/src/testutil.rs empty_line3",
+     "crates/searcher/src/testutil.rs empty_line4",
+     "crates/searcher/src/testutil.rs empty_line5",
+     "crates/searcher/src/testutil.rs empty_line6"
+    ],
+    "precision": 1.0,
+    "recall": 0.5,
+    "tool": 8,
+    "tp": 8,
+    "truth": 16
+   },
+   "grep_searcher::Searcher::search_path": {
+    "extra": [],
+    "missed": [],
+    "precision": 1.0,
+    "recall": 1.0,
+    "tool": 3,
+    "tp": 3,
+    "truth": 3
+   },
+   "grep_searcher::Sink::matched": {
+    "extra": [],
+    "missed": [
+     "crates/searcher/src/sink.rs matched"
+    ],
+    "precision": 1.0,
+    "recall": 0.857,
+    "tool": 6,
+    "tp": 6,
+    "truth": 7
+   },
+   "ignore::ParallelVisitor::visit": {
+    "extra": [
+     "crates/core/main.rs files_parallel",
+     "crates/core/main.rs search_parallel",
+     "crates/ignore/examples/walk.rs main",
+     "crates/ignore/src/walk.rs walk_collect_entries_parallel"
+    ],
+    "missed": [
+     "crates/ignore/src/walk.rs visit"
+    ],
+    "precision": 0.429,
+    "recall": 0.75,
+    "tool": 7,
+    "tp": 3,
+    "truth": 4
+   }
+  },
+  "gitnexus": {
+   "grep_cli::escape": {
+    "extra": [],
+    "missed": [
+     "crates/cli/src/escape.rs backslash",
+     "crates/cli/src/escape.rs carriage",
+     "crates/cli/src/escape.rs empty",
+     "crates/cli/src/escape.rs invalid_utf8",
+     "crates/cli/src/escape.rs nl",
+     "crates/cli/src/escape.rs nothing_hex0",
+     "crates/cli/src/escape.rs nothing_hex1",
+     "crates/cli/src/escape.rs nothing_hex2"
+    ],
+    "precision": 1.0,
+    "recall": 0.312,
+    "tool": 5,
+    "tp": 5,
+    "truth": 16
+   },
+   "grep_matcher::Matcher::find_at": {
+    "extra": [
+     "crates/matcher/tests/util.rs find_at",
+     "crates/pcre2/src/matcher.rs find_at",
+     "crates/regex/src/matcher.rs find_at",
+     "crates/regex/src/matcher.rs shortest_match_at",
+     "crates/searcher/src/testutil.rs find_at"
+    ],
+    "missed": [
+     "crates/matcher/src/lib.rs find_at",
+     "crates/matcher/tests/test_matcher.rs find",
+     "crates/searcher/src/searcher/core.rs find",
+     "crates/searcher/src/testutil.rs empty_line1",
+     "crates/searcher/src/testutil.rs empty_line2",
+     "crates/searcher/src/testutil.rs empty_line3",
+     "crates/searcher/src/testutil.rs empty_line4",
+     "crates/searcher/src/testutil.rs empty_line5"
+    ],
+    "precision": 0.583,
+    "recall": 0.438,
+    "tool": 12,
+    "tp": 7,
+    "truth": 16
+   },
+   "grep_searcher::Searcher::search_path": {
+    "extra": [],
+    "missed": [
+     "crates/grep/examples/simplegrep.rs search",
+     "crates/grep/examples/simplegrep.rs try_main"
+    ],
+    "precision": 1.0,
+    "recall": 0.333,
+    "tool": 1,
+    "tp": 1,
+    "truth": 3
+   },
+   "grep_searcher::Sink::matched": {
+    "extra": [],
+    "missed": [
+     "crates/searcher/src/searcher/core.rs after_context_by_line",
+     "crates/searcher/src/searcher/core.rs match_by_line_fast",
+     "crates/searcher/src/searcher/core.rs match_by_line_fast_invert",
+     "crates/searcher/src/searcher/core.rs match_by_line_slow",
+     "crates/searcher/src/searcher/core.rs matched",
+     "crates/searcher/src/searcher/core.rs sink_matched",
+     "crates/searcher/src/sink.rs matched"
+    ],
+    "precision": null,
+    "recall": 0.0,
+    "tool": 0,
+    "tp": 0,
+    "truth": 7
+   },
+   "ignore::ParallelVisitor::visit": {
+    "extra": [],
+    "missed": [
+     "crates/ignore/src/walk.rs generate_work",
+     "crates/ignore/src/walk.rs run",
+     "crates/ignore/src/walk.rs run_one",
+     "crates/ignore/src/walk.rs visit"
+    ],
+    "precision": null,
+    "recall": 0.0,
+    "tool": 0,
+    "tp": 0,
+    "truth": 4
+   }
+  },
+  "roam": {
+   "grep_cli::escape": {
+    "extra": [],
+    "missed": [
+     "crates/cli/src/escape.rs backslash",
+     "crates/cli/src/escape.rs carriage",
+     "crates/cli/src/escape.rs empty",
+     "crates/cli/src/escape.rs invalid_utf8",
+     "crates/cli/src/escape.rs nl",
+     "crates/cli/src/escape.rs nothing_hex0",
+     "crates/cli/src/escape.rs nothing_hex1",
+     "crates/cli/src/escape.rs nothing_hex2"
+    ],
+    "precision": 1.0,
+    "recall": 0.125,
+    "tool": 2,
+    "tp": 2,
+    "truth": 16
+   },
+   "grep_matcher::Matcher::find_at": {
+    "extra": [],
+    "missed": [
+     "crates/matcher/src/lib.rs find_at",
+     "crates/matcher/src/lib.rs find_iter_at",
+     "crates/matcher/src/lib.rs is_match_at",
+     "crates/matcher/src/lib.rs shortest_match",
+     "crates/matcher/src/lib.rs shortest_match_at",
+     "crates/matcher/src/lib.rs try_find_iter",
+     "crates/matcher/tests/test_matcher.rs find",
+     "crates/searcher/src/searcher/core.rs find"
+    ],
+    "precision": 1.0,
+    "recall": 0.125,
+    "tool": 2,
+    "tp": 2,
+    "truth": 16
+   },
+   "grep_searcher::Searcher::search_path": {
+    "extra": [],
+    "missed": [
+     "crates/core/search.rs search_path",
+     "crates/grep/examples/simplegrep.rs search",
+     "crates/grep/examples/simplegrep.rs try_main"
+    ],
+    "precision": null,
+    "recall": 0.0,
+    "tool": 0,
+    "tp": 0,
+    "truth": 3
+   },
+   "grep_searcher::Sink::matched": {
+    "extra": [],
+    "missed": [
+     "crates/searcher/src/searcher/core.rs after_context_by_line",
+     "crates/searcher/src/searcher/core.rs match_by_line_fast",
+     "crates/searcher/src/searcher/core.rs match_by_line_fast_invert",
+     "crates/searcher/src/searcher/core.rs match_by_line_slow",
+     "crates/searcher/src/searcher/core.rs matched",
+     "crates/searcher/src/searcher/core.rs sink_matched",
+     "crates/searcher/src/sink.rs matched"
+    ],
+    "precision": null,
+    "recall": 0.0,
+    "tool": 0,
+    "tp": 0,
+    "truth": 7
+   },
+   "ignore::ParallelVisitor::visit": {
+    "extra": [],
+    "missed": [
+     "crates/ignore/src/walk.rs run",
+     "crates/ignore/src/walk.rs visit"
+    ],
+    "precision": 1.0,
+    "recall": 0.5,
+    "tool": 2,
+    "tp": 2,
+    "truth": 4
+   }
+  }
+ },
+ "truth": {
+  "grep_cli::escape": [
+   [
+    "crates/cli/src/escape.rs",
+    "backslash"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "carriage"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "empty"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "escape_os"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "invalid_utf8"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "nl"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "nothing_hex0"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "nothing_hex1"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "nothing_hex2"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "nothing_simple"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "nul"
+   ],
+   [
+    "crates/cli/src/escape.rs",
+    "tab"
+   ],
+   [
+    "crates/cli/src/pattern.rs",
+    "bytes"
+   ],
+   [
+    "crates/cli/src/pattern.rs",
+    "pattern_from_bytes"
+   ],
+   [
+    "crates/cli/src/pattern.rs",
+    "pattern_from_os"
+   ],
+   [
+    "crates/cli/src/pattern.rs",
+    "patterns_from_reader"
+   ]
+  ],
+  "grep_matcher::Matcher::find_at": [
+   [
+    "crates/matcher/src/lib.rs",
+    "find"
+   ],
+   [
+    "crates/matcher/src/lib.rs",
+    "find_at"
+   ],
+   [
+    "crates/matcher/src/lib.rs",
+    "find_iter_at"
+   ],
+   [
+    "crates/matcher/src/lib.rs",
+    "is_match_at"
+   ],
+   [
+    "crates/matcher/src/lib.rs",
+    "shortest_match"
+   ],
+   [
+    "crates/matcher/src/lib.rs",
+    "shortest_match_at"
+   ],
+   [
+    "crates/matcher/src/lib.rs",
+    "try_find_iter"
+   ],
+   [
+    "crates/matcher/src/lib.rs",
+    "try_find_iter_at"
+   ],
+   [
+    "crates/matcher/tests/test_matcher.rs",
+    "find"
+   ],
+   [
+    "crates/searcher/src/searcher/core.rs",
+    "find"
+   ],
+   [
+    "crates/searcher/src/testutil.rs",
+    "empty_line1"
+   ],
+   [
+    "crates/searcher/src/testutil.rs",
+    "empty_line2"
+   ],
+   [
+    "crates/searcher/src/testutil.rs",
+    "empty_line3"
+   ],
+   [
+    "crates/searcher/src/testutil.rs",
+    "empty_line4"
+   ],
+   [
+    "crates/searcher/src/testutil.rs",
+    "empty_line5"
+   ],
+   [
+    "crates/searcher/src/testutil.rs",
+    "empty_line6"
+   ]
+  ],
+  "grep_searcher::Searcher::search_path": [
+   [
+    "crates/core/search.rs",
+    "search_path"
+   ],
+   [
+    "crates/grep/examples/simplegrep.rs",
+    "search"
+   ],
+   [
+    "crates/grep/examples/simplegrep.rs",
+    "try_main"
+   ]
+  ],
+  "grep_searcher::Sink::matched": [
+   [
+    "crates/searcher/src/searcher/core.rs",
+    "after_context_by_line"
+   ],
+   [
+    "crates/searcher/src/searcher/core.rs",
+    "match_by_line_fast"
+   ],
+   [
+    "crates/searcher/src/searcher/core.rs",
+    "match_by_line_fast_invert"
+   ],
+   [
+    "crates/searcher/src/searcher/core.rs",
+    "match_by_line_slow"
+   ],
+   [
+    "crates/searcher/src/searcher/core.rs",
+    "matched"
+   ],
+   [
+    "crates/searcher/src/searcher/core.rs",
+    "sink_matched"
+   ],
+   [
+    "crates/searcher/src/sink.rs",
+    "matched"
+   ]
+  ],
+  "ignore::ParallelVisitor::visit": [
+   [
+    "crates/ignore/src/walk.rs",
+    "generate_work"
+   ],
+   [
+    "crates/ignore/src/walk.rs",
+    "run"
+   ],
+   [
+    "crates/ignore/src/walk.rs",
+    "run_one"
+   ],
+   [
+    "crates/ignore/src/walk.rs",
+    "visit"
+   ]
+  ]
+ }
+}
