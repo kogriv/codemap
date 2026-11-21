@@ -1260,6 +1260,23 @@ schema **0.13**, **`ANSWER_FORMAT` stays 10**.
 **Consumers:** `check` on bquant and the bquearch gate identical in markdown; graphs identical apart from the
 version (measured on the dev build, E3/E4).
 
+**0.0.39 published 2026-11-21:** [`codmap` 0.0.39](https://pypi.org/project/codmap/0.0.39/), schema 0.13,
+`ANSWER_FORMAT` 10. From `6aa0942`: the suite ran after the version bump (1322 passed / 2 skipped, 1324
+collected), CI green on 3.11–3.14, `twine check` PASSED, the wheel carries the 10 devkit templates. Reconciled
+from PyPI (the index needed `--no-cache` for about a minute, as on every release):
+
+```
+                                              0.0.38                         0.0.39
+devkit status (empty repo)                    exit 2 (no such command)       exit 1, "No devkit here"
+allowed = [a→b] over a→b, b→c (function-local) exit 2, unknown key `allowed`  exit 2, names b → c
+allowed = [a→b, b→c]                          exit 2 (still unknown key)     exit 0
+devkit init --package pkg, then status        exit 2                         exit 0
+namespace p/nsp/m.py, function-local import   no edge; 0001_x.py unread      edge (function); p.nsp.migrations.0001_x a node
+--version                                     codemap 0.0.38 · format 10     codemap 0.0.39 · answer format 10 · schema 0.13
+```
+
+Every expectation holds. Tag `v0.0.39` on both mirrors.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
