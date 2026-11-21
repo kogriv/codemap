@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import tempfile
 import tomllib
 from pathlib import Path
 
@@ -25,8 +26,14 @@ from truth_ra import DECLS, TRAITS  # noqa: E402
 
 
 def cypher(binary, repo, q):
-    r = subprocess.run([binary, "cypher", "-r", repo, "-l", "5000", q], capture_output=True, text=True, timeout=600)
-    t = r.stdout
+    # stdout goes to a file: through a pipe, a reply over 64 KB comes back cut (the process exits before the
+    # pipe drains), which first showed on the R1-C112 dead-code query.
+    with tempfile.TemporaryFile("w+", encoding="utf-8") as fh:
+        r = subprocess.run([binary, "cypher", "-r", repo, "-l", "5000", q], stdout=fh, stderr=subprocess.PIPE,
+                           text=True, timeout=600)
+        fh.seek(0)
+        t = fh.read()
+    r.stdout = t
     if "{" not in t and t.strip().endswith("[]"):
         return []  # an empty result prints `[]`
     if "{" not in t:

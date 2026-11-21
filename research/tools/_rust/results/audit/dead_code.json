@@ -1,0 +1,320 @@
+{
+ "functions": 2809,
+ "rustc_dead_code": [
+  [
+   "crates/core/messages.rs",
+   28,
+   "function `audit_p2b_bin_unused` is never used"
+  ],
+  [
+   "crates/searcher/src/audit_plants.rs",
+   7,
+   "function `audit_p1_private_unused` is never used"
+  ],
+  [
+   "crates/searcher/src/audit_plants.rs",
+   54,
+   "function `audit_p7_test_only` is never used"
+  ]
+ ],
+ "tools": {
+  "codegraph": {
+   "alive_sample": [
+    "crates/cli/src/lib.rs:170 is_readable_stdin \u2190 crates/core/flags/hiargs.rs:1113",
+    "crates/cli/src/lib.rs:174 imp \u2190 crates/cli/src/lib.rs:249",
+    "crates/cli/src/process.rs:195 new \u2190 crates/core/flags/hiargs.rs:1339",
+    "crates/core/flags/hiargs.rs:771 attach_timestamps \u2190 crates/core/flags/hiargs.rs:792",
+    "crates/core/flags/hiargs.rs:1422 suggest_other_engine \u2190 crates/core/flags/hiargs.rs:373",
+    "crates/core/flags/hiargs.rs:1455 suggest_multiline \u2190 crates/core/flags/hiargs.rs:510",
+    "crates/core/flags/hiargs.rs:1469 suggest_text \u2190 crates/core/flags/hiargs.rs:510",
+    "crates/globset/src/glob.rs:326 regex \u2190 crates/globset/src/lib.rs:503"
+   ],
+   "classes": {
+    "alive": 36,
+    "cfg_variant": 18,
+    "entry": 463,
+    "reexported": 25,
+    "test_only": 34,
+    "trait_impl": 146,
+    "unresolved": 2,
+    "unused": 84
+   },
+   "false_death_rate": 0.045,
+   "how": "CodeGraph 1.6.4, library findDeadCode() (not in its CLI or MCP)",
+   "items": 808,
+   "plants": {
+    "audit_p1_private_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p2_pub_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p2b_bin_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p3_cross_crate": {
+     "reported_dead": false,
+     "truth": "alive"
+    },
+    "audit_p4_dyn_only": {
+     "reported_dead": false,
+     "truth": "alive"
+    },
+    "audit_p5_generic_only": {
+     "reported_dead": false,
+     "truth": "alive"
+    },
+    "audit_p6_macro_only": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p7_test_only": {
+     "reported_dead": false,
+     "truth": "test-only"
+    }
+   },
+   "precision_after_dropping_entries_and_trait_impls": 0.426,
+   "recall_unused": {
+    "found": 84,
+    "truth": 95
+   }
+  },
+  "gitnexus": {
+   "alive_sample": [
+    "crates/cli/src/decompress.rs:50 build \u2190 crates/cli/src/decompress.rs:169",
+    "crates/cli/src/decompress.rs:191 has_command \u2190 crates/core/search.rs:278",
+    "crates/cli/src/decompress.rs:205 new \u2190 crates/cli/src/decompress.rs:355",
+    "crates/cli/src/decompress.rs:221 build \u2190 crates/cli/src/decompress.rs:355",
+    "crates/cli/src/decompress.rs:260 get_matcher \u2190 crates/core/search.rs:278",
+    "crates/cli/src/decompress.rs:276 async_stderr \u2190 crates/core/search.rs:74",
+    "crates/cli/src/decompress.rs:383 close \u2190 crates/core/search.rs:335",
+    "crates/cli/src/hostname.rs:16 hostname \u2190 crates/core/flags/hiargs.rs:1376"
+   ],
+   "classes": {
+    "alive": 280,
+    "cfg_variant": 5,
+    "entry": 457,
+    "reexported": 34,
+    "test_only": 104,
+    "trait_impl": 912,
+    "unresolved": 20,
+    "unused": 86
+   },
+   "false_death_rate": 0.149,
+   "how": "GitNexus 1.6.12, Cypher: Function/Method with no incoming CALLS (no dead-code command)",
+   "items": 1898,
+   "plants": {
+    "audit_p1_private_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p2_pub_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p2b_bin_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p3_cross_crate": {
+     "reported_dead": false,
+     "truth": "alive"
+    },
+    "audit_p4_dyn_only": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p5_generic_only": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p6_macro_only": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p7_test_only": {
+     "reported_dead": true,
+     "truth": "test-only"
+    }
+   },
+   "precision_after_dropping_entries_and_trait_impls": 0.169,
+   "recall_unused": {
+    "found": 86,
+    "truth": 95
+   }
+  },
+  "roam": {
+   "alive_sample": [
+    "crates/cli/src/decompress.rs:260 get_matcher \u2190 crates/core/search.rs:278",
+    "crates/cli/src/decompress.rs:276 async_stderr \u2190 crates/core/search.rs:74",
+    "crates/cli/src/decompress.rs:383 close \u2190 crates/core/search.rs:335",
+    "crates/cli/src/hostname.rs:16 hostname \u2190 crates/core/flags/hiargs.rs:1376",
+    "crates/cli/src/lib.rs:170 is_readable_stdin \u2190 crates/core/flags/hiargs.rs:1113",
+    "crates/cli/src/pattern.rs:82 patterns_from_path \u2190 crates/core/flags/hiargs.rs:1040",
+    "crates/cli/src/pattern.rs:104 patterns_from_stdin \u2190 crates/core/flags/hiargs.rs:1035",
+    "crates/cli/src/pattern.rs:141 patterns_from_reader \u2190 crates/cli/src/pattern.rs:107"
+   ],
+   "classes": {
+    "alive": 108,
+    "cfg_variant": 3,
+    "reexported": 9,
+    "test_only": 29,
+    "unresolved": 2,
+    "unused": 48
+   },
+   "false_death_rate": 0.548,
+   "how": "roam-code 14.1.0, `roam dead --all --no-decay` (product command)",
+   "items": 199,
+   "plants": {
+    "audit_p1_private_unused": {
+     "reported_dead": false,
+     "truth": "dead"
+    },
+    "audit_p2_pub_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p2b_bin_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p3_cross_crate": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p4_dyn_only": {
+     "reported_dead": false,
+     "truth": "alive"
+    },
+    "audit_p5_generic_only": {
+     "reported_dead": false,
+     "truth": "alive"
+    },
+    "audit_p6_macro_only": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p7_test_only": {
+     "reported_dead": true,
+     "truth": "test-only"
+    }
+   },
+   "precision_after_dropping_entries_and_trait_impls": 0.244,
+   "recall_unused": {
+    "found": 48,
+    "truth": 95
+   }
+  }
+ },
+ "tree": "ripgrep 15.2.0 e89fff89 + plant.py",
+ "truth": "truth_refs.py (rust-analyzer references, documentSymbol), score_dead.py classes; two runs byte-identical",
+ "truth_classes_all_functions": {
+  "alive": 949,
+  "cfg_variant": 22,
+  "entry": 466,
+  "reexported": 34,
+  "test_only": 256,
+  "trait_impl": 987,
+  "unused": 95
+ },
+ "truth_unused": [
+  "crates/cli/src/decompress.rs:76 defaults",
+  "crates/cli/src/decompress.rs:96 associate",
+  "crates/cli/src/decompress.rs:251 matcher",
+  "crates/cli/src/decompress.rs:352 new",
+  "crates/cli/src/lib.rs:260 is_tty_stdin",
+  "crates/cli/src/lib.rs:279 is_tty_stdout",
+  "crates/cli/src/lib.rs:292 is_tty_stderr",
+  "crates/core/messages.rs:28 audit_p2b_bin_unused",
+  "crates/core/messages.rs:106 messages",
+  "crates/core/messages.rs:118 ignore_messages",
+  "crates/core/messages.rs:142 set_errored",
+  "crates/globset/src/glob.rs:142 is_match",
+  "crates/globset/src/glob.rs:152 glob",
+  "crates/globset/src/glob.rs:170 is_match",
+  "crates/globset/src/glob.rs:300 compile_strategic_matcher",
+  "crates/globset/src/glob.rs:308 glob",
+  "crates/globset/src/glob.rs:647 empty_alternates",
+  "crates/globset/src/lib.rs:206 glob",
+  "crates/globset/src/lib.rs:319 builder",
+  "crates/globset/src/lib.rs:629 from_bytes",
+  "crates/ignore/src/gitignore.rs:47 from",
+  "crates/ignore/src/gitignore.rs:52 original",
+  "crates/ignore/src/gitignore.rs:58 actual",
+  "crates/ignore/src/gitignore.rs:141 global",
+  "crates/ignore/src/gitignore.rs:177 len",
+  "crates/ignore/src/lib.rs:462 inner",
+  "crates/ignore/src/overrides.rs:58 path",
+  "crates/ignore/src/overrides.rs:70 num_ignores",
+  "crates/ignore/src/overrides.rs:180 allow_unclosed_class",
+  "crates/ignore/src/types.rs:132 file_type_def",
+  "crates/ignore/src/types.rs:244 len",
+  "crates/ignore/src/walk.rs:43 into_path",
+  "crates/ignore/src/walk.rs:927 sort_by_file_path",
+  "crates/ignore/src/walk.rs:1080 new",
+  "crates/ignore/src/walk.rs:1089 from_iter",
+  "crates/matcher/src/interpolate.rs:185 interpolate_string",
+  "crates/matcher/src/lib.rs:313 empty",
+  "crates/matcher/src/lib.rs:336 add_all",
+  "crates/matcher/src/lib.rs:402 as_match",
+  "crates/matcher/src/lib.rs:412 is_empty",
+  "crates/pcre2/src/error.rs:17 kind",
+  "crates/pcre2/src/matcher.rs:94 caseless",
+  "crates/pcre2/src/matcher.rs:127 dotall",
+  "crates/pcre2/src/matcher.rs:135 extended",
+  "crates/pcre2/src/matcher.rs:184 fixed_strings",
+  "crates/pcre2/src/matcher.rs:191 whole_line",
+  "crates/pcre2/src/matcher.rs:205 ucp",
+  "crates/pcre2/src/matcher.rs:225 utf",
+  "crates/pcre2/src/matcher.rs:245 disable_utf_check",
+  "crates/pcre2/src/matcher.rs:258 jit",
+  "crates/pcre2/src/matcher.rs:273 jit_if_available",
+  "crates/pcre2/src/matcher.rs:291 max_jit_stack_size",
+  "crates/pcre2/src/matcher.rs:310 new",
+  "crates/printer/src/color.rs:162 to_color_spec",
+  "crates/printer/src/hyperlink/mod.rs:89 into_config",
+  "crates/printer/src/json.rs:496 new",
+  "crates/printer/src/json.rs:566 has_written",
+  "crates/printer/src/json.rs:577 into_inner",
+  "crates/printer/src/json.rs:621 match_count",
+  "crates/printer/src/json.rs:635 binary_byte_offset",
+  "crates/printer/src/standard.rs:494 new",
+  "crates/printer/src/standard.rs:505 new_no_color",
+  "crates/printer/src/standard.rs:600 has_written",
+  "crates/printer/src/standard.rs:611 into_inner",
+  "crates/printer/src/standard.rs:669 match_count",
+  "crates/printer/src/summary.rs:364 new",
+  "crates/printer/src/summary.rs:377 new_no_color",
+  "crates/printer/src/summary.rs:454 has_written",
+  "crates/printer/src/summary.rs:465 into_inner",
+  "crates/printer/src/summary.rs:520 binary_byte_offset",
+  "crates/regex/src/error.rs:34 kind",
+  "crates/regex/src/literal.rs:459 new",
+  "crates/regex/src/literal.rs:496 sort",
+  "crates/regex/src/literal.rs:516 is_exact",
+  "crates/regex/src/literal.rs:537 max_literal_len",
+  "crates/regex/src/matcher.rs:92 build_literals",
+  "crates/regex/src/matcher.rs:157 swap_greed",
+  "crates/regex/src/matcher.rs:167 ignore_whitespace",
+  "crates/regex/src/matcher.rs:256 nest_limit",
+  "crates/searcher/src/audit_plants.rs:7 audit_p1_private_unused",
+  "crates/searcher/src/audit_plants.rs:12 audit_p2_pub_unused",
+  "crates/searcher/src/audit_plants.rs:44 audit_p6_macro_only",
+  "crates/searcher/src/searcher/mod.rs:667 search_file",
+  "crates/searcher/src/searcher/mod.rs:859 line_number",
+  "crates/searcher/src/searcher/mod.rs:873 stop_on_nonmatch",
+  "crates/searcher/src/searcher/mod.rs:887 max_matches",
+  "crates/searcher/src/searcher/mod.rs:922 after_context",
+  "crates/searcher/src/searcher/mod.rs:929 before_context",
+  "crates/searcher/src/searcher/mod.rs:935 passthru",
+  "crates/searcher/src/testutil.rs:305 filter",
+  "crates/searcher/src/testutil.rs:316 print_labels",
+  "crates/searcher/src/testutil.rs:354 expected_slice_with_line_number",
+  "crates/searcher/src/testutil.rs:384 multi_line",
+  "tests/util.rs:22 setup",
+  "tests/util.rs:29 setup_pcre2"
+ ]
+}

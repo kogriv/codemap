@@ -78,11 +78,12 @@ class LSP:
     def notify(self, method, params):
         self._send({"jsonrpc": "2.0", "method": method, "params": params})
 
-    def start(self):
+    def start(self, text_document_caps: dict | None = None):
         self.request("initialize", {
             "processId": os.getpid(), "rootUri": self.root.as_uri(),
             "capabilities": {"experimental": {"serverStatusNotification": True},
-                             "textDocument": {"callHierarchy": {}, "implementation": {}, "references": {}},
+                             "textDocument": {"callHierarchy": {}, "implementation": {}, "references": {},
+                                              **(text_document_caps or {})},
                              "window": {"workDoneProgress": True}},
             "initializationOptions": {"workspace": {"symbol": {"search": {"kind": "all_symbols",
                                                                          "scope": "workspace", "limit": 1000}}},
