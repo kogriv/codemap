@@ -1277,6 +1277,20 @@ namespace p/nsp/m.py, function-local import   no edge; 0001_x.py unread      edg
 
 Every expectation holds. Tag `v0.0.39` on both mirrors.
 
+**0.0.40 — the release check, pre-registered before the upload (2026-11-21).** One item (R1-C110); schema
+**0.13**, **`ANSWER_FORMAT` 11** (`outside_graph` on a not-found foreign file, op `advise`); devkit v3.
+
+| | tree form | 0.0.39 (expected) | 0.0.40 (expected) |
+|---|---|---|---|
+| A1 | `codemap advise "ts call graph"` | `invalid choice: 'advise'`, exit 2 | `multi-lang-graph`, codemap not covered, GitNexus `read only`, exit 0 |
+| A2 | `codemap advise --root` on a dir with `a.py` + `app.ts` | exit 2 | names `typescript 1`, exit 0 |
+| A3 | `codemap advise zzzz` | exit 2 | refusal listing need ids, exit 1 |
+| A4 | the wheel | — | carries `codemap/advise/data/matrix.toml` and `feed.json` |
+| version | `codemap --version` | `codemap 0.0.39 · answer format 10 · schema 0.13` | `codemap 0.0.40 · answer format 11 · schema 0.13` |
+
+**Consumers:** graphs identical for bquant and bquearch; `check` markdown identical apart from the format line
+(measured on the dev build, E8).
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

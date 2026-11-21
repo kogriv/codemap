@@ -1,0 +1,280 @@
+{
+  "schema": 1,
+  "as_of": "2026-11-21T09:45:21Z",
+  "latest": {
+    "aider-repo-map": {
+      "version": "0.86.2",
+      "date": "2026-02-12",
+      "seen": "2026-11-21"
+    },
+    "archunitpython": {
+      "version": "1.8.1",
+      "date": "2026-10-06",
+      "seen": "2026-11-21"
+    },
+    "ast-grep": {
+      "version": "0.51.3",
+      "date": "2026-11-16",
+      "seen": "2026-11-21"
+    },
+    "bandit": {
+      "version": "1.9.4",
+      "date": "2026-02-25",
+      "seen": "2026-11-21"
+    },
+    "cocoindex-code": {
+      "version": "0.2.43",
+      "date": "2026-11-05",
+      "seen": "2026-11-21"
+    },
+    "code2flow": {
+      "version": "2.5.1",
+      "date": "2023-01-08",
+      "seen": "2026-11-21"
+    },
+    "codegraph": {
+      "version": "1.6.4",
+      "date": "2026-11-20",
+      "seen": "2026-11-21"
+    },
+    "codeql": {
+      "version": "2.27.5",
+      "date": "2026-11-19",
+      "seen": "2026-11-21"
+    },
+    "comby": {
+      "version": "1.8.1",
+      "date": "2022-06-28",
+      "seen": "2026-11-21"
+    },
+    "continue": {
+      "version": "2.0.0-vscode",
+      "date": "2026-06-19",
+      "seen": "2026-11-21"
+    },
+    "coverage-py": {
+      "version": "7.17.4",
+      "date": "2026-11-20",
+      "seen": "2026-11-21"
+    },
+    "doxygen": {
+      "version": "1.18.0",
+      "date": "2026-08-13",
+      "seen": "2026-11-21"
+    },
+    "gitnexus": {
+      "version": "1.6.12",
+      "date": "2026-09-12",
+      "seen": "2026-11-21"
+    },
+    "glean": {
+      "version": "commit-5ad54f4",
+      "date": "2026-11-20",
+      "seen": "2026-11-21"
+    },
+    "gpt-repository-loader": {
+      "version": "commit-c243824",
+      "date": "2023-03-20",
+      "seen": "2026-11-21"
+    },
+    "grafema": {
+      "version": "0.4.1",
+      "date": "2026-06-14",
+      "seen": "2026-11-21"
+    },
+    "graphify": {
+      "version": "0.9.114",
+      "date": "2026-11-20",
+      "seen": "2026-11-21"
+    },
+    "graphlens-mcp": {
+      "version": "0.4.0",
+      "date": "2026-07-03",
+      "seen": "2026-11-21"
+    },
+    "griffe": {
+      "version": "2.4.1",
+      "date": "2026-10-22",
+      "seen": "2026-11-21"
+    },
+    "grimp": {
+      "version": "3.20",
+      "date": "2026-11-13",
+      "seen": "2026-11-21"
+    },
+    "import-linter": {
+      "version": "2.17",
+      "date": "2026-11-18",
+      "seen": "2026-11-21"
+    },
+    "jedi": {
+      "version": "0.20.1",
+      "date": "2026-10-12",
+      "seen": "2026-11-21"
+    },
+    "jevgrep": {
+      "version": "0.8.5",
+      "date": "2026-10-18",
+      "seen": "2026-11-21"
+    },
+    "jscpd": {
+      "version": "5.4.3",
+      "date": "2026-11-08",
+      "seen": "2026-11-21"
+    },
+    "knip": {
+      "version": "6.47.0",
+      "date": "2026-11-20",
+      "seen": "2026-11-21"
+    },
+    "kythe": {
+      "version": "0.0.76",
+      "date": "2026-07-16",
+      "seen": "2026-11-21"
+    },
+    "lizard": {
+      "version": "1.26.1",
+      "date": "2026-11-16",
+      "seen": "2026-11-21"
+    },
+    "mypy": {
+      "version": "2.4.1",
+      "date": "2026-10-28",
+      "seen": "2026-11-21"
+    },
+    "ontoindex": {
+      "version": "3.2.3",
+      "date": "2026-11-18",
+      "seen": "2026-11-21"
+    },
+    "opengrep": {
+      "version": "2.0.0",
+      "date": "2026-11-13",
+      "seen": "2026-11-21"
+    },
+    "pyan3": {
+      "version": "2.9.0",
+      "date": "2026-10-06",
+      "seen": "2026-11-21"
+    },
+    "pycg": {
+      "version": "0.0.8",
+      "date": "2023-11-26",
+      "seen": "2026-11-21"
+    },
+    "pydeps": {
+      "version": "3.0.9",
+      "date": "2026-10-01",
+      "seen": "2026-11-21"
+    },
+    "pyright": {
+      "version": "1.1.414",
+      "date": "2026-09-09",
+      "seen": "2026-11-21"
+    },
+    "pytest-django": {
+      "version": "4.14.0",
+      "date": "2026-08-10",
+      "seen": "2026-11-21"
+    },
+    "radon": {
+      "version": "6.0.1",
+      "date": "2023-03-26",
+      "seen": "2026-11-21"
+    },
+    "rag-for-git": {
+      "version": "0.7.0",
+      "date": "2026-08-26",
+      "seen": "2026-11-21"
+    },
+    "repomix": {
+      "version": "1.19.0",
+      "date": "2026-11-08",
+      "seen": "2026-11-21"
+    },
+    "rope": {
+      "version": "1.15.2",
+      "date": "2026-11-05",
+      "seen": "2026-11-21"
+    },
+    "scip": {
+      "version": "0.10.0",
+      "date": "2026-09-03",
+      "seen": "2026-11-21"
+    },
+    "scip-python": {
+      "version": "0.6.8",
+      "date": "2026-10-22",
+      "seen": "2026-11-21"
+    },
+    "semgrep": {
+      "version": "1.186.0",
+      "date": "2026-11-18",
+      "seen": "2026-11-21"
+    },
+    "tree-sitter": {
+      "version": "0.27.2",
+      "date": "2026-11-07",
+      "seen": "2026-11-21"
+    },
+    "tutorial-codebase-knowledge": {
+      "version": "commit-05b24cb",
+      "date": "2026-05-31",
+      "seen": "2026-11-21"
+    },
+    "understand-anything": {
+      "version": "2.9.8",
+      "date": "2026-11-15",
+      "seen": "2026-11-21"
+    },
+    "universal-ctags": {
+      "version": "6.2.1",
+      "date": "2025-10-25",
+      "seen": "2026-11-21"
+    },
+    "vulture": {
+      "version": "2.16",
+      "date": "2026-03-25",
+      "seen": "2026-11-21"
+    },
+    "wily": {
+      "version": "1.25.0",
+      "date": "2023-10-11",
+      "seen": "2026-11-21"
+    }
+  },
+  "news": [
+    {
+      "date": "2026-11-21",
+      "kind": "card",
+      "tool": null,
+      "text": "The codemap lab's tool catalog is served to agents: MCP `advise`, `codemap advise`, generated inventory research/matrix.md.",
+      "source": "https://github.com/kogriv/codemap/blob/main/research/matrix.md",
+      "verified": true
+    },
+    {
+      "date": "2026-11-06",
+      "kind": "finding",
+      "tool": "import-linter",
+      "text": "import-linter 2.16 closes two silent passes the lab filed: an unknown contract option and zero contracts now fail (verified by the lab on 2.16).",
+      "source": "https://github.com/seddonym/import-linter/issues/393",
+      "verified": true
+    },
+    {
+      "date": "2026-11-05",
+      "kind": "finding",
+      "tool": "graphify",
+      "text": "Graphify 0.9.103 fixes the builtin homonym the lab filed (a builtin exception bound to a same-named package class); verified by the lab 2026-11-06.",
+      "source": "https://github.com/Graphify-Labs/graphify/issues/4989",
+      "verified": true
+    },
+    {
+      "date": "2026-10-15",
+      "kind": "finding",
+      "tool": "codegraph",
+      "text": "CodeGraph 1.6.1 fixes the silent truncation of callers the lab filed; 1.6.2 returns total and truncated. Figures re-measured on 1.6.2.",
+      "source": "https://github.com/colbymchenry/codegraph/issues/1639",
+      "verified": true
+    }
+  ]
+}

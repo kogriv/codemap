@@ -43,7 +43,7 @@ from codemap.query import Query
 # Here every component must be named, or the baseline is red before a mutation is applied
 # and the mutation proves nothing. The baseline assertion in each test guards this list:
 # if it goes stale, the failure says so rather than passing quietly.
-REAL_LAYERS = ["__main__", "cli", "devkit", "incremental", "extract", "serve", "apidiff", "arch", "diagnostics",
+REAL_LAYERS = ["__main__", "cli", "devkit", "incremental", "extract", "serve", "advise", "apidiff", "arch", "diagnostics",
                "freshness", "integrations", "provenance", "query", "store", "model",
                "tomlio", "watch", "scope"]
 

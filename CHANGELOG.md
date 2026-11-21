@@ -5,6 +5,42 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.40] - 2026-11-21
+
+**`advise`: the codemap lab's verified knowledge of other tools, served to the agent.** Schema unchanged
+(**0.13**). **`ANSWER_FORMAT` becomes 11:** a not-found resolution whose input names a source file codemap
+does not read (`web/app.ts`, `cmd/main.go::Run`) carries `outside_graph: {language, advise}`, and there is a new
+op `advise`. Every other answer is unchanged; the `check` markdown differs only in the format line. **The devkit
+moves to v3: run `codemap devkit update`.**
+
+- **New: MCP tool `advise` and `codemap advise`** (R1-C110, design [`docs/design/advise.md`](docs/design/advise.md),
+  guide [`docs/advise.md`](docs/advise.md)). For a need such as "ts call graph", duplicates, security patterns or
+  DB query counts it gives:
+  - codemap's own coverage, with the tests in its suite that prove it;
+  - the other tools, each claim marked `measured`, `probed`, `read` (nobody in the lab ran it) or `rejected`,
+    with version, date and a link to the evidence;
+  - `stale` and `drift` when a claim may be out of date.
+
+  `--root` detects a repository's languages and shows what codemap does not cover there. The catalog has 21
+  needs and 51 tools. Its 108 claims are 23 measured, 18 probed, 58 read and 9 rejected.
+- **New: `codemap advise --refresh`.** The catalog (`matrix.toml` plus `feed.json` with the latest releases and
+  news) is fetched from `main` into the user cache. A copy is accepted only when it parses, passes the schema
+  and is newer; any failure keeps the packaged copy and says why. No codemap release is needed for new
+  knowledge to reach agents.
+- **New: the generated inventory [`research/matrix.md`](research/matrix.md).** It shows what codemap covers,
+  what the lab measured and what it has only read. A test compares it with its render.
+- **Guards:**
+  - every evidence link resolves to a heading in a research card;
+  - every status meets its requirements;
+  - every test codemap cites exists;
+  - every card has a tool;
+  - the README counts match the catalog.
+- **The boundary in answers.** The MCP instructions send questions outside the Python graph to `advise`. The
+  devkit rules block (v3) says the same and names the languages found outside Python.
+- **Lab flow:** `research/tools/_watch/releases.py` reads PyPI, npm and GitHub for 48 watched tools and lists
+  the claims whose tool has moved past the measured version. A weekly routine scouts for new tools and
+  advisories and proposes them on a branch for review.
+
 ## [0.0.39] - 2026-11-21
 
 **`codemap devkit`: a repository adopts codemap in one command, and the adoption stays current.** Schema

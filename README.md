@@ -6,11 +6,21 @@ the code it analyzes. One canonical, deterministic graph store → many renders:
 dependency/architecture audit, RAG chunks, an Obsidian vault, mermaid diagrams, change-set review,
 and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code-intelligence tools.
 
+**And the lab's measured map of the rest of the field, served to the agent.** codemap reads Python only.
+Its lab measures neighbouring code-intelligence tools on one shared truth and keeps the results current.
+`advise` (MCP) and `codemap advise` answer the agent's next question when the graph cannot: other
+languages, duplicates, security patterns, complexity, DB query counts. For each need it gives codemap's own
+coverage, proved by a named test, and the other tools. Every claim is marked `measured`, `probed`, `read`
+(nobody here ran it) or `rejected`, with its version, date and evidence. Today: 21 needs, 51 tools, claims
+23 measured · 18 probed · 58 read · 9 rejected. The inventory is [`research/matrix.md`](research/matrix.md),
+the guide is [`docs/advise.md`](docs/advise.md), and `codemap advise --refresh` fetches the current catalog
+without a release.
+
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1324 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1367 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
-wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
+wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 32 ops (29 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
 v1 boundaries), **[BACKLOG.md](BACKLOG.md)** (roadmap), and **[research/](research/)** (tool landscape).
 
@@ -179,7 +189,7 @@ codemap semantic "detect swing pivots" --build ./pkg --root pkg
 # token-budgeted context pack — most relevant graph slice under N tokens (ranked; --seed to focus)
 codemap pack --graph graph.json --budget 2000 --seed analyze_zones
 
-# warm resident process — JSON requests over stdin/stdout (31 ops)
+# warm resident process — JSON requests over stdin/stdout (32 ops)
 codemap serve --graph graph.json --source-root .
 
 # …or expose the same surface as MCP tools for an AI-agent host (needs [mcp] extra)
@@ -293,6 +303,7 @@ the live graph, findings, and the milestone that closed them.
 - **[docs/export.md](docs/export.md)** — export recipes: RAG, mermaid, Obsidian vault, SCIP + ctags interop.
 - **[docs/accuracy.md](docs/accuracy.md)** — measured call-graph accuracy, the honest static ceiling, and
   the grep-vs-graph value proof (both harnesses guarded in CI).
+- **[docs/advise.md](docs/advise.md)** — `codemap advise` / MCP `advise`: what to use where codemap stops, from the lab's measured catalog
 - **[docs/devkit.md](docs/devkit.md)** — `codemap devkit`: adopt codemap in a repository in one command
   (agent rules, MCP, hooks, the ratchet contract) and keep the adoption current.
 - **[docs/architecture-contracts.md](docs/architecture-contracts.md)** — declare the intended architecture

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections import Counter
 
+from codemap.advise import outside_graph
 from codemap.model import (ANSWER_FORMAT, SCHEMA_VERSION,
                            SPLICED_EDGE_TYPES as _SPLICED_EDGE_TYPES, Graph)
 from codemap.query import Query
@@ -121,8 +122,13 @@ def _not_found(name_or_id: str) -> dict:
     must not happen is the answer being indistinguishable from "found, and nothing
     references it": that envelope used to be byte-identical for both.
     """
-    return {"input": name_or_id, "id": None, "found": False,
-            "ambiguous": False, "alternatives": []}
+    out = {"input": name_or_id, "id": None, "found": False,
+           "ambiguous": False, "alternatives": []}
+    # R1-C110 / D4: a source file codemap does not read is not "absent from the code".
+    beyond = outside_graph(name_or_id)
+    if beyond:
+        out["outside_graph"] = beyond
+    return out
 
 # R1-C28: ops that cut a computed answer down to a limit. Orthogonal to _PARTIAL_OPS
 # — that one is about how well calls *resolve*; this one is about how much of the
@@ -462,6 +468,11 @@ class Session:
 
     def _op_ping(self, args) -> str:
         return "pong"
+
+    def _op_advise(self, args) -> dict:
+        """R1-C110: the lab's tool expertise — independent of the graph (docs/design/advise.md)."""
+        from codemap.advise import answer
+        return answer(args)
 
     def _op_stats(self, args) -> dict:
         out = {
@@ -889,4 +900,5 @@ _OPS = {
     "source": Session._op_source,
     "report": Session._op_report,
     "export": Session._op_export,
+    "advise": Session._op_advise,
 }

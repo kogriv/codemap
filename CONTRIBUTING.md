@@ -38,6 +38,11 @@ just as importantly, what it does not catch.
   repositories by `codemap devkit`. Renaming a command, flag or MCP tool fails `tests/test_r1c108_devkit.py`
   until the templates follow. Changing a template means raising `DEVKIT_VERSION` and updating
   `TEMPLATES_SHA256`; that release's note then says "run `codemap devkit update`".
+- **The tool catalog is a product surface too.** `codemap/advise/data/` is what `advise` serves to agents.
+  A new or re-measured card moves its claims in `matrix.toml` in the same commit: status, version, `checked`,
+  evidence anchor. Then regenerate the inventory (`codemap advise --matrix > research/matrix.md`) and update
+  the README counts. `tests/test_r1c110_advise.py` fails until all of it agrees. Nothing is marked `measured`
+  without a card section that has the numbers, and nothing from a private project goes in.
 
 ## Reporting issues
 

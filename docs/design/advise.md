@@ -1,6 +1,6 @@
 # Design — `advise`: the lab's verified tool expertise, delivered to the agent
 
-**Status:** 🟡 pre-registered (2026-11-21), not implemented. **Backlog:** R1-C110.
+**Status:** ✅ **done** (2026-11-21, 0.0.40), pre-registered in a9e2c32 before code, reconciled below. **Backlog:** R1-C110.
 **Gap:** [`gaps/tool_expertise_unreachable_2026-11-21.md`](../../gaps/tool_expertise_unreachable_2026-11-21.md).
 
 ## Problem in one paragraph
@@ -157,3 +157,26 @@ Written before any code. Reconciled below after the run; anything unlisted is a 
 | E9 | devkit on a clone of bquant: `status` reports the block outdated (v2 → v3), `update` rewrites only the block, which now names `advise` | yes |
 | E10 | `codemap advise --root` on a repository with Python and TypeScript names TypeScript and the needs codemap does not cover for it | yes |
 | E11 | The scouting routine exists, its first run produces a reviewable change with ≥ 1 item, and the change carries no private names | yes |
+
+## Reconciliation (2026-11-21)
+
+| # | Result |
+|---|---|
+| E1 | ✅ with a correction to the expectation: `research/tools/` holds **12** cards, not 13 (the earlier count included the README). All 12 are in, each with a hands-on claim whose evidence resolves. grimp and scip-python carry claims measured inside other cards. All nine memo tools are present; the six without a card are `read` only. |
+| E2 | ✅ `advise "ts call graph"` → `multi-lang-graph`, codemap `none`; GitNexus and CodeGraph `read`, with "only Python measured" in the summary. |
+| E3 | ✅ codemap `covered` with two existing tests; import-linter first, `measured`. Its summary first lacked 266/266: those numbers were on grimp's `py-imports` claim. The gate's claim now states the graph under it (grimp, 266/266, 45/45), which the card supports. |
+| E4 | ✅ M1–M6 in memory, each named by its guard. Code mutations K1–K5 are each red and the control is green: the session hint, status requirements, anchor check, the dotted-name rule and refresh validation. |
+| E5 | ✅ against a local server: not newer → kept; invalid → refused, packaged served; newer feed → `source.feed: refreshed`; no server → reason, exit 0. A corrupt cache falls back too. |
+| E6 | ✅ 48 watched tools. First run: 45 versions and 3 named failures, which were repositories with no releases and no tags. The fix falls back to the last commit; the second run had 0 failures. 36 claims show drift: import-linter is measured on 2.15 and the latest is 2.17, CodeGraph 1.6.0 vs 1.6.4. |
+| E7 | ✅ on a live MCP spawn: 29 tools; `query("web/app.ts")` → `outside_graph.language = typescript`; `query("no_such_python_name")` has no `outside_graph`; `advise("duplicates")` answers; `answer_format` 11. |
+| E8 | ✅ graphs: bquant 3408/10014 and bquearch 3475/9696 nodes/edges are identical to 0.0.39. **Surprise:** the `check` markdown differs in one line, `answer format 10` → `11`. It follows from the bump in D4 but was not listed. |
+| E9 | ✅ on a clone of bquant installed by 0.0.39 (v2): `status` exit 1 with "outdated", and `update` rewrote only the block, which now names `advise`. **Surprise:** the first render named `shell` among the languages. Shell scripts are glue, so they are no longer named in the block; the CLI still counts them. |
+| E10 | ✅ `codemap advise --root` on Python + TypeScript names `typescript 1` and `multi-lang-graph`. |
+| E11 | Routine created after the push. The first run's result is recorded in the next entry. |
+
+**Surprises beyond E8/E9:**
+- A dotted Python name such as `a.b.c` first read as a C file. Without a path separator, only a single-dot
+  name with an extension of two letters or more is now a file. The test lists both forms.
+- `news(days=10**6)` overflowed the date ordinal; the window is clamped.
+- One extracted claim was promoted too far: Understand-Anything × `py-callers` came from a 9-file pilot and is
+  now `probed`. Two tools without a known URL were dropped rather than given a guessed one.

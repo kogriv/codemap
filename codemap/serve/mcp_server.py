@@ -37,7 +37,10 @@ _INSTRUCTIONS = (
     "complete; `total: null` means the total was not observable, not that it is zero. "
     "Every response carries `currency`: `behind` means the source tree changed since the "
     "graph was built, so the answer describes the older tree — say so, or rebuild and "
-    "`reload` before relying on it."
+    "`reload` before relying on it. codemap reads Python only: for other languages and for "
+    "needs it does not cover (duplicates, security patterns, DB query counts, …) call "
+    "`advise` — the lab's measured and read-only knowledge of other tools, never a guess. "
+    "A not-found answer with `outside_graph` names a file codemap does not read."
 )
 
 
@@ -338,6 +341,22 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
             args["direction"] = direction
         return op("pack", args)
 
+    @server.tool()
+    def advise(need: str | None = None, languages: list[str] | None = None,
+               tool: str | None = None, news_days: int | None = None) -> dict:
+        """What to use for a need codemap does not cover (other languages, duplicates,
+        security patterns, complexity, DB query counts, …), from the codemap lab's
+        catalog. `need`: an id or free words ("ts call graph"); omit for the overview of
+        every need with codemap's own coverage. `languages` filters; `tool` gives one tool's
+        claims and news; `news_days` adds the feed. Every claim has a status: `measured`
+        (scored against the lab's truth; evidence URL), `probed` (run, not scored), `read`
+        (known from docs only — say so when you rely on it), `rejected`. `stale` and `drift`
+        mean the claim may be out of date. Read `catalog.as_of`; `codemap advise --refresh`
+        fetches the current catalog. Nothing here installs or runs a tool: check a claim
+        with its `probe` on your own tree first."""
+        return op("advise", {"need": need, "languages": languages, "tool": tool,
+                             "news_days": news_days})
+
     return server
 
 
@@ -348,5 +367,5 @@ MCP_TOOLS = (
     "column", "columns_of",
     "accessors",
     "locate", "review", "architecture", "check", "diff", "communities", "flows", "source", "report",
-    "semantic_search", "pack",
+    "semantic_search", "pack", "advise",
 )

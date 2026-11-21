@@ -9,6 +9,7 @@ layers = [
   "cli",           # entry point — may import everything below
   "devkit",        # adoption in a repository (R1-C108): renders templates, edits the contract region
   "serve",         # warm/MCP surface over the query layer
+  "advise",        # the lab's tool expertise (R1-C110): reviewed data, no graph
   "extract",       # source → graph
   "query",         # read model over the graph
   "store",         # (de)serialize the graph

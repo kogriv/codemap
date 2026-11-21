@@ -16,11 +16,11 @@ import hashlib
 from pathlib import Path
 
 #: Raised whenever a template changes; adopting projects see "outdated" in `codemap devkit status`.
-DEVKIT_VERSION = 2
+DEVKIT_VERSION = 3
 
 #: sha256 over the templates (name + content, sorted). The suite recomputes it: a template edited without
 #: bumping DEVKIT_VERSION and updating this value fails there, in the same commit (D7).
-TEMPLATES_SHA256 = "175879a3f5457a24517f6bb00556fa7bc493d0776944835e4e7615e159f44d7d"
+TEMPLATES_SHA256 = "131c38386ac4558ddc701a00a2dcaa4e18efcb8848ad90bc2b168295d6479cb6"
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 

@@ -30,6 +30,13 @@ between layers: remove the import, or add the pair by hand inside the generated 
 giving the reason**, and let the review judge it. `codemap devkit ratchet --tighten` removes the pairs
 nothing uses any more.
 
+**Beyond the Python graph** — codemap reads Python only{{outside_languages}}. For other languages, and for
+needs codemap does not cover (duplicates, security patterns, complexity, DB query counts), call `advise`
+(MCP) or `codemap advise "<need>"`: the codemap lab's catalog of other tools. Each claim there is `measured`,
+`probed`, `read` (nobody in the lab ran it) or `rejected`: say which when you rely on it, and check a `read`
+tool on a question whose answer you know first. A not-found answer carrying `outside_graph` means the file
+is not in the graph, not that nothing uses it.
+
 **A defect in codemap** — a wrong answer, a missing edge, a false alarm, a crash: tell the codemap
 maintainers, and file an issue at https://github.com/kogriv/codemap/issues with a minimal example on invented
 names. The tracker is public: no code, names or paths of this project. Give the question, codemap's answer,

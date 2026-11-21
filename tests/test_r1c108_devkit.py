@@ -244,7 +244,8 @@ SAMPLE = {"devkit_version": 1, "codemap_version": "0.0.0", "package": "src/pkg",
           "graph": ".codemap/graph.json", "graph_next": ".codemap/graph.next.json",
           "build_args": "--consumer tests --mode full", "agents_file": "AGENTS.md", "pin_shell": "codemap",
           "pin_assign": "codemap", "pin_command_toml": '"codemap"', "pin_args_toml": "", "pairs": "",
-          "flags": "no_cycles = true", "currency": "current", "devkit_note": "", "root_toml": '"/repo"'}
+          "flags": "no_cycles = true", "currency": "current", "devkit_note": "", "root_toml": '"/repo"',
+          "outside_languages": "; this repository also has typescript, which it does not read"}
 
 _OPS = ("|", "||", "&&", ";", "&")
 
@@ -292,7 +293,7 @@ def _all_templates():
 #: How many codemap commands the scan finds in each template. Pinned so the scan cannot quietly stop
 #: reading a file (or a command form) and keep passing over what it no longer checks; a template that
 #: gains or loses a command updates its count here, in the same commit.
-COMMANDS_PER_TEMPLATE = {"agents_block.md": 8, "brief.txt": 1, "claude_hooks.json": 2, "codex_region.toml": 1,
+COMMANDS_PER_TEMPLATE = {"agents_block.md": 9, "brief.txt": 1, "claude_hooks.json": 2, "codex_region.toml": 1,
                          "contract_head.toml": 1, "github-workflow.yml": 2, "gitlab-ci.yml": 2,
                          "mcp_claude.args": 1, "post-commit.sh": 3, "ratchet_region.toml": 2}
 

@@ -8,6 +8,11 @@ Copy the template, fill every section. Leave a field explicitly **"not checked"*
 the honest boundary is part of the finding. Record exact versions / commit hashes / commands so numbers
 reproduce.
 
+**A card feeds the catalog.** Each card's results are claims in
+[`codemap/advise/data/matrix.toml`](../../codemap/advise/data/matrix.toml), served to agents by `advise` and rolled
+up in [`../matrix.md`](../matrix.md) (generated). A new card, or a re-measure, updates its claims in the same
+commit ([CONTRIBUTING](../../CONTRIBUTING.md)). The release watch lives in [`_watch/`](_watch/).
+
 **Scope parity is mandatory.** Every hands-on card measures on the shared R2 benchmark scope
 ([`_scope/bquant.scope.json`](_scope/bquant.scope.json)) and records its `scope_id` in the **Scope** field.
 Two cards are only comparable when their `scope_id` matches — the [comparison hub](../comparison.md) asserts

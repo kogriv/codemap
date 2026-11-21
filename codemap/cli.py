@@ -1020,6 +1020,53 @@ def _cmd_check(args) -> int:
     return _check_exit(violations, currency, allow_stale)
 
 
+def _cmd_advise(args) -> int:
+    """R1-C110: `codemap advise` — the lab's tool expertise; design ``docs/design/advise.md``."""
+    import json as _json
+    from pathlib import Path as _P
+
+    from codemap.advise import answer, detect_languages, load
+    from codemap.advise.render import answer_md, matrix_md
+    if args.refresh:
+        from codemap.advise.refresh import refresh
+        r = refresh(args.source)
+        if args.format == "json":
+            print(_json.dumps(r, indent=2, sort_keys=True))
+        elif r["updated"]:
+            print(f"refreshed from {r['from']}: catalog as of {r['after']['as_of']} "
+                  f"(was {r['before']['as_of']}) → {r['cache']}")
+        else:
+            print(f"not refreshed: {r['reason']}. Serving the catalog as of {r['before']['as_of']}.")
+        return 0
+    cat = load()
+    if args.matrix:
+        print(matrix_md(cat), end="")
+        return 0
+    langs = list(args.lang)
+    detected = None
+    if args.root:
+        detected = detect_languages(_P(args.root))
+        langs += [x for x in detected if x != "python" and x not in langs]
+    req = {"need": args.need, "tool": args.tool, "languages": langs or None,
+           "news_days": args.days if args.news else None}
+    a = answer(req, cat)
+    if detected is not None:
+        a["detected_languages"] = detected
+    if args.format == "json":
+        print(_json.dumps(a, indent=2, sort_keys=True, ensure_ascii=False))
+    else:
+        text = answer_md(a)
+        if detected is not None:
+            outside = {k: v for k, v in detected.items() if k != "python"}
+            head = ("Languages under the root: " + ", ".join(f"{k} {v}" for k, v in sorted(
+                detected.items(), key=lambda x: -x[1])) + ". " + (
+                "codemap reads only the Python; the rows below are filtered to these languages."
+                if outside else "Only Python: codemap reads all of it."))
+            text = head + "\n\n" + text
+        print(text, end="")
+    return 1 if a.get("error") else 0
+
+
 def _cmd_devkit(args) -> int:
     """R1-C108: `codemap devkit …` — design ``docs/design/devkit.md``."""
     from pathlib import Path as _P
@@ -1525,6 +1572,23 @@ def build_parser() -> argparse.ArgumentParser:
     dus.add_argument("--transcripts", default=None, help="Transcripts directory (default: Claude Code's for --root).")
     dus.add_argument("--format", choices=["markdown", "json"], default="markdown")
     dk.set_defaults(func=_cmd_devkit)
+
+    # R1-C110: the lab's verified expertise on other tools, for the needs codemap does not cover.
+    ad = sub.add_parser("advise", help="What codemap covers for a need, and what the lab measured "
+                                       "(or has only read) about other tools.")
+    ad.add_argument("need", nargs="?", default=None,
+                    help="A need id or free words (\"ts call graph\", duplicates). Omit for the overview.")
+    ad.add_argument("--lang", action="append", default=[], help="Only needs for this language. Repeatable.")
+    ad.add_argument("--root", default=None, help="Detect the languages under this directory and filter to them.")
+    ad.add_argument("--tool", default=None, help="One tool: its claims, latest release seen, news.")
+    ad.add_argument("--news", action="store_true", help="Add the feed's news.")
+    ad.add_argument("--days", type=int, default=30, help="News window in days (with --news).")
+    ad.add_argument("--refresh", action="store_true",
+                    help="Fetch the lab's current catalog from main into the user cache (no codemap release needed).")
+    ad.add_argument("--from", dest="source", default=None, help="Base URL for --refresh (default: the repository's main).")
+    ad.add_argument("--matrix", action="store_true", help="Print research/matrix.md (the generated inventory).")
+    ad.add_argument("--format", choices=["markdown", "json"], default="markdown")
+    ad.set_defaults(func=_cmd_advise)
 
     return p
 

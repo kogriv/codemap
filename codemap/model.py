@@ -135,7 +135,10 @@ SCHEMA_VERSION = "0.13"
 #  10 — `currency` says how it was checked (`via`: `recipe` or the graph's provenance roots,
 #       R1-C90), so a graph built elsewhere is `current`/`behind` where it was `unknown`; repo-scoped
 #       `build --incremental` is applied (R1-C86).
-ANSWER_FORMAT = 10
+#  11 — a not-found resolution whose input names a source file codemap does not read (`.ts`,
+#       `.go`, …) carries `outside_graph: {language, advise}`; new op `advise` (R1-C110,
+#       docs/design/advise.md).
+ANSWER_FORMAT = 11
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship

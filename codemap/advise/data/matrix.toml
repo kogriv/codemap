@@ -1,0 +1,1633 @@
+[meta]
+schema = 1
+as_of = "2026-11-21"
+stale_after_days = 180
+repo = "https://github.com/kogriv/codemap"
+
+[[need]]
+id = "py-symbols"
+title = "Where a Python symbol is defined, and its dossier"
+keywords = ["definition", "where", "defined", "symbol", "dossier", "signature", "find", "lookup", "goto"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "MCP `search`, `query`, `resolve`, `source`; CLI `codemap query <symbol>`"
+codemap_tests = ["tests/test_m1_query.py::test_where_defined_resolves_reexport", "tests/test_m17_mcp.py::test_query_tool_dossier"]
+
+[[need]]
+id = "py-callers"
+title = "Who calls a Python function, and what it calls"
+keywords = ["callers", "callees", "call", "calls", "graph", "who", "uses", "usage", "references"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "MCP `callers`, `callees`; CLI `codemap query <symbol>` (both lists in the dossier)"
+codemap_tests = ["tests/test_m4_behavior.py::test_callers_of_flagship", "tests/test_epistemic.py::test_callers_partial"]
+codemap_caveat = "Calls through a string (a registry keyed by name, `run(\"name\")`) are not resolved (R1-C107); dynamic dispatch is reported as partial, never as complete."
+
+[[need]]
+id = "py-impact"
+title = "What a change to a Python symbol touches (blast radius)"
+keywords = ["impact", "blast", "radius", "change", "break", "affected", "dependents", "refactor", "safe"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "MCP `impact`; CLI `codemap report impact --symbol <symbol> [--depth N]`"
+codemap_tests = ["tests/test_impact_depth.py::test_depth_limits_the_bfs", "tests/test_impact_depth.py::test_cli_report_impact_depth_flag"]
+
+[[need]]
+id = "py-imports"
+title = "Python import graph and import cycles"
+keywords = ["imports", "import", "dependencies", "cycles", "cycle", "circular", "modules", "graph"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "CLI `codemap report dependencies`; MCP `report kind=dependencies`, `architecture`"
+codemap_tests = ["tests/test_m1_query.py::test_import_edges_resolved", "tests/test_m1_query.py::test_cycle_detection"]
+
+[[need]]
+id = "import-gate"
+title = "An architecture contract on imports, enforced in CI"
+keywords = ["gate", "contract", "layers", "forbidden", "architecture", "ci", "enforce", "lint", "import", "ratchet", "boundaries"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "`[architecture]` in codemap.toml; CLI `codemap check --require-contract`; MCP `check`"
+codemap_tests = ["tests/test_r1c37_rule_mutation.py::test_forbidden_catches_the_banned_direction_only", "tests/test_r1c37_rule_mutation.py::test_no_cycles_catches_a_cycle_the_import_actually_closes"]
+
+[[need]]
+id = "py-tests-for"
+title = "Which tests exercise a Python symbol"
+keywords = ["tests", "test", "coverage", "covers", "exercise", "untested"]
+languages = ["python"]
+codemap = "partial"
+codemap_how = "MCP `tests`, `covers`; CLI `codemap tests <symbol>` — on a repo-scoped graph (`build --consumer tests --mode full`)"
+codemap_tests = ["tests/test_r1c24_test_mapping.py::test_only_real_pytest_tests_are_tests"]
+codemap_caveat = "Static reach, not runtime coverage; tests that reach code through dispatch by name are missed (R1-C107). For line coverage use coverage.py."
+
+[[need]]
+id = "api-diff"
+title = "Breaking changes in a Python package's public API between two versions"
+keywords = ["api", "breaking", "diff", "semver", "public", "surface", "compatibility", "release"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "CLI `codemap diff old.json new.json`; MCP `diff`"
+codemap_tests = ["tests/test_r1c5_apidiff.py::test_made_private_is_breaking", "tests/test_r1c34_signature_kinds.py::test_making_a_parameter_keyword_only_is_breaking"]
+
+[[need]]
+id = "diff-review"
+title = "What a diff or pull request touches, and what of it is untested"
+keywords = ["review", "diff", "pr", "pull", "request", "merge", "change", "set", "hunks"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "CLI `codemap review < diff`; MCP `review`"
+codemap_tests = ["tests/test_m15_review.py::test_build_review_resolves_hunks_to_dossiers", "tests/test_m15_review.py::test_review_reports_unresolved_hunks"]
+
+[[need]]
+id = "semantic-search"
+title = "Find code by concept or natural-language description"
+keywords = ["semantic", "concept", "natural", "language", "embedding", "embeddings", "fuzzy", "meaning", "search", "vector"]
+languages = ["any"]
+codemap = "partial"
+codemap_how = "MCP `semantic_search` through an opt-in adapter (cocoindex-code), resolved back to exact symbols"
+codemap_tests = ["tests/test_r1c16_semantic.py::test_semantic_enriches_hits_to_symbols"]
+codemap_caveat = "Needs the adapter installed and indexed; without it the answer is empty and says so."
+
+[[need]]
+id = "context-pack"
+title = "Token-budgeted repository context for an LLM"
+keywords = ["context", "pack", "budget", "tokens", "repo", "map", "llm", "prompt", "summary"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "MCP `pack` (budget, seeds); CLI `codemap pack`"
+codemap_tests = ["tests/test_pack_honesty.py::test_seeded_pack_holds_only_what_the_seed_reaches", "tests/test_pack_honesty.py::test_unresolved_seed_is_a_refusal_not_the_global_pack"]
+
+[[need]]
+id = "repo-overview"
+title = "Architecture map: subsystems, layers, communities"
+keywords = ["architecture", "overview", "map", "subsystems", "communities", "layers", "structure", "wiki", "onboarding"]
+languages = ["python"]
+codemap = "covered"
+codemap_how = "CLI `codemap report architecture`; MCP `architecture`, `communities`, `flows`"
+codemap_tests = ["tests/test_subsystems.py::test_communities_split_two_clusters", "tests/test_subsystems.py::test_communities_deterministic"]
+
+[[need]]
+id = "dead-code"
+title = "Unused Python code"
+keywords = ["dead", "unused", "code", "orphan", "unreachable", "vulture", "cleanup"]
+languages = ["python"]
+codemap = "partial"
+codemap_how = "CLI `codemap report dead-code`; MCP `report kind=dead-code`"
+codemap_tests = ["tests/test_m4_behavior.py::test_dead_symbols_are_private", "tests/test_m6_repo_scope.py::test_dead_code_report_separates_consumers"]
+codemap_caveat = "Candidates, not verdicts: functions registered by a decorator and called by name look dead (R1-C106)."
+
+[[need]]
+id = "duplicates"
+title = "Copy-paste and duplicated code"
+keywords = ["duplicates", "duplicate", "duplication", "copy", "paste", "clone", "clones", "similar"]
+languages = ["any"]
+codemap = "none"
+
+[[need]]
+id = "complexity"
+title = "Complexity metrics (cyclomatic, size) and a threshold in CI"
+keywords = ["complexity", "cyclomatic", "metrics", "maintainability", "size", "long", "functions", "threshold"]
+languages = ["any"]
+codemap = "none"
+
+[[need]]
+id = "security-patterns"
+title = "Security patterns and leaked secrets"
+keywords = ["security", "vulnerability", "vulnerabilities", "secrets", "secret", "injection", "sast", "lint", "audit", "cve"]
+languages = ["any"]
+codemap = "none"
+
+[[need]]
+id = "dataflow-taint"
+title = "Data flow and taint: where an input value can reach"
+keywords = ["dataflow", "data", "flow", "taint", "source", "sink", "reach", "ssrf", "injection", "track"]
+languages = ["any"]
+codemap = "none"
+
+[[need]]
+id = "multi-lang-graph"
+title = "Symbol and call graph for languages other than Python"
+keywords = ["typescript", "javascript", "go", "rust", "java", "kotlin", "csharp", "cpp", "ruby", "php", "frontend", "multi", "language", "polyglot", "call", "graph", "callers", "impact"]
+languages = ["typescript", "javascript", "go", "rust", "java", "kotlin", "csharp", "c", "cpp", "ruby", "php", "swift", "scala", "vue", "svelte"]
+codemap = "none"
+
+[[need]]
+id = "frontend-dead-exports"
+title = "Unused exports, files and dependencies in a JS/TS project"
+keywords = ["unused", "exports", "dead", "frontend", "dependencies", "files", "typescript", "javascript"]
+languages = ["typescript", "javascript", "vue", "svelte"]
+codemap = "none"
+
+[[need]]
+id = "structural-search"
+title = "Structural (AST) pattern search and rewrite"
+keywords = ["structural", "pattern", "ast", "search", "rewrite", "codemod", "grep", "match", "replace"]
+languages = ["any"]
+codemap = "none"
+
+[[need]]
+id = "type-errors"
+title = "Static type checking"
+keywords = ["types", "type", "typing", "checker", "mypy", "errors", "annotations"]
+languages = ["python", "typescript"]
+codemap = "none"
+
+[[need]]
+id = "db-query-count"
+title = "How many database queries a code path makes"
+keywords = ["database", "db", "queries", "query", "count", "orm", "n+1", "django", "sql", "performance"]
+languages = ["python", "sql"]
+codemap = "none"
+note = "No static tool sees this: the number of queries depends on the data and the ORM at run time. Use query-counting tests on the paths that matter (Django's `assertNumQueries`, pytest-django's `django_assert_num_queries`, or a counter on the connection)."
+
+[[tool]]
+id = "aider-repo-map"
+name = "aider repo-map"
+url = "https://github.com/Aider-AI/aider"
+license = "Apache-2.0"
+languages = ["multi (tree-sitter)"]
+interface = ["cli"]
+watch = { kind = "pypi", name = "aider-chat" }
+
+[[tool]]
+id = "archunitpython"
+name = "ArchUnitPython"
+url = "https://github.com/LukasNiessen/ArchUnitPython"
+languages = ["python"]
+interface = ["lib"]
+watch = { kind = "pypi", name = "archunitpython" }
+
+[[tool]]
+id = "ast-grep"
+name = "ast-grep (sg)"
+url = "https://github.com/ast-grep/ast-grep"
+license = "MIT"
+languages = ["multi (tree-sitter)"]
+interface = ["cli", "lib", "lsp", "mcp"]
+watch = { kind = "github", name = "ast-grep/ast-grep" }
+
+[[tool]]
+id = "bandit"
+name = "Bandit"
+url = "https://github.com/PyCQA/bandit"
+license = "Apache-2.0"
+languages = ["python"]
+interface = ["cli"]
+watch = { kind = "pypi", name = "bandit" }
+
+[[tool]]
+id = "cocoindex-code"
+name = "cocoindex-code (ccc)"
+url = "https://github.com/cocoindex-io/cocoindex-code"
+license = "Apache-2.0"
+languages = ["multi (tree-sitter)"]
+interface = ["cli", "mcp"]
+watch = { kind = "pypi", name = "cocoindex-code" }
+card = "research/tools/cocoindex-code.md"
+
+[[tool]]
+id = "code2flow"
+name = "code2flow"
+url = "https://github.com/scottrogowski/code2flow"
+license = "MIT"
+languages = ["python", "javascript", "ruby", "php"]
+interface = ["cli"]
+watch = { kind = "pypi", name = "code2flow" }
+
+[[tool]]
+id = "codegraph"
+name = "CodeGraph (colbymchenry)"
+url = "https://github.com/colbymchenry/codegraph"
+license = "MIT"
+languages = ["python", "typescript", "javascript", "go", "rust", "java", "... (20 via Rust kernel)"]
+interface = ["cli", "mcp", "lib"]
+watch = { kind = "npm", name = "@colbymchenry/codegraph" }
+card = "research/tools/codegraph.md"
+
+[[tool]]
+id = "codeql"
+name = "CodeQL"
+url = "https://github.com/github/codeql"
+license = "MIT (queries/libraries); CLI/engine proprietary"
+languages = ["multi"]
+interface = ["cli", "plugin"]
+watch = { kind = "github", name = "github/codeql-cli-binaries" }
+
+[[tool]]
+id = "codewiki"
+name = "CodeWiki (Google)"
+url = "https://codewiki.google"
+license = "proprietary"
+languages = ["multi"]
+interface = ["saas"]
+watch = { kind = "none" }
+
+[[tool]]
+id = "comby"
+name = "Comby"
+url = "https://github.com/comby-tools/comby"
+license = "Apache-2.0"
+languages = ["any (delimiter-aware)"]
+interface = ["cli"]
+watch = { kind = "github", name = "comby-tools/comby" }
+
+[[tool]]
+id = "continue"
+name = "Continue (@codebase)"
+url = "https://github.com/continuedev/continue"
+license = "Apache-2.0"
+languages = ["multi"]
+interface = ["plugin"]
+watch = { kind = "github", name = "continuedev/continue" }
+
+[[tool]]
+id = "coverage-py"
+name = "coverage.py"
+url = "https://github.com/nedbat/coveragepy"
+license = "Apache-2.0"
+languages = ["python"]
+interface = ["cli", "lib"]
+watch = { kind = "pypi", name = "coverage" }
+
+[[tool]]
+id = "doxygen"
+name = "Doxygen"
+url = "https://www.doxygen.nl"
+license = "GPL-2.0"
+languages = ["multi"]
+interface = ["cli"]
+watch = { kind = "github", name = "doxygen/doxygen" }
+
+[[tool]]
+id = "gitnexus"
+name = "GitNexus"
+url = "https://github.com/abhigyanpatwari/GitNexus"
+license = "PolyForm-Noncommercial-1.0.0"
+languages = ["python", "typescript", "javascript", "java", "kotlin", "csharp", "go", "rust", "php", "ruby", "swift", "c", "cpp", "dart"]
+interface = ["cli", "mcp"]
+watch = { kind = "npm", name = "gitnexus" }
+card = "research/tools/gitnexus.md"
+
+[[tool]]
+id = "glean"
+name = "Glean (Meta)"
+url = "https://glean.software"
+license = "BSD-style"
+languages = ["multi"]
+interface = ["lib", "cli"]
+watch = { kind = "github", name = "facebookincubator/Glean" }
+
+[[tool]]
+id = "gpt-repository-loader"
+name = "gpt-repository-loader"
+url = "https://github.com/mpoon/gpt-repository-loader"
+license = "MIT"
+languages = ["any (text)"]
+interface = ["cli"]
+watch = { kind = "github", name = "mpoon/gpt-repository-loader" }
+
+[[tool]]
+id = "grafema"
+name = "grafema"
+url = "https://github.com/Disentinel/grafema"
+license = "FSL-1.1-Apache-2.0"
+languages = ["javascript", "typescript", "python (beta)"]
+interface = ["cli", "mcp"]
+watch = { kind = "npm", name = "grafema" }
+card = "research/tools/grafema.md"
+
+[[tool]]
+id = "graphify"
+name = "Graphify"
+url = "https://github.com/Graphify-Labs/graphify"
+license = "Apache-2.0"
+languages = ["python", "~40 via tree-sitter", "non-code via LLM"]
+interface = ["cli", "mcp", "saas"]
+watch = { kind = "pypi", name = "graphifyy" }
+card = "research/tools/graphify.md"
+
+[[tool]]
+id = "graphlens-mcp"
+name = "graphlens-mcp"
+url = "https://github.com/neko1313/graphlens-mcp"
+license = "MIT"
+languages = ["python", "typescript", "go", "rust", "php"]
+interface = ["mcp", "cli"]
+watch = { kind = "pypi", name = "graphlens-mcp" }
+card = "research/tools/graphlens.md"
+
+[[tool]]
+id = "griffe"
+name = "griffe"
+url = "https://mkdocstrings.github.io/griffe/"
+license = "ISC"
+languages = ["python"]
+interface = ["cli", "lib"]
+watch = { kind = "pypi", name = "griffe" }
+
+[[tool]]
+id = "grimp"
+name = "grimp"
+url = "https://github.com/python-grimp/grimp"
+license = "BSD-2-Clause"
+languages = ["python"]
+interface = ["lib"]
+watch = { kind = "pypi", name = "grimp" }
+card = "research/tools/import-linter.md"
+
+[[tool]]
+id = "import-linter"
+name = "import-linter"
+url = "https://github.com/seddonym/import-linter"
+license = "BSD-2-Clause"
+languages = ["python"]
+interface = ["cli", "lib"]
+watch = { kind = "pypi", name = "import-linter" }
+card = "research/tools/import-linter.md"
+
+[[tool]]
+id = "jedi"
+name = "jedi"
+url = "https://github.com/davidhalter/jedi"
+languages = ["python"]
+interface = ["lib"]
+watch = { kind = "pypi", name = "jedi" }
+
+[[tool]]
+id = "jevgrep"
+name = "jevgrep (jg)"
+url = "https://github.com/dzhng/jevgrep"
+license = "MIT"
+languages = ["python", "go", "rust", "typescript", "javascript", "text fallback"]
+interface = ["cli"]
+watch = { kind = "npm", name = "@dzhng/jevgrep" }
+card = "research/tools/jevgrep.md"
+
+[[tool]]
+id = "jscpd"
+name = "jscpd"
+url = "https://github.com/kucherenko/jscpd"
+license = "MIT"
+languages = ["multi (150+ formats)"]
+interface = ["cli", "lib"]
+watch = { kind = "npm", name = "jscpd" }
+
+[[tool]]
+id = "knip"
+name = "Knip"
+url = "https://github.com/webpro-nl/knip"
+license = "ISC"
+languages = ["javascript", "typescript"]
+interface = ["cli"]
+watch = { kind = "npm", name = "knip" }
+
+[[tool]]
+id = "kythe"
+name = "Kythe"
+url = "https://kythe.io"
+license = "Apache-2.0"
+languages = ["multi"]
+interface = ["lib"]
+watch = { kind = "github", name = "kythe/kythe" }
+
+[[tool]]
+id = "lizard"
+name = "lizard"
+url = "https://github.com/terryyin/lizard"
+license = "MIT"
+languages = ["multi (C/C++, Java, JS, Python, Go, ...)"]
+interface = ["cli", "lib"]
+watch = { kind = "pypi", name = "lizard" }
+
+[[tool]]
+id = "mypy"
+name = "mypy"
+url = "https://github.com/python/mypy"
+license = "MIT"
+languages = ["python"]
+interface = ["cli", "lib"]
+watch = { kind = "pypi", name = "mypy" }
+
+[[tool]]
+id = "ontoindex"
+name = "OntoIndex"
+url = "https://github.com/ontograph/ontoindex"
+license = "AGPL-3.0-or-later"
+languages = ["typescript", "javascript", "python", "java", "kotlin", "csharp", "go", "rust", "php", "ruby", "swift", "c", "cpp", "dart"]
+interface = ["cli", "mcp"]
+watch = { kind = "github", name = "ontograph/ontoindex" }
+card = "research/tools/ontoindex.md"
+
+[[tool]]
+id = "opengrep"
+name = "OpenGrep"
+url = "https://github.com/opengrep/opengrep"
+license = "LGPL-2.1"
+languages = ["multi (~12 for cross-function taint)"]
+interface = ["cli"]
+watch = { kind = "github", name = "opengrep/opengrep" }
+
+[[tool]]
+id = "pyan3"
+name = "pyan3"
+url = "https://github.com/Technologicat/pyan"
+license = "GPL-2.0"
+languages = ["python"]
+interface = ["cli"]
+watch = { kind = "pypi", name = "pyan3" }
+
+[[tool]]
+id = "pycg"
+name = "PyCG"
+url = "https://github.com/vitsalis/PyCG"
+license = "Apache-2.0"
+languages = ["python"]
+interface = ["cli", "lib"]
+watch = { kind = "pypi", name = "pycg" }
+card = "research/tools/pycg.md"
+
+[[tool]]
+id = "pydeps"
+name = "pydeps"
+url = "https://github.com/thebjorn/pydeps"
+license = "BSD-2-Clause"
+languages = ["python"]
+interface = ["cli"]
+watch = { kind = "pypi", name = "pydeps" }
+
+[[tool]]
+id = "pyright"
+name = "Pyright"
+url = "https://github.com/microsoft/pyright"
+license = "MIT"
+languages = ["python"]
+interface = ["cli", "lsp"]
+watch = { kind = "npm", name = "pyright" }
+
+[[tool]]
+id = "pytest-django"
+name = "pytest-django"
+url = "https://github.com/pytest-dev/pytest-django"
+license = "BSD-3-Clause"
+languages = ["python"]
+interface = ["lib", "plugin"]
+watch = { kind = "pypi", name = "pytest-django" }
+
+[[tool]]
+id = "radon"
+name = "radon"
+url = "https://github.com/rubik/radon"
+license = "MIT"
+languages = ["python"]
+interface = ["cli", "lib"]
+watch = { kind = "pypi", name = "radon" }
+
+[[tool]]
+id = "rag-for-git"
+name = "rag_for_git (rag-reviewer)"
+url = "https://github.com/mimfort/rag_for_git"
+license = "MIT"
+languages = ["python"]
+interface = ["cli", "mcp", "lib"]
+watch = { kind = "pypi", name = "rag-reviewer" }
+card = "research/tools/rag_for_git.md"
+
+[[tool]]
+id = "repomix"
+name = "Repomix"
+url = "https://github.com/yamadashy/repomix"
+license = "MIT"
+languages = ["multi"]
+interface = ["cli", "mcp"]
+watch = { kind = "npm", name = "repomix" }
+
+[[tool]]
+id = "rope"
+name = "rope"
+url = "https://github.com/python-rope/rope"
+license = "LGPL"
+languages = ["python"]
+interface = ["lib"]
+watch = { kind = "pypi", name = "rope" }
+
+[[tool]]
+id = "scip"
+name = "SCIP (format)"
+url = "https://github.com/sourcegraph/scip"
+license = "Apache-2.0"
+languages = ["python", "typescript", "go", "java", "... (per indexer)"]
+interface = ["cli", "lib"]
+watch = { kind = "github", name = "sourcegraph/scip" }
+
+[[tool]]
+id = "scip-python"
+name = "scip-python"
+url = "https://github.com/sourcegraph/scip-python"
+license = "MIT"
+languages = ["python"]
+interface = ["cli"]
+watch = { kind = "npm", name = "@sourcegraph/scip-python" }
+card = "research/tools/rag_for_git.md"
+
+[[tool]]
+id = "semgrep"
+name = "Semgrep"
+url = "https://github.com/semgrep/semgrep"
+license = "LGPL-2.1 (engine)"
+languages = ["multi"]
+interface = ["cli", "saas"]
+watch = { kind = "pypi", name = "semgrep" }
+
+[[tool]]
+id = "sourcegraph"
+name = "Sourcegraph (incl. Cody)"
+url = "https://sourcegraph.com"
+license = "proprietary (open components)"
+languages = ["multi"]
+interface = ["saas"]
+watch = { kind = "none" }
+
+[[tool]]
+id = "stack-graphs"
+name = "Stack Graphs"
+url = "https://github.com/github/stack-graphs"
+license = "MIT/Apache-2.0"
+languages = ["multi (tree-sitter + .tsg)"]
+interface = ["lib"]
+watch = { kind = "none" }
+
+[[tool]]
+id = "tree-sitter"
+name = "tree-sitter"
+url = "https://github.com/tree-sitter/tree-sitter"
+license = "MIT"
+languages = ["multi (grammars)"]
+interface = ["lib", "cli"]
+watch = { kind = "github", name = "tree-sitter/tree-sitter" }
+
+[[tool]]
+id = "tutorial-codebase-knowledge"
+name = "Tutorial-Codebase-Knowledge"
+url = "https://github.com/The-Pocket/Tutorial-Codebase-Knowledge"
+languages = ["multi"]
+interface = ["cli"]
+watch = { kind = "github", name = "The-Pocket/Tutorial-Codebase-Knowledge" }
+
+[[tool]]
+id = "understand-anything"
+name = "Understand-Anything"
+url = "https://github.com/Egonex-AI/Understand-Anything"
+license = "MIT"
+languages = ["multi (tree-sitter wasm)", "non-code (config, docs, IaC, SQL)"]
+interface = ["plugin"]
+watch = { kind = "github", name = "Egonex-AI/Understand-Anything" }
+card = "research/tools/understand-anything.md"
+
+[[tool]]
+id = "universal-ctags"
+name = "universal-ctags"
+url = "https://github.com/universal-ctags/ctags"
+license = "GPL-2.0"
+languages = ["multi"]
+interface = ["cli"]
+watch = { kind = "github", name = "universal-ctags/ctags" }
+
+[[tool]]
+id = "vulture"
+name = "vulture"
+url = "https://github.com/jendrikseipp/vulture"
+license = "MIT"
+languages = ["python"]
+interface = ["cli"]
+watch = { kind = "pypi", name = "vulture" }
+
+[[tool]]
+id = "wily"
+name = "wily"
+url = "https://github.com/tonybaloney/wily"
+license = "Apache-2.0"
+languages = ["python"]
+interface = ["cli"]
+watch = { kind = "pypi", name = "wily" }
+
+[[claim]]
+tool = "griffe"
+need = "api-diff"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#pydoctor--griffe--sphinx-autodoc"
+summary = "Static API model with version-to-version API-breaking-change detection; codemap's own extractor."
+vs_codemap = "codemap ships its own `diff` (R1-C5) on top of griffe."
+
+[[claim]]
+tool = "lizard"
+need = "complexity"
+status = "read"
+summary = "Cyclomatic complexity and function-length analyzer across many languages."
+
+[[claim]]
+tool = "radon"
+need = "complexity"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#radon--wily--complexity-metrics"
+summary = "Per-block cyclomatic complexity, Halstead, Maintainability Index and raw SLOC from the AST."
+vs_codemap = "codemap added complexity to hotspots (R1-C4)."
+
+[[claim]]
+tool = "wily"
+need = "complexity"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#radon--wily--complexity-metrics"
+summary = "Tracks radon-style metrics across git history."
+
+[[claim]]
+tool = "aider-repo-map"
+need = "context-pack"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/01_ai_context_repomap.md#aider--repo-map-the-closest-peer"
+summary = "tree-sitter def/ref graph ranked by personalized PageRank, rendered as a token-budgeted text map (binary search into --map-tokens, ~1k default); graph is transient, internal to the aider chat loop."
+vs_codemap = "Source of codemap's pack idea (R1-C6); codemap persists a diffable graph and exposes query verbs."
+
+[[claim]]
+tool = "codegraph"
+need = "context-pack"
+status = "read"
+version = "1.6.0"
+checked = "2026-08-28"
+evidence = "research/tools/codegraph.md#what-it-is"
+summary = "Default MCP surface is one tool, codegraph_explore (verbatim source, call paths, blast radius in one call); README reports 80 % more resident context but fewer tool calls/tokens. Headline benchmark not reproduced; MCP path not exercised."
+
+[[claim]]
+tool = "gpt-repository-loader"
+need = "context-pack"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/01_ai_context_repomap.md#repomix--gpt-repository-loader--llamaindex-code-loaders"
+summary = "Flattens a git repo into one prompt blob; dormant; the naive floor."
+
+[[claim]]
+tool = "jevgrep"
+need = "context-pack"
+status = "measured"
+version = "0.8.0"
+checked = "2026-10-14"
+evidence = "research/tools/jevgrep.md#hands-on-measurements-target-bquant"
+summary = "With real Jev (OpenRouter typesafe/jev-1.13), file-level recall against codemap truth: code that uses a symbol found almost completely, documents poorly (docs 3/7 on T3, 2/24 on T4); $0.026-0.15 per cold search, 18-75 s; the 17-search campaign cost $1.14. Not byte-stable even serialised; never states which eligible files were not sent."
+vs_codemap = "Closest competitor to codemap pack: no index or build, 7.3 MB install, but needs a paid key and uploads source; no structure (T3-T5 absent)."
+
+[[claim]]
+tool = "repomix"
+need = "context-pack"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/01_ai_context_repomap.md#repomix--gpt-repository-loader--llamaindex-code-loaders"
+summary = "Concatenates a repo into one AI-friendly pack with token counting, gitignore/glob and --compress (tree-sitter signature stripping); deterministic formatter with an MCP server."
+vs_codemap = "No structural intelligence; complementary output form."
+
+[[claim]]
+tool = "codeql"
+need = "dataflow-taint"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#codeql-github"
+summary = "Relational CodeQL database queried in QL (Datalog); mature local + global data flow and taint tracking; build observation needed for compiled languages, Python/JS build-free; private-repo use needs GHAS."
+vs_codemap = "codemap has only a columns data-flow slice; CodeQL is the reference for taint."
+
+[[claim]]
+tool = "grafema"
+need = "dataflow-taint"
+status = "rejected"
+version = "0.4.1"
+checked = "2026-11-03"
+evidence = "research/tools/grafema.md#66-second-pass-reconciled-2026-11-0203"
+summary = "`wtf` answers 'no reachable nodes' for 3 of 3 Python questions and a Python toy; the same toy in JS returns 4- and 7-node chains (a control, not a JS measurement). Filed #486."
+vs_codemap = "codemap offers no data flow beyond columns."
+reason = "Python backward data flow returns nothing on 0.4.1"
+
+[[claim]]
+tool = "opengrep"
+need = "dataflow-taint"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#semgrep"
+summary = "Community fork of Semgrep (Jan 2025) restoring cross-function taint across about 12 languages."
+
+[[claim]]
+tool = "semgrep"
+need = "dataflow-taint"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#semgrep"
+summary = "`mode: taint` (source/sink/sanitizer/propagator); intra-procedural free, inter-procedural/inter-file is Pro."
+
+[[claim]]
+tool = "pytest-django"
+need = "db-query-count"
+status = "read"
+summary = "The `django_assert_num_queries` and `django_assert_max_num_queries` fixtures fail a test when a code path makes more queries than allowed; Django's own `assertNumQueries` does the same in TestCase."
+
+[[claim]]
+tool = "codegraph"
+need = "dead-code"
+status = "probed"
+version = "1.6.0"
+checked = "2026-08-28"
+evidence = "research/tools/codegraph.md#the-same-question-asked-of-both--function-local-imports"
+summary = "Library-only findDeadCode() returned 1 207 unreferenced symbols as one flat list; precision not measured."
+vs_codemap = "codemap bands candidates by confidence with whitelist and blind-spot notice."
+
+[[claim]]
+tool = "ontoindex"
+need = "dead-code"
+status = "read"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#what-it-is"
+summary = "`audit` includes a Dead Code section; its contents were not evaluated."
+
+[[claim]]
+tool = "vulture"
+need = "dead-code"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#vulture--dead-code-detection"
+summary = "AST defined-vs-used names with confidence 60-100 % and whitelist; high false-positive rate on dynamic code (~260 on Flask, as reported)."
+vs_codemap = "codemap's provenance-aware dead-code adds cross-root context; not measured head to head."
+
+[[claim]]
+tool = "gitnexus"
+need = "diff-review"
+status = "probed"
+version = "1.6.9"
+checked = "2026-08-06"
+evidence = "research/tools/gitnexus.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "`detect-changes` (git diff to symbols and flows, the analog of codemap review) requires git and errored on the git-less staging; not evaluated."
+vs_codemap = "codemap review works on any directory; GitNexus needs .git."
+
+[[claim]]
+tool = "ontoindex"
+need = "diff-review"
+status = "read"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#what-it-is"
+summary = "Ships `review diff` (requires a git repository); read, not exercised."
+
+[[claim]]
+tool = "rag-for-git"
+need = "diff-review"
+status = "read"
+version = "0.7.0"
+checked = "2026-09-12"
+evidence = "research/tools/rag_for_git.md#what-it-is"
+summary = "An AI pull-request reviewer: every graph op is keyed by (repo, pr); get_impact names callers outside the diff of changed signatures. Stages B/C (Neo4j, ParadeDB, paid Voyage key) not run, so the review product is unmeasured."
+
+[[claim]]
+tool = "understand-anything"
+need = "diff-review"
+status = "read"
+version = "main@f2d0164"
+checked = "2026-10-15"
+evidence = "research/tools/understand-anything.md#coverage-vs-codemap"
+summary = "`/understand-diff` over the LLM graph exists; not measured."
+
+[[claim]]
+tool = "jscpd"
+need = "duplicates"
+status = "read"
+summary = "Copy/paste (clone) detector over token streams for many languages."
+
+[[claim]]
+tool = "knip"
+need = "frontend-dead-exports"
+status = "read"
+summary = "Finds unused files, exports and dependencies in JS/TS projects."
+
+[[claim]]
+tool = "archunitpython"
+need = "import-gate"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/05_curated_sources.md#4-architecture-as-tests-reinforces-r1-c3"
+summary = "Architecture rules as pytest: have_no_cycles(), layer direction, naming, file size."
+
+[[claim]]
+tool = "grafema"
+need = "import-gate"
+status = "rejected"
+version = "0.4.1"
+checked = "2026-11-03"
+evidence = "research/tools/grafema.md#66-second-pass-reconciled-2026-11-0203"
+summary = "Datalog guarantees work as a mechanism (recursive rule found exactly the 11 modules on cycles; ordinary-module violation caught), but the first `check` on a fresh graph evaluates nothing at exit 0, a predicate typo passes, an edited rule keeps its old body, an __init__ violation is invisible, and importing costs about 300 s per rule. Filed #483-#484."
+vs_codemap = "Worse: codemap check catches the __init__ case."
+reason = "silent vacuous passes on 0.4.1"
+
+[[claim]]
+tool = "import-linter"
+need = "import-gate"
+status = "measured"
+version = "2.15"
+checked = "2026-11-04"
+evidence = "research/tools/import-linter.md#1-hands-on"
+summary = "The graph under the gate (grimp) equals the lab's truth: 266/266 import edges, 45/45 cycles, 0.11 s. 19 gate probes on a 3-layer fixture: lazy, TYPE_CHECKING, `import a.b.c` and `__init__` violations all caught; on bquant's translated contract it agrees with `codemap check` on all four trees (as-is pass; module-level, function-local and TYPE_CHECKING violations fail). On 2.15 three silent passes: unknown option ignored, misspelled forbidden module dropped (fixed on main), zero contracts pass; the first and third were fixed in 2.16 (verified 2026-11-09)."
+vs_codemap = "Better: indirect (chain) semantics, `protected` contract, mature. Worse: cycles only via acyclic_siblings; codemap names the single offending edge and has separate eager/lazy/type-only cycle rules."
+
+[[claim]]
+tool = "code2flow"
+need = "multi-lang-graph"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#code2flow"
+summary = "Same heuristic call graph for JS, Ruby, PHP."
+
+[[claim]]
+tool = "codegraph"
+need = "multi-lang-graph"
+status = "read"
+version = "1.6.0"
+checked = "2026-08-28"
+evidence = "research/tools/codegraph.md#identity"
+summary = "Rust kernel with 20 tree-sitter grammars; only Python measured, byte-identical-to-reference claim for other languages not checked."
+
+[[claim]]
+tool = "gitnexus"
+need = "multi-lang-graph"
+status = "read"
+version = "1.6.9"
+checked = "2026-08-06"
+evidence = "research/tools/gitnexus.md#what-it-is"
+summary = "14 languages via tree-sitter; only Python was measured."
+
+[[claim]]
+tool = "glean"
+need = "multi-lang-graph"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/02_codegraph_index_infra.md#glean-meta"
+summary = "Fact database of defs/refs/types/calls/imports queried with Angle (Datalog-style); ingests SCIP/LSIF; open-sourced Dec 2024."
+
+[[claim]]
+tool = "grafema"
+need = "multi-lang-graph"
+status = "read"
+version = "0.4.1"
+checked = "2026-11-02"
+evidence = "research/tools/grafema.md#what-it-is"
+summary = "JS/TS is the primary language (Python listed as Beta); JS/TS not measured beyond a data-flow toy."
+
+[[claim]]
+tool = "graphify"
+need = "multi-lang-graph"
+status = "read"
+version = "0.9.102"
+checked = "2026-11-04"
+evidence = "research/tools/graphify.md#identity"
+summary = "30 tree-sitter grammars as hard dependencies (about 40 languages with extras); only Python measured."
+
+[[claim]]
+tool = "graphlens-mcp"
+need = "multi-lang-graph"
+status = "read"
+version = "0.4.0"
+checked = "2026-08-03"
+evidence = "research/tools/graphlens.md#identity"
+summary = "Tree-sitter plus per-language LSP resolvers for Python, TypeScript, Go, Rust, PHP; only Python tested."
+
+[[claim]]
+tool = "jevgrep"
+need = "multi-lang-graph"
+status = "read"
+version = "0.8.0"
+checked = "2026-10-14"
+evidence = "research/tools/jevgrep.md#what-it-is"
+summary = "Local declaration parsing for Python, Go, Rust (wasm grammars) and TS/JS (tsc); no graph. Only Python measured."
+
+[[claim]]
+tool = "kythe"
+need = "multi-lang-graph"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/02_codegraph_index_infra.md#kythe-google"
+summary = "Language-agnostic node/fact/edge graph with VName identity, produced by compiler-integrated extractors; perpetually pre-1.0."
+vs_codemap = "Schema teacher; too build-coupled for source-only use."
+
+[[claim]]
+tool = "ontoindex"
+need = "multi-lang-graph"
+status = "read"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#identity"
+summary = "14 languages via tree-sitter; Python only was run."
+
+[[claim]]
+tool = "scip"
+need = "multi-lang-graph"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/02_codegraph_index_infra.md#scip--sourcegraph-code-intelligence-protocol"
+summary = "Language-agnostic Protobuf interchange format with structured symbol strings; produced by per-language, mostly type-checker-integrated indexers (scip-python builds on Pyright); open governance since March 2026."
+vs_codemap = "codemap exports SCIP (R1-C1); compiler-backed indexers are more precise but build-coupled."
+
+[[claim]]
+tool = "sourcegraph"
+need = "multi-lang-graph"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/02_codegraph_index_infra.md#sourcegraph-the-product"
+summary = "Code search and navigation in two tiers: search-based (tree-sitter heuristics) and precise (uploaded SCIP indexes). Cody is Enterprise-only since July 2025."
+vs_codemap = "Consumer of a codemap SCIP export."
+
+[[claim]]
+tool = "stack-graphs"
+need = "multi-lang-graph"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/02_codegraph_index_infra.md#stack-graphs-github"
+summary = "Source-only name-resolution graph from tree-sitter plus per-language .tsg rules; repository archived 2025-09-09."
+vs_codemap = "Cautionary: per-language binding DSLs did not scale."
+
+[[claim]]
+tool = "cocoindex-code"
+need = "py-callers"
+status = "rejected"
+version = "0.2.41"
+checked = "2026-08-16"
+evidence = "research/tools/cocoindex-code.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "T2 not answerable: a query 'who calls MACDZoneAnalyzer' returns semantically similar docs/tests, not a caller list."
+vs_codemap = "codemap answers; ccc has no call graph."
+reason = "vector index only, no call graph"
+
+[[claim]]
+tool = "code2flow"
+need = "py-callers"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#code2flow"
+summary = "Heuristic name-matching call graphs for dynamic languages; Graphviz + JSON; community MCP wrapper exists."
+
+[[claim]]
+tool = "codegraph"
+need = "py-callers"
+status = "measured"
+version = "1.6.0"
+checked = "2026-08-28"
+evidence = "research/tools/codegraph.md#hands-on-measurements-target-bquant--cb89a24-the-r2-scope"
+summary = "T2 MACDZoneAnalyzer: 58 symbol-level callers vs codemap 57; codemap's set is a complete subset, the extra is an isinstance reference. On 1.6.0 the default --limit 20 silently truncated (all 58 symbol callers hidden behind 20 file rows); reported #1639, fixed in 1.6.1 (1.6.2 returns total and truncated)."
+vs_codemap = "Equal on a unique name; on polymorphic names it binds by name (dict.get to MemoryCache.get, 6 of 6 sampled false on 1.6.0)."
+
+[[claim]]
+tool = "doxygen"
+need = "py-callers"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#doxygen-python-support"
+summary = "Call/caller/inheritance graphs via Graphviz; Python class-method calls are ignored in call graphs (issue #7254)."
+
+[[claim]]
+tool = "gitnexus"
+need = "py-callers"
+status = "probed"
+version = "1.6.9"
+checked = "2026-08-06"
+evidence = "research/tools/gitnexus.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "T2 MACDZoneAnalyzer: `context` reports file-level import fan-in (22) plus 3 methods, not call sites; codemap's deep build gave 65 references by role (tests 53)."
+vs_codemap = "Worse: file-import model, not symbol-level call sites."
+
+[[claim]]
+tool = "grafema"
+need = "py-callers"
+status = "rejected"
+version = "0.4.1"
+checked = "2026-11-02"
+evidence = "research/tools/grafema.md#1-hands-on--the-import-graph-on-the-r2-tree"
+summary = "With pipeline.py dropped, `who analyze_zones` attributes 109 callers marked [resolved] to the same-named method; no call to a class is ever resolved (60 MACDZoneAnalyzer calls all unresolved). Call file pairs agree with codemap 95.8 % but cover 35.9 % of codemap's pairs (second pass)."
+vs_codemap = "Worse: confident wrong answer where codemap flags ambiguity."
+reason = "namesake substitution without a flag; class calls never resolved"
+
+[[claim]]
+tool = "graphify"
+need = "py-callers"
+status = "measured"
+version = "0.9.102"
+checked = "2026-11-04"
+evidence = "research/tools/graphify.md#1-hands-on--the-r2-tree"
+summary = "Files with calls/uses links to MACDZoneAnalyzer are exactly codemap's 23 caller files. Cross-file call pairs: 89.1 % agree with codemap, covering 59.8 % of codemap's pairs; builtin NotImplementedError bound to a same-named package class (fixed upstream in 0.9.103)."
+vs_codemap = "Found calls through a re-exported class name that codemap's fast tier misses (R1-C75)."
+
+[[claim]]
+tool = "graphlens-mcp"
+need = "py-callers"
+status = "measured"
+version = "0.4.0"
+checked = "2026-08-03"
+evidence = "research/tools/graphlens.md#hands-on--impact-head-to-head-on-macdzoneanalyzer-identical-staging"
+summary = "With the bundled `ty` on PATH (resolver_status ok), `relations` gave 9 callers + 2 references for MACDZoneAnalyzer with tests auto-excluded; codemap's non-test count is 12, so the resolved graph roughly matches. Without `ty` on PATH it silently degrades to tree-sitter and returns nothing."
+vs_codemap = "Close on non-test callers; codemap returns tests+docs+code in one provenance-tagged answer, graphlens hides tests by default."
+
+[[claim]]
+tool = "jevgrep"
+need = "py-callers"
+status = "measured"
+version = "0.8.0"
+checked = "2026-10-14"
+evidence = "research/tools/jevgrep.md#hands-on-measurements-target-bquant"
+summary = "T2 'Which files call MACDZoneAnalyzer?': 26-27 files returned, recall 21/22 in all six runs, precision 0.78-0.81 (file level; no call edges)."
+vs_codemap = "File-level only; codemap gives symbol-level edges."
+
+[[claim]]
+tool = "ontoindex"
+need = "py-callers"
+status = "measured"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#t2-in-detail-a-completeness-field-that-says-false-while-dropping-27-of-57"
+summary = "`context` silently caps incoming calls at 30 (30 of 57 for MACDZoneAnalyzer, 30 of 78 for get_sample_data) with `truncated: false`, and two builds of identical input return different 30-element subsets; exact under the cap (NotebookSimulator 28 = 28)."
+vs_codemap = "Worse via context (silent cap); via impact the full set is returned (see py-impact)."
+
+[[claim]]
+tool = "pyan3"
+need = "py-callers"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#pyan--pyan3"
+summary = "Classic AST call/def-use graph (self-described superficial name heuristics) with defines vs uses edges; revived for Python 3.10-3.14."
+vs_codemap = "codemap's jedi-resolved calls are described as more accurate; not measured head to head."
+
+[[claim]]
+tool = "pycg"
+need = "py-callers"
+status = "rejected"
+version = "0.0.8"
+checked = "2026-08-14"
+evidence = "research/tools/pycg.md#what-happened--three-layered-breakages-on-python-312"
+summary = "Does not run on Python 3.12: case-mismatched package, missing pkg_resources, and a fatal import-hook collision with the 3.12 stdlib even on a 3-line file. Its published ~99 % precision / ~70 % recall ceiling is cited, not reproduced."
+reason = "structural incompatibility with the Python 3.12 import machinery; project dormant"
+
+[[claim]]
+tool = "rag-for-git"
+need = "py-callers"
+status = "measured"
+version = "0.7.0"
+checked = "2026-09-12"
+evidence = "research/tools/rag_for_git.md#hands-on-measurements-target-bquant"
+summary = "Graph-level callers of MACDZoneAnalyzer: SCIP backend 60 (strict superset of codemap's 58, +2 intra-class calls); default tree-sitter backend 58 by count but 57 shared. On the whole scope the default backend has 9 779 CALLS vs 4 914 for SCIP; only 27.3 % of default edges are confirmed by SCIP, and the backend chosen (scip-python on PATH or not) never reaches the answer."
+vs_codemap = "Equal with SCIP; the silent tree-sitter fallback inflates edges on ambiguous names (.get, .info)."
+
+[[claim]]
+tool = "rope"
+need = "py-callers"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#jedi--rope-python"
+summary = "Python refactoring library (rename/move/extract) with find_occurrences cross-referencing."
+vs_codemap = "Candidate edit layer over codemap's impact; codemap is read-only."
+
+[[claim]]
+tool = "scip-python"
+need = "py-callers"
+status = "measured"
+version = "0.6.6"
+checked = "2026-09-12"
+evidence = "research/tools/rag_for_git.md#hands-on-measurements-target-bquant"
+summary = "Measured indirectly: rag_for_git's SCIP backend (scip-python 0.6.6) gave 60 callers of MACDZoneAnalyzer, a strict superset of codemap's 58 (+2 intra-class calls); 4 914 CALLS edges on 207 files, 52 s build."
+vs_codemap = "Equal up to a definitional difference."
+
+[[claim]]
+tool = "understand-anything"
+need = "py-callers"
+status = "probed"
+version = "main@f2d0164"
+checked = "2026-10-15"
+evidence = "research/tools/understand-anything.md#4-pilot--what-happened-reconciled"
+summary = "LLM layer pilot only (Sonnet 5.5, 9-file slice, $0.71, 108 s): the model wrote 0 calls, inherits or depends_on edges; codemap has 4 cross-file call pairs on the slice. Full tree not run."
+vs_codemap = "Worse: no call edges at all on the pilot."
+
+[[claim]]
+tool = "cocoindex-code"
+need = "py-impact"
+status = "rejected"
+version = "0.2.41"
+checked = "2026-08-16"
+evidence = "research/tools/cocoindex-code.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "T3 not answerable: no graph, so no blast radius."
+vs_codemap = "codemap answers."
+reason = "no symbol or call graph"
+
+[[claim]]
+tool = "codegraph"
+need = "py-impact"
+status = "probed"
+version = "1.6.0"
+checked = "2026-08-28"
+evidence = "research/tools/codegraph.md#hands-on-measurements-target-bquant--cb89a24-the-r2-scope"
+summary = "T3 MACDZoneAnalyzer: 89 affected / 146 edges at depth 2, flat and untagged; codemap 69 references tagged by type, root and distance. Byte-identical across two builds; not scored against a truth set."
+vs_codemap = "More reach, less structure (no calls/references or tests/docs split)."
+
+[[claim]]
+tool = "gitnexus"
+need = "py-impact"
+status = "probed"
+version = "1.6.9"
+checked = "2026-08-06"
+evidence = "research/tools/gitnexus.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "T3 MACDZoneAnalyzer: transitive upstream import closure, 48 impacted (direct 5, by depth 5/15/28), risk MEDIUM, byte-identical across two clean stagings; judged correct in its own model, not scored against a truth set."
+vs_codemap = "Better: transitive depth and risk band. Worse: file-level and provenance-blind (no tests/docs split)."
+
+[[claim]]
+tool = "grafema"
+need = "py-impact"
+status = "rejected"
+version = "0.4.1"
+checked = "2026-11-02"
+evidence = "research/tools/grafema.md#1-hands-on--the-import-graph-on-the-r2-tree"
+summary = "`impact analyze_zones` reports 93 direct callers, 0 transitive, all against the namesake method; direct-only on both probe symbols."
+reason = "misattributed and direct-only"
+
+[[claim]]
+tool = "graphify"
+need = "py-impact"
+status = "read"
+version = "0.9.102"
+checked = "2026-11-04"
+evidence = "research/tools/graphify.md#coverage-vs-codemap"
+summary = "`affected` exists; not measured."
+
+[[claim]]
+tool = "graphlens-mcp"
+need = "py-impact"
+status = "measured"
+version = "0.4.0"
+checked = "2026-08-03"
+evidence = "research/tools/graphlens.md#hands-on--impact-head-to-head-on-macdzoneanalyzer-identical-staging"
+summary = "Impact split across two tools: `relations` (resolved code edges) and `search exhaustive` (44 files incl. 5 generated docs/_build copies); codemap impact 31 refs (core 2, docs 7, examples 1, scripts 2, tests 19) on the same staging."
+vs_codemap = "codemap: one call, provenance-tagged. graphlens: resolves into dependencies (codemap does not), but 12x index time and SQLite artifact."
+
+[[claim]]
+tool = "jevgrep"
+need = "py-impact"
+status = "measured"
+version = "0.8.0"
+checked = "2026-10-14"
+evidence = "research/tools/jevgrep.md#hands-on-measurements-target-bquant"
+summary = "T3 blast radius: 48 files, recall 25/29 (tests 19/19, scripts 2/2, examples 1/1, docs 3/7), precision 0.52."
+vs_codemap = "Misses documents; no distance or role structure."
+
+[[claim]]
+tool = "ontoindex"
+need = "py-impact"
+status = "measured"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#t3-in-detail-two-independent-graphs-the-same-57"
+summary = "`impact --include-tests` depth-1 CALLS set is set-identical to codemap callers: 57 = 57 (MACDZoneAnalyzer) and 78 = 78 (get_sample_data); re-verified on three codemap deep builds 2026-09-02. Defaults exclude tests (55 vs 149 impacted) and order is unstable across runs."
+vs_codemap = "Equal on the set; tests excluded by default and non-diffable order."
+
+[[claim]]
+tool = "rag-for-git"
+need = "py-impact"
+status = "rejected"
+version = "0.7.0"
+checked = "2026-09-12"
+evidence = "research/tools/rag_for_git.md#hands-on-measurements-target-bquant"
+summary = "Product impact is `get_impact(repo, pr)`, diff-scoped; a symbol-scoped blast radius exists only in the library (`expand(hops)`) and is not exposed."
+vs_codemap = "codemap answers symbol-scoped, role-tagged impact (69 refs on the same tree)."
+reason = "no symbol-scoped impact in the product"
+
+[[claim]]
+tool = "codegraph"
+need = "py-imports"
+status = "measured"
+version = "1.6.2"
+checked = "2026-10-15"
+evidence = "research/tools/codegraph.md#re-measured-on-162-2026-10-15"
+summary = "Library-only findCircularDependencies(): 1.6.0 reported 136 cycles, 13 of the 45 real (precision 9.6 %, recall 28.9 %); 1.6.2 reports 25, 16 real (64 % / 35.6 %). Derived from name-resolved call edges, not import statements; not exposed on CLI/MCP."
+vs_codemap = "Worse: codemap reports all 45 (eager vs lazy split) and exposes it on CLI/MCP."
+
+[[claim]]
+tool = "gitnexus"
+need = "py-imports"
+status = "probed"
+version = "1.6.9"
+checked = "2026-08-06"
+evidence = "research/tools/gitnexus.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "`check --cycles` reported 3 file-level import cycles; not scored against the later 45-cycle truth set."
+
+[[claim]]
+tool = "grafema"
+need = "py-imports"
+status = "rejected"
+version = "0.4.1"
+checked = "2026-11-02"
+evidence = "research/tools/grafema.md#1-hands-on--the-import-graph-on-the-r2-tree"
+summary = "164 module edges, 163 true (precision 99.4 %), recall 163/266 = 61 %, 8 of 45 cycles; deterministic over 3 runs. Defect A (relative imports in __init__.py resolve one package too high, 85 edges), defect B (any f-string with !r/!s/!a drops the file, exit 0), and the quickstart analyzes 0 Python modules at exit 0. Filed upstream #480-#482."
+vs_codemap = "Worse: codemap reads all 266 edges and 45 cycles."
+reason = "Python product not usable as measured on 0.4.1: integration defects hide 37 of 45 cycles without failing the run"
+
+[[claim]]
+tool = "graphify"
+need = "py-imports"
+status = "measured"
+version = "0.9.102"
+checked = "2026-11-04"
+evidence = "research/tools/graphify.md#1-hands-on--the-r2-tree"
+summary = "241 module dependencies, 240 true (precision 99.6 %), recall 240/266 = 90.2 % (function-scope 0/25); its own GRAPH_REPORT lists 2 of 45 cycles because function-local imports make no module dependency; graph.json byte-identical over 3 runs, 14 s each."
+vs_codemap = "Close on module-level edges; cannot serve as a cycle gate where lazy imports break cycles (codemap: 45/45)."
+
+[[claim]]
+tool = "grimp"
+need = "py-imports"
+status = "measured"
+version = "3.18"
+checked = "2026-11-04"
+evidence = "research/tools/import-linter.md#1-hands-on"
+summary = "Import graph of bquant on the R2 tree: 89/89 modules, 266/266 edges (precision 100 %, recall 100 %; module 240, function 25, type_checking 1), 45/45 cycles, 0 false; three builds identical, 0.11-0.14 s. Measured as the engine under import-linter 2.15."
+vs_codemap = "Equal on this tree (set-identical to codemap's import edges), much faster; library only, no symbol graph."
+
+[[claim]]
+tool = "ontoindex"
+need = "py-imports"
+status = "probed"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#t5-in-detail-the-right-sections-and-what-is-inside-them"
+summary = "`audit` (needs git) reports 'Import Cycles (6)' mixing markdown-link rings, call cycles and basename-only paths; not scored against the 45-cycle truth."
+vs_codemap = "Worse: codemap separates hard and lazily-closed import cycles with full module ids."
+
+[[claim]]
+tool = "pydeps"
+need = "py-imports"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/04_python_graph_arch_peers.md#pydeps"
+summary = "Module dependency graphs from import opcodes in compiled bytecode; Graphviz output with cycle boxes plus --show-deps JSON."
+vs_codemap = "codemap's AST import graph needs no bytecode compile."
+
+[[claim]]
+tool = "understand-anything"
+need = "py-imports"
+status = "measured"
+version = "main@f2d0164"
+checked = "2026-10-15"
+evidence = "research/tools/understand-anything.md#1-hands-on--the-deterministic-layer-on-the-r2-tree"
+summary = "Deterministic import map: 216 edges, 215 true (precision 99.5 %), recall 215/266 (module 215/240, function 0/25, type_checking 0/1), 0 of 45 cycles; byte-identical over 4 runs. A patched main (upstream #692) recovers 256/266 and 13/45 cycles; the `from .. import Name` miss (#727) was fixed upstream 2026-10-22, not re-measured."
+vs_codemap = "Worse: reads only top-level imports, so reports an acyclic graph where codemap finds 45 cycles."
+
+[[claim]]
+tool = "cocoindex-code"
+need = "py-symbols"
+status = "probed"
+version = "0.2.41"
+checked = "2026-08-16"
+evidence = "research/tools/cocoindex-code.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "Semantic search for analyze_zones ranked the real definition (pipeline.py:718) only #5; the bundled tree-sitter `ccc grep 'def analyze_zones'` pinpointed both definitions exactly."
+vs_codemap = "Worse: codemap answers exactly and resolves re-exports."
+
+[[claim]]
+tool = "codegraph"
+need = "py-symbols"
+status = "measured"
+version = "1.6.0"
+checked = "2026-08-28"
+evidence = "research/tools/codegraph.md#hands-on-measurements-target-bquant--cb89a24-the-r2-scope"
+summary = "T1 analyze_zones: both definitions at the same lines as codemap plus fuzzy neighbours and inline signature; 0.33 s. On 1.6.0 ambiguity was a ranked list, never flagged; 1.6.2 adds `ambiguous: true` on callers."
+vs_codemap = "Equal on correctness; codemap flags ambiguity explicitly; CodeGraph much faster."
+
+[[claim]]
+tool = "gitnexus"
+need = "py-symbols"
+status = "measured"
+version = "1.6.9"
+checked = "2026-08-06"
+evidence = "research/tools/gitnexus.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "T1 analyze_zones: `context` returned ambiguous with both definitions (pipeline.py and analyzer.py), lines off by one versus codemap."
+vs_codemap = "Equal: both surface the ambiguity."
+
+[[claim]]
+tool = "grafema"
+need = "py-symbols"
+status = "probed"
+version = "0.4.1"
+checked = "2026-11-02"
+evidence = "research/tools/grafema.md#1-hands-on--the-import-graph-on-the-r2-tree"
+summary = "T1: MACDZoneAnalyzer and the method UniversalZoneAnalyzer.analyze_zones found; the top-level analyze_zones missing because defect B dropped its file."
+
+[[claim]]
+tool = "graphify"
+need = "py-symbols"
+status = "measured"
+version = "0.9.102"
+checked = "2026-11-04"
+evidence = "research/tools/graphify.md#1-hands-on--the-r2-tree"
+summary = "`explain analyze_zones` refuses with exit 3 and both candidates; `explain MACDZoneAnalyzer` exit 0 at indicators/macd.py L48."
+vs_codemap = "Equal; exit codes for ambiguity are something codemap's CLI lacks."
+
+[[claim]]
+tool = "graphlens-mcp"
+need = "py-symbols"
+status = "probed"
+version = "0.4.0"
+checked = "2026-08-03"
+evidence = "research/tools/graphlens.md#quality-re-measured"
+summary = "`search` finds the flagship plus content/markdown hits; ranking mediocre (a same-named method outranks the flagship function)."
+
+[[claim]]
+tool = "jedi"
+need = "py-symbols"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#jedi--rope-python"
+summary = "Static Python analysis: goto/inference, find-references, completion. codemap already depends on it for deep call resolution."
+vs_codemap = "codemap's own resolver."
+
+[[claim]]
+tool = "jevgrep"
+need = "py-symbols"
+status = "measured"
+version = "0.8.0"
+checked = "2026-10-14"
+evidence = "research/tools/jevgrep.md#hands-on-measurements-target-bquant"
+summary = "T1 where analyze_zones is defined: both truth files at ranks 1 and 2 in all runs, 36 files returned (precision 0.06), ambiguity not mentioned."
+vs_codemap = "codemap returns exactly the two definitions and flags ambiguity."
+
+[[claim]]
+tool = "ontoindex"
+need = "py-symbols"
+status = "measured"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#hands-on-measurements-target-bquant--cb89a24-the-r2-scope"
+summary = "T1 analyze_zones: both definitions with explicit `status: ambiguous`; startLine is 0-based (121/717 for 122/718)."
+vs_codemap = "Equal (both flag ambiguity); off-by-one lines."
+
+[[claim]]
+tool = "understand-anything"
+need = "py-symbols"
+status = "measured"
+version = "main@f2d0164"
+checked = "2026-10-15"
+evidence = "research/tools/understand-anything.md#1-hands-on--the-deterministic-layer-on-the-r2-tree"
+summary = "T1: the analyze_zones function and same-named method, and MACDZoneAnalyzer class, all found; definition counts match Python's ast exactly."
+vs_codemap = "Equal."
+
+[[claim]]
+tool = "universal-ctags"
+need = "py-symbols"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/02_codegraph_index_infra.md#universal-ctags"
+summary = "Single-pass, source-only tags file of definitions (name, file, address, kind, scope, roles); no cross-file resolution."
+vs_codemap = "codemap exports ctags (R1-C2); ctags is the definitions-only floor."
+
+[[claim]]
+tool = "coverage-py"
+need = "py-tests-for"
+status = "read"
+summary = "Line and branch coverage measured while the tests run; with dynamic contexts (`--context=test`) it records which test executed each line. Runtime truth, where codemap gives static reach."
+vs_codemap = "Complements codemap: needs a test run; sees dispatch by name that a static graph cannot."
+
+[[claim]]
+tool = "codewiki"
+need = "repo-overview"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/05_curated_sources.md#2-living-docs-from-code-new-capability-signal"
+summary = "Living wiki auto-updated per commit with Gemini chat and class/sequence diagrams."
+
+[[claim]]
+tool = "gitnexus"
+need = "repo-overview"
+status = "probed"
+version = "1.6.9"
+checked = "2026-08-06"
+evidence = "research/tools/gitnexus.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "Index on the R2 scope produced 276 Leiden clusters and 294 process flows; cluster count stable across A/B, membership not verified; `wiki` (needs an LLM key) not run."
+vs_codemap = "Has communities/flows codemap lacked at the time; lacks codemap's layer/coupling metrics."
+
+[[claim]]
+tool = "graphify"
+need = "repo-overview"
+status = "probed"
+version = "0.9.102"
+checked = "2026-11-04"
+evidence = "research/tools/graphify.md#1-hands-on--the-r2-tree"
+summary = "Writes GRAPH_REPORT.md with god nodes and communities; community naming calls the `claude` CLI on the user's subscription when no API key is set (announced, disabled with GRAPHIFY_BACKEND=none). Quality not scored."
+
+[[claim]]
+tool = "ontoindex"
+need = "repo-overview"
+status = "probed"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#the-bug-worth-reporting-upstream"
+summary = "Index yields 254 Leiden clusters and 300 flows, but `report hubs` and `report surprising-connections` print 'no hubs found' at exit 0 on a 10 745-node graph because the vendored Cypher parser rejects label negation."
+
+[[claim]]
+tool = "tutorial-codebase-knowledge"
+need = "repo-overview"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/05_curated_sources.md#2-living-docs-from-code-new-capability-signal"
+summary = "Walks a repo and generates a tutorial with diagrams via the PocketFlow engine."
+
+[[claim]]
+tool = "understand-anything"
+need = "repo-overview"
+status = "probed"
+version = "main@f2d0164"
+checked = "2026-10-15"
+evidence = "research/tools/understand-anything.md#4-pilot--what-happened-reconciled"
+summary = "Pilot produced summaries, 4 layers and a 7-step tour; the orchestrator skipped three phases' agents and wrote some summaries from names only. Full run extrapolated to at least about $9-12 on Sonnet 5.5; summary quality not scored."
+vs_codemap = "Different product: explains a codebase (tours, summaries) rather than answering structural queries."
+
+[[claim]]
+tool = "bandit"
+need = "security-patterns"
+status = "read"
+summary = "AST-based security linter for common Python issues (e.g. eval, hardcoded passwords, unsafe subprocess)."
+
+[[claim]]
+tool = "codeql"
+need = "security-patterns"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#codeql-github"
+summary = "Native CI via GitHub code scanning (described only)."
+
+[[claim]]
+tool = "repomix"
+need = "security-patterns"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/01_ai_context_repomap.md#repomix--gpt-repository-loader--llamaindex-code-loaders"
+summary = "Includes a security scan of the packed content (described only)."
+
+[[claim]]
+tool = "semgrep"
+need = "security-patterns"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#semgrep"
+summary = "YAML rules with code-like patterns and metavariables over a per-language AST; source-only, deterministic. A Dec 2024 relicensing put many rules under a restrictive license."
+
+[[claim]]
+tool = "cocoindex-code"
+need = "semantic-search"
+status = "probed"
+version = "0.2.41"
+checked = "2026-08-16"
+evidence = "research/tools/cocoindex-code.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "Concept query 'detect swing high/low pivot points within a zone' returned strategies/swing/pivot_points.py as top hit (score 0.72) with no name knowledge; only a handful of queries spot-checked, no labelled query set. Index: 280 files to 6403 chunks, cold CPU build 559 s on 4 cores, incremental re-index of unchanged content about 1 s; GPU follow-up 48 s vs 216 s CPU on the same box."
+vs_codemap = "Card: does concept search codemap (as measured then) could not; but its artifact is a binary LMDB/SQLite store, not a diffable graph."
+
+[[claim]]
+tool = "continue"
+need = "semantic-search"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/01_ai_context_repomap.md#continuedev--codebase-indexing--codebase"
+summary = "Hybrid local embeddings + keyword FTS + tree-sitter with optional LLM re-rank; @codebase deprecated for agentic retrieval."
+
+[[claim]]
+tool = "gitnexus"
+need = "semantic-search"
+status = "probed"
+version = "1.6.9"
+checked = "2026-08-16"
+evidence = "research/tools/gitnexus.md#follow-up-run-as-an-end-user-dev-tool-on-full-bquant-2026-08-16"
+summary = "On the full bquant repo (13 054 nodes, 4 516 embedding chunks) a concept query returned relevant MACD-zone flows by inspection; not measured against a labelled set. Full CPU embedding pass about 18 min on 4 cores; ANN index needs a one-time network install."
+vs_codemap = "Card (2026-08): codemap had no fuzzy layer; GitNexus fuses BM25 + embeddings (RRF) with the graph."
+
+[[claim]]
+tool = "graphlens-mcp"
+need = "semantic-search"
+status = "read"
+version = "0.4.0"
+checked = "2026-08-03"
+evidence = "research/tools/graphlens.md#mcp-surface--3-general-verbs-richer-than-the-first-pass-implied"
+summary = "`search` advertises meaning-based ranking, but the embedding model was unreachable (no egress), so only name/content search ran."
+
+[[claim]]
+tool = "jevgrep"
+need = "semantic-search"
+status = "measured"
+version = "0.8.0"
+checked = "2026-10-14"
+evidence = "research/tools/jevgrep.md#hands-on-measurements-target-bquant"
+summary = "Natural-language questions answered by a typed classifier walk (no embeddings, no index); scored on the same T1-T4 file sets as above (T4 recall 26/49, precision 0.50)."
+
+[[claim]]
+tool = "ontoindex"
+need = "semantic-search"
+status = "read"
+version = "2.2.0"
+checked = "2026-09-01"
+evidence = "research/tools/ontoindex.md#what-it-is"
+summary = "BM25 plus optional local embeddings with RRF; embeddings are off by default and were not built, so retrieval quality is untested."
+
+[[claim]]
+tool = "rag-for-git"
+need = "semantic-search"
+status = "read"
+version = "0.7.0"
+checked = "2026-09-12"
+evidence = "research/tools/rag_for_git.md#what-it-is"
+summary = "Hybrid retrieval (ParadeDB BM25 + pgvector, RRF) with Voyage embeddings (hard dependency, paid key); entirely unmeasured."
+
+[[claim]]
+tool = "ast-grep"
+need = "structural-search"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#ast-grep-sg"
+summary = "Rust CLI for structural search, lint and rewrite with patterns written as code over tree-sitter CSTs; Python/JS bindings, LSP and MCP server; no data flow or name resolution."
+vs_codemap = "Syntactic only; codemap gives a resolved semantic graph but no pattern search."
+
+[[claim]]
+tool = "cocoindex-code"
+need = "structural-search"
+status = "probed"
+version = "0.2.41"
+checked = "2026-08-16"
+evidence = "research/tools/cocoindex-code.md#hands-on-measurements-target-bquant-r2-scope"
+summary = "`ccc grep` is index-free tree-sitter structural search by example; on T1 it found pipeline.py:718 and analyzer.py:122 exactly. Only this one lookup was exercised."
+
+[[claim]]
+tool = "comby"
+need = "structural-search"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#comby"
+summary = "Language-agnostic structural search and replace with hole templates; no semantic model."
+
+[[claim]]
+tool = "semgrep"
+need = "structural-search"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#semgrep"
+summary = "Pattern language that looks like target code."
+
+[[claim]]
+tool = "tree-sitter"
+need = "structural-search"
+status = "read"
+checked = "2026-08-02"
+evidence = "research/03_query_dataflow_engines.md#tree-sitter"
+summary = "Incremental parsing library with an S-expression query interface; syntax only, single-file, no cross-file resolution. Substrate under most tools in this matrix."
+vs_codemap = "Candidate multi-language backend for codemap; gives breadth, not semantics."
+
+[[claim]]
+tool = "mypy"
+need = "type-errors"
+status = "read"
+summary = "Static type checker for annotated Python."
+
+[[claim]]
+tool = "pyright"
+need = "type-errors"
+status = "read"
+summary = "Static type checker and language server for Python; scip-python is built on it (research/02, passing mention)."
