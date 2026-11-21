@@ -244,7 +244,7 @@ SAMPLE = {"devkit_version": 1, "codemap_version": "0.0.0", "package": "src/pkg",
           "graph": ".codemap/graph.json", "graph_next": ".codemap/graph.next.json",
           "build_args": "--consumer tests --mode full", "agents_file": "AGENTS.md", "pin_shell": "codemap",
           "pin_assign": "codemap", "pin_command_toml": '"codemap"', "pin_args_toml": "", "pairs": "",
-          "flags": "no_cycles = true", "currency": "current", "devkit_note": ""}
+          "flags": "no_cycles = true", "currency": "current", "devkit_note": "", "root_toml": '"/repo"'}
 
 _OPS = ("|", "||", "&&", ";", "&")
 
@@ -289,18 +289,27 @@ def _all_templates():
     return sorted(p for p in devkit.TEMPLATES_DIR.iterdir() if p.is_file())
 
 
+#: How many codemap commands the scan finds in each template. Pinned so the scan cannot quietly stop
+#: reading a file (or a command form) and keep passing over what it no longer checks; a template that
+#: gains or loses a command updates its count here, in the same commit.
+COMMANDS_PER_TEMPLATE = {"agents_block.md": 8, "brief.txt": 1, "claude_hooks.json": 2, "codex_region.toml": 1,
+                         "contract_head.toml": 1, "github-workflow.yml": 2, "gitlab-ci.yml": 2,
+                         "mcp_claude.args": 1, "post-commit.sh": 3, "ratchet_region.toml": 2}
+
+
 def test_d7_every_command_in_every_template_parses_with_the_cli_parser():
     parser = build_parser()
-    seen = 0
+    seen = {}
     for p in _all_templates():
         text = devkit.render(p.read_text(encoding="utf-8"), SAMPLE)
-        for argv in _commands(p.name, text):
-            seen += 1
+        cmds = _commands(p.name, text)
+        seen[p.name] = len(cmds)
+        for argv in cmds:
             try:
                 parser.parse_args(argv)
             except SystemExit as exc:
                 assert exc.code == 0, f"{p.name}: `codemap {shlex.join(argv)}` does not parse"
-    assert seen >= 15, seen      # the scan itself must find the commands, or it checks nothing
+    assert seen == COMMANDS_PER_TEMPLATE, seen
 
 
 def test_d7_every_template_is_scanned_by_some_rule():
@@ -386,3 +395,35 @@ def test_d7_the_hash_never_moves_without_the_version_in_git_history():
             continue
         if nh != oh:
             assert nv > ov, f"{where}: TEMPLATES_SHA256 changed while DEVKIT_VERSION stayed {nv}"
+
+
+def test_d6_usage_counts_assistant_records_once_per_id_and_reads_newline_as_a_separator(tmp_path):
+    from datetime import datetime, timezone
+
+    from codemap.devkit.usage import count
+    now = datetime.now(timezone.utc).isoformat()
+
+    def rec(kind, items, ts=now):
+        o = {"type": kind, "message": {"content": items}}
+        if ts:
+            o["timestamp"] = ts
+        return json.dumps(o)
+
+    tu = lambda i, name, cmd=None: {"type": "tool_use", "id": i, "name": name,
+                                    **({"input": {"command": cmd}} if cmd else {})}
+    lines = [
+        rec("assistant", [tu("1", "mcp__codemap__callers"), tu("2", "Grep")]),
+        rec("assistant", [tu("1", "mcp__codemap__callers")]),                    # same id again
+        rec("api-request-blob", [tu("9", "mcp__codemap__impact")], ts=None),     # a request blob
+        rec("assistant", [tu("3", "Bash", "cd x\n  grep -rn foo .")]),           # newline separator
+        rec("assistant", [tu("4", "Bash", "echo grep")]),                        # an argument, not a command
+        rec("assistant", [tu("5", "Bash", "find . | xargs rg bar")]),
+        rec("assistant", [tu("6", "mcp__codemap__impact")], ts="2000-01-01T00:00:00+00:00"),  # outside window
+    ]
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "s.jsonl").write_text("\n".join(lines[:4]) + "\n")
+    (tmp_path / "sub" / "agent.jsonl").write_text("\n".join(lines[4:]) + "\n")   # subagents count too
+    r = count(tmp_path, 7)
+    assert r["codemap"] == {"callers": 1}
+    assert r["grep"] == {"Grep tool": 1, "grep/rg in Bash": 2}
+    assert r["files"] == 2

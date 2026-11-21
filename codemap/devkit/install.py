@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import os
 import shlex
 import subprocess
 import sys
@@ -49,7 +50,8 @@ def running_pin() -> list[str]:
     """How to run *this* codemap: its console script, else ``python -m codemap``."""
     argv0 = Path(sys.argv[0]) if sys.argv and sys.argv[0] else None
     if argv0 is not None and argv0.name == "codemap" and argv0.exists():
-        return [str(argv0.absolute())]
+        # abspath, not resolve: `..` is folded, a venv's symlinked bin is kept as the user named it
+        return [os.path.abspath(argv0)]
     return [sys.executable, "-m", "codemap"]
 
 
@@ -105,7 +107,7 @@ def build_args(st: dict) -> str:
     return shlex.join(parts)
 
 
-def context(st: dict, pin: list[str], codemap_version: str) -> dict:
+def context(st: dict, pin: list[str], codemap_version: str, root: Path | None = None) -> dict:
     pkg = st["package"]
     return {
         "devkit_version": DEVKIT_VERSION,
@@ -120,6 +122,8 @@ def context(st: dict, pin: list[str], codemap_version: str) -> dict:
         "pin_assign": shlex.quote(shlex.join(pin)),
         "pin_command_toml": json.dumps(pin[0]),
         "pin_args_toml": "".join(json.dumps(a) + ", " for a in pin[1:]),
+        # Codex resolves a relative `cwd` against `.codex/`; an absolute root leaves nothing to assume.
+        "root_toml": json.dumps(str(root) if root is not None else "."),
     }
 
 
@@ -154,7 +158,7 @@ class Item:
 
 def items(root: Path, st: dict, pin: list[str], codemap_version: str) -> tuple[list[Item], list[str]]:
     """The artifacts this repository's options call for, with their rendered content; plus skip notes."""
-    ctx = context(st, pin, codemap_version)
+    ctx = context(st, pin, codemap_version, root)
     opts = st.get("options", {})
     out: list[Item] = []
     notes: list[str] = []

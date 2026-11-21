@@ -156,6 +156,11 @@ def _visit_source(name: str, path: Path, parent, root):
     (it then keeps its ``skipped`` entry with the reason ``_skip_reason`` finds)."""
     try:
         code = path.read_text(encoding="utf-8")
+        # R1-C109 D1: griffe's loader stores the text before it visits a file (`loader.py`, the
+        # `lines_collection[module_path] = …` line); `griffe.visit` does not. Without it the module's
+        # `source` is empty and every pass that reads it — function-local, class-body, TYPE_CHECKING and
+        # dotted imports — silently finds nothing in a namespace subpackage.
+        root.lines_collection[path] = code.splitlines(keepends=False)
         return griffe.visit(name, path, code, parent=parent,
                             lines_collection=root.lines_collection,
                             modules_collection=root.modules_collection)
@@ -172,7 +177,8 @@ def _load_namespace_subdirs(root, pkg_dir: Path) -> None:
     research code is laid out that way all the time; codemap used to drop every module in
     it, with an ``unread`` entry. Here such a directory becomes a namespace module and each
     importable ``.py`` in it is read with ``griffe.visit`` — static, public API, no import.
-    Names Python cannot import (``my-dir``, ``a.b.py``) stay out, as they do for Python.
+    A directory whose name is not an identifier (``my-dir``) and a file stem with a dot (``a.b.py``) stay
+    out; any other file is read, as griffe reads it in a regular package (R1-C109 D2).
     """
     seen: set[str] = set()
 
@@ -203,7 +209,10 @@ def _load_namespace_subdirs(root, pkg_dir: Path) -> None:
                     walk(member, child)
             elif child.suffix == ".py" and child.stem != "__init__":
                 stem = child.stem
-                if not _importable_name(stem) or stem in module.members:
+                # R1-C109 D2: files as griffe reads them in a regular package — any stem without a dot
+                # (`0001_initial.py` included; Django imports it by `import_module`). Directories keep
+                # the identifier rule above: griffe never loads a directory without `__init__.py`.
+                if "." in stem or stem in module.members:
                     continue
                 sub = _visit_source(stem, child, module, root)
                 if sub is not None:
