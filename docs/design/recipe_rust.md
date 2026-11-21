@@ -164,3 +164,36 @@ builder or accessor methods with no caller in the workspace.
 | module layers | nothing native | nothing measured works | a script over cargo-modules edges is the honest option |
 | change impact | rust-analyzer call hierarchy, one level at a time | CodeGraph `impact` in one call: 78 % of the depth-2 closure at 90 % precision | GitNexus 28 %, roam-code 13 %: a short impact list on Rust does not mean a small blast radius |
 | duplication | nothing native | roam-code `clones` (exact and renamed copies) | not `duplicates` (name-driven); jscpd only exact copies and skips files over 1 000 lines unless told |
+
+## D8 — the recipe in the catalog (added 2026-11-21 before the code)
+
+D5 said "a table `[[recipe]]`". The audit axes (D7) decide its shape:
+
+- **Needs per language, not reworded Python ones.** `dead-code`, `py-impact`, `py-imports` and `import-gate`
+  describe Python and carry codemap's Python coverage; rewording them would change every Python answer (E8).
+  New needs, `languages = ["rust"]`, codemap `none`: `rs-dead-code`, `rs-module-cycles`, `rs-layers`, `rs-impact`,
+  and the native axes `rs-security-deps`, `rs-api-semver`, `rs-lint`, `rs-unused-deps`. Navigation stays
+  `multi-lang-graph`, duplication stays `duplicates` (both already language-neutral).
+- **Native tools enter as tools.** rustc, clippy, rust-analyzer, cargo-modules: `probed` where the benchmark ran
+  them (with what was seen, including cargo-modules `--acyclic` as `rejected` for a cycle gate); cargo-audit,
+  cargo-deny, cargo-semver-checks, cargo-machete, cargo-udeps: `read`.
+- **Lab tools get their Rust numbers as claims** with `measured_on = ["rust"]` on the `rs-*` needs, and CodeGraph
+  and GitNexus on `multi-lang-graph` (their present `read` claims there become `measured` on Rust).
+- **A recipe row** = `language`, `need`, `summary`, `evidence`, `use` (ordered `{tool, why}`), `avoid`
+  (`{tool, why}`). A row with no lab tool in `use` says so in its summary.
+- **Display.** With a language filter (`--lang`, or `--root` detecting it), the overview starts with that
+  language's recipe table, and a need answer starts with its recipe row. Without a filter nothing changes.
+  The answer gains an additive key `recipe`; `ANSWER_FORMAT` stays 11.
+- **Guards.** A recipe naming an unknown tool, need or language, a `why` or summary with a digit and no evidence,
+  and a claim whose evidence lies under `research/tools/_rust/` without `"rust"` in `measured_on` are schema
+  problems. Recipe evidence must resolve (repo check).
+
+### Expectations for D8
+
+| # | Expectation | Fails if nothing was done? |
+|---|---|---|
+| E16 | `advise --lang rust` (and `--root` on a Rust tree) prints the recipe table before the need table; for `rs-module-cycles` it names CodeGraph `cycles`, for `rs-security-deps` cargo-audit and cargo-deny, for `rs-dead-code` it names no lab tool in `use` and lists GitNexus, OntoIndex and roam-code under `avoid` | yes |
+| E17 | Rust-measured claims: before, 3 claims on 1 need; after, ≥ 5 lab tools on ≥ 4 needs | yes |
+| E18 | Each guard of D8 goes red under a mutation that removes it, with a green control | yes |
+| E19 | Every Python-filtered need answer and the unfiltered overview rows for Python needs are identical to those of the same catalog with every Rust addition removed | no (stays) |
+| E20 | The packaged catalog passes `schema_problems` and `repo_problems`; the suite is green | no (stays) |
