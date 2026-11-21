@@ -6,7 +6,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 
 **Statuses.** `measured` — scored against the lab's truth, numbers in the card. `probed` — run on a real tree, not scored. `read only` — known from its docs or a survey; nobody here has run it. `rejected` — tried and unusable for that need.
 
-21 need(s), 53 tool(s); claims: 25 measured, 18 probed, 61 read, 9 rejected.
+21 need(s), 53 tool(s); claims: 26 measured, 18 probed, 61 read, 9 rejected.
 
 | need | codemap | best other tool | tools |
 |---|---|---|---|
@@ -22,7 +22,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 | `context-pack` Token-budgeted repository context for an LLM | ✅ covered | jevgrep (measured) | 5 |
 | `repo-overview` Architecture map: subsystems, layers, communities | ✅ covered | graphify (probed) | 7 |
 | `dead-code` Unused Python code | ◐ partial | codegraph (probed) | 3 |
-| `duplicates` Copy-paste and duplicated code | — not covered | jscpd (measured) | 3 |
+| `duplicates` Copy-paste and duplicated code | — not covered | jscpd (measured) | 4 |
 | `complexity` Complexity metrics (cyclomatic, size) and a threshold in CI | — not covered | radon (read only) | 3 |
 | `security-patterns` Security patterns and leaked secrets | — not covered | codeql (read only) | 4 |
 | `dataflow-taint` Data flow and taint: where an input value can reach | — not covered | codeql (read only) | 3 |
@@ -451,6 +451,9 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 - **jscpd** — measured · v4.3.0 · checked 2026-11-21 · MIT · ⚠ measured 4.3.0, latest 5.4.3
   On ripgrep with three planted copies: finds the exact copy only, not the renamed or the reordered one. By default it skips files over 1 000 lines (83 of 100 files, 20 231 of 53 212 lines scanned); pass --max-lines and --max-size.
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#duplication-resultsauditclonesjson
+- **OntoIndex** — measured · v3.2.3 · checked 2026-11-21 · AGPL-3.0-or-later
+  `duplicate-code` wraps jscpd 5.0.11 and scans large files; on ripgrep it finds the exact planted copy only, not the renamed or the reordered one. Its semantic mode is declared not implemented.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/ontoindex.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c112
 - **roam-code** — measured · v14.1.0 · checked 2026-11-21 · Apache-2.0
   `clones` (AST hashing) finds the exact and the renamed planted copy, and keeps the renamed one after a rename to an unrelated name; misses the reordered copy. `duplicates` finds all three only while they share a name prefix: renamed, two drop out.
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/roam-code.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c112
@@ -694,7 +697,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [Kythe](https://kythe.io) | Apache-2.0 | cpp, java, go, typescript | multi-lang-graph (read only) | — |
 | [lizard](https://github.com/terryyin/lizard) | MIT | c, cpp, java, csharp, javascript, typescript, python, go, rust, swift, php, ruby, scala, kotlin | complexity (read only) | — |
 | [mypy](https://github.com/python/mypy) | MIT | python | type-errors (read only) | — |
-| [OntoIndex](https://github.com/ontograph/ontoindex) | AGPL-3.0-or-later | typescript, javascript, python, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | py-callers (measured), py-impact (measured), py-symbols (measured), py-imports (probed), repo-overview (probed), dead-code (read only), diff-review (read only), multi-lang-graph (read only), semantic-search (read only) | [card](../research/tools/ontoindex.md) |
+| [OntoIndex](https://github.com/ontograph/ontoindex) | AGPL-3.0-or-later | typescript, javascript, python, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | duplicates (measured), py-callers (measured), py-impact (measured), py-symbols (measured), py-imports (probed), repo-overview (probed), dead-code (read only), diff-review (read only), multi-lang-graph (read only), semantic-search (read only) | [card](../research/tools/ontoindex.md) |
 | [OpenGrep](https://github.com/opengrep/opengrep) | LGPL-2.1 | python, javascript, typescript, go, rust, java, kotlin, c, cpp, csharp, ruby, php, swift, scala | dataflow-taint (read only) | — |
 | [pyan3](https://github.com/Technologicat/pyan) | GPL-2.0 | python | py-callers (read only) | — |
 | [PyCG](https://github.com/vitsalis/PyCG) | Apache-2.0 | python | py-callers (rejected) | [card](../research/tools/pycg.md) |

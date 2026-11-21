@@ -1362,10 +1362,12 @@ say who won. And a consumer forbidden to check its producer turns the producer's
 - "codemap answers questions; this tool explains a codebase. The stars say which one more people want." →
   build-story #15
 
-## Build-story #16 — "On Rust the compiler wins every lookup; the tools earn their place on three audit axes, and the one dead-code command is mostly wrong" (CodeGraph, GitNexus, roam-code, jscpd)
+## Build-story #16 — "On Rust the compiler wins every lookup; the tools earn their place on three audit axes, and the dead-code commands are mostly wrong" (CodeGraph, GitNexus, roam-code, OntoIndex, graphlens, jscpd)
 
 **Facts:** [`tools/_rust/README.md`](tools/_rust/README.md), cards [`codegraph`](tools/codegraph.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c111c112),
-[`gitnexus`](tools/gitnexus.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c111c112), [`roam-code`](tools/roam-code.md);
+[`gitnexus`](tools/gitnexus.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c111c112), [`roam-code`](tools/roam-code.md),
+[`ontoindex`](tools/ontoindex.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c112),
+[`graphlens`](tools/graphlens.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c112);
 design and pre-registration [`docs/design/recipe_rust.md`](../docs/design/recipe_rust.md) D7, E9–E15.
 **Post:** not written yet (draft material; the owner reviews before anything is published).
 
@@ -1388,6 +1390,10 @@ rust-analyzer and cargo-modules as the truth, and a planted copy: dead functions
   macro calls it.
 - roam-code `duplicates` found all three planted copies — because I had named them alike. Renamed to unrelated
   names, two dropped out. Its `clones` kept the renamed one.
+- OntoIndex's dead-code audit of a Rust workspace listed twenty functions, all from one Python script.
+- graphlens builds its Rust graph from rust-analyzer itself, and still answered "who calls `Matcher::find_at`" about
+  a different method: there is no node for a trait method without a body, and the name resolved, silently, to an
+  impl with zero callers. OntoIndex has the same gap and at least says it cannot find the symbol.
 
 ### The turn
 Three of six axes gave a lab tool a measured reason to exist on Rust: module cycles (CodeGraph `cycles`), change
@@ -1413,6 +1419,8 @@ dead-code list is a deleted live function.
   compiler leaves open." → build-story #16
 - "The only dead-code command I measured on Rust was wrong more often than right." → build-story #16
 - "The clone finder found my copies because I had named them alike." → build-story #16
+- "Built on the compiler's own index, it answered my question about a different method, and did not say so." →
+  build-story #16
 
 ## Future stories (skeletons — fill on разбор)
 

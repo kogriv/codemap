@@ -1,6 +1,7 @@
 {
  "codegraph": "no clone feature",
  "gitnexus": "no clone feature",
+ "graphlens": "no clone feature",
  "jscpd": {
   "default": {
    "pairs": 75,
@@ -17,6 +18,15 @@
   }
  },
  "native": "none: clippy match_same_arms / if_same_then_else are local to one function",
+ "ontoindex": {
+  "groups": 410,
+  "how": "OntoIndex 3.2.3 `duplicate-code` (exact mode wraps jscpd 5.0.11 via npx; semantic mode \"not implemented\")",
+  "planted_found": [
+   "audit_c1_exact"
+  ],
+  "reading": "scans files over 1 000 lines (defs.rs, 7 779 lines, is in 110 groups): the wrapper sets jscpd limits right; finds the exact copy only",
+  "rust_groups": 390
+ },
  "plants": {
   "audit_c1_exact": "exact copy",
   "audit_c2_renamed": "identifiers renamed",

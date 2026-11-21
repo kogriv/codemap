@@ -904,6 +904,16 @@ evidence = "research/tools/_rust/README.md#duplication-resultsauditclonesjson"
 summary = "On ripgrep with three planted copies: finds the exact copy only, not the renamed or the reordered one. By default it skips files over 1 000 lines (83 of 100 files, 20 231 of 53 212 lines scanned); pass --max-lines and --max-size."
 
 [[claim]]
+tool = "ontoindex"
+need = "duplicates"
+status = "measured"
+version = "3.2.3"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/ontoindex.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c112"
+summary = "`duplicate-code` wraps jscpd 5.0.11 and scans large files; on ripgrep it finds the exact planted copy only, not the renamed or the reordered one. Its semantic mode is declared not implemented."
+
+[[claim]]
 tool = "roam-code"
 need = "duplicates"
 status = "measured"

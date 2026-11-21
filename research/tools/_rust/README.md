@@ -2,8 +2,8 @@
 
 **Backlog:** R1-C111 (navigation), R1-C112 (audit axes). **Design and pre-registration:**
 [`docs/design/recipe_rust.md`](../../../docs/design/recipe_rust.md) (D1–D7, E1–E15, reconciled there).
-**Status:** navigation scored for CodeGraph and GitNexus; audit axes scored for CodeGraph, GitNexus, roam-code
-and jscpd (2026-11-21). OntoIndex and graphlens next.
+**Status:** navigation scored for CodeGraph and GitNexus; audit axes scored for CodeGraph, GitNexus, roam-code,
+OntoIndex, graphlens and jscpd (2026-11-21).
 
 This is the evidence document for everything Rust in the catalog and in the build-story. Numbers here come from
 the result files beside it; if a sentence and a result file disagree, the file wins.
@@ -29,8 +29,10 @@ change impact, duplication, and the axes the Rust ecosystem already covers.
   - cargo-modules 0.27.0 (`truth_modules.py`): module `uses` edges, `--cfg-test`, workspace crates only.
   - Every truth file reproduces byte for byte over two runs. Hand checks: 20 of 20 sampled call sites; 10 of
     10 sampled "false deaths" are real production calls; 12 sampled "unused" functions have no caller.
-- **Tools** (each deterministic over two runs): CodeGraph 1.6.4 (npm), GitNexus 1.6.12 (npm), roam-code
-  14.1.0 (PyPI), jscpd 4.3.0 (npm).
+- **Tools** (each deterministic over two runs where scored): CodeGraph 1.6.4 (npm), GitNexus 1.6.12 (npm),
+  roam-code 14.1.0 (PyPI), OntoIndex 3.2.3 (GitHub release tarball, SHA256 checked, installed with npm into an
+  isolated prefix and an isolated HOME), graphlens-mcp 0.4.0 (uv tool; its Rust resolver reports `ok`), jscpd 4.3.0
+  (npm).
 
 ## Navigation (R1–R5)
 
@@ -98,6 +100,11 @@ lines: a **false death**), test-only, re-exported only, `#[cfg]` twin, unused.
 | CodeGraph, library `findDeadCode()` (not in CLI or MCP) | 808 | 36 (4.5 %) | 84 | 43 % | P6 |
 | GitNexus, Cypher "no incoming CALLS" (no dead-code command) | 1 898 | 280 (14.9 %) | 86 | 17 % | P4, P5, P6, P7 |
 | roam-code, `dead --all` (product command) | 199 | 108 (54.8 %) | 48 | 24 % | P3, P6, P7 |
+| OntoIndex, Cypher "no incoming CALLS" | 2 008 | 369 (18.4 %) | 85 | 14 % | P3, P4, P5, P6, P7 |
+| OntoIndex, `audit` Dead Code Candidates (product command) | 20 | — | 0 | — | — |
+
+OntoIndex's `audit` lists 20 candidates on this Rust workspace, all of them functions of `benchsuite/benchsuite`, a
+Python script, and stops there: no Rust item at all. graphlens has no dead-code feature.
 
 What the false deaths are: calls through a facade crate's path (`grep::cli::hostname()`), method calls on a value
 (`.build()`, `.close()`), and, for roam-code, plain calls in the same file. In ripgrep the crates are published,
@@ -115,20 +122,33 @@ The truth is its `uses` edges folded to files: 6 strongly connected components (
 | CodeGraph `cycles` (exits 1: a CI gate) | 3 exact, 2 inside a larger component, 1 missed | found |
 | GitNexus `check --cycles` | 2 exact, 1 partial, 3 missed | found |
 | roam-code `cycles` | 0 of 6, plus a false cycle (`write` bound to the wrong method) | missed |
+| OntoIndex `audit` Import Cycles | 0 of 6: its 4 "import cycles" are function recursion, a call ring and a ring of markdown links | missed |
 
-Layer rules: no native tool states one, and neither CodeGraph nor GitNexus can. roam-code `fitness` misses the
+Layer rules: no native tool states one, and neither CodeGraph, GitNexus, OntoIndex (its `checks.yml` knows impact
+thresholds and semantic contracts only; `audit` Boundary Violations "did not complete") nor graphlens can. roam-code `fitness` misses the
 planted break and fires on a control rule, "matcher must not depend on searcher", through a call edge
 `fmt -> finish` that Cargo makes impossible.
 
 ### Change impact (`results/audit/impact.json`)
 
-Depth 2, five targets, against rust-analyzer's callers and their callers, as (file, function):
+Depth 2, five targets (`escape`, `Matcher::find_at`, `Searcher::search_path`, `Sink::matched`,
+`ParallelVisitor::visit`), against rust-analyzer's callers and their callers, as (file, function). "Production"
+counts only callers outside test code (25 of the 46 truth callers).
 
-| Tool, command | Precision | Recall | Per target recall |
-|---|---|---|---|
-| CodeGraph `impact -d 2` | 0.90 | 0.78 | 1.0, 0.5, 1.0, 0.86, 0.75 |
-| GitNexus `impact --depth 2 --include-tests` | 0.72 | 0.28 | 0.31, 0.44, 0.33, 0, 0 |
-| roam-code `impact --depth 2` | 1.00 | 0.13 | 0.13, 0.13, 0, 0, 0.5 |
+| Tool, command | Answered | Precision | Recall | Production recall | Per target recall |
+|---|---|---|---|---|---|
+| CodeGraph `impact -d 2` | 5 of 5 | 0.90 | 0.78 | 0.84 | 1.0, 0.5, 1.0, 0.86, 0.75 |
+| GitNexus `impact --depth 2 --include-tests` | 5 of 5 | 0.72 | 0.28 | 0.48 | 0.31, 0.44, 0.33, 0, 0 |
+| roam-code `impact --depth 2` | 5 of 5 | 1.00 | 0.13 | 0.24 | 0.13, 0.13, 0, 0, 0.5 |
+| graphlens MCP `relations(depth=2)` | 2 of 5 | 1.00 | 0.42 | 1.00 (of 5) | 0.31, —, 1.0, —, — |
+| OntoIndex `impact -u UID --depth 2 --include-tests` | 2 of 5 | 1.00 | 0.21 | 0.40 (of 5) | 0.06, —, 1.0, —, — |
+
+- **graphlens and OntoIndex have no node for a trait method without a body**, so the three trait-method targets
+  cannot be asked. OntoIndex has no uid at the declaration line. graphlens **answers for a same-named impl without
+  saying so**: asked for `Matcher::find_at` it resolves to the blanket impl `M.find_at`, for `ParallelVisitor::visit`
+  to `FnVisitorImp.visit`, each with 0 callers. Scored here as not answered.
+- graphlens drops test call sites by design; on the two targets it can answer it finds every production caller.
+- GitNexus's gap is tests, `dyn` and generics: on plain functions its production recall is 1.0, 1.0 and 0.78.
 
 ### Duplication (`results/audit/clones.json`)
 
@@ -137,7 +157,8 @@ Depth 2, five targets, against rust-analyzer's callers and their callers, as (fi
 | jscpd 4.3.0 | yes | no | no | by default skips files over 1 000 lines: 83 of 100 files, 20 231 of 53 212 lines |
 | roam-code `clones` | yes | yes | no | keeps the renamed copy after a rename to an unrelated name |
 | roam-code `duplicates` | yes | yes* | yes* | *only while the copies share a name prefix; renamed, both drop out |
-| CodeGraph, GitNexus | — | — | — | no clone feature |
+| OntoIndex `duplicate-code` (wraps jscpd 5.0.11) | yes | no | no | sets jscpd's limits right: files over 1 000 lines are scanned; "semantic" mode not implemented |
+| CodeGraph, GitNexus, graphlens | — | — | — | no clone feature |
 
 Precision on the natural tree is not scored: natural clones have no objective truth.
 
@@ -146,11 +167,11 @@ Precision on the natural tree is not scored: natural clones have no objective tr
 | Axis | Use | A lab tool adds | Watch out |
 |---|---|---|---|
 | security, deps, API, lint, unused deps | cargo-audit / cargo-deny, cargo-semver-checks, clippy, cargo-machete | nothing | — |
-| dead code | rustc for private items; rust-analyzer references for `pub` items across crates | CodeGraph's list is the closest, but library-only | GitNexus and roam-code lists are 15 % and 55 % live code; macro-called functions are called dead by all three |
+| dead code | rustc for private items; rust-analyzer references for `pub` items across crates | CodeGraph's list is the closest, but library-only | GitNexus, OntoIndex and roam-code lists are 15 %, 18 % and 55 % live code; macro-called functions are called dead by all four; OntoIndex `audit` reports no Rust item |
 | module cycles | no usable native check | CodeGraph `cycles`, a CI gate | GitNexus finds half, roam-code none |
 | module layers | nothing | nothing that works | a script over cargo-modules edges |
-| change impact | rust-analyzer, one level per request | CodeGraph `impact`: 78 % of the closure in one call | GitNexus 28 %, roam-code 13 %: a short list is not a small blast radius |
-| duplication | nothing | roam-code `clones` | not `duplicates`; jscpd only exact copies, and only files under 1 000 lines unless told |
+| change impact | rust-analyzer, one level per request | CodeGraph `impact`: 78 % of the closure in one call (84 % of production callers) | GitNexus 28 %, roam-code 13 %: a short list is not a small blast radius; graphlens and OntoIndex cannot be asked about a trait method, and graphlens silently answers for an impl instead |
+| duplication | nothing | roam-code `clones` | not `duplicates`; jscpd (alone or inside OntoIndex) only exact copies, and alone only files under 1 000 lines unless told |
 
 ## Surprises, in the order they happened
 
@@ -162,7 +183,12 @@ Precision on the natural tree is not scored: natural clones have no objective tr
 5. **jscpd silently skips large files** by default.
 6. **My own adapter cut GitNexus answers over 64 KB** (the process exits before the pipe drains). The R1–R5
    answers re-ran identical after the fix.
-7. **My truth twice needed a fix before it could judge anyone:** an indentation scan for trait impls was fooled by
+7. **graphlens, whose Rust graph is built from rust-analyzer (its external symbol ids are rust-analyzer SCIP
+   symbols), answers trait-method questions about the wrong symbol.**
+   Its graph has no node for a bodiless trait method, and name plus file resolves to a same-named impl, silently.
+   OntoIndex has the same gap and says so (no uid).
+8. **OntoIndex's dead-code audit of a Rust workspace lists only Python functions** (20, from one script).
+9. **My truth twice needed a fix before it could judge anyone:** an indentation scan for trait impls was fooled by
    raw strings at column 0 (now document symbols), and `#[cfg(windows)]` twins look unused to rust-analyzer on
    Linux (now their own class).
 

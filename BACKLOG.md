@@ -3219,6 +3219,11 @@ Workflow/Query-surface. Все закрыты одной вехой **M13** (ser
       Итог — строка рецепта на ось: штатное, сторонний только с измеренной добавкой, его слепые зоны. Практическая
       проверка рецепта — на частном Rust-проекте владельца (project D), приватно, в каталог не идёт. Дизайн —
       [`docs/design/recipe_rust.md`](docs/design/recipe_rust.md) D7, ожидания E9–E15.
+      Промежуточно (2026-11-21): оси измерены для CodeGraph, GitNexus, roam-code, OntoIndex 3.2.3, graphlens 0.4.0,
+      jscpd — сводка `research/tools/_rust/README.md`, заготовка публикации — build-story #16 в positioning.md.
+      Для каталога: потребности `dead-code`, `py-impact`, `py-imports` названы под Python — при `[[recipe]]`
+      завести языково-нейтральные (или Rust-) потребности и перенести туда измерения (пока в каталоге только
+      `duplicates` на Rust: jscpd, OntoIndex, roam-code).
 
 - [x] **R1-C95 Сборка падает, а должна деградировать** (S) — 🆕 (2026-11-09, из R1-C93). Сборка завершилась
       ненулевым кодом на 8 строках из 5 репозиториев RepoBench:

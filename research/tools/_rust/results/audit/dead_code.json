@@ -146,6 +146,74 @@
     "truth": 95
    }
   },
+  "ontoindex_audit": {
+   "how": "OntoIndex 3.2.3 `audit --since HEAD~1`, section Dead Code Candidates (report kept beside this file)",
+   "items": 20,
+   "reading": "all 20 are functions of benchsuite/benchsuite, a Python script; the list stops at 20; no Rust item"
+  },
+  "ontoindex_cypher": {
+   "alive_sample": [
+    "crates/cli/src/decompress.rs:50 build \u2190 crates/cli/src/decompress.rs:169",
+    "crates/cli/src/decompress.rs:191 has_command \u2190 crates/core/search.rs:278",
+    "crates/cli/src/decompress.rs:221 build \u2190 crates/cli/src/decompress.rs:355",
+    "crates/cli/src/decompress.rs:260 get_matcher \u2190 crates/core/search.rs:278",
+    "crates/cli/src/decompress.rs:383 close \u2190 crates/core/search.rs:335",
+    "crates/cli/src/escape.rs:33 escape_os \u2190 crates/cli/src/pattern.rs:57",
+    "crates/cli/src/hostname.rs:16 hostname \u2190 crates/core/flags/hiargs.rs:1376",
+    "crates/cli/src/human.rs:19 format \u2190 crates/cli/src/human.rs:84"
+   ],
+   "classes": {
+    "alive": 369,
+    "cfg_variant": 5,
+    "entry": 464,
+    "reexported": 34,
+    "test_only": 114,
+    "trait_impl": 937,
+    "unused": 85
+   },
+   "false_death_rate": 0.184,
+   "how": "OntoIndex 3.2.3, Cypher: Function with no incoming CALLS (same route as GitNexus; its product command is audit, below)",
+   "items": 2008,
+   "plants": {
+    "audit_p1_private_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p2_pub_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p2b_bin_unused": {
+     "reported_dead": true,
+     "truth": "dead"
+    },
+    "audit_p3_cross_crate": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p4_dyn_only": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p5_generic_only": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p6_macro_only": {
+     "reported_dead": true,
+     "truth": "alive"
+    },
+    "audit_p7_test_only": {
+     "reported_dead": true,
+     "truth": "test-only"
+    }
+   },
+   "precision_after_dropping_entries_and_trait_impls": 0.14,
+   "recall_unused": {
+    "found": 85,
+    "truth": 95
+   }
+  },
   "roam": {
    "alive_sample": [
     "crates/cli/src/decompress.rs:260 get_matcher \u2190 crates/core/search.rs:278",

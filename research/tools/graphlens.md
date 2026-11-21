@@ -200,3 +200,17 @@ target: `mypkg.core.dump` calls `json.dumps`; control `caller`→`helper`. Findi
   graphlens names the external member (not a span) and `ty` stabilizes on heavy deps. The spike-first gate
   worked — it prevented building the adapter. Net: **neither worked-through tool yields a built adapter** —
   unique capabilities are built natively (R1-C18/19), foreign ones are routed (GitNexus, R1-C16).
+
+## On Rust — ripgrep, against rust-analyzer (2026-11-21, R1-C112)
+
+graphlens-mcp **0.4.0** (still the latest on PyPI), `reindex` in 34 s; `status` reports the Rust toolchain `ok`, and
+the graph's external symbols are rust-analyzer SCIP ids. Of the audit axes it claims only impact (`relations`).
+Method and tables: [`_rust/README.md`](_rust/README.md).
+
+- **Impact:** on the two plain targets it finds every production caller (test call sites are dropped by design).
+  On the three trait methods it cannot be asked: its graph has no node for a bodiless trait method, and
+  `relations(name, file)` **resolves to a same-named impl without saying so** (`Matcher::find_at` → the blanket
+  impl `M.find_at`; `ParallelVisitor::visit` → `FnVisitorImp.visit`), each with 0 callers.
+- **No feature** for dead code, cycles, layers or clones.
+- **Environment note:** with a SOCKS proxy in the environment and no `socksio`, `serve` dies at start while building
+  the embedding client, even though `relations` needs no embeddings. The lab ran it with the proxy variables unset.

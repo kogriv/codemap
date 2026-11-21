@@ -269,3 +269,21 @@ produced.
   while "epistemic honesty" can no longer be claimed as ours alone. License (MIT vs AGPL) and the deterministic,
   diffable artifact remain.
 - **New candidates:** per-edge resolution reason + graded confidence; `earliest_broken_step` for flows.
+
+## On Rust — ripgrep, against rust-analyzer (2026-11-21, R1-C112)
+
+OntoIndex **3.2.3** (GitHub release tarball, SHA256 checked; installed into an isolated prefix with an isolated
+HOME), 13 s to index ripgrep 15.2.0. Only the audit axes were run. Method, plants and every table:
+[`_rust/README.md`](_rust/README.md); the audit report is kept in `_rust/results/audit/`.
+
+- **Dead code:** `audit` lists 20 candidates on this Rust workspace, all functions of one Python script
+  (`benchsuite/benchsuite`), and stops at 20: no Rust item. A list built with Cypher like GitNexus's (Function
+  with no incoming CALLS) is 18.4 % live production code and calls all five alive plants dead (cross-crate,
+  `dyn`-only, generic-only, macro-only, test-only).
+- **Cycles:** `audit` "Import Cycles" are function recursion rings, a call ring and a ring of markdown links:
+  0 of the 6 module-cycle components, planted cycle not reported. No layer rule (`checks.yml` knows
+  impact-threshold and semantic-contract); `audit` Boundary Violations "did not complete".
+- **Impact:** no node for a bodiless trait method, so 3 of 5 targets cannot be asked (no uid at the declaration
+  line); on the other two, recall 0.06 and 1.0. `impact` has no file switch: a symbol is picked by uid.
+- **Duplication:** `duplicate-code` wraps jscpd 5.0.11 through npx and sets its limits so large files are scanned;
+  it finds the exact planted copy only. The "semantic" mode is declared not implemented.

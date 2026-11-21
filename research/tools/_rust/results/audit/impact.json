@@ -6,6 +6,7 @@
     "missed": [],
     "precision": 1.0,
     "recall": 1.0,
+    "recall_production": 1.0,
     "tool": 16,
     "tp": 16,
     "truth": 16
@@ -24,6 +25,7 @@
     ],
     "precision": 1.0,
     "recall": 0.5,
+    "recall_production": 0.778,
     "tool": 8,
     "tp": 8,
     "truth": 16
@@ -33,6 +35,7 @@
     "missed": [],
     "precision": 1.0,
     "recall": 1.0,
+    "recall_production": 1.0,
     "tool": 3,
     "tp": 3,
     "truth": 3
@@ -44,6 +47,7 @@
     ],
     "precision": 1.0,
     "recall": 0.857,
+    "recall_production": 0.857,
     "tool": 6,
     "tp": 6,
     "truth": 7
@@ -60,6 +64,7 @@
     ],
     "precision": 0.429,
     "recall": 0.75,
+    "recall_production": 0.75,
     "tool": 7,
     "tp": 3,
     "truth": 4
@@ -80,6 +85,7 @@
     ],
     "precision": 1.0,
     "recall": 0.312,
+    "recall_production": 1.0,
     "tool": 5,
     "tp": 5,
     "truth": 16
@@ -104,6 +110,7 @@
     ],
     "precision": 0.583,
     "recall": 0.438,
+    "recall_production": 0.778,
     "tool": 12,
     "tp": 7,
     "truth": 16
@@ -116,6 +123,7 @@
     ],
     "precision": 1.0,
     "recall": 0.333,
+    "recall_production": 1.0,
     "tool": 1,
     "tp": 1,
     "truth": 3
@@ -133,6 +141,7 @@
     ],
     "precision": null,
     "recall": 0.0,
+    "recall_production": 0.0,
     "tool": 0,
     "tp": 0,
     "truth": 7
@@ -147,9 +156,93 @@
     ],
     "precision": null,
     "recall": 0.0,
+    "recall_production": 0.0,
     "tool": 0,
     "tp": 0,
     "truth": 4
+   }
+  },
+  "graphlens": {
+   "grep_cli::escape": {
+    "extra": [],
+    "missed": [
+     "crates/cli/src/escape.rs backslash",
+     "crates/cli/src/escape.rs carriage",
+     "crates/cli/src/escape.rs empty",
+     "crates/cli/src/escape.rs invalid_utf8",
+     "crates/cli/src/escape.rs nl",
+     "crates/cli/src/escape.rs nothing_hex0",
+     "crates/cli/src/escape.rs nothing_hex1",
+     "crates/cli/src/escape.rs nothing_hex2"
+    ],
+    "precision": 1.0,
+    "recall": 0.312,
+    "recall_production": 1.0,
+    "tool": 5,
+    "tp": 5,
+    "truth": 16
+   },
+   "grep_matcher::Matcher::find_at": {
+    "error": "resolved to grep-matcher::M.find_at, not Matcher::find_at",
+    "resolved": "grep-matcher::M.find_at"
+   },
+   "grep_searcher::Searcher::search_path": {
+    "extra": [],
+    "missed": [],
+    "precision": 1.0,
+    "recall": 1.0,
+    "recall_production": 1.0,
+    "tool": 3,
+    "tp": 3,
+    "truth": 3
+   },
+   "grep_searcher::Sink::matched": {
+    "error": "resolved to grep-searcher::sink::sinks::Lossy.matched, not Sink::matched",
+    "resolved": "grep-searcher::sink::sinks::Lossy.matched"
+   },
+   "ignore::ParallelVisitor::visit": {
+    "error": "resolved to ignore::walk::FnVisitorImp.visit, not ParallelVisitor::visit",
+    "resolved": "ignore::walk::FnVisitorImp.visit"
+   }
+  },
+  "ontoindex": {
+   "grep_cli::escape": {
+    "extra": [],
+    "missed": [
+     "crates/cli/src/escape.rs backslash",
+     "crates/cli/src/escape.rs carriage",
+     "crates/cli/src/escape.rs empty",
+     "crates/cli/src/escape.rs invalid_utf8",
+     "crates/cli/src/escape.rs nl",
+     "crates/cli/src/escape.rs nothing_hex0",
+     "crates/cli/src/escape.rs nothing_hex1",
+     "crates/cli/src/escape.rs nothing_hex2"
+    ],
+    "precision": 1.0,
+    "recall": 0.062,
+    "recall_production": 0.25,
+    "tool": 1,
+    "tp": 1,
+    "truth": 16
+   },
+   "grep_matcher::Matcher::find_at": {
+    "error": "0 uid(s) at the declaration line"
+   },
+   "grep_searcher::Searcher::search_path": {
+    "extra": [],
+    "missed": [],
+    "precision": 1.0,
+    "recall": 1.0,
+    "recall_production": 1.0,
+    "tool": 3,
+    "tp": 3,
+    "truth": 3
+   },
+   "grep_searcher::Sink::matched": {
+    "error": "0 uid(s) at the declaration line"
+   },
+   "ignore::ParallelVisitor::visit": {
+    "error": "0 uid(s) at the declaration line"
    }
   },
   "roam": {
@@ -167,6 +260,7 @@
     ],
     "precision": 1.0,
     "recall": 0.125,
+    "recall_production": 0.5,
     "tool": 2,
     "tp": 2,
     "truth": 16
@@ -185,6 +279,7 @@
     ],
     "precision": 1.0,
     "recall": 0.125,
+    "recall_production": 0.222,
     "tool": 2,
     "tp": 2,
     "truth": 16
@@ -198,6 +293,7 @@
     ],
     "precision": null,
     "recall": 0.0,
+    "recall_production": 0.0,
     "tool": 0,
     "tp": 0,
     "truth": 3
@@ -215,6 +311,7 @@
     ],
     "precision": null,
     "recall": 0.0,
+    "recall_production": 0.0,
     "tool": 0,
     "tp": 0,
     "truth": 7
@@ -227,6 +324,7 @@
     ],
     "precision": 1.0,
     "recall": 0.5,
+    "recall_production": 0.5,
     "tool": 2,
     "tp": 2,
     "truth": 4

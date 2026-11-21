@@ -1,7 +1,9 @@
 {
  "codegraph": "no layer rule",
  "gitnexus": "no layer rule (`check` offers --cycles only)",
+ "graphlens": "no layer feature",
  "native": "no tool states a module layer rule inside a crate (Cargo forbids crate cycles; cargo-deny bans crates, not modules)",
+ "ontoindex": "no dependency rule: .ontoindex/checks.yml knows impact-threshold and semantic-contract only; audit section Boundary Violations reports \"did not complete\" on this tree",
  "roam": {
   "how": "roam-code 14.1.0 `fitness` with three dependency rules in .roam/fitness.yaml",
   "reading": "the planted break (lines.rs uses sink::SinkContextKind) is missed; the control matcher -> searcher fires on a call edge fmt -> finish that Cargo makes impossible (grep-matcher does not depend on grep-searcher)",

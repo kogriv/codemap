@@ -33,6 +33,15 @@
    "planted_pair_in_one_component": true,
    "unmatched_components": []
   },
+  "graphlens": {
+   "how": "graphlens-mcp 0.4.0",
+   "reading": "no cycle feature"
+  },
+  "ontoindex": {
+   "components": 0,
+   "how": "OntoIndex 3.2.3 `audit`, section Import Cycles",
+   "reading": "4 \"import cycles\": two function recursion rings (extract..., from_ast_class_set...), one call ring (stdout...), and one ring of markdown links (FAQ.md -> GUIDE.md -> README.md). None is a module cycle: 0 of 6 truth components; planted cycle not reported"
+  },
   "roam": {
    "components": 1,
    "per_truth_component": {
