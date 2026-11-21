@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from codemap.advise import STATUSES, Catalog, need_answer, news, overview, tool_answer
+from codemap.advise import STATUSES, Catalog, need_answer, news, overview, recipes, tool_answer
 
 _MARK = {"measured": "measured", "probed": "probed", "read": "read only", "rejected": "rejected"}
 _COV = {"covered": "✅ covered", "partial": "◐ partial", "none": "— not covered"}
@@ -31,6 +31,8 @@ def _tool_line(v: dict) -> str:
     head = " · ".join(bits)
     if v.get("status_note"):
         head += f" · {v['status_note']}"
+    elif v.get("measured_on") and v["measured_on"] != ["python"]:
+        head += f" · on {', '.join(v['measured_on'])}"
     if v.get("stale"):
         head += " · ⚠ stale"
     if v.get("drift"):
@@ -47,12 +49,41 @@ def _tool_line(v: dict) -> str:
     return "\n".join(lines)
 
 
+def _names(steps: list[dict]) -> str:
+    return "; ".join(f"**{x['name']}** — {x['why']}" for x in steps) or "—"
+
+
+def recipe_md(rows: list[dict]) -> str:
+    """The recipe for a language: one row per audit axis, before anything else (design recipe_rust D8)."""
+    langs = ", ".join(sorted({r["language"] for r in rows}))
+    out = [f"## Recipe for {langs} — what to use, per axis", "",
+           "The lab's measured choice per axis: native tools first, a lab tool only with a measured gain, and what "
+           "to avoid.", "", "| axis | use | avoid |", "|---|---|---|"]
+    for r in rows:
+        out.append(f"| `{r['need']}` {r['summary']} | {_names(r['use'])} | {_names(r['avoid'])} |")
+    ev = sorted({r["evidence"] for r in rows if r.get("evidence")})
+    if ev:
+        out += ["", "Evidence: " + ", ".join(ev)]
+    return "\n".join(out)
+
+
+def _recipe_row_md(r: dict) -> list[str]:
+    out = [f"**Recipe ({r['language']}):** {r['summary']}", f"- use: {_names(r['use'])}"]
+    if r["avoid"]:
+        out.append(f"- avoid: {_names(r['avoid'])}")
+    if r.get("evidence"):
+        out.append(f"- evidence: {r['evidence']}")
+    return out
+
+
 def need_md(a: dict) -> str:
     cm = a["codemap"]
     out = [f"## {a['title']} (`{a['need']}`)", "", f"**codemap:** {_COV[cm['coverage']]}"
            + (f" — {cm['how']}" if cm.get("how") else "")]
     if cm.get("caveat"):
         out.append(f"  {cm['caveat']}")
+    for r in a.get("recipe", []):
+        out += [""] + _recipe_row_md(r)
     if a.get("note"):
         out += ["", a["note"]]
     if a["tools"]:
@@ -113,6 +144,8 @@ def answer_md(a: dict) -> str:
     if a.get("error"):
         listing = a.get("needs") or a.get("tools") or []
         parts.append(f"**{a['error']}.** Known: " + ", ".join(f"`{x}`" for x in listing))
+    if a.get("recipe"):
+        parts.append(recipe_md(a["recipe"]))
     if a.get("overview"):
         parts.append(overview_md(a["overview"]))
     for m in a.get("matches", []):
@@ -137,6 +170,8 @@ def matrix_md(cat: Catalog) -> str:
            "real tree, not scored. `read only` — known from its docs or a survey; nobody here has run it. "
            "`rejected` — tried and unusable for that need.", "",
            overview_md(o).split("\n\n", 1)[1].rsplit("\n\n", 1)[0], ""]
+    for lang in sorted({r["language"] for r in cat.matrix.get("recipe", [])}):
+        out += [recipe_md(recipes(cat, {lang})), ""]
     for r in o["needs"]:
         a = need_answer(cat, r["need"])
         out += [need_md(a).replace("## ", "### ", 1), ""]

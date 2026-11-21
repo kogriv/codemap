@@ -1331,6 +1331,17 @@ advise "semantic search"                      jevgrep measured               jev
 
 Every expectation holds. Tag `v0.0.41` on both mirrors.
 
+**0.0.42 — the release check, pre-registered before the upload (2026-11-21).** The Rust recipe (R1-C111/C112),
+`ANSWER_FORMAT` stays 11 (additive key `recipe`). Run from PyPI in clean venvs, both versions, same commands:
+
+| | question | 0.0.41 (expected) | 0.0.42 (expected) |
+|---|---|---|---|
+| recipe | `advise --lang rust` | no "Recipe for rust" block | starts with "## Recipe for rust"; `rs-module-cycles` row uses CodeGraph |
+| dead code | `advise "dead code" --lang rust` | `dead-code` (Python) only, CodeGraph read only | `rs-dead-code` with a recipe row whose `avoid` names roam-code, OntoIndex, GitNexus |
+| language in the question | `advise "ts call graph"` | GitNexus read only | GitNexus read only, "measured on rust only; not run on typescript" |
+| Python unchanged | `advise "import cycles" --lang python` | rows R | the same rows R (byte-compare the need section) |
+| version | `codemap --version` | `codemap 0.0.41 · answer format 11 · schema 0.13` | `codemap 0.0.42 · answer format 11 · schema 0.13` |
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

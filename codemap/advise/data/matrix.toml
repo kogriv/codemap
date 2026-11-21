@@ -969,20 +969,22 @@ summary = "Same heuristic call graph for JS, Ruby, PHP."
 [[claim]]
 tool = "codegraph"
 need = "multi-lang-graph"
-status = "read"
-version = "1.6.0"
-checked = "2026-08-28"
-evidence = "research/tools/codegraph.md#identity"
-summary = "Rust kernel with 20 tree-sitter grammars; only Python measured, byte-identical-to-reference claim for other languages not checked."
+status = "measured"
+version = "1.6.4"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#navigation-r1r5"
+summary = "On ripgrep against rust-analyzer: callers of a plain function 13 of 13, through `dyn` 3 of 3, through generic forwarders 1 of 3; definitions precision 1.0 (23 of 25); module graph P 0.94 R 0.80; macro call sites not answered. Fails by omission, never confused a namesake. Other languages not measured."
 
 [[claim]]
 tool = "gitnexus"
 need = "multi-lang-graph"
-status = "read"
-version = "1.6.9"
-checked = "2026-08-06"
-evidence = "research/tools/gitnexus.md#what-it-is"
-summary = "14 languages via tree-sitter; only Python was measured."
+status = "measured"
+version = "1.6.12"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#navigation-r1r5"
+summary = "On ripgrep against rust-analyzer: callers of a plain function 2 of 13 (most test callers missed), through `dyn` 0 of 3, through generics 0 of 3; module graph P 0.99 R 0.56. An empty answer on Rust is not evidence of no use. Other languages not measured."
 
 [[claim]]
 tool = "glean"
@@ -1720,3 +1722,494 @@ tool = "roam-code"
 need = "multi-lang-graph"
 status = "read"
 summary = "Per its README: a local SQLite code graph over 28 languages (Python, JavaScript, TypeScript, Go, Rust, Java, C#, PHP, Ruby and more); extraction depth varies by language. Not run by the lab."
+
+# ---------------------------------------------------------------- Rust (R1-C111, R1-C112)
+
+[[need]]
+id = "rs-dead-code"
+title = "Unused code in a Rust workspace, across crates"
+keywords = ["dead", "unused", "unreachable", "pub", "crate", "workspace", "delete", "remove"]
+languages = ["rust"]
+codemap = "none"
+
+[[need]]
+id = "rs-module-cycles"
+title = "Module cycles inside a Rust crate"
+keywords = ["cycles", "cycle", "circular", "modules", "module", "mod", "use", "dependencies", "gate"]
+languages = ["rust"]
+codemap = "none"
+
+[[need]]
+id = "rs-layers"
+title = "Layer rules between the modules of a Rust crate, enforced in CI"
+keywords = ["layers", "layer", "architecture", "contract", "forbidden", "boundaries", "rule", "gate", "ci"]
+languages = ["rust"]
+codemap = "none"
+
+[[need]]
+id = "rs-impact"
+title = "What a change to a Rust function touches (blast radius)"
+keywords = ["impact", "blast", "radius", "change", "break", "affected", "callers", "refactor", "safe"]
+languages = ["rust"]
+codemap = "none"
+
+[[need]]
+id = "rs-security-deps"
+title = "Vulnerable, banned or badly licensed dependencies of a Rust project"
+keywords = ["security", "vulnerable", "vulnerability", "advisory", "cve", "license", "licenses", "dependencies", "audit", "supply", "chain", "bans"]
+languages = ["rust"]
+codemap = "none"
+
+[[need]]
+id = "rs-api-semver"
+title = "Breaking changes in a Rust crate's public API before a release"
+keywords = ["api", "semver", "breaking", "public", "release", "compatibility", "surface"]
+languages = ["rust"]
+codemap = "none"
+
+[[need]]
+id = "rs-lint"
+title = "Correctness and style lints for Rust"
+keywords = ["lint", "lints", "style", "correctness", "warnings", "idiom", "clippy"]
+languages = ["rust"]
+codemap = "none"
+
+[[need]]
+id = "rs-unused-deps"
+title = "Unused dependencies in Cargo.toml"
+keywords = ["unused", "dependencies", "deps", "cargo", "toml", "bloat"]
+languages = ["rust"]
+codemap = "none"
+
+[[tool]]
+id = "rustc"
+name = "rustc (the Rust compiler)"
+url = "https://github.com/rust-lang/rust"
+license = "MIT OR Apache-2.0"
+languages = ["rust"]
+interface = ["cli"]
+watch = { kind = "github", name = "rust-lang/rust" }
+
+[[tool]]
+id = "clippy"
+name = "Clippy"
+url = "https://github.com/rust-lang/rust-clippy"
+license = "MIT OR Apache-2.0"
+languages = ["rust"]
+interface = ["cli"]
+watch = { kind = "github", name = "rust-lang/rust-clippy" }
+
+[[tool]]
+id = "rust-analyzer"
+name = "rust-analyzer"
+url = "https://github.com/rust-lang/rust-analyzer"
+license = "MIT OR Apache-2.0"
+languages = ["rust"]
+interface = ["lsp"]
+watch = { kind = "github", name = "rust-lang/rust-analyzer" }
+
+[[tool]]
+id = "cargo-modules"
+name = "cargo-modules"
+url = "https://github.com/regexident/cargo-modules"
+license = "MPL-2.0"
+languages = ["rust"]
+interface = ["cli"]
+watch = { kind = "github", name = "regexident/cargo-modules" }
+
+[[tool]]
+id = "cargo-audit"
+name = "cargo-audit (RustSec)"
+url = "https://github.com/rustsec/rustsec"
+license = "MIT OR Apache-2.0"
+languages = ["rust"]
+interface = ["cli"]
+watch = { kind = "github", name = "rustsec/rustsec" }
+
+[[tool]]
+id = "cargo-deny"
+name = "cargo-deny"
+url = "https://github.com/EmbarkStudios/cargo-deny"
+license = "MIT OR Apache-2.0"
+languages = ["rust"]
+interface = ["cli"]
+watch = { kind = "github", name = "EmbarkStudios/cargo-deny" }
+
+[[tool]]
+id = "cargo-semver-checks"
+name = "cargo-semver-checks"
+url = "https://github.com/obi1kenobi/cargo-semver-checks"
+license = "Apache-2.0 OR MIT"
+languages = ["rust"]
+interface = ["cli"]
+watch = { kind = "github", name = "obi1kenobi/cargo-semver-checks" }
+
+[[tool]]
+id = "cargo-machete"
+name = "cargo-machete"
+url = "https://github.com/bnjbvr/cargo-machete"
+license = "MIT"
+languages = ["rust"]
+interface = ["cli"]
+watch = { kind = "github", name = "bnjbvr/cargo-machete" }
+
+[[tool]]
+id = "cargo-udeps"
+name = "cargo-udeps"
+url = "https://github.com/est31/cargo-udeps"
+license = "MIT OR Apache-2.0"
+languages = ["rust"]
+interface = ["cli"]
+watch = { kind = "github", name = "est31/cargo-udeps" }
+
+[[claim]]
+tool = "rustc"
+need = "rs-dead-code"
+status = "probed"
+version = "1.96.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#dead-code-resultsauditdead_codejson"
+summary = "The `dead_code` lint flags private unused items and `pub` items of a binary crate. A `pub` item of a library crate that no workspace crate uses is never reported: on the planted ripgrep copy it flagged the private and the binary-crate plants and not the exported one."
+
+[[claim]]
+tool = "clippy"
+need = "rs-lint"
+status = "probed"
+version = "1.96.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#audit-axes"
+summary = "Run on the planted ripgrep copy: adds nothing about unused code to rustc. The ecosystem's lint standard (hundreds of lints); not scored as a linter."
+
+[[claim]]
+tool = "rust-analyzer"
+need = "multi-lang-graph"
+status = "probed"
+version = "1.96.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#navigation-r1r5"
+summary = "The lab's truth for Rust navigation: compiler front end, ready in 5 s on ripgrep, byte-identical over two runs, 20 of 20 sampled call sites right. Speaks LSP, not MCP: an agent needs a client."
+
+[[claim]]
+tool = "rust-analyzer"
+need = "rs-impact"
+status = "probed"
+version = "1.96.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#change-impact-resultsauditimpactjson"
+summary = "Exact callers through `dyn`, generics and macros via call hierarchy, one level per request; the transitive closure takes a script (the lab's truth does it)."
+
+[[claim]]
+tool = "cargo-modules"
+need = "rs-module-cycles"
+status = "rejected"
+version = "0.27.0"
+checked = "2026-11-21"
+evidence = "research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson"
+reason = "`dependencies --acyclic` checks items, not modules: it fails on a type and its own method (`Hasher` and `Hasher::default`) in 8 of the 9 library crates of a clean ripgrep. Its `uses` edges are right and are the lab's truth for module cycles; the check is unusable as a gate."
+summary = ""
+
+[[claim]]
+tool = "cargo-audit"
+need = "rs-security-deps"
+status = "read"
+summary = "Checks Cargo.lock against the RustSec advisory database; the ecosystem standard for known vulnerabilities."
+
+[[claim]]
+tool = "cargo-deny"
+need = "rs-security-deps"
+status = "read"
+summary = "Advisories, license allow-lists, banned crates and duplicate versions, from one config; crate-level bans, not module rules."
+
+[[claim]]
+tool = "cargo-semver-checks"
+need = "rs-api-semver"
+status = "read"
+summary = "Compares a crate's public API with its last release by rustdoc JSON and reports semver violations before publishing."
+
+[[claim]]
+tool = "cargo-machete"
+need = "rs-unused-deps"
+status = "read"
+summary = "Fast unused-dependency finder by searching sources for crate names; may report false positives on macro-only use."
+
+[[claim]]
+tool = "cargo-udeps"
+need = "rs-unused-deps"
+status = "read"
+summary = "Unused dependencies from compilation (nightly toolchain); slower and more exact than a text search."
+
+[[claim]]
+tool = "codegraph"
+need = "rs-dead-code"
+status = "measured"
+version = "1.6.4"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#dead-code-resultsauditdead_codejson"
+summary = "Library-only `findDeadCode()` (not in its CLI or MCP): 808 items, 4.5 % alive in production (false deaths), 84 of 95 unreferenced functions found; after dropping test entries and trait-impl methods 43 % are true candidates. Calls a macro-only function dead."
+
+[[claim]]
+tool = "gitnexus"
+need = "rs-dead-code"
+status = "measured"
+version = "1.6.12"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#dead-code-resultsauditdead_codejson"
+summary = "No dead-code command; a no-incoming-CALLS Cypher list is 1 898 items with 14.9 % false deaths, and calls `dyn`-only, generic-only, macro-only and test-only functions dead."
+
+[[claim]]
+tool = "roam-code"
+need = "rs-dead-code"
+status = "measured"
+version = "14.1.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#dead-code-resultsauditdead_codejson"
+summary = "`dead --all`: 199 items, 54.8 % alive in production; 48 of 95 unreferenced functions; calls cross-crate, macro-only and test-only functions dead. Misses calls through a facade crate path and plain same-file calls."
+
+[[claim]]
+tool = "ontoindex"
+need = "rs-dead-code"
+status = "measured"
+version = "3.2.3"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#dead-code-resultsauditdead_codejson"
+summary = "`audit` Dead Code Candidates on the Rust workspace: 20 items, all Python functions of one script, no Rust item. A no-incoming-CALLS Cypher list: 18.4 % false deaths, all five alive plants called dead."
+
+[[claim]]
+tool = "codegraph"
+need = "rs-module-cycles"
+status = "measured"
+version = "1.6.4"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson"
+summary = "`cycles` (exits 1, a CI gate): of 6 file-level module-cycle components, 3 exact, 2 inside a larger component, 1 missed; the planted cycle found."
+
+[[claim]]
+tool = "gitnexus"
+need = "rs-module-cycles"
+status = "measured"
+version = "1.6.12"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson"
+summary = "`check --cycles`: 2 of 6 components exact, 1 partial, 3 missed; the planted cycle found."
+
+[[claim]]
+tool = "roam-code"
+need = "rs-module-cycles"
+status = "measured"
+version = "14.1.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson"
+summary = "`cycles`: 0 of 6 components; one false cycle from a name mislink; the planted cycle missed."
+
+[[claim]]
+tool = "ontoindex"
+need = "rs-module-cycles"
+status = "measured"
+version = "3.2.3"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson"
+summary = "`audit` Import Cycles are function recursion, a call ring and a ring of markdown links: 0 of 6 module-cycle components."
+
+[[claim]]
+tool = "roam-code"
+need = "rs-layers"
+status = "measured"
+version = "14.1.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson"
+summary = "`fitness` dependency rules: the planted break (a `use` of a type) missed, and a control rule fired on a call edge that Cargo makes impossible (grep-matcher cannot depend on grep-searcher)."
+
+[[claim]]
+tool = "codegraph"
+need = "rs-impact"
+status = "measured"
+version = "1.6.4"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#change-impact-resultsauditimpactjson"
+summary = "`impact -d 2` against rust-analyzer's depth-2 closure on 5 targets: precision 0.90, recall 0.78 (production callers 0.84)."
+
+[[claim]]
+tool = "gitnexus"
+need = "rs-impact"
+status = "measured"
+version = "1.6.12"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#change-impact-resultsauditimpactjson"
+summary = "`impact --depth 2 --include-tests`: precision 0.72, recall 0.28 (production 0.48); 0 on the `dyn` and generic targets."
+
+[[claim]]
+tool = "roam-code"
+need = "rs-impact"
+status = "measured"
+version = "14.1.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#change-impact-resultsauditimpactjson"
+summary = "`impact --depth 2`: precision 1.00, recall 0.13 (production 0.24)."
+
+[[claim]]
+tool = "graphlens-mcp"
+need = "rs-impact"
+status = "measured"
+version = "0.4.0"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#change-impact-resultsauditimpactjson"
+summary = "MCP `relations(depth=2)`: every production caller on the 2 plain targets; the 3 trait methods cannot be asked (no node for a bodiless trait method) and it silently answers for a same-named impl instead."
+
+[[claim]]
+tool = "ontoindex"
+need = "rs-impact"
+status = "measured"
+version = "3.2.3"
+checked = "2026-11-21"
+measured_on = ["rust"]
+evidence = "research/tools/_rust/README.md#change-impact-resultsauditimpactjson"
+summary = "`impact -u UID --depth 2`: 3 of 5 targets cannot be asked (no node for a bodiless trait method); recall 0.06 and 1.0 on the other two."
+
+[[recipe]]
+language = "rust"
+need = "multi-lang-graph"
+summary = "Exact answers come from rust-analyzer; for an agent over MCP, CodeGraph is the closest measured graph."
+evidence = "research/tools/_rust/README.md#the-recipe-by-axis"
+use = [
+  { tool = "rust-analyzer", why = "compiler-grade truth for definitions, callers, implementations; LSP, so the agent needs a client" },
+  { tool = "codegraph", why = "MCP graph closest to the truth: plain and `dyn` callers complete, misses generic forwarders and macros" },
+]
+avoid = [
+  { tool = "gitnexus", why = "2 of 13 callers of a plain function, 0 through `dyn`: an empty answer is not no use" },
+]
+
+[[recipe]]
+language = "rust"
+need = "rs-dead-code"
+summary = "No lab tool is safe to act on. rustc covers private items; for `pub` items across crates, ask rust-analyzer for references (scriptable, exact). In a published library crate an unused `pub` item is API, in an internal crate it is dead."
+evidence = "research/tools/_rust/README.md#dead-code-resultsauditdead_codejson"
+use = [
+  { tool = "rustc", why = "flags private and binary-crate items; blind to exported items of library crates" },
+  { tool = "rust-analyzer", why = "references per item give the exact cross-crate answer" },
+]
+avoid = [
+  { tool = "roam-code", why = "55 % of its dead list is live code" },
+  { tool = "ontoindex", why = "its audit lists no Rust item; the call-edge list is 18 % live code" },
+  { tool = "gitnexus", why = "15 % of a no-callers list is live code, including `dyn` and generic paths" },
+  { tool = "codegraph", why = "closest (4.5 % false deaths) but library-only and calls macro-called functions dead" },
+]
+
+[[recipe]]
+language = "rust"
+need = "rs-module-cycles"
+summary = "No usable native check; CodeGraph `cycles` is the measured gate."
+evidence = "research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson"
+use = [
+  { tool = "codegraph", why = "`cycles` found or covered 5 of 6 module-cycle components and the planted one; exits 1 in CI" },
+]
+avoid = [
+  { tool = "cargo-modules", why = "`--acyclic` fires on every type and its own method" },
+  { tool = "gitnexus", why = "finds half" },
+  { tool = "roam-code", why = "none of 6, plus a false cycle" },
+  { tool = "ontoindex", why = "its import cycles are not module cycles" },
+]
+
+[[recipe]]
+language = "rust"
+need = "rs-layers"
+summary = "No native or lab tool states a working module layer rule on Rust; a small script over cargo-modules `uses` edges is the honest option."
+evidence = "research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson"
+use = [
+  { tool = "cargo-modules", why = "its `uses` edges are exact: the input for a script that checks the rule" },
+]
+avoid = [
+  { tool = "roam-code", why = "`fitness` missed the planted break and fired on an impossible dependency" },
+]
+
+[[recipe]]
+language = "rust"
+need = "rs-impact"
+summary = "rust-analyzer is exact one level at a time; CodeGraph gives most of the depth-2 closure in one call."
+evidence = "research/tools/_rust/README.md#change-impact-resultsauditimpactjson"
+use = [
+  { tool = "codegraph", why = "`impact -d 2`: recall 0.78, precision 0.90" },
+  { tool = "rust-analyzer", why = "exact, one call-hierarchy level per request" },
+]
+avoid = [
+  { tool = "gitnexus", why = "recall 0.28: a short list is not a small blast radius" },
+  { tool = "roam-code", why = "recall 0.13" },
+  { tool = "graphlens-mcp", why = "answers a trait-method question about a same-named impl, silently" },
+  { tool = "ontoindex", why = "cannot be asked about a trait method" },
+]
+
+[[recipe]]
+language = "rust"
+need = "duplicates"
+summary = "No native tool finds cross-file clones; roam-code `clones` is the measured choice."
+evidence = "research/tools/_rust/README.md#duplication-resultsauditclonesjson"
+use = [
+  { tool = "roam-code", why = "`clones` finds exact and renamed copies, and keeps the renamed one after a rename" },
+]
+avoid = [
+  { tool = "jscpd", why = "exact copies only, and skips files over 1 000 lines unless told" },
+  { tool = "ontoindex", why = "wraps jscpd: exact copies only" },
+]
+
+[[recipe]]
+language = "rust"
+need = "rs-security-deps"
+summary = "Native tools cover it; no lab tool adds anything."
+evidence = "research/tools/_rust/README.md#audit-axes"
+use = [
+  { tool = "cargo-audit", why = "RustSec advisories against Cargo.lock" },
+  { tool = "cargo-deny", why = "advisories, licenses, bans, duplicate versions" },
+]
+avoid = [
+]
+
+[[recipe]]
+language = "rust"
+need = "rs-api-semver"
+summary = "Native tool covers it; no lab tool adds anything."
+evidence = "research/tools/_rust/README.md#audit-axes"
+use = [
+  { tool = "cargo-semver-checks", why = "public API against the last release" },
+]
+avoid = [
+]
+
+[[recipe]]
+language = "rust"
+need = "rs-lint"
+summary = "Native tools cover it; no lab tool adds anything."
+evidence = "research/tools/_rust/README.md#audit-axes"
+use = [
+  { tool = "clippy", why = "the ecosystem's lints" },
+  { tool = "rustc", why = "compiler warnings, including unused private code" },
+]
+avoid = [
+]
+
+[[recipe]]
+language = "rust"
+need = "rs-unused-deps"
+summary = "Native tools cover it; no lab tool adds anything."
+evidence = "research/tools/_rust/README.md#audit-axes"
+use = [
+  { tool = "cargo-machete", why = "fast, text search" },
+  { tool = "cargo-udeps", why = "exact, from compilation, nightly" },
+]
+avoid = [
+]

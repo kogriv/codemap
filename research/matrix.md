@@ -6,7 +6,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 
 **Statuses.** `measured` — scored against the lab's truth, numbers in the card. `probed` — run on a real tree, not scored. `read only` — known from its docs or a survey; nobody here has run it. `rejected` — tried and unusable for that need.
 
-21 need(s), 53 tool(s); claims: 26 measured, 18 probed, 61 read, 9 rejected.
+29 need(s), 62 tool(s); claims: 42 measured, 22 probed, 64 read, 10 rejected.
 
 | need | codemap | best other tool | tools |
 |---|---|---|---|
@@ -26,11 +26,38 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 | `complexity` Complexity metrics (cyclomatic, size) and a threshold in CI | — not covered | radon (read only) | 3 |
 | `security-patterns` Security patterns and leaked secrets | — not covered | codeql (read only) | 4 |
 | `dataflow-taint` Data flow and taint: where an input value can reach | — not covered | codeql (read only) | 3 |
-| `multi-lang-graph` Symbol and call graph for languages other than Python | — not covered | graphify (read only) | 14 |
+| `multi-lang-graph` Symbol and call graph for languages other than Python | — not covered | codegraph (measured) | 15 |
 | `frontend-dead-exports` Unused exports, files and dependencies in a JS/TS project | — not covered | fallow (read only) | 2 |
 | `structural-search` Structural (AST) pattern search and rewrite | — not covered | cocoindex-code (probed) | 5 |
 | `type-errors` Static type checking | — not covered | mypy (read only) | 2 |
 | `db-query-count` How many database queries a code path makes | — not covered | pytest-django (read only) | 1 |
+| `rs-dead-code` Unused code in a Rust workspace, across crates | — not covered | codegraph (measured) | 5 |
+| `rs-module-cycles` Module cycles inside a Rust crate | — not covered | codegraph (measured) | 4 |
+| `rs-layers` Layer rules between the modules of a Rust crate, enforced in CI | — not covered | roam-code (measured) | 1 |
+| `rs-impact` What a change to a Rust function touches (blast radius) | — not covered | codegraph (measured) | 6 |
+| `rs-security-deps` Vulnerable, banned or badly licensed dependencies of a Rust project | — not covered | cargo-audit (read only) | 2 |
+| `rs-api-semver` Breaking changes in a Rust crate's public API before a release | — not covered | cargo-semver-checks (read only) | 1 |
+| `rs-lint` Correctness and style lints for Rust | — not covered | clippy (probed) | 1 |
+| `rs-unused-deps` Unused dependencies in Cargo.toml | — not covered | cargo-machete (read only) | 2 |
+
+## Recipe for rust — what to use, per axis
+
+The lab's measured choice per axis: native tools first, a lab tool only with a measured gain, and what to avoid.
+
+| axis | use | avoid |
+|---|---|---|
+| `multi-lang-graph` Exact answers come from rust-analyzer; for an agent over MCP, CodeGraph is the closest measured graph. | **rust-analyzer** — compiler-grade truth for definitions, callers, implementations; LSP, so the agent needs a client; **CodeGraph (colbymchenry)** — MCP graph closest to the truth: plain and `dyn` callers complete, misses generic forwarders and macros | **GitNexus** — 2 of 13 callers of a plain function, 0 through `dyn`: an empty answer is not no use |
+| `rs-dead-code` No lab tool is safe to act on. rustc covers private items; for `pub` items across crates, ask rust-analyzer for references (scriptable, exact). In a published library crate an unused `pub` item is API, in an internal crate it is dead. | **rustc (the Rust compiler)** — flags private and binary-crate items; blind to exported items of library crates; **rust-analyzer** — references per item give the exact cross-crate answer | **roam-code** — 55 % of its dead list is live code; **OntoIndex** — its audit lists no Rust item; the call-edge list is 18 % live code; **GitNexus** — 15 % of a no-callers list is live code, including `dyn` and generic paths; **CodeGraph (colbymchenry)** — closest (4.5 % false deaths) but library-only and calls macro-called functions dead |
+| `rs-module-cycles` No usable native check; CodeGraph `cycles` is the measured gate. | **CodeGraph (colbymchenry)** — `cycles` found or covered 5 of 6 module-cycle components and the planted one; exits 1 in CI | **cargo-modules** — `--acyclic` fires on every type and its own method; **GitNexus** — finds half; **roam-code** — none of 6, plus a false cycle; **OntoIndex** — its import cycles are not module cycles |
+| `rs-layers` No native or lab tool states a working module layer rule on Rust; a small script over cargo-modules `uses` edges is the honest option. | **cargo-modules** — its `uses` edges are exact: the input for a script that checks the rule | **roam-code** — `fitness` missed the planted break and fired on an impossible dependency |
+| `rs-impact` rust-analyzer is exact one level at a time; CodeGraph gives most of the depth-2 closure in one call. | **CodeGraph (colbymchenry)** — `impact -d 2`: recall 0.78, precision 0.90; **rust-analyzer** — exact, one call-hierarchy level per request | **GitNexus** — recall 0.28: a short list is not a small blast radius; **roam-code** — recall 0.13; **graphlens-mcp** — answers a trait-method question about a same-named impl, silently; **OntoIndex** — cannot be asked about a trait method |
+| `duplicates` No native tool finds cross-file clones; roam-code `clones` is the measured choice. | **roam-code** — `clones` finds exact and renamed copies, and keeps the renamed one after a rename | **jscpd** — exact copies only, and skips files over 1 000 lines unless told; **OntoIndex** — wraps jscpd: exact copies only |
+| `rs-security-deps` Native tools cover it; no lab tool adds anything. | **cargo-audit (RustSec)** — RustSec advisories against Cargo.lock; **cargo-deny** — advisories, licenses, bans, duplicate versions | — |
+| `rs-api-semver` Native tool covers it; no lab tool adds anything. | **cargo-semver-checks** — public API against the last release | — |
+| `rs-lint` Native tools cover it; no lab tool adds anything. | **Clippy** — the ecosystem's lints; **rustc (the Rust compiler)** — compiler warnings, including unused private code | — |
+| `rs-unused-deps` Native tools cover it; no lab tool adds anything. | **cargo-machete** — fast, text search; **cargo-udeps** — exact, from compilation, nightly | — |
+
+Evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson, https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#audit-axes, https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#change-impact-resultsauditimpactjson, https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#dead-code-resultsauditdead_codejson, https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#duplication-resultsauditclonesjson, https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#the-recipe-by-axis
 
 ### Where a Python symbol is defined, and its dossier (`py-symbols`)
 
@@ -448,13 +475,13 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** — not covered
 
 **Other tools** (measured first; `read only` means the lab has not run it):
-- **jscpd** — measured · v4.3.0 · checked 2026-11-21 · MIT · ⚠ measured 4.3.0, latest 5.4.3
+- **jscpd** — measured · v4.3.0 · checked 2026-11-21 · MIT · on rust · ⚠ measured 4.3.0, latest 5.4.3
   On ripgrep with three planted copies: finds the exact copy only, not the renamed or the reordered one. By default it skips files over 1 000 lines (83 of 100 files, 20 231 of 53 212 lines scanned); pass --max-lines and --max-size.
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#duplication-resultsauditclonesjson
-- **OntoIndex** — measured · v3.2.3 · checked 2026-11-21 · AGPL-3.0-or-later
+- **OntoIndex** — measured · v3.2.3 · checked 2026-11-21 · AGPL-3.0-or-later · on rust
   `duplicate-code` wraps jscpd 5.0.11 and scans large files; on ripgrep it finds the exact planted copy only, not the renamed or the reordered one. Its semantic mode is declared not implemented.
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/ontoindex.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c112
-- **roam-code** — measured · v14.1.0 · checked 2026-11-21 · Apache-2.0
+- **roam-code** — measured · v14.1.0 · checked 2026-11-21 · Apache-2.0 · on rust
   `clones` (AST hashing) finds the exact and the renamed planted copy, and keeps the renamed one after a rename to an unrelated name; misses the reordered copy. `duplicates` finds all three only while they share a name prefix: renamed, two drop out.
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/roam-code.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c112
 - **fallow** — read only · MIT
@@ -534,6 +561,16 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** — not covered
 
 **Other tools** (measured first; `read only` means the lab has not run it):
+- **CodeGraph (colbymchenry)** — measured · v1.6.4 · checked 2026-11-21 · MIT · on rust
+  On ripgrep against rust-analyzer: callers of a plain function 13 of 13, through `dyn` 3 of 3, through generic forwarders 1 of 3; definitions precision 1.0 (23 of 25); module graph P 0.94 R 0.80; macro call sites not answered. Fails by omission, never confused a namesake. Other languages not measured.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#navigation-r1r5
+- **GitNexus** — measured · v1.6.12 · checked 2026-11-21 · PolyForm-Noncommercial-1.0.0 · on rust
+  On ripgrep against rust-analyzer: callers of a plain function 2 of 13 (most test callers missed), through `dyn` 0 of 3, through generics 0 of 3; module graph P 0.99 R 0.56. An empty answer on Rust is not evidence of no use. Other languages not measured.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#navigation-r1r5
+- **rust-analyzer** — probed · v1.96.0 · checked 2026-11-21 · MIT OR Apache-2.0 · on rust
+  The lab's truth for Rust navigation: compiler front end, ready in 5 s on ripgrep, byte-identical over two runs, 20 of 20 sampled call sites right. Speaks LSP, not MCP: an agent needs a client.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#navigation-r1r5
 - **Graphify** — read only · v0.9.102 · checked 2026-11-04 · Apache-2.0
   30 tree-sitter grammars as hard dependencies (about 40 languages with extras); only Python measured.
   check it first: not scored by the lab: check it on a question whose answer you know first
@@ -550,14 +587,6 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   14 languages via tree-sitter; Python only was run.
   check it first: not scored by the lab: check it on a question whose answer you know first
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/ontoindex.md#identity
-- **CodeGraph (colbymchenry)** — read only · v1.6.0 · checked 2026-08-28 · MIT
-  Rust kernel with 20 tree-sitter grammars; only Python measured, byte-identical-to-reference claim for other languages not checked.
-  check it first: not scored by the lab: check it on a question whose answer you know first
-  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/codegraph.md#identity
-- **GitNexus** — read only · v1.6.9 · checked 2026-08-06 · PolyForm-Noncommercial-1.0.0
-  14 languages via tree-sitter; only Python was measured.
-  check it first: not scored by the lab: check it on a question whose answer you know first
-  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/gitnexus.md#what-it-is
 - **graphlens-mcp** — read only · v0.4.0 · checked 2026-08-03 · MIT
   Tree-sitter plus per-language LSP resolvers for Python, TypeScript, Go, Rust, PHP; only Python tested.
   check it first: not scored by the lab: check it on a question whose answer you know first
@@ -663,6 +692,133 @@ No static tool sees this: the number of queries depends on the data and the ORM 
   check it first: not scored by the lab: check it on a question whose answer you know first
   https://github.com/pytest-dev/pytest-django
 
+### Unused code in a Rust workspace, across crates (`rs-dead-code`)
+
+**codemap:** — not covered
+
+**Other tools** (measured first; `read only` means the lab has not run it):
+- **CodeGraph (colbymchenry)** — measured · v1.6.4 · checked 2026-11-21 · MIT · on rust
+  Library-only `findDeadCode()` (not in its CLI or MCP): 808 items, 4.5 % alive in production (false deaths), 84 of 95 unreferenced functions found; after dropping test entries and trait-impl methods 43 % are true candidates. Calls a macro-only function dead.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#dead-code-resultsauditdead_codejson
+- **GitNexus** — measured · v1.6.12 · checked 2026-11-21 · PolyForm-Noncommercial-1.0.0 · on rust
+  No dead-code command; a no-incoming-CALLS Cypher list is 1 898 items with 14.9 % false deaths, and calls `dyn`-only, generic-only, macro-only and test-only functions dead.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#dead-code-resultsauditdead_codejson
+- **OntoIndex** — measured · v3.2.3 · checked 2026-11-21 · AGPL-3.0-or-later · on rust
+  `audit` Dead Code Candidates on the Rust workspace: 20 items, all Python functions of one script, no Rust item. A no-incoming-CALLS Cypher list: 18.4 % false deaths, all five alive plants called dead.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#dead-code-resultsauditdead_codejson
+- **roam-code** — measured · v14.1.0 · checked 2026-11-21 · Apache-2.0 · on rust
+  `dead --all`: 199 items, 54.8 % alive in production; 48 of 95 unreferenced functions; calls cross-crate, macro-only and test-only functions dead. Misses calls through a facade crate path and plain same-file calls.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#dead-code-resultsauditdead_codejson
+- **rustc (the Rust compiler)** — probed · v1.96.0 · checked 2026-11-21 · MIT OR Apache-2.0 · on rust
+  The `dead_code` lint flags private unused items and `pub` items of a binary crate. A `pub` item of a library crate that no workspace crate uses is never reported: on the planted ripgrep copy it flagged the private and the binary-crate plants and not the exported one.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#dead-code-resultsauditdead_codejson
+
+### Module cycles inside a Rust crate (`rs-module-cycles`)
+
+**codemap:** — not covered
+
+**Other tools** (measured first; `read only` means the lab has not run it):
+- **CodeGraph (colbymchenry)** — measured · v1.6.4 · checked 2026-11-21 · MIT · on rust
+  `cycles` (exits 1, a CI gate): of 6 file-level module-cycle components, 3 exact, 2 inside a larger component, 1 missed; the planted cycle found.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson
+- **GitNexus** — measured · v1.6.12 · checked 2026-11-21 · PolyForm-Noncommercial-1.0.0 · on rust
+  `check --cycles`: 2 of 6 components exact, 1 partial, 3 missed; the planted cycle found.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson
+- **OntoIndex** — measured · v3.2.3 · checked 2026-11-21 · AGPL-3.0-or-later · on rust
+  `audit` Import Cycles are function recursion, a call ring and a ring of markdown links: 0 of 6 module-cycle components.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson
+- **roam-code** — measured · v14.1.0 · checked 2026-11-21 · Apache-2.0 · on rust
+  `cycles`: 0 of 6 components; one false cycle from a name mislink; the planted cycle missed.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson
+
+**Tried and rejected:**
+- **cargo-modules** — rejected · v0.27.0 · checked 2026-11-21 · MPL-2.0
+  why not: `dependencies --acyclic` checks items, not modules: it fails on a type and its own method (`Hasher` and `Hasher::default`) in 8 of the 9 library crates of a clean ripgrep. Its `uses` edges are right and are the lab's truth for module cycles; the check is unusable as a gate.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson
+
+### Layer rules between the modules of a Rust crate, enforced in CI (`rs-layers`)
+
+**codemap:** — not covered
+
+**Other tools** (measured first; `read only` means the lab has not run it):
+- **roam-code** — measured · v14.1.0 · checked 2026-11-21 · Apache-2.0 · on rust
+  `fitness` dependency rules: the planted break (a `use` of a type) missed, and a control rule fired on a call edge that Cargo makes impossible (grep-matcher cannot depend on grep-searcher).
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#architecture-resultsauditcyclesjson-resultsauditlayersjson
+
+### What a change to a Rust function touches (blast radius) (`rs-impact`)
+
+**codemap:** — not covered
+
+**Other tools** (measured first; `read only` means the lab has not run it):
+- **CodeGraph (colbymchenry)** — measured · v1.6.4 · checked 2026-11-21 · MIT · on rust
+  `impact -d 2` against rust-analyzer's depth-2 closure on 5 targets: precision 0.90, recall 0.78 (production callers 0.84).
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#change-impact-resultsauditimpactjson
+- **GitNexus** — measured · v1.6.12 · checked 2026-11-21 · PolyForm-Noncommercial-1.0.0 · on rust
+  `impact --depth 2 --include-tests`: precision 0.72, recall 0.28 (production 0.48); 0 on the `dyn` and generic targets.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#change-impact-resultsauditimpactjson
+- **graphlens-mcp** — measured · v0.4.0 · checked 2026-11-21 · MIT · on rust
+  MCP `relations(depth=2)`: every production caller on the 2 plain targets; the 3 trait methods cannot be asked (no node for a bodiless trait method) and it silently answers for a same-named impl instead.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#change-impact-resultsauditimpactjson
+- **OntoIndex** — measured · v3.2.3 · checked 2026-11-21 · AGPL-3.0-or-later · on rust
+  `impact -u UID --depth 2`: 3 of 5 targets cannot be asked (no node for a bodiless trait method); recall 0.06 and 1.0 on the other two.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#change-impact-resultsauditimpactjson
+- **roam-code** — measured · v14.1.0 · checked 2026-11-21 · Apache-2.0 · on rust
+  `impact --depth 2`: precision 1.00, recall 0.13 (production 0.24).
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#change-impact-resultsauditimpactjson
+- **rust-analyzer** — probed · v1.96.0 · checked 2026-11-21 · MIT OR Apache-2.0 · on rust
+  Exact callers through `dyn`, generics and macros via call hierarchy, one level per request; the transitive closure takes a script (the lab's truth does it).
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#change-impact-resultsauditimpactjson
+
+### Vulnerable, banned or badly licensed dependencies of a Rust project (`rs-security-deps`)
+
+**codemap:** — not covered
+
+**Other tools** (measured first; `read only` means the lab has not run it):
+- **cargo-audit (RustSec)** — read only · MIT OR Apache-2.0
+  Checks Cargo.lock against the RustSec advisory database; the ecosystem standard for known vulnerabilities.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/rustsec/rustsec
+- **cargo-deny** — read only · MIT OR Apache-2.0
+  Advisories, license allow-lists, banned crates and duplicate versions, from one config; crate-level bans, not module rules.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/EmbarkStudios/cargo-deny
+
+### Breaking changes in a Rust crate's public API before a release (`rs-api-semver`)
+
+**codemap:** — not covered
+
+**Other tools** (measured first; `read only` means the lab has not run it):
+- **cargo-semver-checks** — read only · Apache-2.0 OR MIT
+  Compares a crate's public API with its last release by rustdoc JSON and reports semver violations before publishing.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/obi1kenobi/cargo-semver-checks
+
+### Correctness and style lints for Rust (`rs-lint`)
+
+**codemap:** — not covered
+
+**Other tools** (measured first; `read only` means the lab has not run it):
+- **Clippy** — probed · v1.96.0 · checked 2026-11-21 · MIT OR Apache-2.0 · on rust
+  Run on the planted ripgrep copy: adds nothing about unused code to rustc. The ecosystem's lint standard (hundreds of lints); not scored as a linter.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#audit-axes
+
+### Unused dependencies in Cargo.toml (`rs-unused-deps`)
+
+**codemap:** — not covered
+
+**Other tools** (measured first; `read only` means the lab has not run it):
+- **cargo-machete** — read only · MIT
+  Fast unused-dependency finder by searching sources for crate names; may report false positives on macro-only use.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/bnjbvr/cargo-machete
+- **cargo-udeps** — read only · MIT OR Apache-2.0
+  Unused dependencies from compilation (nightly toolchain); slower and more exact than a text search.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/est31/cargo-udeps
+
 ## Tools
 
 | tool | license | languages | claims | card |
@@ -671,9 +827,16 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [ArchUnitPython](https://github.com/LukasNiessen/ArchUnitPython) | ? | python | import-gate (read only) | — |
 | [ast-grep (sg)](https://github.com/ast-grep/ast-grep) | MIT | python, javascript, typescript, go, rust, java, kotlin, c, cpp, csharp, ruby, php, swift, scala | structural-search (read only) | — |
 | [Bandit](https://github.com/PyCQA/bandit) | Apache-2.0 | python | security-patterns (read only) | — |
+| [cargo-audit (RustSec)](https://github.com/rustsec/rustsec) | MIT OR Apache-2.0 | rust | rs-security-deps (read only) | — |
+| [cargo-deny](https://github.com/EmbarkStudios/cargo-deny) | MIT OR Apache-2.0 | rust | rs-security-deps (read only) | — |
+| [cargo-machete](https://github.com/bnjbvr/cargo-machete) | MIT | rust | rs-unused-deps (read only) | — |
+| [cargo-modules](https://github.com/regexident/cargo-modules) | MPL-2.0 | rust | rs-module-cycles (rejected) | — |
+| [cargo-semver-checks](https://github.com/obi1kenobi/cargo-semver-checks) | Apache-2.0 OR MIT | rust | rs-api-semver (read only) | — |
+| [cargo-udeps](https://github.com/est31/cargo-udeps) | MIT OR Apache-2.0 | rust | rs-unused-deps (read only) | — |
+| [Clippy](https://github.com/rust-lang/rust-clippy) | MIT OR Apache-2.0 | rust | rs-lint (probed) | — |
 | [cocoindex-code (ccc)](https://github.com/cocoindex-io/cocoindex-code) | Apache-2.0 |  | py-symbols (probed), semantic-search (probed), structural-search (probed), py-callers (rejected), py-impact (rejected) | [card](../research/tools/cocoindex-code.md) |
 | [code2flow](https://github.com/scottrogowski/code2flow) | MIT | python, javascript, ruby, php | multi-lang-graph (read only), py-callers (read only) | — |
-| [CodeGraph (colbymchenry)](https://github.com/colbymchenry/codegraph) | MIT | python, typescript, javascript, go, rust, java | py-callers (measured), py-imports (measured), py-symbols (measured), dead-code (probed), py-impact (probed), context-pack (read only), multi-lang-graph (read only) | [card](../research/tools/codegraph.md) |
+| [CodeGraph (colbymchenry)](https://github.com/colbymchenry/codegraph) | MIT | python, typescript, javascript, go, rust, java | multi-lang-graph (measured), py-callers (measured), py-imports (measured), py-symbols (measured), rs-dead-code (measured), rs-impact (measured), rs-module-cycles (measured), dead-code (probed), py-impact (probed), context-pack (read only) | [card](../research/tools/codegraph.md) |
 | [CodeQL](https://github.com/github/codeql) | MIT (queries/libraries); CLI/engine proprietary | python, javascript, typescript, go, rust, java, csharp, php, ruby | dataflow-taint (read only), security-patterns (read only) | — |
 | [CodeWiki (Google)](https://codewiki.google) | proprietary | any | repo-overview (read only) | — |
 | [Comby](https://github.com/comby-tools/comby) | Apache-2.0 | any | structural-search (read only) | — |
@@ -681,12 +844,12 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [coverage.py](https://github.com/nedbat/coveragepy) | Apache-2.0 | python | py-tests-for (read only) | — |
 | [Doxygen](https://www.doxygen.nl) | GPL-2.0 | c, cpp, java, python, csharp, php | py-callers (read only) | — |
 | [fallow](https://github.com/fallow-rs/fallow) | MIT | typescript, javascript | duplicates (read only), frontend-dead-exports (read only) | — |
-| [GitNexus](https://github.com/abhigyanpatwari/GitNexus) | PolyForm-Noncommercial-1.0.0 | python, typescript, javascript, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | py-symbols (measured), diff-review (probed), py-callers (probed), py-impact (probed), py-imports (probed), repo-overview (probed), semantic-search (probed), multi-lang-graph (read only) | [card](../research/tools/gitnexus.md) |
+| [GitNexus](https://github.com/abhigyanpatwari/GitNexus) | PolyForm-Noncommercial-1.0.0 | python, typescript, javascript, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | multi-lang-graph (measured), py-symbols (measured), rs-dead-code (measured), rs-impact (measured), rs-module-cycles (measured), diff-review (probed), py-callers (probed), py-impact (probed), py-imports (probed), repo-overview (probed), semantic-search (probed) | [card](../research/tools/gitnexus.md) |
 | [Glean (Meta)](https://glean.software) | BSD-style |  | multi-lang-graph (read only) | — |
 | [gpt-repository-loader](https://github.com/mpoon/gpt-repository-loader) | MIT | any | context-pack (read only) | — |
 | [grafema](https://github.com/Disentinel/grafema) | FSL-1.1-Apache-2.0 | javascript, typescript, python | py-symbols (probed), multi-lang-graph (read only), dataflow-taint (rejected), import-gate (rejected), py-callers (rejected), py-impact (rejected), py-imports (rejected) | [card](../research/tools/grafema.md) |
 | [Graphify](https://github.com/Graphify-Labs/graphify) | Apache-2.0 | python | py-callers (measured), py-imports (measured), py-symbols (measured), repo-overview (probed), multi-lang-graph (read only), py-impact (read only) | [card](../research/tools/graphify.md) |
-| [graphlens-mcp](https://github.com/neko1313/graphlens-mcp) | MIT | python, typescript, go, rust, php | py-callers (measured), py-impact (measured), py-symbols (probed), multi-lang-graph (read only), semantic-search (read only) | [card](../research/tools/graphlens.md) |
+| [graphlens-mcp](https://github.com/neko1313/graphlens-mcp) | MIT | python, typescript, go, rust, php | py-callers (measured), py-impact (measured), rs-impact (measured), py-symbols (probed), multi-lang-graph (read only), semantic-search (read only) | [card](../research/tools/graphlens.md) |
 | [griffe](https://mkdocstrings.github.io/griffe/) | ISC | python | api-diff (read only) | — |
 | [grimp](https://github.com/python-grimp/grimp) | BSD-2-Clause | python | py-imports (measured) | [card](../research/tools/import-linter.md) |
 | [import-linter](https://github.com/seddonym/import-linter) | BSD-2-Clause | python | import-gate (measured) | [card](../research/tools/import-linter.md) |
@@ -697,7 +860,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [Kythe](https://kythe.io) | Apache-2.0 | cpp, java, go, typescript | multi-lang-graph (read only) | — |
 | [lizard](https://github.com/terryyin/lizard) | MIT | c, cpp, java, csharp, javascript, typescript, python, go, rust, swift, php, ruby, scala, kotlin | complexity (read only) | — |
 | [mypy](https://github.com/python/mypy) | MIT | python | type-errors (read only) | — |
-| [OntoIndex](https://github.com/ontograph/ontoindex) | AGPL-3.0-or-later | typescript, javascript, python, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | duplicates (measured), py-callers (measured), py-impact (measured), py-symbols (measured), py-imports (probed), repo-overview (probed), dead-code (read only), diff-review (read only), multi-lang-graph (read only), semantic-search (read only) | [card](../research/tools/ontoindex.md) |
+| [OntoIndex](https://github.com/ontograph/ontoindex) | AGPL-3.0-or-later | typescript, javascript, python, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | duplicates (measured), py-callers (measured), py-impact (measured), py-symbols (measured), rs-dead-code (measured), rs-impact (measured), rs-module-cycles (measured), py-imports (probed), repo-overview (probed), dead-code (read only), diff-review (read only), multi-lang-graph (read only), semantic-search (read only) | [card](../research/tools/ontoindex.md) |
 | [OpenGrep](https://github.com/opengrep/opengrep) | LGPL-2.1 | python, javascript, typescript, go, rust, java, kotlin, c, cpp, csharp, ruby, php, swift, scala | dataflow-taint (read only) | — |
 | [pyan3](https://github.com/Technologicat/pyan) | GPL-2.0 | python | py-callers (read only) | — |
 | [PyCG](https://github.com/vitsalis/PyCG) | Apache-2.0 | python | py-callers (rejected) | [card](../research/tools/pycg.md) |
@@ -707,8 +870,10 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [radon](https://github.com/rubik/radon) | MIT | python | complexity (read only) | — |
 | [rag_for_git (rag-reviewer)](https://github.com/mimfort/rag_for_git) | MIT | python | py-callers (measured), diff-review (read only), semantic-search (read only), py-impact (rejected) | [card](../research/tools/rag_for_git.md) |
 | [Repomix](https://github.com/yamadashy/repomix) | MIT | any | context-pack (read only), security-patterns (read only) | — |
-| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | python, javascript, typescript, go, rust, java, csharp, php, ruby | duplicates (measured), multi-lang-graph (read only), repo-overview (read only) | [card](../research/tools/roam-code.md) |
+| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | python, javascript, typescript, go, rust, java, csharp, php, ruby | duplicates (measured), rs-dead-code (measured), rs-impact (measured), rs-layers (measured), rs-module-cycles (measured), multi-lang-graph (read only), repo-overview (read only) | [card](../research/tools/roam-code.md) |
 | [rope](https://github.com/python-rope/rope) | LGPL | python | py-callers (read only) | — |
+| [rust-analyzer](https://github.com/rust-lang/rust-analyzer) | MIT OR Apache-2.0 | rust | multi-lang-graph (probed), rs-impact (probed) | — |
+| [rustc (the Rust compiler)](https://github.com/rust-lang/rust) | MIT OR Apache-2.0 | rust | rs-dead-code (probed) | — |
 | [SCIP (format)](https://github.com/sourcegraph/scip) | Apache-2.0 | python, typescript, javascript, go, java, rust, csharp, ruby, cpp | multi-lang-graph (read only) | — |
 | [scip-python](https://github.com/sourcegraph/scip-python) | MIT | python | py-callers (measured) | [card](../research/tools/rag_for_git.md) |
 | [Semgrep](https://github.com/semgrep/semgrep) | LGPL-2.1 (engine) | python, javascript, typescript, go, rust, java, kotlin, c, cpp, csharp, ruby, php, swift, scala | dataflow-taint (read only), security-patterns (read only), structural-search (read only) | — |

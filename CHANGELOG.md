@@ -5,10 +5,28 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
-**The catalog's first claims measured on Rust** (R1-C112, research in `research/tools/_rust/`). jscpd,
-OntoIndex and roam-code are measured for `duplicates` on ripgrep with planted copies, `measured_on = ["rust"]`; under a Python
-filter they show as `read`. roam-code gets a card. The E1 guard now lets a tool without a card hold a claim past
-`read` only with its own evidence.
+## [0.0.42] - 2026-11-21
+
+**`advise` has a recipe for Rust.** Schema **0.13**, **`ANSWER_FORMAT` stays 11**: the `advise` answer gains an
+additive key `recipe`; every other answer is unchanged.
+
+- **The recipe** (R1-C111, R1-C112). `codemap advise --lang rust` (or `--root` on a Rust tree, or MCP
+  `advise(languages=["rust"])`) starts with one row per audit axis: navigation, dead code, module cycles, layers,
+  change impact, duplication, security and dependencies, API semver, lint, unused dependencies. Each row names
+  what to use, what a lab tool adds, and what to avoid, with the evidence. Measured on ripgrep 15.2.0 against
+  rust-analyzer and cargo-modules, with a planted copy for the audit axes: `research/tools/_rust/README.md`.
+- **New catalog entries.** Eight Rust needs (`rs-dead-code`, `rs-module-cycles`, `rs-layers`, `rs-impact`,
+  `rs-security-deps`, `rs-api-semver`, `rs-lint`, `rs-unused-deps`); nine native tools (rustc, Clippy,
+  rust-analyzer, cargo-modules, cargo-audit, cargo-deny, cargo-semver-checks, cargo-machete, cargo-udeps);
+  Rust measurements for CodeGraph, GitNexus, roam-code (new card), OntoIndex, graphlens and jscpd. Catalog:
+  29 needs, 62 tools, 138 claims (42 measured).
+- **A language named in the question filters like `--lang`.** "ts call graph" no longer shows a tool measured
+  on Rust as measured; a measurement on a language other than Python says which, even without a filter.
+- **Guards.** A recipe naming an unknown tool, need or language, a number without evidence, recipe evidence
+  that does not resolve, and a claim with evidence from the Rust benchmark but no `measured_on = ["rust"]` are
+  catalog problems (eight code mutations, each red). Python answers are tested equal to those of the same
+  catalog with every Rust addition removed.
+- The E1 guard lets a tool without a card hold a claim past `read` only with its own evidence.
 
 ## [0.0.41] - 2026-11-21
 

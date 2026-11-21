@@ -231,6 +231,12 @@ def schema_problems(matrix: dict, feed: dict) -> list[str]:
             p.append(f"{where}: measured_on {on!r} — a non-empty list of language names")
         if c.get("checked") and not _date(c["checked"]):
             p.append(f"{where}: checked is not an ISO date")
+        # A number measured on another language's benchmark must say so, or it reads as a Python measurement.
+        m = re.match(r"research/tools/_(\w+)/", c.get("evidence") or "")
+        bench = _BENCH_LANGUAGE.get(m.group(1)) if m else None
+        if bench and st in ("measured", "probed") and bench not in (on or []):
+            p.append(f"{where}: evidence from the {bench} benchmark without measured_on [{bench!r}]")
+    p += _recipe_problems(matrix, needs, tools)
     for tid in tools:
         if not any(c.get("tool") == tid for c in matrix.get("claim", [])):
             p.append(f"tool {tid}: no claim")
@@ -254,6 +260,58 @@ def schema_problems(matrix: dict, feed: dict) -> list[str]:
         if not isinstance(item.get("verified"), bool):
             p.append(f"feed news #{i}: verified must be true or false")
     return p
+
+
+#: Benchmark directories under research/tools/ (`_rust/`) and the language their numbers were measured on.
+_BENCH_LANGUAGE = {"rust": "rust"}
+
+
+def _recipe_problems(matrix: dict, needs: dict, tools: dict) -> list[str]:
+    """A recipe row names a known language, need and tools; a number in it needs evidence (design recipe_rust D8)."""
+    p: list[str] = []
+    seen = set()
+    for r in matrix.get("recipe", []):
+        key = (r.get("language"), r.get("need"))
+        where = f"recipe {key[0]}×{key[1]}"
+        if key in seen:
+            p.append(f"{where}: duplicate")
+        seen.add(key)
+        if key[0] not in LANGUAGE_NAMES or key[0] == "any":
+            p.append(f"{where}: language {key[0]!r} is not a language name")
+        if key[1] not in needs:
+            p.append(f"{where}: unknown need")
+        if not r.get("summary"):
+            p.append(f"{where}: no summary")
+        if not r.get("use"):
+            p.append(f"{where}: `use` is empty")
+        texts = [r.get("summary", "")]
+        for part in ("use", "avoid"):
+            for step in r.get(part, []):
+                if step.get("tool") not in tools:
+                    p.append(f"{where}: {part} names unknown tool {step.get('tool')!r}")
+                if not step.get("why"):
+                    p.append(f"{where}: {part} {step.get('tool')!r} without a why")
+                texts.append(step.get("why", ""))
+        if any(re.search(r"\d", t) for t in texts) and not r.get("evidence"):
+            p.append(f"{where}: cites a number without evidence")
+    return p
+
+
+def recipes(cat: "Catalog", languages: set[str]) -> list[dict]:
+    """Recipe rows for the given languages, in catalog order, with tool names resolved."""
+    out = []
+    for r in cat.matrix.get("recipe", []):
+        if r["language"] not in languages:
+            continue
+        row = {"language": r["language"], "need": r["need"], "title": cat.needs[r["need"]]["title"],
+               "summary": r["summary"]}
+        for part in ("use", "avoid"):
+            row[part] = [{"tool": x["tool"], "name": cat.tools[x["tool"]]["name"], "why": x["why"]}
+                         for x in r.get(part, [])]
+        if r.get("evidence"):
+            row["evidence"] = evidence_url(cat, r["evidence"])
+        out.append(row)
+    return out
 
 
 def github_anchor(heading: str) -> str:
@@ -319,6 +377,11 @@ def repo_problems(matrix: dict, root: Path) -> list[str]:
             named.add(t["card"])
             if not (root / t["card"]).is_file():
                 p.append(f"tool {t['id']}: card {t['card']} does not exist")
+    for r in matrix.get("recipe", []):
+        if r.get("evidence"):
+            err = resolves(r["evidence"])
+            if err:
+                p.append(f"recipe {r.get('language')}×{r.get('need')}: evidence {err}")
     for card in sorted((root / "research" / "tools").glob("*.md")):
         rel = card.relative_to(root).as_posix()
         if card.name != "README.md" and rel not in named:
@@ -553,6 +616,11 @@ def answer(args: dict, cat: Catalog | None = None) -> dict:
         out["tool"] = tool_answer(cat, tool)
     elif need:
         ids = match_needs(cat, need)
+        if not langs:
+            # A language named in the question ("ts call graph") filters like --lang: a measurement on another
+            # language must not read as one on this.
+            named = [w for w in _tokens(need) if w in LANGUAGE_NAMES and w != "any"]
+            langs = named or None
         if langs:
             want = {_ALIASES.get(x.lower(), x.lower()) for x in langs}
             ids = [i for i in ids if _applies(cat.needs[i], want)] or ids
@@ -562,8 +630,17 @@ def answer(args: dict, cat: Catalog | None = None) -> dict:
             return out
         want = {_ALIASES.get(x.lower(), x.lower()) for x in langs} if langs else None
         out["matches"] = [need_answer(cat, i, want) for i in ids]
+        if want:
+            for m in out["matches"]:
+                rows = [r for r in recipes(cat, want) if r["need"] == m["need"]]
+                if rows:
+                    m["recipe"] = rows
     else:
         out["overview"] = overview(cat, langs)
+        if langs:
+            rows = recipes(cat, {_ALIASES.get(x.lower(), x.lower()) for x in langs})
+            if rows:
+                out["recipe"] = rows
     if args.get("news_days") is not None:
         out["news"] = news(cat, int(args["news_days"]))
     return out

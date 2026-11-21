@@ -197,3 +197,25 @@ D5 said "a table `[[recipe]]`". The audit axes (D7) decide its shape:
 | E18 | Each guard of D8 goes red under a mutation that removes it, with a green control | yes |
 | E19 | Every Python-filtered need answer and the unfiltered overview rows for Python needs are identical to those of the same catalog with every Rust addition removed | no (stays) |
 | E20 | The packaged catalog passes `schema_problems` and `repo_problems`; the suite is green | no (stays) |
+
+### E1–E8 and E16–E20 reconciled (2026-11-21, 0.0.42)
+
+| # | Result | Verdict |
+|---|---|---|
+| E1 | rust-analyzer truth byte-identical over two runs; 20 of 20 sampled call sites | holds |
+| E2 | R2 has `dyn` and generic trait-method targets; R1 `matched` has 17 definitions | holds |
+| E3 | CodeGraph and GitNexus scored on R1–R5 with versions; `multi-lang-graph` claims measured on Rust with resolving evidence | holds |
+| E4 | neither binds trait calls by name; both fail by omission | prediction **fails** (recorded as surprise 1) |
+| E5 | `advise --lang rust` shows the recipe first; `multi-lang-graph` names rust-analyzer and CodeGraph; native tools for security, unused deps, lint | holds |
+| E6 | before: 0 Rust-measured claims (3 after the first R1-C112 commits, all `duplicates`); after: 6 lab tools on 6 needs | holds |
+| E7 | see E18 | holds |
+| E8 | see E19 | holds |
+| E16 | recipe table before the need table under `--lang rust` and `--root` on a Rust tree; `rs-module-cycles` uses CodeGraph; `rs-security-deps` cargo-audit and cargo-deny; `rs-dead-code` no lab tool in `use`, GitNexus, OntoIndex, roam-code (and CodeGraph) under `avoid` | holds |
+| E17 | 6 lab tools (CodeGraph, GitNexus, roam-code, OntoIndex, graphlens, jscpd) measured on Rust on 6 needs | holds |
+| E18 | 8 code mutations (unknown tool, need, language; number without evidence; Rust evidence without `measured_on`; unresolving recipe evidence; recipe not shown; language in the question ignored) each red; the no-op control green | holds |
+| E19 | Python-named needs: answers equal to the catalog with every Rust addition removed | holds |
+| E20 | schema and repo checks clean; suite 1381 passed, 2 skipped | holds |
+
+**Surprise found by the tests, fixed before release:** with the Rust claims in, `advise "ts call graph"` (no
+`--lang`) showed GitNexus as `measured`, because a measurement only downgraded under an explicit filter. A
+language named in the question now filters like `--lang`, and a non-Python measurement always says its language.

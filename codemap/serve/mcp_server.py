@@ -351,7 +351,10 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         claims and news; `news_days` adds the feed. Every claim has a status: `measured`
         (scored against the lab's truth; evidence URL), `probed` (run, not scored), `read`
         (known from docs only — say so when you rely on it), `rejected`. `stale` and `drift`
-        mean the claim may be out of date. Read `catalog.as_of`; `codemap advise --refresh`
+        mean the claim may be out of date. With `languages` (or a language named in `need`),
+        the answer starts with the lab's `recipe` for that language where one exists: per
+        audit axis, what to use, what a lab tool adds, what to avoid, with evidence.
+        Read `catalog.as_of`; `codemap advise --refresh`
         fetches the current catalog. Nothing here installs or runs a tool: check a claim
         with its `probe` on your own tree first."""
         return op("advise", {"need": need, "languages": languages, "tool": tool,

@@ -10,6 +10,7 @@ tools exist, and for each tool what the lab actually saw. Design and acceptance:
 codemap advise                          # every need: codemap's coverage and the best other tool
 codemap advise "ts call graph"          # one need, by id or free words
 codemap advise --root .                 # the languages here, and the needs codemap does not cover for them
+codemap advise --lang rust              # the Rust recipe first: per audit axis, what to use and what to avoid
 codemap advise --tool import-linter     # one tool: every claim, the latest release seen, news
 codemap advise --news --days 30         # the feed
 codemap advise --refresh                # the lab's current catalog from main, no codemap release needed
@@ -38,13 +39,27 @@ Two flags say a claim may be out of date:
 
 **Asked about a language** (`--lang`, `--root`, MCP `languages`), `advise` shows only tools whose recorded
 languages include it, or that are language-agnostic, and it lists the others as `excluded`. A measurement
-counts for the language it ran on. The lab's truth so far is Python, so for Rust a tool measured on Python
-shows as `read`, with the note "measured on python only".
+counts for the language it ran on: a tool measured on Python shows for Rust as `read`, with the note "measured
+on python only", and the other way round. A language named in the question itself ("ts call graph", "rust
+blast radius") filters the same way.
 
 Before relying on a `read` or `probed` tool, ask it a question whose answer you know on your own tree.
 
 codemap's own coverage is part of every answer: `covered`, `partial` (with the caveat and its backlog id)
 or `none`. A `covered` or `partial` claim names the tests in codemap's suite that prove it.
+
+## Recipes: what to use, per audit axis
+
+For a language the lab has benchmarked, the catalog holds a **recipe**: one row per audit axis (navigation,
+dead code, module cycles, layers, change impact, duplication, and the axes the ecosystem's own tools cover),
+naming what to use, what a lab tool adds, and what to avoid, each with a reason and the evidence. Native
+tools come first; a lab tool appears in `use` only with a measured gain over them, and a tool whose output
+misleads on that language is listed under `avoid` with the number that says so.
+
+With a language filter, the overview starts with the recipe table and each need answer with its row (JSON key
+`recipe`). Without a filter nothing changes. Rust has a recipe today, measured on ripgrep against
+rust-analyzer: [`research/tools/_rust/README.md`](../research/tools/_rust/README.md),
+design [`design/recipe_rust.md`](design/recipe_rust.md) (R1-C111, R1-C112).
 
 ## The boundary in other answers
 
