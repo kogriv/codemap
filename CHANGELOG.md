@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+**The catalog's first claims measured on Rust** (R1-C112, research in `research/tools/_rust/`). jscpd and
+roam-code are measured for `duplicates` on ripgrep with planted copies, `measured_on = ["rust"]`; under a Python
+filter they show as `read`. roam-code gets a card. The E1 guard now lets a tool without a card hold a claim past
+`read` only with its own evidence.
+
 ## [0.0.41] - 2026-11-21
 
 **`advise` respects the language it is asked about.** Schema **0.13**, **`ANSWER_FORMAT` stays 11**: the `advise`

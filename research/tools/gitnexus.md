@@ -179,3 +179,18 @@ index. codemap is the *deterministic, diffable, provenance-precise, Python-deep 
   (semantic search, multi-language) — if we build parity ourselves — are better wrapped around an **MIT/Apache**
   peer (cocoindex / graphlens), not GitNexus. So: **learn** for building, **routable opt-in** for using-as-is.
   See [DESIGN §13](../../DESIGN.md) licensing policy.
+
+## On Rust — ripgrep, against rust-analyzer (2026-11-21, R1-C111/C112)
+
+GitNexus 1.6.12, deterministic over two index runs, 30 s to index ripgrep 15.2.0. Full method and every table:
+[`_rust/README.md`](_rust/README.md).
+
+- **Navigation:** misses most calls through generics and `dyn` (0 of 3 each) and most test callers; plain-function
+  callers 2 of 13; module graph recall 0.56 at precision 0.99. Like CodeGraph, it fails by omission, not by
+  confusing namesakes.
+- **Audit axes:** `check --cycles` finds 2 of 6 module-cycle components exactly and the planted one. `impact`
+  recall is 0.28 at depth 2. A dead-code list built from its call edges (it has no dead-code command) is
+  14.9 % live production code and calls `dyn`-only, generic-only and macro-only functions dead.
+- **Reading for an agent:** on Rust, an empty GitNexus caller or impact list is not evidence of no use.
+- **Harness note:** `gitnexus cypher` output over 64 KB came back cut when read through a pipe; the lab's adapter
+  now reads it from a file.

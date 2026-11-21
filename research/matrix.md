@@ -6,7 +6,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 
 **Statuses.** `measured` — scored against the lab's truth, numbers in the card. `probed` — run on a real tree, not scored. `read only` — known from its docs or a survey; nobody here has run it. `rejected` — tried and unusable for that need.
 
-21 need(s), 53 tool(s); claims: 23 measured, 18 probed, 62 read, 9 rejected.
+21 need(s), 53 tool(s); claims: 25 measured, 18 probed, 61 read, 9 rejected.
 
 | need | codemap | best other tool | tools |
 |---|---|---|---|
@@ -22,7 +22,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 | `context-pack` Token-budgeted repository context for an LLM | ✅ covered | jevgrep (measured) | 5 |
 | `repo-overview` Architecture map: subsystems, layers, communities | ✅ covered | graphify (probed) | 7 |
 | `dead-code` Unused Python code | ◐ partial | codegraph (probed) | 3 |
-| `duplicates` Copy-paste and duplicated code | — not covered | fallow (read only) | 2 |
+| `duplicates` Copy-paste and duplicated code | — not covered | jscpd (measured) | 3 |
 | `complexity` Complexity metrics (cyclomatic, size) and a threshold in CI | — not covered | radon (read only) | 3 |
 | `security-patterns` Security patterns and leaked secrets | — not covered | codeql (read only) | 4 |
 | `dataflow-taint` Data flow and taint: where an input value can reach | — not covered | codeql (read only) | 3 |
@@ -448,14 +448,16 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** — not covered
 
 **Other tools** (measured first; `read only` means the lab has not run it):
+- **jscpd** — measured · v4.3.0 · checked 2026-11-21 · MIT · ⚠ measured 4.3.0, latest 5.4.3
+  On ripgrep with three planted copies: finds the exact copy only, not the renamed or the reordered one. By default it skips files over 1 000 lines (83 of 100 files, 20 231 of 53 212 lines scanned); pass --max-lines and --max-size.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/_rust/README.md#duplication-resultsauditclonesjson
+- **roam-code** — measured · v14.1.0 · checked 2026-11-21 · Apache-2.0
+  `clones` (AST hashing) finds the exact and the renamed planted copy, and keeps the renamed one after a rename to an unrelated name; misses the reordered copy. `duplicates` finds all three only while they share a name prefix: renamed, two drop out.
+  evidence: https://github.com/kogriv/codemap/blob/main/research/tools/roam-code.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c112
 - **fallow** — read only · MIT
   Per its README: duplication detection for TypeScript and JavaScript, also CSS and Vue, Svelte and Astro components.
   check it first: not scored by the lab: check it on a question whose answer you know first
   https://github.com/fallow-rs/fallow
-- **jscpd** — read only · MIT
-  Copy/paste (clone) detector over token streams for many languages.
-  check it first: not scored by the lab: check it on a question whose answer you know first
-  https://github.com/kucherenko/jscpd
 
 ### Complexity metrics (cyclomatic, size) and a threshold in CI (`complexity`)
 
@@ -687,7 +689,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [import-linter](https://github.com/seddonym/import-linter) | BSD-2-Clause | python | import-gate (measured) | [card](../research/tools/import-linter.md) |
 | [jedi](https://github.com/davidhalter/jedi) | ? | python | py-symbols (read only) | — |
 | [jevgrep (jg)](https://github.com/dzhng/jevgrep) | MIT | python, go, rust, typescript, javascript | context-pack (measured), py-callers (measured), py-impact (measured), py-symbols (measured), semantic-search (measured), multi-lang-graph (read only) | [card](../research/tools/jevgrep.md) |
-| [jscpd](https://github.com/kucherenko/jscpd) | MIT | any | duplicates (read only) | — |
+| [jscpd](https://github.com/kucherenko/jscpd) | MIT | any | duplicates (measured) | — |
 | [Knip](https://github.com/webpro-nl/knip) | ISC | javascript, typescript | frontend-dead-exports (read only) | — |
 | [Kythe](https://kythe.io) | Apache-2.0 | cpp, java, go, typescript | multi-lang-graph (read only) | — |
 | [lizard](https://github.com/terryyin/lizard) | MIT | c, cpp, java, csharp, javascript, typescript, python, go, rust, swift, php, ruby, scala, kotlin | complexity (read only) | — |
@@ -702,7 +704,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [radon](https://github.com/rubik/radon) | MIT | python | complexity (read only) | — |
 | [rag_for_git (rag-reviewer)](https://github.com/mimfort/rag_for_git) | MIT | python | py-callers (measured), diff-review (read only), semantic-search (read only), py-impact (rejected) | [card](../research/tools/rag_for_git.md) |
 | [Repomix](https://github.com/yamadashy/repomix) | MIT | any | context-pack (read only), security-patterns (read only) | — |
-| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | python, javascript, typescript, go, rust, java, csharp, php, ruby | multi-lang-graph (read only), repo-overview (read only) | — |
+| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | python, javascript, typescript, go, rust, java, csharp, php, ruby | duplicates (measured), multi-lang-graph (read only), repo-overview (read only) | [card](../research/tools/roam-code.md) |
 | [rope](https://github.com/python-rope/rope) | LGPL | python | py-callers (read only) | — |
 | [SCIP (format)](https://github.com/sourcegraph/scip) | Apache-2.0 | python, typescript, javascript, go, java, rust, csharp, ruby, cpp | multi-lang-graph (read only) | — |
 | [scip-python](https://github.com/sourcegraph/scip-python) | MIT | python | py-callers (measured) | [card](../research/tools/rag_for_git.md) |

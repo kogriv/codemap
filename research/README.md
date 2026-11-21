@@ -61,6 +61,8 @@ against codemap" gets answered with numbers, not adjectives.
   Measured hands-on so far: [graphlens](tools/graphlens.md), [GitNexus](tools/gitnexus.md),
   [cocoindex-code](tools/cocoindex-code.md), [CodeGraph](tools/codegraph.md),
   [OntoIndex](tools/ontoindex.md) — all on the shared R2 scope ([tools/_scope/](tools/_scope/)).
+  **Rust** (ripgrep, against rust-analyzer: navigation and audit axes): [tools/_rust/](tools/_rust/README.md),
+  with [roam-code](tools/roam-code.md) measured there only.
 - **[positioning.md](positioning.md)** — the *publication layer*: article-ready build-story + positioning,
   distilled from the cards (realizes R1-C14). Story Zero (codemap + roadmap) + one build-story per notable
   разбор. Facts live in the cards; this narrates them.

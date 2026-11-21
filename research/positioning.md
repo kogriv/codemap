@@ -1362,11 +1362,63 @@ say who won. And a consumer forbidden to check its producer turns the producer's
 - "codemap answers questions; this tool explains a codebase. The stars say which one more people want." →
   build-story #15
 
+## Build-story #16 — "On Rust the compiler wins every lookup; the tools earn their place on three audit axes, and the one dead-code command is mostly wrong" (CodeGraph, GitNexus, roam-code, jscpd)
+
+**Facts:** [`tools/_rust/README.md`](tools/_rust/README.md), cards [`codegraph`](tools/codegraph.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c111c112),
+[`gitnexus`](tools/gitnexus.md#on-rust--ripgrep-against-rust-analyzer-2026-11-21-r1-c111c112), [`roam-code`](tools/roam-code.md);
+design and pre-registration [`docs/design/recipe_rust.md`](../docs/design/recipe_rust.md) D7, E9–E15.
+**Post:** not written yet (draft material; the owner reviews before anything is published).
+
+### The setup
+The owner asked what codemap would advise a Rust project. The honest first answer was "rust-analyzer": it resolves
+names through the compiler, so on "where is it defined, who calls it" a tree-sitter graph can at most tie. His
+follow-up made the story: *if the native tools do everything, why install the others?* So the comparison moved from
+lookups to audit axes — dead code, module cycles, layers, change impact, duplication — on ripgrep 15.2.0, with
+rust-analyzer and cargo-modules as the truth, and a planted copy: dead functions, live traps reachable only through
+`dyn`, generics or a macro, a cycle, a layer break, and three clones. Fifteen expectations were committed first.
+
+### The surprising measurement
+- The navigation prediction failed the right way: neither CodeGraph nor GitNexus confuses trait calls by name.
+  They **miss** calls instead (GitNexus: 2 of 13 callers of a plain function, 0 of 3 through `dyn`).
+- The native side has a hole I did not expect: `cargo-modules --acyclic` checks items, so it fails on a type and
+  its own `default()` in 8 of 9 crates of a clean tree. The only usable module-cycle gate measured was CodeGraph's
+  `cycles`.
+- The one product dead-code command measured, roam-code `dead`, is **55 % live code**. A list built from
+  GitNexus's call edges is 15 %; CodeGraph's library-only finder 4.5 %. All three call a function dead when only a
+  macro calls it.
+- roam-code `duplicates` found all three planted copies — because I had named them alike. Renamed to unrelated
+  names, two dropped out. Its `clones` kept the renamed one.
+
+### The turn
+Three of six axes gave a lab tool a measured reason to exist on Rust: module cycles (CodeGraph `cycles`), change
+impact in one call (CodeGraph `impact`, 78 % of the closure at 90 % precision), cross-file clones (roam-code
+`clones`). On the rest — security, API, lint, dependencies — the native tools leave nothing to add, and on dead
+code and layers nothing measured is safe to act on. And my own truth needed two fixes before it could judge anyone
+(an indentation scan fooled by raw strings; `#[cfg(windows)]` twins that look unused on Linux), plus a fix to my
+adapter, which was cutting GitNexus answers over 64 KB.
+
+### The lesson (reusable)
+On a language with a compiler-grade LSP, do not benchmark the third-party graph on lookups — it cannot win. Ask
+which audit question the compiler leaves open, then ask whether the tool's failures on that question are
+omissions you can live with or deletions you will regret. A missed caller is a slower answer; a missed caller in a
+dead-code list is a deleted live function.
+
+### What we take, what we keep
+- **Take:** a recipe row per audit axis, where a lab tool appears only with a measured number and its blind spot;
+  plants with live traps for every dead-code claim; a rename control for every clone claim.
+- **Keep:** the compiler as the truth wherever one exists; "not answered" never scored as zero.
+
+**Quotable:**
+- "On Rust, the question is not whether a code graph beats rust-analyzer. It cannot. The question is which audit the
+  compiler leaves open." → build-story #16
+- "The only dead-code command I measured on Rust was wrong more often than right." → build-story #16
+- "The clone finder found my copies because I had named them alike." → build-story #16
+
 ## Future stories (skeletons — fill on разбор)
 
-- **#16 …** next tool from R2.2 (CodeSlicer, ast-index, CodeWiki, Foglamp in the queue). Same shape: setup → the surprising measurement → head-to-head → lesson →
+- **#17 …** next tool from R2.2 (CodeSlicer, ast-index, CodeWiki, Foglamp in the queue). Same shape: setup → the surprising measurement → head-to-head → lesson →
   take/keep. (#1 graphlens, #2 GitNexus, #3 cocoindex-code, #6 CodeGraph, #7 OntoIndex, #10 jevgrep, #11 grafema,
-  #12 Graphify, #13 import-linter, #15 Understand-Anything done; #4, #5, #8, #9, #14 are about ourselves, and #11 is both.)
+  #12 Graphify, #13 import-linter, #15 Understand-Anything, #16 Rust audit axes done; #4, #5, #8, #9, #14 are about ourselves, and #11 is both.)
 - **The determinism story.** ✅ Told twice, neither time as sketched: #4 (a determinism *test* went red and
   the tool was fine) and #8 (the artifact was byte-stable and the *rendering* was not). The sketch asked for
   "graph diff caught X" and the episodes that happened were both sharper than that.

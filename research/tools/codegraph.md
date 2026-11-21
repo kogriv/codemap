@@ -658,3 +658,19 @@ Backlog effect:
 end to end, and the resolver's behaviour on polymorphic names — the first pass had measured two of three
 interfaces and compared our end-to-end loop against their manual sync) · CodeGraph 1.6.0 · bquant@cb89a24 ·
 `scope_id sha256:300e0a01…5e47d2` · every command and number above reproduces from a clean staging.*
+
+## On Rust — ripgrep, against rust-analyzer (2026-11-21, R1-C111/C112)
+
+CodeGraph 1.6.4, deterministic over two index runs, 3 s to index ripgrep 15.2.0. Full method and every table:
+[`_rust/README.md`](_rust/README.md).
+
+- **Navigation:** the closest of the measured tools to rust-analyzer. Plain-function callers 13 of 13, `dyn`
+  callers 3 of 3; misses calls through deref and blanket forwarders (`(**self).matched`), blanket impls, and does
+  not answer macro call sites. It returns file-level `use` lines as callers. It fails by omission, not by
+  confusing namesakes.
+- **Where it adds to the native tools:** `cycles` is the only usable module-cycle gate on Rust that was measured
+  (3 of 6 components exact, 2 inside a larger component, the planted cycle found; exits 1). `impact -d 2` returns
+  78 % of rust-analyzer's depth-2 closure at 90 % precision in one call.
+- **Dead code:** library-only `findDeadCode()` has the fewest false deaths of the three lists measured (4.5 %) and
+  finds 84 of 95 unreferenced functions, but it is not reachable from the CLI or MCP, and it calls a
+  macro-called function dead.

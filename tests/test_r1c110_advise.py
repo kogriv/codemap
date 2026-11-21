@@ -73,7 +73,10 @@ def test_memo_tools_are_in_and_uncarded_ones_are_read_only(raw):
     for tid in ("jscpd", "semgrep", "bandit", "knip", "radon", "lizard", "gitnexus", "codegraph", "import-linter"):
         assert tid in tools, tid
         if not tools[tid].get("card"):
-            assert {c["status"] for c in m["claim"] if c["tool"] == tid} == {"read"}, tid
+            # Without a card, a claim past `read` must carry its own evidence (jscpd: the Rust benchmark, R1-C112).
+            for c in m["claim"]:
+                if c["tool"] == tid and c["status"] != "read":
+                    assert c.get("evidence"), (tid, c["need"])
 
 
 # --------------------------------------------------------------------------- E2, E3: the answers
