@@ -1,6 +1,6 @@
 [meta]
 schema = 1
-as_of = "2026-11-21T10:03:40Z"
+as_of = "2026-11-21T10:45:43Z"
 stale_after_days = 180
 repo = "https://github.com/kogriv/codemap"
 
@@ -185,7 +185,8 @@ id = "aider-repo-map"
 name = "aider repo-map"
 url = "https://github.com/Aider-AI/aider"
 license = "Apache-2.0"
-languages = ["multi (tree-sitter)"]
+languages = ["python", "javascript", "typescript", "go", "rust", "java", "c", "cpp", "csharp", "ruby", "php"]
+languages_note = "tree-sitter tag queries; the list is the common subset"
 interface = ["cli"]
 watch = { kind = "pypi", name = "aider-chat" }
 
@@ -202,7 +203,8 @@ id = "ast-grep"
 name = "ast-grep (sg)"
 url = "https://github.com/ast-grep/ast-grep"
 license = "MIT"
-languages = ["multi (tree-sitter)"]
+languages = ["python", "javascript", "typescript", "go", "rust", "java", "kotlin", "c", "cpp", "csharp", "ruby", "php", "swift", "scala"]
+languages_note = "tree-sitter grammars"
 interface = ["cli", "lib", "lsp", "mcp"]
 watch = { kind = "github", name = "ast-grep/ast-grep" }
 
@@ -220,7 +222,8 @@ id = "cocoindex-code"
 name = "cocoindex-code (ccc)"
 url = "https://github.com/cocoindex-io/cocoindex-code"
 license = "Apache-2.0"
-languages = ["multi (tree-sitter)"]
+languages = []
+languages_note = "tree-sitter chunking; language list not recorded"
 interface = ["cli", "mcp"]
 watch = { kind = "pypi", name = "cocoindex-code" }
 card = "research/tools/cocoindex-code.md"
@@ -239,7 +242,8 @@ id = "codegraph"
 name = "CodeGraph (colbymchenry)"
 url = "https://github.com/colbymchenry/codegraph"
 license = "MIT"
-languages = ["python", "typescript", "javascript", "go", "rust", "java", "... (20 via Rust kernel)"]
+languages = ["python", "typescript", "javascript", "go", "rust", "java"]
+languages_note = "20 languages via its Rust kernel per its docs"
 interface = ["cli", "mcp", "lib"]
 watch = { kind = "npm", name = "@colbymchenry/codegraph" }
 card = "research/tools/codegraph.md"
@@ -258,7 +262,8 @@ id = "codewiki"
 name = "CodeWiki (Google)"
 url = "https://codewiki.google"
 license = "proprietary"
-languages = ["multi"]
+languages = ["any"]
+languages_note = "LLM-written documentation"
 interface = ["saas"]
 watch = { kind = "none" }
 
@@ -267,7 +272,8 @@ id = "comby"
 name = "Comby"
 url = "https://github.com/comby-tools/comby"
 license = "Apache-2.0"
-languages = ["any (delimiter-aware)"]
+languages = ["any"]
+languages_note = "delimiter-aware, language-agnostic"
 interface = ["cli"]
 watch = { kind = "github", name = "comby-tools/comby" }
 
@@ -276,7 +282,8 @@ id = "continue"
 name = "Continue (@codebase)"
 url = "https://github.com/continuedev/continue"
 license = "Apache-2.0"
-languages = ["multi"]
+languages = ["any"]
+languages_note = "LLM assistant"
 interface = ["plugin"]
 watch = { kind = "github", name = "continuedev/continue" }
 
@@ -294,7 +301,7 @@ id = "doxygen"
 name = "Doxygen"
 url = "https://www.doxygen.nl"
 license = "GPL-2.0"
-languages = ["multi"]
+languages = ["c", "cpp", "java", "python", "csharp", "php"]
 interface = ["cli"]
 watch = { kind = "github", name = "doxygen/doxygen" }
 
@@ -313,7 +320,8 @@ id = "glean"
 name = "Glean (Meta)"
 url = "https://glean.software"
 license = "BSD-style"
-languages = ["multi"]
+languages = []
+languages_note = "indexers for several languages; list not recorded"
 interface = ["lib", "cli"]
 watch = { kind = "github", name = "facebookincubator/Glean" }
 
@@ -322,7 +330,8 @@ id = "gpt-repository-loader"
 name = "gpt-repository-loader"
 url = "https://github.com/mpoon/gpt-repository-loader"
 license = "MIT"
-languages = ["any (text)"]
+languages = ["any"]
+languages_note = "plain text"
 interface = ["cli"]
 watch = { kind = "github", name = "mpoon/gpt-repository-loader" }
 
@@ -331,7 +340,8 @@ id = "grafema"
 name = "grafema"
 url = "https://github.com/Disentinel/grafema"
 license = "FSL-1.1-Apache-2.0"
-languages = ["javascript", "typescript", "python (beta)"]
+languages = ["javascript", "typescript", "python"]
+languages_note = "Python is beta"
 interface = ["cli", "mcp"]
 watch = { kind = "npm", name = "grafema" }
 card = "research/tools/grafema.md"
@@ -341,7 +351,8 @@ id = "graphify"
 name = "Graphify"
 url = "https://github.com/Graphify-Labs/graphify"
 license = "Apache-2.0"
-languages = ["python", "~40 via tree-sitter", "non-code via LLM"]
+languages = ["python"]
+languages_note = "about 40 languages via tree-sitter per its docs; only Python recorded here"
 interface = ["cli", "mcp", "saas"]
 watch = { kind = "pypi", name = "graphifyy" }
 card = "research/tools/graphify.md"
@@ -398,7 +409,8 @@ id = "jevgrep"
 name = "jevgrep (jg)"
 url = "https://github.com/dzhng/jevgrep"
 license = "MIT"
-languages = ["python", "go", "rust", "typescript", "javascript", "text fallback"]
+languages = ["python", "go", "rust", "typescript", "javascript"]
+languages_note = "plain-text fallback for others"
 interface = ["cli"]
 watch = { kind = "npm", name = "@dzhng/jevgrep" }
 card = "research/tools/jevgrep.md"
@@ -408,7 +420,8 @@ id = "jscpd"
 name = "jscpd"
 url = "https://github.com/kucherenko/jscpd"
 license = "MIT"
-languages = ["multi (150+ formats)"]
+languages = ["any"]
+languages_note = "token-based, 150+ formats"
 interface = ["cli", "lib"]
 watch = { kind = "npm", name = "jscpd" }
 
@@ -426,7 +439,8 @@ id = "kythe"
 name = "Kythe"
 url = "https://kythe.io"
 license = "Apache-2.0"
-languages = ["multi"]
+languages = ["cpp", "java", "go", "typescript"]
+languages_note = "official indexers"
 interface = ["lib"]
 watch = { kind = "github", name = "kythe/kythe" }
 
@@ -435,7 +449,7 @@ id = "lizard"
 name = "lizard"
 url = "https://github.com/terryyin/lizard"
 license = "MIT"
-languages = ["multi (C/C++, Java, JS, Python, Go, ...)"]
+languages = ["c", "cpp", "java", "csharp", "javascript", "typescript", "python", "go", "rust", "swift", "php", "ruby", "scala", "kotlin"]
 interface = ["cli", "lib"]
 watch = { kind = "pypi", name = "lizard" }
 
@@ -463,7 +477,8 @@ id = "opengrep"
 name = "OpenGrep"
 url = "https://github.com/opengrep/opengrep"
 license = "LGPL-2.1"
-languages = ["multi (~12 for cross-function taint)"]
+languages = ["python", "javascript", "typescript", "go", "rust", "java", "kotlin", "c", "cpp", "csharp", "ruby", "php", "swift", "scala"]
+languages_note = "cross-function taint on about 12 of them"
 interface = ["cli"]
 watch = { kind = "github", name = "opengrep/opengrep" }
 
@@ -537,7 +552,8 @@ id = "repomix"
 name = "Repomix"
 url = "https://github.com/yamadashy/repomix"
 license = "MIT"
-languages = ["multi"]
+languages = ["any"]
+languages_note = "plain text packing"
 interface = ["cli", "mcp"]
 watch = { kind = "npm", name = "repomix" }
 
@@ -555,7 +571,8 @@ id = "scip"
 name = "SCIP (format)"
 url = "https://github.com/sourcegraph/scip"
 license = "Apache-2.0"
-languages = ["python", "typescript", "go", "java", "... (per indexer)"]
+languages = ["python", "typescript", "javascript", "go", "java", "rust", "csharp", "ruby", "cpp"]
+languages_note = "one indexer per language"
 interface = ["cli", "lib"]
 watch = { kind = "github", name = "sourcegraph/scip" }
 
@@ -574,7 +591,7 @@ id = "semgrep"
 name = "Semgrep"
 url = "https://github.com/semgrep/semgrep"
 license = "LGPL-2.1 (engine)"
-languages = ["multi"]
+languages = ["python", "javascript", "typescript", "go", "rust", "java", "kotlin", "c", "cpp", "csharp", "ruby", "php", "swift", "scala"]
 interface = ["cli", "saas"]
 watch = { kind = "pypi", name = "semgrep" }
 
@@ -583,7 +600,8 @@ id = "sourcegraph"
 name = "Sourcegraph (incl. Cody)"
 url = "https://sourcegraph.com"
 license = "proprietary (open components)"
-languages = ["multi"]
+languages = ["any"]
+languages_note = "search on any text; precise navigation through SCIP indexers"
 interface = ["saas"]
 watch = { kind = "none" }
 
@@ -592,7 +610,7 @@ id = "stack-graphs"
 name = "Stack Graphs"
 url = "https://github.com/github/stack-graphs"
 license = "MIT/Apache-2.0"
-languages = ["multi (tree-sitter + .tsg)"]
+languages = ["python", "javascript", "typescript", "java"]
 interface = ["lib"]
 watch = { kind = "none" }
 
@@ -601,7 +619,8 @@ id = "tree-sitter"
 name = "tree-sitter"
 url = "https://github.com/tree-sitter/tree-sitter"
 license = "MIT"
-languages = ["multi (grammars)"]
+languages = ["any"]
+languages_note = "parser framework with grammars for most languages"
 interface = ["lib", "cli"]
 watch = { kind = "github", name = "tree-sitter/tree-sitter" }
 
@@ -609,7 +628,8 @@ watch = { kind = "github", name = "tree-sitter/tree-sitter" }
 id = "tutorial-codebase-knowledge"
 name = "Tutorial-Codebase-Knowledge"
 url = "https://github.com/The-Pocket/Tutorial-Codebase-Knowledge"
-languages = ["multi"]
+languages = ["any"]
+languages_note = "LLM-written tutorials"
 interface = ["cli"]
 watch = { kind = "github", name = "The-Pocket/Tutorial-Codebase-Knowledge" }
 
@@ -618,7 +638,8 @@ id = "understand-anything"
 name = "Understand-Anything"
 url = "https://github.com/Egonex-AI/Understand-Anything"
 license = "MIT"
-languages = ["multi (tree-sitter wasm)", "non-code (config, docs, IaC, SQL)"]
+languages = []
+languages_note = "tree-sitter wasm plus non-code files; list not recorded"
 interface = ["plugin"]
 watch = { kind = "github", name = "Egonex-AI/Understand-Anything" }
 card = "research/tools/understand-anything.md"
@@ -628,7 +649,7 @@ id = "universal-ctags"
 name = "universal-ctags"
 url = "https://github.com/universal-ctags/ctags"
 license = "GPL-2.0"
-languages = ["multi"]
+languages = ["python", "javascript", "typescript", "go", "rust", "java", "kotlin", "c", "cpp", "csharp", "ruby", "php", "swift", "scala"]
 interface = ["cli"]
 watch = { kind = "github", name = "universal-ctags/ctags" }
 
@@ -664,7 +685,8 @@ id = "roam-code"
 name = "roam-code"
 url = "https://github.com/Cranot/roam-code"
 license = "Apache-2.0"
-languages = ["multi"]
+languages = ["python", "javascript", "typescript", "go", "rust", "java", "csharp", "php", "ruby"]
+languages_note = "28 languages per its README"
 interface = ["cli", "mcp"]
 watch = { kind = "pypi", name = "roam-code" }
 

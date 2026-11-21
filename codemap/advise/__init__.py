@@ -51,8 +51,11 @@ LANGUAGES = {
     ".go": "go", ".rs": "rust", ".java": "java", ".kt": "kotlin", ".kts": "kotlin", ".scala": "scala",
     ".rb": "ruby", ".php": "php", ".cs": "csharp", ".swift": "swift",
     ".c": "c", ".h": "c", ".cpp": "cpp", ".cc": "cpp", ".cxx": "cpp", ".hpp": "cpp",
-    ".sql": "sql", ".sh": "shell", ".bash": "shell",
+    ".sql": "sql", ".sh": "shell", ".bash": "shell", ".dart": "dart",
 }
+#: A tool's `languages`: real names from the map above, or "any" for a language-agnostic tool (text, tokens, an
+#: LLM). An empty list means "not recorded": such a tool is never shown for a language filter.
+LANGUAGE_NAMES = frozenset(LANGUAGES.values()) | {"any"}
 _SKIP_DIRS = {".git", ".hg", ".svn", "node_modules", ".venv", "venv", "env", "__pycache__", "dist", "build",
               ".codemap", ".tox", ".nox", ".mypy_cache", ".pytest_cache", ".ruff_cache", "site-packages",
               ".next", ".nuxt", "coverage", "target", "vendor", ".idea", ".vscode"}
@@ -198,6 +201,10 @@ def schema_problems(matrix: dict, feed: dict) -> list[str]:
             p.append(f"tool {tid}: watch.kind not in {WATCH_KINDS}")
         elif w["kind"] != "none" and not w.get("name"):
             p.append(f"tool {tid}: watch.kind {w['kind']} needs watch.name")
+        langs = t.get("languages", [])
+        if not isinstance(langs, list) or any(x not in LANGUAGE_NAMES for x in langs):
+            p.append(f"tool {tid}: languages {langs!r} — use names from {sorted(LANGUAGE_NAMES)} "
+                     "(free text goes to languages_note)")
         bad = [i for i in t.get("interface", []) if i not in INTERFACES]
         if bad:
             p.append(f"tool {tid}: interface {bad} not in {INTERFACES}")
@@ -219,6 +226,9 @@ def schema_problems(matrix: dict, feed: dict) -> list[str]:
         for fld in _REQUIRES[st]:
             if not c.get(fld):
                 p.append(f"{where}: status {st} requires {fld}")
+        on = c.get("measured_on")
+        if on is not None and (not isinstance(on, list) or not on or any(x not in LANGUAGE_NAMES for x in on)):
+            p.append(f"{where}: measured_on {on!r} — a non-empty list of language names")
         if c.get("checked") and not _date(c["checked"]):
             p.append(f"{where}: checked is not an ISO date")
     for tid in tools:
@@ -335,14 +345,22 @@ def evidence_url(cat: Catalog, ref: str | None) -> str | None:
     return f"{base}/blob/main/{ref}"
 
 
-def _claim_view(cat: Catalog, c: dict) -> dict:
+def _claim_view(cat: Catalog, c: dict, languages: set[str] | None = None) -> dict:
     t = cat.tools.get(c["tool"], {})
     out = {"tool": c["tool"], "name": t.get("name", c["tool"]), "url": t.get("url"),
            "license": t.get("license"), "interface": t.get("interface", []), "status": c["status"]}
+    # A measurement is about the language it ran on (the lab's truth so far is Python). Asked about another
+    # language, the claim is only what the tool says about itself: `read`, with where it was measured.
+    if c["status"] in ("measured", "probed"):
+        on = c.get("measured_on", ["python"])
+        out["measured_on"] = list(on)
+        if languages and not (set(on) & languages):
+            out["status"] = "read"
+            out["status_note"] = f"{c['status']} on {', '.join(on)} only; not run on {', '.join(sorted(languages))}"
     for k in ("version", "checked", "summary", "vs_codemap", "reason", "probe"):
         if c.get(k):
             out[k] = c[k]
-    if not out.get("probe") and c["status"] in ("read", "probed"):
+    if not out.get("probe") and out["status"] in ("read", "probed"):
         out["probe"] = "not scored by the lab: check it on a question whose answer you know first"
     if isinstance(c.get("rank"), int):
         out["_rank"] = c["rank"]
@@ -377,15 +395,34 @@ def _codemap_view(n: dict) -> dict:
     return out
 
 
-def need_answer(cat: Catalog, nid: str) -> dict:
+def _speaks(tool: dict, langs: set[str]) -> bool:
+    have = set(tool.get("languages", []))
+    return "any" in have or bool(have & langs)
+
+
+def need_answer(cat: Catalog, nid: str, languages: set[str] | None = None) -> dict:
+    """One need. With ``languages``, a tool whose recorded languages include none of them is left out and
+    listed in ``excluded`` — never recommended for a language it does not read."""
     n = cat.needs[nid]
-    views = [_claim_view(cat, c) for c in cat.claims if c["need"] == nid]
+    views, excluded = [], []
+    for c in cat.claims:
+        if c["need"] != nid:
+            continue
+        t = cat.tools.get(c["tool"], {})
+        if languages and not _speaks(t, languages):
+            excluded.append({"tool": c["tool"], "status": c["status"], "languages": t.get("languages", []),
+                             **({"languages_note": t["languages_note"]} if t.get("languages_note") else {})})
+            continue
+        views.append(_claim_view(cat, c, languages))
     usable = _order([v for v in views if v["status"] != "rejected"])
     rejected = sorted((v for v in views if v["status"] == "rejected"), key=lambda v: v["tool"])
     for v in usable + rejected:
         v.pop("_rank", None)
     out = {"need": nid, "title": n["title"], "languages": n.get("languages", []), "codemap": _codemap_view(n),
            "tools": usable, "rejected": rejected}
+    if languages:
+        out["language_filter"] = sorted(languages)
+        out["excluded"] = sorted(excluded, key=lambda x: x["tool"])
     if n.get("note"):
         out["note"] = n["note"]
     return out
@@ -431,7 +468,7 @@ def overview(cat: Catalog, languages: list[str] | None = None) -> dict:
     for nid, n in cat.needs.items():
         if langs and not _applies(n, langs):
             continue
-        a = need_answer(cat, nid)
+        a = need_answer(cat, nid, langs or None)
         best = a["tools"][0] if a["tools"] else None
         rows.append({"need": nid, "title": n["title"], "codemap": n["codemap"],
                      "best": ({"tool": best["tool"], "status": best["status"]} if best else None),
@@ -523,7 +560,8 @@ def answer(args: dict, cat: Catalog | None = None) -> dict:
             out["error"] = f"no need matches {need!r}"
             out["needs"] = sorted(cat.needs)
             return out
-        out["matches"] = [need_answer(cat, i) for i in ids]
+        want = {_ALIASES.get(x.lower(), x.lower()) for x in langs} if langs else None
+        out["matches"] = [need_answer(cat, i, want) for i in ids]
     else:
         out["overview"] = overview(cat, langs)
     if args.get("news_days") is not None:

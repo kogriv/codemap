@@ -5,6 +5,20 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.41] - 2026-11-21
+
+**`advise` respects the language it is asked about.** Schema **0.13**, **`ANSWER_FORMAT` stays 11**: the `advise`
+answer gains additive keys (`excluded`, `language_filter`, `measured_on`, `status_note`), and every other answer is
+unchanged.
+
+- **Fixed:** with a language filter, `advise` filtered needs but not tools. Asked about Rust, it offered radon
+  (Python only) for complexity and fallow (TS/JS only) for duplicates. Now a tool whose recorded languages do not
+  include the asked language is left out and listed under `excluded`.
+- **Fixed:** a measurement made on Python was shown as `measured` for any language. Asked about another language,
+  such a claim now shows as `read`, with "measured on python only".
+- Tool `languages` is now a closed vocabulary: real language names, or `any` for language-agnostic tools.
+  Free text moved to `languages_note`. A guard enforces it.
+
 ## [0.0.40] - 2026-11-21
 
 **`advise`: the codemap lab's verified knowledge of other tools, served to the agent.** Schema unchanged

@@ -174,6 +174,12 @@ Written before any code. Reconciled below after the run; anything unlisted is a 
 | E10 | ✅ `codemap advise --root` on Python + TypeScript names `typescript 1` and `multi-lang-graph`. |
 | E11 | ✅ The routine was created and its first run was fired by hand (158 s, Sonnet 5.5). It pushed `scout/2026-11-21`: two tools new to the catalog (fallow, roam-code), `read` only, with two `verified: false` news items; the README counts were updated and the advise tests passed there. No private names. Maintainer review checked both repositories (license, description, languages) and merged. Corrections: roam-code `languages = ["multi"]` became the real list, a `multi-lang-graph` claim was added, and the news is now verified. **Found by the run:** the GitHub API refuses anonymous calls from the cloud (15 × 403); the watcher now falls back to the version tags over `git ls-remote`, or the HEAD commit. `--report` imported codemap only with `PYTHONPATH`, and now puts the checkout on the path. The cloud image has two interpreters, so the prompt names `python -m pip`. |
 
+**After the release (0.0.41):** asked "what for Rust", the owner's question showed two defects. Tools were not
+filtered by language: radon was offered for Rust complexity and fallow for Rust duplicates. And a Python
+measurement read as `measured` for any language. Both are fixed with guards: `excluded`, `measured_on`, a closed
+language vocabulary, and mutations L1–L3 red with the control green. The question also showed what the catalog
+lacks: per-language recipes, and measurements outside Python. That is R1-C111.
+
 **Surprises beyond E8/E9:**
 - **Delivery defect, found reconciling E11.** The matrix `as_of` was a date. After a same-day scouting merge,
   `--refresh` would have taken the newer feed but not the matrix. The feed names the two new tools, the pair

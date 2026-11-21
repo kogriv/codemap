@@ -1307,6 +1307,16 @@ advise --refresh (real main)                  —                              d
 
 Every expectation holds. Tag `v0.0.40` on both mirrors.
 
+**0.0.41 — the release check, pre-registered before the upload (2026-11-21).** One fix (R1-C110 follow-up);
+schema **0.13**, **`ANSWER_FORMAT` stays 11**.
+
+| | question | 0.0.40 (expected) | 0.0.41 (expected) |
+|---|---|---|---|
+| F1 | `advise complexity --lang rust` | radon among the tools | radon absent, named in "Not shown for rust" |
+| F2 | `advise "semantic search" --lang rust` | jevgrep `measured` | jevgrep `read only`, "measured on python only" |
+| F3 | `advise "semantic search"` (no filter) | jevgrep `measured` | jevgrep `measured` (unchanged) |
+| version | `codemap --version` | `codemap 0.0.40 · answer format 11` | `codemap 0.0.41 · answer format 11 · schema 0.13` |
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

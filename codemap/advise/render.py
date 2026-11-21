@@ -29,6 +29,8 @@ def _tool_line(v: dict) -> str:
     if v.get("license"):
         bits.append(v["license"])
     head = " · ".join(bits)
+    if v.get("status_note"):
+        head += f" · {v['status_note']}"
     if v.get("stale"):
         head += " · ⚠ stale"
     if v.get("drift"):
@@ -60,6 +62,10 @@ def need_md(a: dict) -> str:
         out += ["", "_No other tool in the catalog for this need._"]
     if a["rejected"]:
         out += ["", "**Tried and rejected:**"] + [_tool_line(v) for v in a["rejected"]]
+    if a.get("excluded"):
+        names = ", ".join(x["tool"] for x in a["excluded"])
+        out += ["", f"_Not shown for {', '.join(a['language_filter'])}: {len(a['excluded'])} tool(s) whose recorded "
+                f"languages do not include it — {names}._"]
     return "\n".join(out)
 
 

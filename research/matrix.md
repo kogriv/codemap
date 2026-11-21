@@ -662,38 +662,38 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 
 | tool | license | languages | claims | card |
 |---|---|---|---|---|
-| [aider repo-map](https://github.com/Aider-AI/aider) | Apache-2.0 | multi (tree-sitter) | context-pack (read only) | — |
+| [aider repo-map](https://github.com/Aider-AI/aider) | Apache-2.0 | python, javascript, typescript, go, rust, java, c, cpp, csharp, ruby, php | context-pack (read only) | — |
 | [ArchUnitPython](https://github.com/LukasNiessen/ArchUnitPython) | ? | python | import-gate (read only) | — |
-| [ast-grep (sg)](https://github.com/ast-grep/ast-grep) | MIT | multi (tree-sitter) | structural-search (read only) | — |
+| [ast-grep (sg)](https://github.com/ast-grep/ast-grep) | MIT | python, javascript, typescript, go, rust, java, kotlin, c, cpp, csharp, ruby, php, swift, scala | structural-search (read only) | — |
 | [Bandit](https://github.com/PyCQA/bandit) | Apache-2.0 | python | security-patterns (read only) | — |
-| [cocoindex-code (ccc)](https://github.com/cocoindex-io/cocoindex-code) | Apache-2.0 | multi (tree-sitter) | py-symbols (probed), semantic-search (probed), structural-search (probed), py-callers (rejected), py-impact (rejected) | [card](../research/tools/cocoindex-code.md) |
+| [cocoindex-code (ccc)](https://github.com/cocoindex-io/cocoindex-code) | Apache-2.0 |  | py-symbols (probed), semantic-search (probed), structural-search (probed), py-callers (rejected), py-impact (rejected) | [card](../research/tools/cocoindex-code.md) |
 | [code2flow](https://github.com/scottrogowski/code2flow) | MIT | python, javascript, ruby, php | multi-lang-graph (read only), py-callers (read only) | — |
-| [CodeGraph (colbymchenry)](https://github.com/colbymchenry/codegraph) | MIT | python, typescript, javascript, go, rust, java, ... (20 via Rust kernel) | py-callers (measured), py-imports (measured), py-symbols (measured), dead-code (probed), py-impact (probed), context-pack (read only), multi-lang-graph (read only) | [card](../research/tools/codegraph.md) |
+| [CodeGraph (colbymchenry)](https://github.com/colbymchenry/codegraph) | MIT | python, typescript, javascript, go, rust, java | py-callers (measured), py-imports (measured), py-symbols (measured), dead-code (probed), py-impact (probed), context-pack (read only), multi-lang-graph (read only) | [card](../research/tools/codegraph.md) |
 | [CodeQL](https://github.com/github/codeql) | MIT (queries/libraries); CLI/engine proprietary | python, javascript, typescript, go, rust, java, csharp, php, ruby | dataflow-taint (read only), security-patterns (read only) | — |
-| [CodeWiki (Google)](https://codewiki.google) | proprietary | multi | repo-overview (read only) | — |
-| [Comby](https://github.com/comby-tools/comby) | Apache-2.0 | any (delimiter-aware) | structural-search (read only) | — |
-| [Continue (@codebase)](https://github.com/continuedev/continue) | Apache-2.0 | multi | semantic-search (read only) | — |
+| [CodeWiki (Google)](https://codewiki.google) | proprietary | any | repo-overview (read only) | — |
+| [Comby](https://github.com/comby-tools/comby) | Apache-2.0 | any | structural-search (read only) | — |
+| [Continue (@codebase)](https://github.com/continuedev/continue) | Apache-2.0 | any | semantic-search (read only) | — |
 | [coverage.py](https://github.com/nedbat/coveragepy) | Apache-2.0 | python | py-tests-for (read only) | — |
-| [Doxygen](https://www.doxygen.nl) | GPL-2.0 | multi | py-callers (read only) | — |
+| [Doxygen](https://www.doxygen.nl) | GPL-2.0 | c, cpp, java, python, csharp, php | py-callers (read only) | — |
 | [fallow](https://github.com/fallow-rs/fallow) | MIT | typescript, javascript | duplicates (read only), frontend-dead-exports (read only) | — |
 | [GitNexus](https://github.com/abhigyanpatwari/GitNexus) | PolyForm-Noncommercial-1.0.0 | python, typescript, javascript, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | py-symbols (measured), diff-review (probed), py-callers (probed), py-impact (probed), py-imports (probed), repo-overview (probed), semantic-search (probed), multi-lang-graph (read only) | [card](../research/tools/gitnexus.md) |
-| [Glean (Meta)](https://glean.software) | BSD-style | multi | multi-lang-graph (read only) | — |
-| [gpt-repository-loader](https://github.com/mpoon/gpt-repository-loader) | MIT | any (text) | context-pack (read only) | — |
-| [grafema](https://github.com/Disentinel/grafema) | FSL-1.1-Apache-2.0 | javascript, typescript, python (beta) | py-symbols (probed), multi-lang-graph (read only), dataflow-taint (rejected), import-gate (rejected), py-callers (rejected), py-impact (rejected), py-imports (rejected) | [card](../research/tools/grafema.md) |
-| [Graphify](https://github.com/Graphify-Labs/graphify) | Apache-2.0 | python, ~40 via tree-sitter, non-code via LLM | py-callers (measured), py-imports (measured), py-symbols (measured), repo-overview (probed), multi-lang-graph (read only), py-impact (read only) | [card](../research/tools/graphify.md) |
+| [Glean (Meta)](https://glean.software) | BSD-style |  | multi-lang-graph (read only) | — |
+| [gpt-repository-loader](https://github.com/mpoon/gpt-repository-loader) | MIT | any | context-pack (read only) | — |
+| [grafema](https://github.com/Disentinel/grafema) | FSL-1.1-Apache-2.0 | javascript, typescript, python | py-symbols (probed), multi-lang-graph (read only), dataflow-taint (rejected), import-gate (rejected), py-callers (rejected), py-impact (rejected), py-imports (rejected) | [card](../research/tools/grafema.md) |
+| [Graphify](https://github.com/Graphify-Labs/graphify) | Apache-2.0 | python | py-callers (measured), py-imports (measured), py-symbols (measured), repo-overview (probed), multi-lang-graph (read only), py-impact (read only) | [card](../research/tools/graphify.md) |
 | [graphlens-mcp](https://github.com/neko1313/graphlens-mcp) | MIT | python, typescript, go, rust, php | py-callers (measured), py-impact (measured), py-symbols (probed), multi-lang-graph (read only), semantic-search (read only) | [card](../research/tools/graphlens.md) |
 | [griffe](https://mkdocstrings.github.io/griffe/) | ISC | python | api-diff (read only) | — |
 | [grimp](https://github.com/python-grimp/grimp) | BSD-2-Clause | python | py-imports (measured) | [card](../research/tools/import-linter.md) |
 | [import-linter](https://github.com/seddonym/import-linter) | BSD-2-Clause | python | import-gate (measured) | [card](../research/tools/import-linter.md) |
 | [jedi](https://github.com/davidhalter/jedi) | ? | python | py-symbols (read only) | — |
-| [jevgrep (jg)](https://github.com/dzhng/jevgrep) | MIT | python, go, rust, typescript, javascript, text fallback | context-pack (measured), py-callers (measured), py-impact (measured), py-symbols (measured), semantic-search (measured), multi-lang-graph (read only) | [card](../research/tools/jevgrep.md) |
-| [jscpd](https://github.com/kucherenko/jscpd) | MIT | multi (150+ formats) | duplicates (read only) | — |
+| [jevgrep (jg)](https://github.com/dzhng/jevgrep) | MIT | python, go, rust, typescript, javascript | context-pack (measured), py-callers (measured), py-impact (measured), py-symbols (measured), semantic-search (measured), multi-lang-graph (read only) | [card](../research/tools/jevgrep.md) |
+| [jscpd](https://github.com/kucherenko/jscpd) | MIT | any | duplicates (read only) | — |
 | [Knip](https://github.com/webpro-nl/knip) | ISC | javascript, typescript | frontend-dead-exports (read only) | — |
-| [Kythe](https://kythe.io) | Apache-2.0 | multi | multi-lang-graph (read only) | — |
-| [lizard](https://github.com/terryyin/lizard) | MIT | multi (C/C++, Java, JS, Python, Go, ...) | complexity (read only) | — |
+| [Kythe](https://kythe.io) | Apache-2.0 | cpp, java, go, typescript | multi-lang-graph (read only) | — |
+| [lizard](https://github.com/terryyin/lizard) | MIT | c, cpp, java, csharp, javascript, typescript, python, go, rust, swift, php, ruby, scala, kotlin | complexity (read only) | — |
 | [mypy](https://github.com/python/mypy) | MIT | python | type-errors (read only) | — |
 | [OntoIndex](https://github.com/ontograph/ontoindex) | AGPL-3.0-or-later | typescript, javascript, python, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | py-callers (measured), py-impact (measured), py-symbols (measured), py-imports (probed), repo-overview (probed), dead-code (read only), diff-review (read only), multi-lang-graph (read only), semantic-search (read only) | [card](../research/tools/ontoindex.md) |
-| [OpenGrep](https://github.com/opengrep/opengrep) | LGPL-2.1 | multi (~12 for cross-function taint) | dataflow-taint (read only) | — |
+| [OpenGrep](https://github.com/opengrep/opengrep) | LGPL-2.1 | python, javascript, typescript, go, rust, java, kotlin, c, cpp, csharp, ruby, php, swift, scala | dataflow-taint (read only) | — |
 | [pyan3](https://github.com/Technologicat/pyan) | GPL-2.0 | python | py-callers (read only) | — |
 | [PyCG](https://github.com/vitsalis/PyCG) | Apache-2.0 | python | py-callers (rejected) | [card](../research/tools/pycg.md) |
 | [pydeps](https://github.com/thebjorn/pydeps) | BSD-2-Clause | python | py-imports (read only) | — |
@@ -701,18 +701,18 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [pytest-django](https://github.com/pytest-dev/pytest-django) | BSD-3-Clause | python | db-query-count (read only) | — |
 | [radon](https://github.com/rubik/radon) | MIT | python | complexity (read only) | — |
 | [rag_for_git (rag-reviewer)](https://github.com/mimfort/rag_for_git) | MIT | python | py-callers (measured), diff-review (read only), semantic-search (read only), py-impact (rejected) | [card](../research/tools/rag_for_git.md) |
-| [Repomix](https://github.com/yamadashy/repomix) | MIT | multi | context-pack (read only), security-patterns (read only) | — |
-| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | multi | multi-lang-graph (read only), repo-overview (read only) | — |
+| [Repomix](https://github.com/yamadashy/repomix) | MIT | any | context-pack (read only), security-patterns (read only) | — |
+| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | python, javascript, typescript, go, rust, java, csharp, php, ruby | multi-lang-graph (read only), repo-overview (read only) | — |
 | [rope](https://github.com/python-rope/rope) | LGPL | python | py-callers (read only) | — |
-| [SCIP (format)](https://github.com/sourcegraph/scip) | Apache-2.0 | python, typescript, go, java, ... (per indexer) | multi-lang-graph (read only) | — |
+| [SCIP (format)](https://github.com/sourcegraph/scip) | Apache-2.0 | python, typescript, javascript, go, java, rust, csharp, ruby, cpp | multi-lang-graph (read only) | — |
 | [scip-python](https://github.com/sourcegraph/scip-python) | MIT | python | py-callers (measured) | [card](../research/tools/rag_for_git.md) |
-| [Semgrep](https://github.com/semgrep/semgrep) | LGPL-2.1 (engine) | multi | dataflow-taint (read only), security-patterns (read only), structural-search (read only) | — |
-| [Sourcegraph (incl. Cody)](https://sourcegraph.com) | proprietary (open components) | multi | multi-lang-graph (read only) | — |
-| [Stack Graphs](https://github.com/github/stack-graphs) | MIT/Apache-2.0 | multi (tree-sitter + .tsg) | multi-lang-graph (read only) | — |
-| [tree-sitter](https://github.com/tree-sitter/tree-sitter) | MIT | multi (grammars) | structural-search (read only) | — |
-| [Tutorial-Codebase-Knowledge](https://github.com/The-Pocket/Tutorial-Codebase-Knowledge) | ? | multi | repo-overview (read only) | — |
-| [Understand-Anything](https://github.com/Egonex-AI/Understand-Anything) | MIT | multi (tree-sitter wasm), non-code (config, docs, IaC, SQL) | py-imports (measured), py-symbols (measured), py-callers (probed), repo-overview (probed), diff-review (read only) | [card](../research/tools/understand-anything.md) |
-| [universal-ctags](https://github.com/universal-ctags/ctags) | GPL-2.0 | multi | py-symbols (read only) | — |
+| [Semgrep](https://github.com/semgrep/semgrep) | LGPL-2.1 (engine) | python, javascript, typescript, go, rust, java, kotlin, c, cpp, csharp, ruby, php, swift, scala | dataflow-taint (read only), security-patterns (read only), structural-search (read only) | — |
+| [Sourcegraph (incl. Cody)](https://sourcegraph.com) | proprietary (open components) | any | multi-lang-graph (read only) | — |
+| [Stack Graphs](https://github.com/github/stack-graphs) | MIT/Apache-2.0 | python, javascript, typescript, java | multi-lang-graph (read only) | — |
+| [tree-sitter](https://github.com/tree-sitter/tree-sitter) | MIT | any | structural-search (read only) | — |
+| [Tutorial-Codebase-Knowledge](https://github.com/The-Pocket/Tutorial-Codebase-Knowledge) | ? | any | repo-overview (read only) | — |
+| [Understand-Anything](https://github.com/Egonex-AI/Understand-Anything) | MIT |  | py-imports (measured), py-symbols (measured), py-callers (probed), repo-overview (probed), diff-review (read only) | [card](../research/tools/understand-anything.md) |
+| [universal-ctags](https://github.com/universal-ctags/ctags) | GPL-2.0 | python, javascript, typescript, go, rust, java, kotlin, c, cpp, csharp, ruby, php, swift, scala | py-symbols (read only) | — |
 | [vulture](https://github.com/jendrikseipp/vulture) | MIT | python | dead-code (read only) | — |
 | [wily](https://github.com/tonybaloney/wily) | Apache-2.0 | python | complexity (read only) | — |
 

@@ -385,3 +385,36 @@ def test_matrix_as_of_is_a_timestamp(raw):
     and the newer feed that names its tools was then refused as a pair (found reconciling E11)."""
     assert "T" in raw[0]["meta"]["as_of"] and raw[0]["meta"]["as_of"].endswith("Z")
     assert "T" in raw[1]["as_of"] and raw[1]["as_of"].endswith("Z")
+
+
+# --------------------------------------------------------------------------- language filter (found 2026-11-21)
+
+
+def test_language_filter_never_recommends_a_tool_for_a_language_it_does_not_read(cat):
+    """Asked for Rust, `complexity` used to offer radon (Python only) and `duplicates` fallow (TS/JS only)."""
+    for need in ("complexity", "duplicates"):
+        row = answer({"need": need, "languages": ["rust"]}, cat)["matches"][0]
+        shown = {v["tool"] for v in row["tools"]}
+        assert not shown & {"radon", "wily", "fallow"}, (need, shown)
+        assert all("rust" in cat.tools[t]["languages"] or "any" in cat.tools[t]["languages"] for t in shown)
+    ex = answer({"need": "complexity", "languages": ["rust"]}, cat)["matches"][0]["excluded"]
+    assert "radon" in {x["tool"] for x in ex}
+
+
+def test_a_python_measurement_is_read_only_for_another_language(cat):
+    rust = answer({"need": "semantic-search", "languages": ["rust"]}, cat)["matches"][0]
+    jg = next(v for v in rust["tools"] if v["tool"] == "jevgrep")
+    assert jg["status"] == "read" and "measured on python only" in jg["status_note"]
+    py = answer({"need": "semantic-search", "languages": ["python"]}, cat)["matches"][0]
+    assert next(v for v in py["tools"] if v["tool"] == "jevgrep")["status"] == "measured"
+    plain = answer({"need": "semantic-search"}, cat)["matches"][0]
+    assert next(v for v in plain["tools"] if v["tool"] == "jevgrep")["status"] == "measured"
+
+
+def test_tool_languages_are_a_closed_vocabulary(raw):
+    m = copy.deepcopy(raw[0])
+    m["tool"][0]["languages"] = ["multi (tree-sitter)"]
+    assert any("languages ['multi (tree-sitter)']" in p for p in schema_problems(m, raw[1]))
+    m = copy.deepcopy(raw[0])
+    _first(m, "measured")["measured_on"] = ["klingon"]
+    assert any("measured_on" in p for p in schema_problems(m, raw[1]))

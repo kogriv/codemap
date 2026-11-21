@@ -36,6 +36,11 @@ Two flags say a claim may be out of date:
 - `stale` means it was checked more than `stale_after_days` before the catalog's date;
 - `drift` means a release newer than the measured version has come out since.
 
+**Asked about a language** (`--lang`, `--root`, MCP `languages`), `advise` shows only tools whose recorded
+languages include it, or that are language-agnostic, and it lists the others as `excluded`. A measurement
+counts for the language it ran on. The lab's truth so far is Python, so for Rust a tool measured on Python
+shows as `read`, with the note "measured on python only".
+
 Before relying on a `read` or `probed` tool, ask it a question whose answer you know on your own tree.
 
 codemap's own coverage is part of every answer: `covered`, `partial` (with the caveat and its backlog id)
