@@ -6,7 +6,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 
 **Statuses.** `measured` — scored against the lab's truth, numbers in the card. `probed` — run on a real tree, not scored. `read only` — known from its docs or a survey; nobody here has run it. `rejected` — tried and unusable for that need.
 
-21 need(s), 51 tool(s); claims: 23 measured, 18 probed, 58 read, 9 rejected.
+21 need(s), 53 tool(s); claims: 23 measured, 18 probed, 61 read, 9 rejected.
 
 | need | codemap | best other tool | tools |
 |---|---|---|---|
@@ -20,14 +20,14 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 | `diff-review` What a diff or pull request touches, and what of it is untested | ✅ covered | gitnexus (probed) | 4 |
 | `semantic-search` Find code by concept or natural-language description | ◐ partial | jevgrep (measured) | 7 |
 | `context-pack` Token-budgeted repository context for an LLM | ✅ covered | jevgrep (measured) | 5 |
-| `repo-overview` Architecture map: subsystems, layers, communities | ✅ covered | graphify (probed) | 6 |
+| `repo-overview` Architecture map: subsystems, layers, communities | ✅ covered | graphify (probed) | 7 |
 | `dead-code` Unused Python code | ◐ partial | codegraph (probed) | 3 |
-| `duplicates` Copy-paste and duplicated code | — not covered | jscpd (read only) | 1 |
+| `duplicates` Copy-paste and duplicated code | — not covered | fallow (read only) | 2 |
 | `complexity` Complexity metrics (cyclomatic, size) and a threshold in CI | — not covered | radon (read only) | 3 |
 | `security-patterns` Security patterns and leaked secrets | — not covered | codeql (read only) | 4 |
 | `dataflow-taint` Data flow and taint: where an input value can reach | — not covered | codeql (read only) | 3 |
 | `multi-lang-graph` Symbol and call graph for languages other than Python | — not covered | graphify (read only) | 13 |
-| `frontend-dead-exports` Unused exports, files and dependencies in a JS/TS project | — not covered | knip (read only) | 1 |
+| `frontend-dead-exports` Unused exports, files and dependencies in a JS/TS project | — not covered | fallow (read only) | 2 |
 | `structural-search` Structural (AST) pattern search and rewrite | — not covered | cocoindex-code (probed) | 5 |
 | `type-errors` Static type checking | — not covered | mypy (read only) | 2 |
 | `db-query-count` How many database queries a code path makes | — not covered | pytest-django (read only) | 1 |
@@ -417,6 +417,10 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   Walks a repo and generates a tutorial with diagrams via the PocketFlow engine.
   check it first: not scored by the lab: check it on a question whose answer you know first
   evidence: https://github.com/kogriv/codemap/blob/main/research/05_curated_sources.md#2-living-docs-from-code-new-capability-signal
+- **roam-code** — read only · Apache-2.0
+  Per its package description: local codebase intelligence for AI coding agents, with a structural repo map, change-safety gates and an MCP interface; says local analysis needs no API keys and sends no source code.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/Cranot/roam-code
 
 ### Unused Python code (`dead-code`)
 
@@ -444,6 +448,10 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** — not covered
 
 **Other tools** (measured first; `read only` means the lab has not run it):
+- **fallow** — read only · MIT
+  Per its README: duplication detection for TypeScript and JavaScript, also CSS and Vue, Svelte and Astro components.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/fallow-rs/fallow
 - **jscpd** — read only · MIT
   Copy/paste (clone) detector over token streams for many languages.
   check it first: not scored by the lab: check it on a question whose answer you know first
@@ -583,6 +591,10 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** — not covered
 
 **Other tools** (measured first; `read only` means the lab has not run it):
+- **fallow** — read only · MIT
+  Per its README: Rust analyzer for TypeScript and JavaScript that builds one repository graph and reports unused code, circular dependencies and architecture-boundary violations, with an `audit` command that fails only on findings a change introduces.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/fallow-rs/fallow
 - **Knip** — read only · ISC
   Finds unused files, exports and dependencies in JS/TS projects.
   check it first: not scored by the lab: check it on a question whose answer you know first
@@ -659,6 +671,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [Continue (@codebase)](https://github.com/continuedev/continue) | Apache-2.0 | multi | semantic-search (read only) | — |
 | [coverage.py](https://github.com/nedbat/coveragepy) | Apache-2.0 | python | py-tests-for (read only) | — |
 | [Doxygen](https://www.doxygen.nl) | GPL-2.0 | multi | py-callers (read only) | — |
+| [fallow](https://github.com/fallow-rs/fallow) | MIT | typescript, javascript | duplicates (read only), frontend-dead-exports (read only) | — |
 | [GitNexus](https://github.com/abhigyanpatwari/GitNexus) | PolyForm-Noncommercial-1.0.0 | python, typescript, javascript, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | py-symbols (measured), diff-review (probed), py-callers (probed), py-impact (probed), py-imports (probed), repo-overview (probed), semantic-search (probed), multi-lang-graph (read only) | [card](../research/tools/gitnexus.md) |
 | [Glean (Meta)](https://glean.software) | BSD-style | multi | multi-lang-graph (read only) | — |
 | [gpt-repository-loader](https://github.com/mpoon/gpt-repository-loader) | MIT | any (text) | context-pack (read only) | — |
@@ -685,6 +698,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [radon](https://github.com/rubik/radon) | MIT | python | complexity (read only) | — |
 | [rag_for_git (rag-reviewer)](https://github.com/mimfort/rag_for_git) | MIT | python | py-callers (measured), diff-review (read only), semantic-search (read only), py-impact (rejected) | [card](../research/tools/rag_for_git.md) |
 | [Repomix](https://github.com/yamadashy/repomix) | MIT | multi | context-pack (read only), security-patterns (read only) | — |
+| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | multi | repo-overview (read only) | — |
 | [rope](https://github.com/python-rope/rope) | LGPL | python | py-callers (read only) | — |
 | [SCIP (format)](https://github.com/sourcegraph/scip) | Apache-2.0 | python, typescript, go, java, ... (per indexer) | multi-lang-graph (read only) | — |
 | [scip-python](https://github.com/sourcegraph/scip-python) | MIT | python | py-callers (measured) | [card](../research/tools/rag_for_git.md) |
@@ -700,6 +714,8 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 
 ## Latest news
 
+- 2026-11-21 · new-tool · `roam-code` roam-code 14.1.0 on PyPI describes itself as local codebase intelligence for AI coding agents with change-safety gates and an MCP interface. _(unverified)_ — https://pypi.org/project/roam-code/
+- 2026-11-21 · new-tool · `fallow` fallow is an MIT-licensed Rust analyzer for TypeScript and JavaScript offering CLI, MCP and LSP interfaces, per its README. _(unverified)_ — https://github.com/fallow-rs/fallow
 - 2026-11-21 · card · The codemap lab's tool catalog is served to agents: MCP `advise`, `codemap advise`, generated inventory research/matrix.md. — https://github.com/kogriv/codemap/blob/main/research/matrix.md
 - 2026-11-06 · finding · `import-linter` import-linter 2.16 closes two silent passes the lab filed: an unknown contract option and zero contracts now fail (verified by the lab on 2.16). — https://github.com/seddonym/import-linter/issues/393
 - 2026-11-05 · finding · `graphify` Graphify 0.9.103 fixes the builtin homonym the lab filed (a builtin exception bound to a same-named package class); verified by the lab 2026-11-06. — https://github.com/Graphify-Labs/graphify/issues/4989
