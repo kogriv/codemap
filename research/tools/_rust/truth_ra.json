@@ -1,0 +1,419 @@
+{
+ "r1": {
+  "RegexMatcher": {
+   "definitions": [
+    "crates/matcher/tests/util.rs:9::",
+    "crates/pcre2/src/matcher.rs:302::",
+    "crates/regex/src/matcher.rs:367::",
+    "crates/searcher/src/testutil.rs:24::"
+   ],
+   "reexports": [
+    "crates/pcre2/src/lib.rs:12::",
+    "crates/regex/src/lib.rs:8::"
+   ]
+  },
+  "escape": {
+   "definitions": [
+    "crates/cli/src/escape.rs:26::",
+    "crates/cli/src/lib.rs:127::",
+    "crates/globset/src/lib.rs:1115::",
+    "crates/globset/src/lib.rs:1265::"
+   ],
+   "reexports": [
+    "crates/cli/src/lib.rs:139::"
+   ]
+  },
+  "matched": {
+   "definitions": [
+    "crates/ignore/src/dir.rs:500::Ignore",
+    "crates/ignore/src/gitignore.rs:202::Gitignore",
+    "crates/ignore/src/overrides.rs:97::Override",
+    "crates/ignore/src/types.rs:261::Types",
+    "crates/ignore/src/types.rs:499::",
+    "crates/printer/src/color.rs:252::ColorSpecs",
+    "crates/printer/src/json.rs:722::JSONSink<'p, 's, M, W>",
+    "crates/printer/src/standard.rs:766::StandardSink<'p, 's, M, W>",
+    "crates/printer/src/summary.rs:633::SummarySink<'p, 's, M, W>",
+    "crates/searcher/src/searcher/core.rs:99::Core<'s, M, S>",
+    "crates/searcher/src/sink.rs:124::Sink",
+    "crates/searcher/src/sink.rs:229::&'a mut S",
+    "crates/searcher/src/sink.rs:282::Box<S>",
+    "crates/searcher/src/sink.rs:550::UTF8<F>",
+    "crates/searcher/src/sink.rs:598::Lossy<F>",
+    "crates/searcher/src/sink.rs:648::Bytes<F>",
+    "crates/searcher/src/testutil.rs:131::KitchenSink"
+   ],
+   "reexports": []
+  }
+ },
+ "r2": {
+  "err_message": {
+   "kind": "macro",
+   "sites": [
+    "crates/core/haystack.rs:38",
+    "crates/core/main.rs:131",
+    "crates/core/main.rs:193",
+    "crates/core/main.rs:210",
+    "crates/core/main.rs:415"
+   ]
+  },
+  "grep_cli::escape": {
+   "callers": [
+    {
+     "caller": "crates/cli/src/escape.rs::fn backslash()::backslash@96",
+     "sites": [
+      "crates/cli/src/escape.rs:98"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn carriage()::carriage@121",
+     "sites": [
+      "crates/cli/src/escape.rs:123"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn empty()::empty@90",
+     "sites": [
+      "crates/cli/src/escape.rs:92"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn invalid_utf8()::invalid_utf8@155",
+     "sites": [
+      "crates/cli/src/escape.rs:156",
+      "crates/cli/src/escape.rs:157"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn nl()::nl@109",
+     "sites": [
+      "crates/cli/src/escape.rs:111"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn nothing_hex0()::nothing_hex0@134",
+     "sites": [
+      "crates/cli/src/escape.rs:137"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn nothing_hex1()::nothing_hex1@141",
+     "sites": [
+      "crates/cli/src/escape.rs:144"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn nothing_hex2()::nothing_hex2@148",
+     "sites": [
+      "crates/cli/src/escape.rs:151"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn nothing_simple()::nothing_simple@127",
+     "sites": [
+      "crates/cli/src/escape.rs:130"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn nul()::nul@102",
+     "sites": [
+      "crates/cli/src/escape.rs:105"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::fn tab()::tab@115",
+     "sites": [
+      "crates/cli/src/escape.rs:117"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/escape.rs::pub fn escape_os(string: &OsStr) -> String::escape_os@33",
+     "sites": [
+      "crates/cli/src/escape.rs:34"
+     ]
+    },
+    {
+     "caller": "crates/cli/src/pattern.rs::pub fn pattern_from_bytes(pattern: &[u8]) -> Result<&str, InvalidPatternError>::pattern_from_bytes@67",
+     "sites": [
+      "crates/cli/src/pattern.rs:71"
+     ]
+    }
+   ],
+   "error": null,
+   "kind": "plain",
+   "target": "crates/cli/src/escape.rs::pub fn escape(bytes: &[u8]) -> String::escape@26"
+  },
+  "grep_matcher::Matcher::find_at": {
+   "callers": [
+    {
+     "caller": "crates/matcher/src/lib.rs::fn find_at(&self, haystack: &[u8], at: usize) -> Result<Option<Match>, Self::Error>::find_at@1138",
+     "sites": [
+      "crates/matcher/src/lib.rs:1143"
+     ]
+    },
+    {
+     "caller": "crates/matcher/src/lib.rs::pub fn find(&self, haystack: &[u8]) -> Result<Option<Match>, Self::Error>::find@621",
+     "sites": [
+      "crates/matcher/src/lib.rs:622"
+     ]
+    },
+    {
+     "caller": "crates/matcher/src/lib.rs::pub fn shortest_match_at(&self, haystack: &[u8], at: usize) -> Result<Option<usize>, Self::Error>::shortest_match_at@1036",
+     "sites": [
+      "crates/matcher/src/lib.rs:1041"
+     ]
+    },
+    {
+     "caller": "crates/matcher/src/lib.rs::pub fn try_find_iter_at<F, E>(&self, haystack: &[u8], at: usize, mut matched: F) -> Result<Result<(), E>, Self::Error>\nwhere\n    F: FnMut(Match) -> Result<bool, E>,::try_find_iter_at@692",
+     "sites": [
+      "crates/matcher/src/lib.rs:708"
+     ]
+    },
+    {
+     "caller": "crates/searcher/src/testutil.rs::fn empty_line1()::empty_line1@735",
+     "sites": [
+      "crates/searcher/src/testutil.rs:739"
+     ]
+    },
+    {
+     "caller": "crates/searcher/src/testutil.rs::fn empty_line2()::empty_line2@743",
+     "sites": [
+      "crates/searcher/src/testutil.rs:747",
+      "crates/searcher/src/testutil.rs:748"
+     ]
+    },
+    {
+     "caller": "crates/searcher/src/testutil.rs::fn empty_line3()::empty_line3@752",
+     "sites": [
+      "crates/searcher/src/testutil.rs:756",
+      "crates/searcher/src/testutil.rs:757",
+      "crates/searcher/src/testutil.rs:758"
+     ]
+    },
+    {
+     "caller": "crates/searcher/src/testutil.rs::fn empty_line4()::empty_line4@762",
+     "sites": [
+      "crates/searcher/src/testutil.rs:766",
+      "crates/searcher/src/testutil.rs:767",
+      "crates/searcher/src/testutil.rs:768",
+      "crates/searcher/src/testutil.rs:769",
+      "crates/searcher/src/testutil.rs:770",
+      "crates/searcher/src/testutil.rs:771"
+     ]
+    },
+    {
+     "caller": "crates/searcher/src/testutil.rs::fn empty_line5()::empty_line5@775",
+     "sites": [
+      "crates/searcher/src/testutil.rs:779",
+      "crates/searcher/src/testutil.rs:780",
+      "crates/searcher/src/testutil.rs:781",
+      "crates/searcher/src/testutil.rs:782",
+      "crates/searcher/src/testutil.rs:783",
+      "crates/searcher/src/testutil.rs:784",
+      "crates/searcher/src/testutil.rs:785"
+     ]
+    },
+    {
+     "caller": "crates/searcher/src/testutil.rs::fn empty_line6()::empty_line6@789",
+     "sites": [
+      "crates/searcher/src/testutil.rs:793",
+      "crates/searcher/src/testutil.rs:794",
+      "crates/searcher/src/testutil.rs:795"
+     ]
+    }
+   ],
+   "error": null,
+   "kind": "trait-method",
+   "target": "crates/matcher/src/lib.rs::pub fn find_at(&self, haystack: &[u8], at: usize) -> Result<Option<Match>, Self::Error>::find_at@571"
+  },
+  "grep_searcher::Searcher::search_path": {
+   "callers": [
+    {
+     "caller": "crates/core/search.rs::fn search_path<M, W>(matcher: M, searcher: &mut grep::searcher::Searcher, printer: &mut Printer<W>, path: &Path) -> io::Result<SearchResult>\nwhere\n    M: Matcher,\n    W: WriteColor,::search_path@380",
+     "sites": [
+      "crates/core/search.rs:389",
+      "crates/core/search.rs:397",
+      "crates/core/search.rs:405"
+     ]
+    },
+    {
+     "caller": "crates/grep/examples/simplegrep.rs::fn search(pattern: &str, paths: &[OsString]) -> Result<(), Box<dyn Error>>::search@32",
+     "sites": [
+      "crates/grep/examples/simplegrep.rs:58"
+     ]
+    }
+   ],
+   "error": null,
+   "kind": "generic",
+   "target": "crates/searcher/src/searcher/mod.rs::pub fn search_path<P, M, S>(&mut self, matcher: M, path: P, write_to: S) -> Result<(), S::Error>\nwhere\n    P: AsRef<Path>,\n    M: Matcher,\n    S: Sink,::search_path@643"
+  },
+  "grep_searcher::Sink::matched": {
+   "callers": [
+    {
+     "caller": "crates/searcher/src/searcher/core.rs::fn sink_matched(&mut self, buf: &[u8], range: &Range) -> Result<bool, S::Error>::sink_matched@522",
+     "sites": [
+      "crates/searcher/src/searcher/core.rs:536"
+     ]
+    },
+    {
+     "caller": "crates/searcher/src/sink.rs::fn matched(&mut self, searcher: &Searcher, mat: &SinkMatch<'_>) -> Result<bool, S::Error>::matched@229",
+     "sites": [
+      "crates/searcher/src/sink.rs:234"
+     ]
+    },
+    {
+     "caller": "crates/searcher/src/sink.rs::fn matched(&mut self, searcher: &Searcher, mat: &SinkMatch<'_>) -> Result<bool, S::Error>::matched@282",
+     "sites": [
+      "crates/searcher/src/sink.rs:287"
+     ]
+    }
+   ],
+   "error": null,
+   "kind": "trait-method",
+   "target": "crates/searcher/src/sink.rs::pub fn matched(&mut self, _searcher: &Searcher, _mat: &SinkMatch<'_>) -> Result<bool, Self::Error>::matched@124"
+  },
+  "ignore::ParallelVisitor::visit": {
+   "callers": [
+    {
+     "caller": "crates/ignore/src/walk.rs::fn generate_work(\n    &mut self,\n    ig: &Ignore,\n    depth: usize,\n    root_device: Option<u64>,\n    fs_dent: fs::DirEntry\n) -> WalkState::generate_work@1808",
+     "sites": [
+      "crates/ignore/src/walk.rs:1818",
+      "crates/ignore/src/walk.rs:1827",
+      "crates/ignore/src/walk.rs:1832",
+      "crates/ignore/src/walk.rs:1844"
+     ]
+    },
+    {
+     "caller": "crates/ignore/src/walk.rs::fn run_one(&mut self, mut work: Work) -> WalkState::run_one@1703",
+     "sites": [
+      "crates/ignore/src/walk.rs:1713",
+      "crates/ignore/src/walk.rs:1719",
+      "crates/ignore/src/walk.rs:1730",
+      "crates/ignore/src/walk.rs:1755",
+      "crates/ignore/src/walk.rs:1771",
+      "crates/ignore/src/walk.rs:1787"
+     ]
+    },
+    {
+     "caller": "crates/ignore/src/walk.rs::pub fn visit(self, builder: &mut dyn ParallelVisitorBuilder<'_>)::visit@1393",
+     "sites": [
+      "crates/ignore/src/walk.rs:1414",
+      "crates/ignore/src/walk.rs:1426"
+     ]
+    }
+   ],
+   "error": null,
+   "kind": "dyn",
+   "target": "crates/ignore/src/walk.rs::pub fn visit(&mut self, entry: Result<DirEntry, Error>) -> WalkState::visit@1315"
+  }
+ },
+ "r3": {
+  "grep_cli::escape": {
+   "crates/cli/src/escape.rs::fn backslash()::backslash@96": [],
+   "crates/cli/src/escape.rs::fn carriage()::carriage@121": [],
+   "crates/cli/src/escape.rs::fn empty()::empty@90": [],
+   "crates/cli/src/escape.rs::fn invalid_utf8()::invalid_utf8@155": [],
+   "crates/cli/src/escape.rs::fn nl()::nl@109": [],
+   "crates/cli/src/escape.rs::fn nothing_hex0()::nothing_hex0@134": [],
+   "crates/cli/src/escape.rs::fn nothing_hex1()::nothing_hex1@141": [],
+   "crates/cli/src/escape.rs::fn nothing_hex2()::nothing_hex2@148": [],
+   "crates/cli/src/escape.rs::fn nothing_simple()::nothing_simple@127": [],
+   "crates/cli/src/escape.rs::fn nul()::nul@102": [],
+   "crates/cli/src/escape.rs::fn tab()::tab@115": [],
+   "crates/cli/src/escape.rs::pub fn escape_os(string: &OsStr) -> String::escape_os@33": [
+    "crates/cli/src/pattern.rs::pub fn pattern_from_os(pattern: &OsStr) -> Result<&str, InvalidPatternError>::pattern_from_os@51"
+   ],
+   "crates/cli/src/pattern.rs::pub fn pattern_from_bytes(pattern: &[u8]) -> Result<&str, InvalidPatternError>::pattern_from_bytes@67": [
+    "crates/cli/src/pattern.rs::fn bytes()::bytes@165",
+    "crates/cli/src/pattern.rs::pub fn patterns_from_reader<R>(rdr: R) -> io::Result<Vec<String>>\nwhere\n    R: io::Read,::patterns_from_reader@141"
+   ]
+  },
+  "grep_matcher::Matcher::find_at": {
+   "crates/matcher/src/lib.rs::fn find_at(&self, haystack: &[u8], at: usize) -> Result<Option<Match>, Self::Error>::find_at@1138": [],
+   "crates/matcher/src/lib.rs::pub fn find(&self, haystack: &[u8]) -> Result<Option<Match>, Self::Error>::find@621": [
+    "crates/matcher/src/lib.rs::fn find(&self, haystack: &[u8]) -> Result<Option<Match>, Self::Error>::find@1172",
+    "crates/matcher/tests/test_matcher.rs::fn find()::find@21",
+    "crates/searcher/src/searcher/core.rs::pub(crate) fn find(&mut self, slice: &[u8]) -> Result<Option<Range>, S::Error>::find@124"
+   ],
+   "crates/matcher/src/lib.rs::pub fn shortest_match_at(&self, haystack: &[u8], at: usize) -> Result<Option<usize>, Self::Error>::shortest_match_at@1036": [
+    "crates/matcher/src/lib.rs::fn shortest_match_at(&self, haystack: &[u8], at: usize) -> Result<Option<usize>, Self::Error>::shortest_match_at@1354",
+    "crates/matcher/src/lib.rs::pub fn is_match_at(&self, haystack: &[u8], at: usize) -> Result<bool, Self::Error>::is_match_at@987",
+    "crates/matcher/src/lib.rs::pub fn shortest_match(&self, haystack: &[u8]) -> Result<Option<usize>, Self::Error>::shortest_match@1010"
+   ],
+   "crates/matcher/src/lib.rs::pub fn try_find_iter_at<F, E>(&self, haystack: &[u8], at: usize, mut matched: F) -> Result<Result<(), E>, Self::Error>\nwhere\n    F: FnMut(Match) -> Result<bool, E>,::try_find_iter_at@692": [
+    "crates/matcher/src/lib.rs::fn try_find_iter_at<F, E>(&self, haystack: &[u8], at: usize, matched: F) -> Result<Result<(), E>, Self::Error>\nwhere\n    F: FnMut(Match) -> Result<bool, E>,::try_find_iter_at@1214",
+    "crates/matcher/src/lib.rs::pub fn find_iter_at<F>(&self, haystack: &[u8], at: usize, mut matched: F) -> Result<(), Self::Error>\nwhere\n    F: FnMut(Match) -> bool,::find_iter_at@648",
+    "crates/matcher/src/lib.rs::pub fn try_find_iter<F, E>(&self, haystack: &[u8], matched: F) -> Result<Result<(), E>, Self::Error>\nwhere\n    F: FnMut(Match) -> Result<bool, E>,::try_find_iter@669"
+   ],
+   "crates/searcher/src/testutil.rs::fn empty_line1()::empty_line1@735": [],
+   "crates/searcher/src/testutil.rs::fn empty_line2()::empty_line2@743": [],
+   "crates/searcher/src/testutil.rs::fn empty_line3()::empty_line3@752": [],
+   "crates/searcher/src/testutil.rs::fn empty_line4()::empty_line4@762": [],
+   "crates/searcher/src/testutil.rs::fn empty_line5()::empty_line5@775": [],
+   "crates/searcher/src/testutil.rs::fn empty_line6()::empty_line6@789": []
+  },
+  "grep_searcher::Searcher::search_path": {
+   "crates/core/search.rs::fn search_path<M, W>(matcher: M, searcher: &mut grep::searcher::Searcher, printer: &mut Printer<W>, path: &Path) -> io::Result<SearchResult>\nwhere\n    M: Matcher,\n    W: WriteColor,::search_path@380": [
+    "crates/core/search.rs::fn search_path(&mut self, path: &Path) -> io::Result<SearchResult>::search_path@342"
+   ],
+   "crates/grep/examples/simplegrep.rs::fn search(pattern: &str, paths: &[OsString]) -> Result<(), Box<dyn Error>>::search@32": [
+    "crates/grep/examples/simplegrep.rs::fn try_main() -> Result<(), Box<dyn Error>>::try_main@21"
+   ]
+  },
+  "grep_searcher::Sink::matched": {
+   "crates/searcher/src/searcher/core.rs::fn sink_matched(&mut self, buf: &[u8], range: &Range) -> Result<bool, S::Error>::sink_matched@522": [
+    "crates/searcher/src/searcher/core.rs::fn match_by_line_fast(&mut self, buf: &[u8]) -> Result<FastMatchResult, S::Error>::match_by_line_fast@385",
+    "crates/searcher/src/searcher/core.rs::fn match_by_line_fast_invert(&mut self, buf: &[u8]) -> Result<bool, S::Error>::match_by_line_fast_invert@430",
+    "crates/searcher/src/searcher/core.rs::fn match_by_line_slow(&mut self, buf: &[u8]) -> Result<bool, S::Error>::match_by_line_slow@330",
+    "crates/searcher/src/searcher/core.rs::pub(crate) fn after_context_by_line(&mut self, buf: &[u8], upto: usize) -> Result<bool, S::Error>::after_context_by_line@276",
+    "crates/searcher/src/searcher/core.rs::pub(crate) fn matched(&mut self, buf: &[u8], range: &Range) -> Result<bool, S::Error>::matched@99"
+   ],
+   "crates/searcher/src/sink.rs::fn matched(&mut self, searcher: &Searcher, mat: &SinkMatch<'_>) -> Result<bool, S::Error>::matched@229": [],
+   "crates/searcher/src/sink.rs::fn matched(&mut self, searcher: &Searcher, mat: &SinkMatch<'_>) -> Result<bool, S::Error>::matched@282": []
+  },
+  "ignore::ParallelVisitor::visit": {
+   "crates/ignore/src/walk.rs::fn generate_work(\n    &mut self,\n    ig: &Ignore,\n    depth: usize,\n    root_device: Option<u64>,\n    fs_dent: fs::DirEntry\n) -> WalkState::generate_work@1808": [
+    "crates/ignore/src/walk.rs::fn run_one(&mut self, mut work: Work) -> WalkState::run_one@1703"
+   ],
+   "crates/ignore/src/walk.rs::fn run_one(&mut self, mut work: Work) -> WalkState::run_one@1703": [
+    "crates/ignore/src/walk.rs::fn run(self)::run@1695"
+   ],
+   "crates/ignore/src/walk.rs::pub fn visit(self, builder: &mut dyn ParallelVisitorBuilder<'_>)::visit@1393": [
+    "crates/ignore/src/walk.rs::pub fn run<'s, F>(self, mkf: F)\nwhere\n    F: FnMut() -> FnVisitor<'s>,::run@1369"
+   ]
+  }
+ },
+ "r5": {
+  "grep_matcher::Matcher": [
+   "crates/matcher/src/lib.rs:1133",
+   "crates/matcher/tests/util.rs:28",
+   "crates/matcher/tests/util.rs:69",
+   "crates/pcre2/src/matcher.rs:315",
+   "crates/regex/src/matcher.rs:409",
+   "crates/searcher/src/testutil.rs:63"
+  ],
+  "grep_searcher::Sink": [
+   "crates/printer/src/json.rs:719",
+   "crates/printer/src/standard.rs:763",
+   "crates/printer/src/summary.rs:630",
+   "crates/searcher/src/sink.rs:225",
+   "crates/searcher/src/sink.rs:278",
+   "crates/searcher/src/sink.rs:544",
+   "crates/searcher/src/sink.rs:592",
+   "crates/searcher/src/sink.rs:642",
+   "crates/searcher/src/testutil.rs:128"
+  ],
+  "ignore::ParallelVisitor": [
+   "crates/ignore/src/walk.rs:1338"
+  ]
+ },
+ "ready_seconds": 4.6,
+ "rust_analyzer": "rust-analyzer 1.96.0 (ac68faa 2026-05-25)",
+ "tree": {
+  "commit": "e89fff89ac9af12e8d4ce9d5fd07beb408ca730f",
+  "files": 100,
+  "lines": 53025,
+  "repo": "https://github.com/BurntSushi/ripgrep",
+  "tag": "15.2.0"
+ }
+}
