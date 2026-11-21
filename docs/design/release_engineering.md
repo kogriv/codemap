@@ -1317,6 +1317,20 @@ schema **0.13**, **`ANSWER_FORMAT` stays 11**.
 | F3 | `advise "semantic search"` (no filter) | jevgrep `measured` | jevgrep `measured` (unchanged) |
 | version | `codemap --version` | `codemap 0.0.40 · answer format 11` | `codemap 0.0.41 · answer format 11 · schema 0.13` |
 
+**0.0.41 published 2026-11-21:** [`codmap` 0.0.41](https://pypi.org/project/codmap/0.0.41/), schema 0.13,
+`ANSWER_FORMAT` 11. From `1b773bc`: suite 1369 passed / 2 skipped (1371 collected), CI green, `twine check`
+PASSED. Reconciled from PyPI:
+
+```
+                                              0.0.40                         0.0.41
+advise complexity --lang rust                 radon shown                    radon absent; "Not shown for rust: radon, wily"
+advise "semantic search" --lang rust          jevgrep measured               jevgrep read only, "measured on python only"
+advise "semantic search"                      jevgrep measured               jevgrep measured
+--version                                     codemap 0.0.40 · format 11     codemap 0.0.41 · answer format 11 · schema 0.13
+```
+
+Every expectation holds. Tag `v0.0.41` on both mirrors.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
