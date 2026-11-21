@@ -1291,6 +1291,22 @@ Every expectation holds. Tag `v0.0.39` on both mirrors.
 **Consumers:** graphs identical for bquant and bquearch; `check` markdown identical apart from the format line
 (measured on the dev build, E8).
 
+**0.0.40 published 2026-11-21:** [`codmap` 0.0.40](https://pypi.org/project/codmap/0.0.40/), schema 0.13,
+`ANSWER_FORMAT` 11, devkit v3. From `2d910c6`: the suite ran after the version bump (1365 passed / 2 skipped,
+1367 collected), CI green on 3.11–3.14, `twine check` PASSED, the wheel carries `advise/data/matrix.toml` and
+`feed.json`. Reconciled from PyPI:
+
+```
+                                              0.0.39                         0.0.40
+advise "ts call graph"                        usage error (no such command)  multi-lang-graph, codemap not covered, GitNexus read only
+advise --root (a.py + app.ts)                 usage error                    "python 1, typescript 1. codemap reads only the Python"
+advise zzzz                                   exit 2                         exit 1, refusal
+advise --refresh (real main)                  —                              downloaded, valid, "not newer" — packaged kept
+--version                                     codemap 0.0.39 · format 10     codemap 0.0.40 · answer format 11 · schema 0.13
+```
+
+Every expectation holds. Tag `v0.0.40` on both mirrors.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
