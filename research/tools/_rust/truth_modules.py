@@ -42,7 +42,8 @@ def main(argv):
     # Workspace crates only; an external crate (serde_json) also appears as a "crate" node.
     crates: set[str] = {("rg" if n == "ripgrep" else n.replace("-", "_")) for n, _ in pkgs}
     for name, target in pkgs:
-        args = ["cargo-modules", "dependencies", "--package", name, "--no-sysroot"]
+        # --cfg-test: the tools index test code too, so the truth includes `#[cfg(test)]` modules.
+        args = ["cargo-modules", "dependencies", "--package", name, "--no-sysroot", "--cfg-test"]
         args += [target] if target == "--lib" else ["--bin", target.split("=")[1]]
         dot = subprocess.run(args, cwd=root, capture_output=True, text=True, timeout=600).stdout
         if not dot.strip():

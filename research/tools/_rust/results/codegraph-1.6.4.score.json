@@ -1,0 +1,216 @@
+{
+ "r1": {
+  "RegexMatcher": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 4,
+   "tp": 4,
+   "truth": 4
+  },
+  "escape": {
+   "precision": 1.0,
+   "recall": 0.75,
+   "tool": 3,
+   "tp": 3,
+   "truth": 4
+  },
+  "matched": {
+   "precision": 1.0,
+   "recall": 0.941,
+   "tool": 16,
+   "tp": 16,
+   "truth": 17
+  }
+ },
+ "r2": {
+  "err_message": {
+   "answered": false,
+   "truth": 5
+  },
+  "grep_cli::escape": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 13,
+   "tp": 13,
+   "truth": 13
+  },
+  "grep_matcher::Matcher::find_at": {
+   "precision": 1.0,
+   "recall": 0.3,
+   "strict": {
+    "precision": 1.0,
+    "recall": 0.75,
+    "tool": 3,
+    "tp": 3,
+    "truth": 4
+   },
+   "tool": 3,
+   "tp": 3,
+   "truth": 10
+  },
+  "grep_searcher::Searcher::search_path": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 2,
+   "tp": 2,
+   "truth": 2
+  },
+  "grep_searcher::Sink::matched": {
+   "precision": 1.0,
+   "recall": 0.333,
+   "tool": 1,
+   "tp": 1,
+   "truth": 3
+  },
+  "ignore::ParallelVisitor::visit": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 3,
+   "tp": 3,
+   "truth": 3
+  }
+ },
+ "r3": {
+  "grep_cli::escape": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 16,
+   "tp": 16,
+   "truth": 16
+  },
+  "grep_matcher::Matcher::find_at": {
+   "precision": 1.0,
+   "recall": 0.421,
+   "tool": 8,
+   "tp": 8,
+   "truth": 19
+  },
+  "grep_searcher::Searcher::search_path": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 4,
+   "tp": 4,
+   "truth": 4
+  },
+  "grep_searcher::Sink::matched": {
+   "precision": 1.0,
+   "recall": 0.75,
+   "tool": 6,
+   "tp": 6,
+   "truth": 8
+  },
+  "ignore::ParallelVisitor::visit": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 5,
+   "tp": 5,
+   "truth": 5
+  }
+ },
+ "r4": {
+  "extra_sample": [
+   "globset::serde_impl -> globset",
+   "globset::serde_impl -> globset::glob",
+   "grep_printer::json -> grep_regex",
+   "grep_printer::json -> grep_searcher",
+   "grep_printer::standard -> grep_regex",
+   "grep_printer::standard -> grep_searcher",
+   "grep_printer::summary -> grep_regex",
+   "grep_printer::summary -> grep_searcher",
+   "grep_printer::util -> grep_printer",
+   "ignore::types -> ignore::default_types"
+  ],
+  "missed_sample": [
+   "grep -> grep_cli",
+   "grep -> grep_matcher",
+   "grep -> grep_printer",
+   "grep -> grep_regex",
+   "grep -> grep_searcher",
+   "grep_printer::json -> grep_printer::jsont",
+   "grep_printer::jsont -> grep_printer::stats",
+   "grep_regex::config -> grep_regex::ban",
+   "grep_searcher::searcher -> grep_searcher::searcher::core",
+   "rg -> grep_printer::stats"
+  ],
+  "precision": 0.898,
+  "recall": 0.802,
+  "tool": 176,
+  "tp": 158,
+  "truth": 197,
+  "unmapped_tool_edges": 27,
+  "without_crate_root_targets": {
+   "precision": 0.944,
+   "recall": 0.802,
+   "tool": 142,
+   "tp": 134,
+   "truth": 167
+  }
+ },
+ "r5": {
+  "grep_matcher::Matcher": {
+   "precision": 1.0,
+   "recall": 0.833,
+   "tool": 5,
+   "tool_types": [
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcherNoCaps"
+   ],
+   "tp": 5,
+   "truth": 6,
+   "truth_types": [
+    "M",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcherNoCaps"
+   ]
+  },
+  "grep_searcher::Sink": {
+   "precision": 1.0,
+   "recall": 0.778,
+   "tool": 7,
+   "tool_types": [
+    "Bytes",
+    "JSONSink",
+    "KitchenSink",
+    "Lossy",
+    "StandardSink",
+    "SummarySink",
+    "UTF8"
+   ],
+   "tp": 7,
+   "truth": 9,
+   "truth_types": [
+    "Box",
+    "Bytes",
+    "JSONSink",
+    "KitchenSink",
+    "Lossy",
+    "S",
+    "StandardSink",
+    "SummarySink",
+    "UTF8"
+   ]
+  },
+  "ignore::ParallelVisitor": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 1,
+   "tool_types": [
+    "FnVisitorImp"
+   ],
+   "tp": 1,
+   "truth": 1,
+   "truth_types": [
+    "FnVisitorImp"
+   ]
+  }
+ },
+ "tool": "codegraph",
+ "tree": "e89fff89ac9af12e8d4ce9d5fd07beb408ca730f",
+ "version": "1.6.4"
+}

@@ -1,0 +1,621 @@
+{
+ "notes": {
+  "err_message": "no definition at the declaration line among `callers` targets",
+  "file_callers": 6,
+  "r5 raw keys Matcher": [
+   "ambiguous",
+   "definitions",
+   "depth",
+   "file",
+   "filteredOut",
+   "symbol",
+   "targets"
+  ],
+  "r5 raw keys ParallelVisitor": [
+   "ambiguous",
+   "definitions",
+   "depth",
+   "file",
+   "filteredOut",
+   "symbol",
+   "targets"
+  ],
+  "r5 raw keys Sink": [
+   "ambiguous",
+   "definitions",
+   "depth",
+   "file",
+   "filteredOut",
+   "symbol",
+   "targets"
+  ]
+ },
+ "r1": {
+  "RegexMatcher": [
+   "crates/matcher/tests/util.rs:9",
+   "crates/pcre2/src/matcher.rs:302",
+   "crates/regex/src/matcher.rs:367",
+   "crates/searcher/src/testutil.rs:24"
+  ],
+  "escape": [
+   "crates/cli/src/escape.rs:26",
+   "crates/globset/src/lib.rs:1115",
+   "crates/globset/src/lib.rs:1265"
+  ],
+  "matched": [
+   "crates/ignore/src/dir.rs:500",
+   "crates/ignore/src/gitignore.rs:202",
+   "crates/ignore/src/overrides.rs:97",
+   "crates/ignore/src/types.rs:261",
+   "crates/printer/src/color.rs:252",
+   "crates/printer/src/json.rs:722",
+   "crates/printer/src/standard.rs:766",
+   "crates/printer/src/summary.rs:633",
+   "crates/searcher/src/searcher/core.rs:99",
+   "crates/searcher/src/sink.rs:124",
+   "crates/searcher/src/sink.rs:229",
+   "crates/searcher/src/sink.rs:282",
+   "crates/searcher/src/sink.rs:550",
+   "crates/searcher/src/sink.rs:598",
+   "crates/searcher/src/sink.rs:648",
+   "crates/searcher/src/testutil.rs:131"
+  ]
+ },
+ "r2": {
+  "grep_cli::escape": [
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 121,
+    "name": "carriage"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 134,
+    "name": "nothing_hex0"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 90,
+    "name": "empty"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 127,
+    "name": "nothing_simple"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 33,
+    "name": "escape_os"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 102,
+    "name": "nul"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 109,
+    "name": "nl"
+   },
+   {
+    "file": "crates/cli/src/pattern.rs",
+    "line": 67,
+    "name": "pattern_from_bytes"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 115,
+    "name": "tab"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 141,
+    "name": "nothing_hex1"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 148,
+    "name": "nothing_hex2"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 155,
+    "name": "invalid_utf8"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 96,
+    "name": "backslash"
+   }
+  ],
+  "grep_matcher::Matcher::find_at": [
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 692,
+    "name": "try_find_iter_at"
+   },
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 621,
+    "name": "find"
+   },
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 1036,
+    "name": "shortest_match_at"
+   }
+  ],
+  "grep_searcher::Searcher::search_path": [
+   {
+    "file": "crates/core/search.rs",
+    "line": 380,
+    "name": "search_path"
+   },
+   {
+    "file": "crates/grep/examples/simplegrep.rs",
+    "line": 32,
+    "name": "search"
+   }
+  ],
+  "grep_searcher::Sink::matched": [
+   {
+    "file": "crates/searcher/src/searcher/core.rs",
+    "line": 522,
+    "name": "sink_matched"
+   }
+  ],
+  "ignore::ParallelVisitor::visit": [
+   {
+    "file": "crates/ignore/src/walk.rs",
+    "line": 1703,
+    "name": "run_one"
+   },
+   {
+    "file": "crates/ignore/src/walk.rs",
+    "line": 1393,
+    "name": "visit"
+   },
+   {
+    "file": "crates/ignore/src/walk.rs",
+    "line": 1808,
+    "name": "generate_work"
+   }
+  ]
+ },
+ "r3": {
+  "grep_cli::escape": [
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 121,
+    "name": "carriage"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 134,
+    "name": "nothing_hex0"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 90,
+    "name": "empty"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 127,
+    "name": "nothing_simple"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 33,
+    "name": "escape_os"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 102,
+    "name": "nul"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 109,
+    "name": "nl"
+   },
+   {
+    "file": "crates/cli/src/pattern.rs",
+    "line": 67,
+    "name": "pattern_from_bytes"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 115,
+    "name": "tab"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 141,
+    "name": "nothing_hex1"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 148,
+    "name": "nothing_hex2"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 155,
+    "name": "invalid_utf8"
+   },
+   {
+    "file": "crates/cli/src/escape.rs",
+    "line": 96,
+    "name": "backslash"
+   },
+   {
+    "file": "crates/cli/src/pattern.rs",
+    "line": 51,
+    "name": "pattern_from_os"
+   },
+   {
+    "file": "crates/cli/src/pattern.rs",
+    "line": 141,
+    "name": "patterns_from_reader"
+   },
+   {
+    "file": "crates/cli/src/pattern.rs",
+    "line": 165,
+    "name": "bytes"
+   }
+  ],
+  "grep_matcher::Matcher::find_at": [
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 692,
+    "name": "try_find_iter_at"
+   },
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 621,
+    "name": "find"
+   },
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 1036,
+    "name": "shortest_match_at"
+   },
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 648,
+    "name": "find_iter_at"
+   },
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 669,
+    "name": "try_find_iter"
+   },
+   {
+    "file": "crates/matcher/tests/test_matcher.rs",
+    "line": 21,
+    "name": "find"
+   },
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 1010,
+    "name": "shortest_match"
+   },
+   {
+    "file": "crates/matcher/src/lib.rs",
+    "line": 987,
+    "name": "is_match_at"
+   }
+  ],
+  "grep_searcher::Searcher::search_path": [
+   {
+    "file": "crates/core/search.rs",
+    "line": 380,
+    "name": "search_path"
+   },
+   {
+    "file": "crates/grep/examples/simplegrep.rs",
+    "line": 32,
+    "name": "search"
+   },
+   {
+    "file": "crates/core/search.rs",
+    "line": 342,
+    "name": "search_path"
+   },
+   {
+    "file": "crates/grep/examples/simplegrep.rs",
+    "line": 21,
+    "name": "try_main"
+   }
+  ],
+  "grep_searcher::Sink::matched": [
+   {
+    "file": "crates/searcher/src/searcher/core.rs",
+    "line": 522,
+    "name": "sink_matched"
+   },
+   {
+    "file": "crates/searcher/src/searcher/core.rs",
+    "line": 330,
+    "name": "match_by_line_slow"
+   },
+   {
+    "file": "crates/searcher/src/searcher/core.rs",
+    "line": 385,
+    "name": "match_by_line_fast"
+   },
+   {
+    "file": "crates/searcher/src/searcher/core.rs",
+    "line": 276,
+    "name": "after_context_by_line"
+   },
+   {
+    "file": "crates/searcher/src/searcher/core.rs",
+    "line": 99,
+    "name": "matched"
+   },
+   {
+    "file": "crates/searcher/src/searcher/core.rs",
+    "line": 430,
+    "name": "match_by_line_fast_invert"
+   }
+  ],
+  "ignore::ParallelVisitor::visit": [
+   {
+    "file": "crates/ignore/src/walk.rs",
+    "line": 1703,
+    "name": "run_one"
+   },
+   {
+    "file": "crates/ignore/src/walk.rs",
+    "line": 1393,
+    "name": "visit"
+   },
+   {
+    "file": "crates/ignore/src/walk.rs",
+    "line": 1808,
+    "name": "generate_work"
+   },
+   {
+    "file": "crates/ignore/src/walk.rs",
+    "line": 1695,
+    "name": "run"
+   },
+   {
+    "file": "crates/ignore/src/walk.rs",
+    "line": 1369,
+    "name": "run"
+   }
+  ]
+ },
+ "r4": [
+  "crates/cli/src/decompress.rs -> crates/cli/src/process.rs",
+  "crates/cli/src/decompress.rs -> crates/globset/src/glob.rs",
+  "crates/cli/src/decompress.rs -> crates/globset/src/lib.rs",
+  "crates/cli/src/lib.rs -> crates/cli/src/decompress.rs",
+  "crates/cli/src/lib.rs -> crates/cli/src/escape.rs",
+  "crates/cli/src/lib.rs -> crates/cli/src/hostname.rs",
+  "crates/cli/src/lib.rs -> crates/cli/src/human.rs",
+  "crates/cli/src/lib.rs -> crates/cli/src/pattern.rs",
+  "crates/cli/src/lib.rs -> crates/cli/src/process.rs",
+  "crates/cli/src/lib.rs -> crates/cli/src/wtr.rs",
+  "crates/cli/src/pattern.rs -> crates/cli/src/escape.rs",
+  "crates/core/flags/complete/bash.rs -> crates/core/flags/defs.rs",
+  "crates/core/flags/complete/fish.rs -> crates/core/flags/defs.rs",
+  "crates/core/flags/complete/fish.rs -> crates/core/flags/mod.rs",
+  "crates/core/flags/complete/powershell.rs -> crates/core/flags/defs.rs",
+  "crates/core/flags/defs.rs -> crates/core/flags/lowargs.rs",
+  "crates/core/flags/defs.rs -> crates/core/flags/mod.rs",
+  "crates/core/flags/defs.rs -> crates/core/flags/parse.rs",
+  "crates/core/flags/doc/help.rs -> crates/core/flags/defs.rs",
+  "crates/core/flags/doc/help.rs -> crates/core/flags/mod.rs",
+  "crates/core/flags/doc/man.rs -> crates/core/flags/defs.rs",
+  "crates/core/flags/doc/man.rs -> crates/core/flags/mod.rs",
+  "crates/core/flags/hiargs.rs -> crates/core/flags/lowargs.rs",
+  "crates/core/flags/hiargs.rs -> crates/core/haystack.rs",
+  "crates/core/flags/hiargs.rs -> crates/core/search.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/complete/bash.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/complete/fish.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/complete/powershell.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/complete/zsh.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/doc/help.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/doc/man.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/doc/version.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/hiargs.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/lowargs.rs",
+  "crates/core/flags/mod.rs -> crates/core/flags/parse.rs",
+  "crates/core/flags/parse.rs -> crates/core/flags/defs.rs",
+  "crates/core/flags/parse.rs -> crates/core/flags/hiargs.rs",
+  "crates/core/flags/parse.rs -> crates/core/flags/lowargs.rs",
+  "crates/core/flags/parse.rs -> crates/core/flags/mod.rs",
+  "crates/core/main.rs -> crates/core/flags/hiargs.rs",
+  "crates/core/main.rs -> crates/core/flags/lowargs.rs",
+  "crates/core/main.rs -> crates/ignore/src/lib.rs",
+  "crates/core/main.rs -> crates/ignore/src/walk.rs",
+  "crates/core/search.rs -> crates/grep/src/lib.rs",
+  "crates/globset/benches/bench.rs -> crates/globset/src/glob.rs",
+  "crates/globset/benches/bench.rs -> crates/globset/src/lib.rs",
+  "crates/globset/src/glob.rs -> crates/globset/src/lib.rs",
+  "crates/globset/src/lib.rs -> crates/globset/src/glob.rs",
+  "crates/globset/src/lib.rs -> crates/globset/src/pathutil.rs",
+  "crates/globset/src/serde_impl.rs -> crates/globset/src/glob.rs",
+  "crates/globset/src/serde_impl.rs -> crates/globset/src/lib.rs",
+  "crates/ignore/examples/walk.rs -> crates/ignore/src/walk.rs",
+  "crates/ignore/src/dir.rs -> crates/ignore/src/gitignore.rs",
+  "crates/ignore/src/dir.rs -> crates/ignore/src/lib.rs",
+  "crates/ignore/src/dir.rs -> crates/ignore/src/overrides.rs",
+  "crates/ignore/src/dir.rs -> crates/ignore/src/pathutil.rs",
+  "crates/ignore/src/dir.rs -> crates/ignore/src/types.rs",
+  "crates/ignore/src/dir.rs -> crates/ignore/src/walk.rs",
+  "crates/ignore/src/gitignore.rs -> crates/globset/src/glob.rs",
+  "crates/ignore/src/gitignore.rs -> crates/globset/src/lib.rs",
+  "crates/ignore/src/gitignore.rs -> crates/ignore/src/lib.rs",
+  "crates/ignore/src/gitignore.rs -> crates/ignore/src/pathutil.rs",
+  "crates/ignore/src/lib.rs -> crates/ignore/src/walk.rs",
+  "crates/ignore/src/overrides.rs -> crates/ignore/src/gitignore.rs",
+  "crates/ignore/src/overrides.rs -> crates/ignore/src/lib.rs",
+  "crates/ignore/src/pathutil.rs -> crates/ignore/src/walk.rs",
+  "crates/ignore/src/types.rs -> crates/globset/src/glob.rs",
+  "crates/ignore/src/types.rs -> crates/globset/src/lib.rs",
+  "crates/ignore/src/types.rs -> crates/ignore/src/default_types.rs",
+  "crates/ignore/src/types.rs -> crates/ignore/src/lib.rs",
+  "crates/ignore/src/types.rs -> crates/ignore/src/pathutil.rs",
+  "crates/ignore/src/walk.rs -> crates/ignore/src/dir.rs",
+  "crates/ignore/src/walk.rs -> crates/ignore/src/gitignore.rs",
+  "crates/ignore/src/walk.rs -> crates/ignore/src/lib.rs",
+  "crates/ignore/src/walk.rs -> crates/ignore/src/overrides.rs",
+  "crates/ignore/src/walk.rs -> crates/ignore/src/types.rs",
+  "crates/ignore/tests/gitignore_matched_path_or_any_parents_tests.rs -> crates/ignore/src/gitignore.rs",
+  "crates/ignore/tests/gitignore_matched_path_or_any_parents_tests.rs -> crates/ignore/src/lib.rs",
+  "crates/ignore/tests/gitignore_skip_bom.rs -> crates/ignore/src/gitignore.rs",
+  "crates/ignore/tests/gitignore_skip_bom.rs -> crates/ignore/src/lib.rs",
+  "crates/matcher/src/lib.rs -> crates/matcher/src/interpolate.rs",
+  "crates/matcher/tests/test_matcher.rs -> crates/matcher/src/lib.rs",
+  "crates/matcher/tests/test_matcher.rs -> crates/matcher/tests/util.rs",
+  "crates/matcher/tests/util.rs -> crates/matcher/src/lib.rs",
+  "crates/pcre2/src/lib.rs -> crates/pcre2/src/error.rs",
+  "crates/pcre2/src/lib.rs -> crates/pcre2/src/matcher.rs",
+  "crates/pcre2/src/matcher.rs -> crates/matcher/src/lib.rs",
+  "crates/pcre2/src/matcher.rs -> crates/pcre2/src/error.rs",
+  "crates/printer/src/hyperlink/aliases.rs -> crates/printer/src/hyperlink/mod.rs",
+  "crates/printer/src/hyperlink/mod.rs -> crates/printer/src/hyperlink/aliases.rs",
+  "crates/printer/src/hyperlink/mod.rs -> crates/printer/src/util.rs",
+  "crates/printer/src/json.rs -> crates/matcher/src/lib.rs",
+  "crates/printer/src/json.rs -> crates/printer/src/counter.rs",
+  "crates/printer/src/json.rs -> crates/printer/src/stats.rs",
+  "crates/printer/src/json.rs -> crates/printer/src/util.rs",
+  "crates/printer/src/json.rs -> crates/regex/src/lib.rs",
+  "crates/printer/src/json.rs -> crates/regex/src/matcher.rs",
+  "crates/printer/src/json.rs -> crates/searcher/src/lib.rs",
+  "crates/printer/src/json.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/printer/src/json.rs -> crates/searcher/src/sink.rs",
+  "crates/printer/src/lib.rs -> crates/printer/src/color.rs",
+  "crates/printer/src/lib.rs -> crates/printer/src/hyperlink/mod.rs",
+  "crates/printer/src/lib.rs -> crates/printer/src/json.rs",
+  "crates/printer/src/lib.rs -> crates/printer/src/path.rs",
+  "crates/printer/src/lib.rs -> crates/printer/src/standard.rs",
+  "crates/printer/src/lib.rs -> crates/printer/src/stats.rs",
+  "crates/printer/src/lib.rs -> crates/printer/src/summary.rs",
+  "crates/printer/src/path.rs -> crates/printer/src/color.rs",
+  "crates/printer/src/path.rs -> crates/printer/src/hyperlink/mod.rs",
+  "crates/printer/src/path.rs -> crates/printer/src/util.rs",
+  "crates/printer/src/standard.rs -> crates/matcher/src/lib.rs",
+  "crates/printer/src/standard.rs -> crates/printer/src/color.rs",
+  "crates/printer/src/standard.rs -> crates/printer/src/counter.rs",
+  "crates/printer/src/standard.rs -> crates/printer/src/hyperlink/mod.rs",
+  "crates/printer/src/standard.rs -> crates/printer/src/stats.rs",
+  "crates/printer/src/standard.rs -> crates/printer/src/util.rs",
+  "crates/printer/src/standard.rs -> crates/regex/src/lib.rs",
+  "crates/printer/src/standard.rs -> crates/regex/src/matcher.rs",
+  "crates/printer/src/standard.rs -> crates/searcher/src/lib.rs",
+  "crates/printer/src/standard.rs -> crates/searcher/src/lines.rs",
+  "crates/printer/src/standard.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/printer/src/standard.rs -> crates/searcher/src/sink.rs",
+  "crates/printer/src/stats.rs -> crates/printer/src/util.rs",
+  "crates/printer/src/summary.rs -> crates/matcher/src/lib.rs",
+  "crates/printer/src/summary.rs -> crates/printer/src/color.rs",
+  "crates/printer/src/summary.rs -> crates/printer/src/counter.rs",
+  "crates/printer/src/summary.rs -> crates/printer/src/hyperlink/mod.rs",
+  "crates/printer/src/summary.rs -> crates/printer/src/stats.rs",
+  "crates/printer/src/summary.rs -> crates/printer/src/util.rs",
+  "crates/printer/src/summary.rs -> crates/regex/src/lib.rs",
+  "crates/printer/src/summary.rs -> crates/regex/src/matcher.rs",
+  "crates/printer/src/summary.rs -> crates/searcher/src/lib.rs",
+  "crates/printer/src/summary.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/printer/src/summary.rs -> crates/searcher/src/sink.rs",
+  "crates/printer/src/util.rs -> crates/matcher/src/lib.rs",
+  "crates/printer/src/util.rs -> crates/printer/src/hyperlink/mod.rs",
+  "crates/printer/src/util.rs -> crates/printer/src/lib.rs",
+  "crates/printer/src/util.rs -> crates/searcher/src/lines.rs",
+  "crates/printer/src/util.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/printer/src/util.rs -> crates/searcher/src/sink.rs",
+  "crates/regex/src/ban.rs -> crates/regex/src/error.rs",
+  "crates/regex/src/config.rs -> crates/matcher/src/lib.rs",
+  "crates/regex/src/config.rs -> crates/regex/src/ast.rs",
+  "crates/regex/src/config.rs -> crates/regex/src/error.rs",
+  "crates/regex/src/config.rs -> crates/regex/src/non_matching.rs",
+  "crates/regex/src/config.rs -> crates/regex/src/strip.rs",
+  "crates/regex/src/lib.rs -> crates/regex/src/error.rs",
+  "crates/regex/src/lib.rs -> crates/regex/src/matcher.rs",
+  "crates/regex/src/literal.rs -> crates/regex/src/config.rs",
+  "crates/regex/src/literal.rs -> crates/regex/src/error.rs",
+  "crates/regex/src/matcher.rs -> crates/matcher/src/lib.rs",
+  "crates/regex/src/matcher.rs -> crates/regex/src/config.rs",
+  "crates/regex/src/matcher.rs -> crates/regex/src/error.rs",
+  "crates/regex/src/matcher.rs -> crates/regex/src/literal.rs",
+  "crates/regex/src/non_matching.rs -> crates/matcher/src/lib.rs",
+  "crates/regex/src/strip.rs -> crates/matcher/src/lib.rs",
+  "crates/regex/src/strip.rs -> crates/regex/src/error.rs",
+  "crates/searcher/examples/search-stdin.rs -> crates/regex/src/lib.rs",
+  "crates/searcher/examples/search-stdin.rs -> crates/regex/src/matcher.rs",
+  "crates/searcher/examples/search-stdin.rs -> crates/searcher/src/lib.rs",
+  "crates/searcher/examples/search-stdin.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/searcher/examples/search-stdin.rs -> crates/searcher/src/sink.rs",
+  "crates/searcher/src/lib.rs -> crates/searcher/src/lines.rs",
+  "crates/searcher/src/lib.rs -> crates/searcher/src/searcher/mmap.rs",
+  "crates/searcher/src/lib.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/searcher/src/lib.rs -> crates/searcher/src/sink.rs",
+  "crates/searcher/src/lines.rs -> crates/matcher/src/lib.rs",
+  "crates/searcher/src/searcher/core.rs -> crates/matcher/src/lib.rs",
+  "crates/searcher/src/searcher/core.rs -> crates/searcher/src/line_buffer.rs",
+  "crates/searcher/src/searcher/core.rs -> crates/searcher/src/lines.rs",
+  "crates/searcher/src/searcher/core.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/searcher/src/searcher/core.rs -> crates/searcher/src/sink.rs",
+  "crates/searcher/src/searcher/glue.rs -> crates/matcher/src/lib.rs",
+  "crates/searcher/src/searcher/glue.rs -> crates/searcher/src/line_buffer.rs",
+  "crates/searcher/src/searcher/glue.rs -> crates/searcher/src/lines.rs",
+  "crates/searcher/src/searcher/glue.rs -> crates/searcher/src/searcher/core.rs",
+  "crates/searcher/src/searcher/glue.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/searcher/src/searcher/glue.rs -> crates/searcher/src/sink.rs",
+  "crates/searcher/src/searcher/glue.rs -> crates/searcher/src/testutil.rs",
+  "crates/searcher/src/searcher/mod.rs -> crates/matcher/src/lib.rs",
+  "crates/searcher/src/searcher/mod.rs -> crates/searcher/src/line_buffer.rs",
+  "crates/searcher/src/searcher/mod.rs -> crates/searcher/src/searcher/glue.rs",
+  "crates/searcher/src/searcher/mod.rs -> crates/searcher/src/searcher/mmap.rs",
+  "crates/searcher/src/searcher/mod.rs -> crates/searcher/src/sink.rs",
+  "crates/searcher/src/searcher/mod.rs -> crates/searcher/src/testutil.rs",
+  "crates/searcher/src/sink.rs -> crates/matcher/src/lib.rs",
+  "crates/searcher/src/sink.rs -> crates/searcher/src/lines.rs",
+  "crates/searcher/src/sink.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/searcher/src/testutil.rs -> crates/matcher/src/lib.rs",
+  "crates/searcher/src/testutil.rs -> crates/searcher/src/searcher/mod.rs",
+  "crates/searcher/src/testutil.rs -> crates/searcher/src/sink.rs",
+  "fuzz/fuzz_targets/fuzz_glob.rs -> crates/globset/src/lib.rs",
+  "tests/binary.rs -> tests/util.rs",
+  "tests/feature.rs -> tests/hay.rs",
+  "tests/feature.rs -> tests/util.rs",
+  "tests/json.rs -> tests/hay.rs",
+  "tests/json.rs -> tests/util.rs",
+  "tests/misc.rs -> tests/hay.rs",
+  "tests/misc.rs -> tests/util.rs",
+  "tests/multiline.rs -> tests/hay.rs",
+  "tests/multiline.rs -> tests/util.rs",
+  "tests/regression.rs -> tests/hay.rs",
+  "tests/regression.rs -> tests/util.rs"
+ ],
+ "r5": {
+  "grep_matcher::Matcher": [
+   "RegexMatcher",
+   "RegexMatcher",
+   "RegexMatcher",
+   "RegexMatcher",
+   "RegexMatcherNoCaps"
+  ],
+  "grep_searcher::Sink": [
+   "Bytes",
+   "JSONSink",
+   "KitchenSink",
+   "Lossy",
+   "StandardSink",
+   "SummarySink",
+   "UTF8"
+  ],
+  "ignore::ParallelVisitor": [
+   "FnVisitorImp"
+  ]
+ },
+ "tool": "codegraph",
+ "version": "1.6.4"
+}

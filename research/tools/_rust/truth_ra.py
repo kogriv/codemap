@@ -201,8 +201,20 @@ def main(argv):
             continue
         ans = incoming(lsp, root, f, line, col)
         callers = ans.get("callers", [])
+        # rust-analyzer lists a call on a concrete type under the trait method AND under that type's impl. For a
+        # trait method, record which callers are also callers of an impl: "strict" = the rest, the calls that
+        # reach the declaration only through generics, `dyn` or a blanket forwarder.
+        via_impl = set()
+        if r["kind"] in ("trait-method", "dyn"):
+            impls = lsp.request("textDocument/implementation", pos(f, line, col)) or []
+            for im in impls:
+                ip = Path(im["uri"].removeprefix("file://"))
+                st = im["range"]["start"]
+                sub = incoming(lsp, root, ip, st["line"], st["character"])
+                via_impl |= {c["caller"] for c in sub.get("callers", [])}
         out["r2"][r["symbol"]] = {"kind": r["kind"], "target": ans.get("target"), "error": ans.get("error"),
-                                  "callers": [{k: v for k, v in c.items() if k != "_item"} for c in callers]}
+                                  "callers": [{k: v for k, v in c.items() if k != "_item"} for c in callers],
+                                  "via_impl": sorted(via_impl & {c["caller"] for c in callers})}
         depth2 = {}
         for c in callers:
             it = c["_item"]

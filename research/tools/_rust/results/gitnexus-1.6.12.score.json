@@ -1,0 +1,210 @@
+{
+ "r1": {
+  "RegexMatcher": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 4,
+   "tp": 4,
+   "truth": 4
+  },
+  "escape": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 4,
+   "tp": 4,
+   "truth": 4
+  },
+  "matched": {
+   "precision": 0.929,
+   "recall": 0.765,
+   "tool": 14,
+   "tp": 13,
+   "truth": 17
+  }
+ },
+ "r2": {
+  "err_message": {
+   "precision": null,
+   "recall": 0.0,
+   "tool": 0,
+   "tp": 0,
+   "truth": 5
+  },
+  "grep_cli::escape": {
+   "precision": 1.0,
+   "recall": 0.154,
+   "tool": 2,
+   "tp": 2,
+   "truth": 13
+  },
+  "grep_matcher::Matcher::find_at": {
+   "precision": 1.0,
+   "recall": 0.3,
+   "strict": {
+    "precision": 1.0,
+    "recall": 0.75,
+    "tool": 3,
+    "tp": 3,
+    "truth": 4
+   },
+   "tool": 3,
+   "tp": 3,
+   "truth": 10
+  },
+  "grep_searcher::Searcher::search_path": {
+   "precision": 1.0,
+   "recall": 0.5,
+   "tool": 1,
+   "tp": 1,
+   "truth": 2
+  },
+  "grep_searcher::Sink::matched": {
+   "precision": null,
+   "recall": 0.0,
+   "tool": 0,
+   "tp": 0,
+   "truth": 3
+  },
+  "ignore::ParallelVisitor::visit": {
+   "precision": null,
+   "recall": 0.0,
+   "tool": 0,
+   "tp": 0,
+   "truth": 3
+  }
+ },
+ "r3": {
+  "grep_cli::escape": {
+   "precision": 1.0,
+   "recall": 0.312,
+   "tool": 5,
+   "tp": 5,
+   "truth": 16
+  },
+  "grep_matcher::Matcher::find_at": {
+   "precision": 1.0,
+   "recall": 0.368,
+   "tool": 7,
+   "tp": 7,
+   "truth": 19
+  },
+  "grep_searcher::Searcher::search_path": {
+   "precision": 1.0,
+   "recall": 0.25,
+   "tool": 1,
+   "tp": 1,
+   "truth": 4
+  },
+  "grep_searcher::Sink::matched": {
+   "precision": null,
+   "recall": 0.0,
+   "tool": 0,
+   "tp": 0,
+   "truth": 8
+  },
+  "ignore::ParallelVisitor::visit": {
+   "precision": null,
+   "recall": 0.0,
+   "tool": 0,
+   "tp": 0,
+   "truth": 5
+  }
+ },
+ "r4": {
+  "extra_sample": [
+   "ignore::types -> ignore::default_types"
+  ],
+  "missed_sample": [
+   "globset::glob -> globset",
+   "grep -> grep_cli",
+   "grep -> grep_matcher",
+   "grep -> grep_printer",
+   "grep -> grep_regex",
+   "grep -> grep_searcher",
+   "grep_cli::decompress -> globset",
+   "grep_cli::decompress -> globset::glob",
+   "grep_pcre2::matcher -> grep_matcher",
+   "grep_printer::json -> grep_matcher"
+  ],
+  "precision": 0.989,
+  "recall": 0.477,
+  "tool": 95,
+  "tp": 94,
+  "truth": 197,
+  "unmapped_tool_edges": 4,
+  "without_crate_root_targets": {
+   "precision": 0.989,
+   "recall": 0.563,
+   "tool": 95,
+   "tp": 94,
+   "truth": 167
+  }
+ },
+ "r5": {
+  "grep_matcher::Matcher": {
+   "precision": 1.0,
+   "recall": 0.833,
+   "tool": 5,
+   "tool_types": [
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcherNoCaps"
+   ],
+   "tp": 5,
+   "truth": 6,
+   "truth_types": [
+    "M",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcher",
+    "RegexMatcherNoCaps"
+   ]
+  },
+  "grep_searcher::Sink": {
+   "precision": 1.0,
+   "recall": 0.778,
+   "tool": 7,
+   "tool_types": [
+    "Bytes",
+    "JSONSink",
+    "KitchenSink",
+    "Lossy",
+    "StandardSink",
+    "SummarySink",
+    "UTF8"
+   ],
+   "tp": 7,
+   "truth": 9,
+   "truth_types": [
+    "Box",
+    "Bytes",
+    "JSONSink",
+    "KitchenSink",
+    "Lossy",
+    "S",
+    "StandardSink",
+    "SummarySink",
+    "UTF8"
+   ]
+  },
+  "ignore::ParallelVisitor": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "tool": 1,
+   "tool_types": [
+    "FnVisitorImp"
+   ],
+   "tp": 1,
+   "truth": 1,
+   "truth_types": [
+    "FnVisitorImp"
+   ]
+  }
+ },
+ "tool": "gitnexus",
+ "tree": "e89fff89ac9af12e8d4ce9d5fd07beb408ca730f",
+ "version": "1.6.12"
+}

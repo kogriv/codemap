@@ -141,7 +141,8 @@
    ],
    "error": null,
    "kind": "plain",
-   "target": "crates/cli/src/escape.rs::pub fn escape(bytes: &[u8]) -> String::escape@26"
+   "target": "crates/cli/src/escape.rs::pub fn escape(bytes: &[u8]) -> String::escape@26",
+   "via_impl": []
   },
   "grep_matcher::Matcher::find_at": {
    "callers": [
@@ -224,7 +225,15 @@
    ],
    "error": null,
    "kind": "trait-method",
-   "target": "crates/matcher/src/lib.rs::pub fn find_at(&self, haystack: &[u8], at: usize) -> Result<Option<Match>, Self::Error>::find_at@571"
+   "target": "crates/matcher/src/lib.rs::pub fn find_at(&self, haystack: &[u8], at: usize) -> Result<Option<Match>, Self::Error>::find_at@571",
+   "via_impl": [
+    "crates/searcher/src/testutil.rs::fn empty_line1()::empty_line1@735",
+    "crates/searcher/src/testutil.rs::fn empty_line2()::empty_line2@743",
+    "crates/searcher/src/testutil.rs::fn empty_line3()::empty_line3@752",
+    "crates/searcher/src/testutil.rs::fn empty_line4()::empty_line4@762",
+    "crates/searcher/src/testutil.rs::fn empty_line5()::empty_line5@775",
+    "crates/searcher/src/testutil.rs::fn empty_line6()::empty_line6@789"
+   ]
   },
   "grep_searcher::Searcher::search_path": {
    "callers": [
@@ -245,7 +254,8 @@
    ],
    "error": null,
    "kind": "generic",
-   "target": "crates/searcher/src/searcher/mod.rs::pub fn search_path<P, M, S>(&mut self, matcher: M, path: P, write_to: S) -> Result<(), S::Error>\nwhere\n    P: AsRef<Path>,\n    M: Matcher,\n    S: Sink,::search_path@643"
+   "target": "crates/searcher/src/searcher/mod.rs::pub fn search_path<P, M, S>(&mut self, matcher: M, path: P, write_to: S) -> Result<(), S::Error>\nwhere\n    P: AsRef<Path>,\n    M: Matcher,\n    S: Sink,::search_path@643",
+   "via_impl": []
   },
   "grep_searcher::Sink::matched": {
    "callers": [
@@ -270,7 +280,8 @@
    ],
    "error": null,
    "kind": "trait-method",
-   "target": "crates/searcher/src/sink.rs::pub fn matched(&mut self, _searcher: &Searcher, _mat: &SinkMatch<'_>) -> Result<bool, Self::Error>::matched@124"
+   "target": "crates/searcher/src/sink.rs::pub fn matched(&mut self, _searcher: &Searcher, _mat: &SinkMatch<'_>) -> Result<bool, Self::Error>::matched@124",
+   "via_impl": []
   },
   "ignore::ParallelVisitor::visit": {
    "callers": [
@@ -304,7 +315,8 @@
    ],
    "error": null,
    "kind": "dyn",
-   "target": "crates/ignore/src/walk.rs::pub fn visit(&mut self, entry: Result<DirEntry, Error>) -> WalkState::visit@1315"
+   "target": "crates/ignore/src/walk.rs::pub fn visit(&mut self, entry: Result<DirEntry, Error>) -> WalkState::visit@1315",
+   "via_impl": []
   }
  },
  "r3": {
@@ -407,7 +419,7 @@
    "crates/ignore/src/walk.rs:1338"
   ]
  },
- "ready_seconds": 4.6,
+ "ready_seconds": 5.0,
  "rust_analyzer": "rust-analyzer 1.96.0 (ac68faa 2026-05-25)",
  "tree": {
   "commit": "e89fff89ac9af12e8d4ce9d5fd07beb408ca730f",
