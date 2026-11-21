@@ -1,0 +1,45 @@
+# R1-C111 — the Rust benchmark: tree and questions, fixed before any tool runs (docs/design/recipe_rust.md D2, D3).
+[tree]
+repo = "https://github.com/BurntSushi/ripgrep"
+tag = "15.2.0"
+commit = "e89fff89ac9af12e8d4ce9d5fd07beb408ca730f"
+files = 100        # *.rs outside target/
+lines = 53025
+
+# R1 — where a name is defined (all definitions of the bare name)
+[[r1]]
+name = "RegexMatcher"      # pcre2, regex, searcher testutil, matcher tests: same name, four types
+[[r1]]
+name = "escape"            # grep_cli::escape and globset::escape: a plain-function namesake pair
+[[r1]]
+name = "matched"           # the Sink method: trait declaration plus every impl
+
+# R2 — callers (incoming calls); R3 — callers to depth 2 over the same targets
+[[r2]]
+symbol = "grep_searcher::Sink::matched"          # trait method, called through `S: Sink` generics
+kind = "trait-method"
+[[r2]]
+symbol = "grep_matcher::Matcher::find_at"        # trait method, impls in regex and pcre2, blanket &M
+kind = "trait-method"
+[[r2]]
+symbol = "grep_searcher::Searcher::search_path"  # generic over P, M: Matcher, S: Sink
+kind = "generic"
+[[r2]]
+symbol = "grep_cli::escape"                      # plain function with a namesake in globset
+kind = "plain"
+[[r2]]
+symbol = "ignore::ParallelVisitor::visit"        # trait method, called through Box<dyn ParallelVisitor>
+kind = "dyn"
+[[r2]]
+symbol = "err_message"                           # macro_rules! in crates/core/messages.rs: invocation sites
+kind = "macro"
+
+# R4 — module dependency graph: `use`/path edges between modules of the workspace crates (whole tree)
+
+# R5 — implementors of a trait
+[[r5]]
+trait = "grep_searcher::Sink"
+[[r5]]
+trait = "grep_matcher::Matcher"
+[[r5]]
+trait = "ignore::ParallelVisitor"
