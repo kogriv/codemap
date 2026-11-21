@@ -6,7 +6,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 
 **Statuses.** `measured` — scored against the lab's truth, numbers in the card. `probed` — run on a real tree, not scored. `read only` — known from its docs or a survey; nobody here has run it. `rejected` — tried and unusable for that need.
 
-21 need(s), 53 tool(s); claims: 23 measured, 18 probed, 61 read, 9 rejected.
+21 need(s), 53 tool(s); claims: 23 measured, 18 probed, 62 read, 9 rejected.
 
 | need | codemap | best other tool | tools |
 |---|---|---|---|
@@ -26,7 +26,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 | `complexity` Complexity metrics (cyclomatic, size) and a threshold in CI | — not covered | radon (read only) | 3 |
 | `security-patterns` Security patterns and leaked secrets | — not covered | codeql (read only) | 4 |
 | `dataflow-taint` Data flow and taint: where an input value can reach | — not covered | codeql (read only) | 3 |
-| `multi-lang-graph` Symbol and call graph for languages other than Python | — not covered | graphify (read only) | 13 |
+| `multi-lang-graph` Symbol and call graph for languages other than Python | — not covered | graphify (read only) | 14 |
 | `frontend-dead-exports` Unused exports, files and dependencies in a JS/TS project | — not covered | fallow (read only) | 2 |
 | `structural-search` Structural (AST) pattern search and rewrite | — not covered | cocoindex-code (probed) | 5 |
 | `type-errors` Static type checking | — not covered | mypy (read only) | 2 |
@@ -585,6 +585,10 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   vs codemap: Cautionary: per-language binding DSLs did not scale.
   check it first: not scored by the lab: check it on a question whose answer you know first
   evidence: https://github.com/kogriv/codemap/blob/main/research/02_codegraph_index_infra.md#stack-graphs-github
+- **roam-code** — read only · Apache-2.0
+  Per its README: a local SQLite code graph over 28 languages (Python, JavaScript, TypeScript, Go, Rust, Java, C#, PHP, Ruby and more); extraction depth varies by language. Not run by the lab.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/Cranot/roam-code
 
 ### Unused exports, files and dependencies in a JS/TS project (`frontend-dead-exports`)
 
@@ -665,7 +669,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [cocoindex-code (ccc)](https://github.com/cocoindex-io/cocoindex-code) | Apache-2.0 | multi (tree-sitter) | py-symbols (probed), semantic-search (probed), structural-search (probed), py-callers (rejected), py-impact (rejected) | [card](../research/tools/cocoindex-code.md) |
 | [code2flow](https://github.com/scottrogowski/code2flow) | MIT | python, javascript, ruby, php | multi-lang-graph (read only), py-callers (read only) | — |
 | [CodeGraph (colbymchenry)](https://github.com/colbymchenry/codegraph) | MIT | python, typescript, javascript, go, rust, java, ... (20 via Rust kernel) | py-callers (measured), py-imports (measured), py-symbols (measured), dead-code (probed), py-impact (probed), context-pack (read only), multi-lang-graph (read only) | [card](../research/tools/codegraph.md) |
-| [CodeQL](https://github.com/github/codeql) | MIT (queries/libraries); CLI/engine proprietary | multi | dataflow-taint (read only), security-patterns (read only) | — |
+| [CodeQL](https://github.com/github/codeql) | MIT (queries/libraries); CLI/engine proprietary | python, javascript, typescript, go, rust, java, csharp, php, ruby | dataflow-taint (read only), security-patterns (read only) | — |
 | [CodeWiki (Google)](https://codewiki.google) | proprietary | multi | repo-overview (read only) | — |
 | [Comby](https://github.com/comby-tools/comby) | Apache-2.0 | any (delimiter-aware) | structural-search (read only) | — |
 | [Continue (@codebase)](https://github.com/continuedev/continue) | Apache-2.0 | multi | semantic-search (read only) | — |
@@ -698,7 +702,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [radon](https://github.com/rubik/radon) | MIT | python | complexity (read only) | — |
 | [rag_for_git (rag-reviewer)](https://github.com/mimfort/rag_for_git) | MIT | python | py-callers (measured), diff-review (read only), semantic-search (read only), py-impact (rejected) | [card](../research/tools/rag_for_git.md) |
 | [Repomix](https://github.com/yamadashy/repomix) | MIT | multi | context-pack (read only), security-patterns (read only) | — |
-| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | multi | repo-overview (read only) | — |
+| [roam-code](https://github.com/Cranot/roam-code) | Apache-2.0 | multi | multi-lang-graph (read only), repo-overview (read only) | — |
 | [rope](https://github.com/python-rope/rope) | LGPL | python | py-callers (read only) | — |
 | [SCIP (format)](https://github.com/sourcegraph/scip) | Apache-2.0 | python, typescript, go, java, ... (per indexer) | multi-lang-graph (read only) | — |
 | [scip-python](https://github.com/sourcegraph/scip-python) | MIT | python | py-callers (measured) | [card](../research/tools/rag_for_git.md) |
@@ -714,8 +718,8 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 
 ## Latest news
 
-- 2026-11-21 · new-tool · `roam-code` roam-code 14.1.0 on PyPI describes itself as local codebase intelligence for AI coding agents with change-safety gates and an MCP interface. _(unverified)_ — https://pypi.org/project/roam-code/
-- 2026-11-21 · new-tool · `fallow` fallow is an MIT-licensed Rust analyzer for TypeScript and JavaScript offering CLI, MCP and LSP interfaces, per its README. _(unverified)_ — https://github.com/fallow-rs/fallow
+- 2026-11-21 · new-tool · `roam-code` New to the catalog: roam-code 14.1.0 (Apache-2.0, 28 languages per its README), local codebase intelligence for AI coding agents with change-safety gates and an MCP interface. — https://pypi.org/project/roam-code/
+- 2026-11-21 · new-tool · `fallow` New to the catalog: fallow, an MIT-licensed Rust analyzer for TypeScript and JavaScript offering CLI, MCP and LSP interfaces, per its README. — https://github.com/fallow-rs/fallow
 - 2026-11-21 · card · The codemap lab's tool catalog is served to agents: MCP `advise`, `codemap advise`, generated inventory research/matrix.md. — https://github.com/kogriv/codemap/blob/main/research/matrix.md
 - 2026-11-06 · finding · `import-linter` import-linter 2.16 closes two silent passes the lab filed: an unknown contract option and zero contracts now fail (verified by the lab on 2.16). — https://github.com/seddonym/import-linter/issues/393
 - 2026-11-05 · finding · `graphify` Graphify 0.9.103 fixes the builtin homonym the lab filed (a builtin exception bound to a same-named package class); verified by the lab 2026-11-06. — https://github.com/Graphify-Labs/graphify/issues/4989

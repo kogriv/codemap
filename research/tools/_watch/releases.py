@@ -16,6 +16,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 import tomllib
 import urllib.error
@@ -24,6 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT))  # `--report` imports codemap from this checkout
 DATA = ROOT / "codemap" / "advise" / "data"
 TIMEOUT = 15
 
@@ -48,7 +50,8 @@ def clean_tag(tag: str) -> str:
 
 
 def latest(kind: str, name: str) -> dict:
-    """{version, date, source} or raises."""
+    """{version, date, source} or raises. GitHub: the API first; when it refuses (401/403/429), the
+    highest version tag over git, or the HEAD commit."""
     if kind == "pypi":
         d = _get_json(f"https://pypi.org/pypi/{name}/json")
         v = d["info"]["version"]
@@ -62,24 +65,52 @@ def latest(kind: str, name: str) -> dict:
                 "source": f"https://www.npmjs.com/package/{name}/v/{v}"}
     if kind == "github":
         try:
-            d = _get_json(f"https://api.github.com/repos/{name}/releases/latest")
-            return {"version": clean_tag(d["tag_name"]), "date": (d.get("published_at") or "")[:10] or None,
-                    "source": d.get("html_url") or f"https://github.com/{name}/releases"}
+            return _github_api(name)
         except urllib.error.HTTPError as exc:
-            if exc.code != 404:
+            if exc.code not in (401, 403, 429):
                 raise
-        tags = _get_json(f"https://api.github.com/repos/{name}/tags?per_page=1")
-        if tags:
-            return {"version": clean_tag(tags[0]["name"]), "date": None,
-                    "source": f"https://github.com/{name}/tags"}
-        # No releases and no tags: the last commit on the default branch is the only "version" there is.
-        commits = _get_json(f"https://api.github.com/repos/{name}/commits?per_page=1")
-        if not commits:
-            raise LookupError("no releases, no tags, no commits")
-        c = commits[0]
-        return {"version": f"commit-{c['sha'][:7]}", "date": (c["commit"]["committer"]["date"] or "")[:10] or None,
-                "source": c.get("html_url") or f"https://github.com/{name}/commits"}
+        # The API refuses anonymous calls behind some proxies and past the rate limit; git itself still works.
+        return _github_git_tags(name)
     raise ValueError(f"unknown watch kind {kind!r}")
+
+
+def _vkey(v: str) -> tuple:
+    return tuple(int(x) if x.isdigit() else -1 for x in re.split(r"[.\-+]", v))
+
+
+def _github_git_tags(name: str) -> dict:
+    out = subprocess.run(["git", "ls-remote", "--tags", "--refs", f"https://github.com/{name}"],
+                         capture_output=True, text=True, timeout=60, check=True).stdout
+    tags = [clean_tag(line.split("refs/tags/", 1)[1]) for line in out.splitlines() if "refs/tags/" in line]
+    versions = [t for t in tags if re.match(r"^\d+(\.\d+)+$", t)]
+    if not versions:
+        head = subprocess.run(["git", "ls-remote", f"https://github.com/{name}", "HEAD"],
+                              capture_output=True, text=True, timeout=60, check=True).stdout.split()
+        if not head:
+            raise LookupError("API refused; no version tags and no HEAD over git")
+        return {"version": f"commit-{head[0][:7]}", "date": None, "source": f"https://github.com/{name}/commits"}
+    v = max(versions, key=_vkey)
+    return {"version": v, "date": None, "source": f"https://github.com/{name}/releases/tag/{v}"}
+
+
+def _github_api(name: str) -> dict:
+    try:
+        d = _get_json(f"https://api.github.com/repos/{name}/releases/latest")
+        return {"version": clean_tag(d["tag_name"]), "date": (d.get("published_at") or "")[:10] or None,
+                "source": d.get("html_url") or f"https://github.com/{name}/releases"}
+    except urllib.error.HTTPError as exc:
+        if exc.code != 404:
+            raise
+    tags = _get_json(f"https://api.github.com/repos/{name}/tags?per_page=1")
+    if tags:
+        return {"version": clean_tag(tags[0]["name"]), "date": None, "source": f"https://github.com/{name}/tags"}
+    # No releases and no tags: the last commit on the default branch is the only "version" there is.
+    commits = _get_json(f"https://api.github.com/repos/{name}/commits?per_page=1")
+    if not commits:
+        raise LookupError("no releases, no tags, no commits")
+    c = commits[0]
+    return {"version": f"commit-{c['sha'][:7]}", "date": (c["commit"]["committer"]["date"] or "")[:10] or None,
+            "source": c.get("html_url") or f"https://github.com/{name}/commits"}
 
 
 def main(argv: list[str] | None = None) -> int:

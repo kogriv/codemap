@@ -249,7 +249,7 @@ id = "codeql"
 name = "CodeQL"
 url = "https://github.com/github/codeql"
 license = "MIT (queries/libraries); CLI/engine proprietary"
-languages = ["multi"]
+languages = ["python", "javascript", "typescript", "go", "rust", "java", "csharp", "php", "ruby"]
 interface = ["cli", "plugin"]
 watch = { kind = "github", name = "github/codeql-cli-binaries" }
 
@@ -1667,3 +1667,9 @@ tool = "pyright"
 need = "type-errors"
 status = "read"
 summary = "Static type checker and language server for Python; scip-python is built on it (research/02, passing mention)."
+
+[[claim]]
+tool = "roam-code"
+need = "multi-lang-graph"
+status = "read"
+summary = "Per its README: a local SQLite code graph over 28 languages (Python, JavaScript, TypeScript, Go, Rust, Java, C#, PHP, Ruby and more); extraction depth varies by language. Not run by the lab."

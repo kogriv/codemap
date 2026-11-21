@@ -258,17 +258,17 @@
       "date": "2026-11-21",
       "kind": "new-tool",
       "tool": "roam-code",
-      "text": "roam-code 14.1.0 on PyPI describes itself as local codebase intelligence for AI coding agents with change-safety gates and an MCP interface.",
+      "text": "New to the catalog: roam-code 14.1.0 (Apache-2.0, 28 languages per its README), local codebase intelligence for AI coding agents with change-safety gates and an MCP interface.",
       "source": "https://pypi.org/project/roam-code/",
-      "verified": false
+      "verified": true
     },
     {
       "date": "2026-11-21",
       "kind": "new-tool",
       "tool": "fallow",
-      "text": "fallow is an MIT-licensed Rust analyzer for TypeScript and JavaScript offering CLI, MCP and LSP interfaces, per its README.",
+      "text": "New to the catalog: fallow, an MIT-licensed Rust analyzer for TypeScript and JavaScript offering CLI, MCP and LSP interfaces, per its README.",
       "source": "https://github.com/fallow-rs/fallow",
-      "verified": false
+      "verified": true
     },
     {
       "date": "2026-11-21",
