@@ -79,8 +79,13 @@ def main(argv):
             out.append(rec)
             continue
         i, col = hit
-        refs = lsp.request("textDocument/references",
-                           {**pos(root / f, i, col), "context": {"includeDeclaration": False}}) or []
+        try:
+            refs = lsp.request("textDocument/references",
+                               {**pos(root / f, i, col), "context": {"includeDeclaration": False}}) or []
+        except RuntimeError as e:  # a file outside every crate's module tree (included by `#[path]`, a script)
+            rec["error"] = f"rust-analyzer: {e}"[:200]
+            out.append(rec)
+            continue
         prod, test = [], []
         for r in refs:
             rf = rel(root, r["uri"]) if r["uri"].startswith(root.as_uri()) else r["uri"]
