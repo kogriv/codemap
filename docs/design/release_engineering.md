@@ -1342,6 +1342,21 @@ Every expectation holds. Tag `v0.0.41` on both mirrors.
 | Python unchanged | `advise "import cycles" --lang python` | rows R | the same rows R (byte-compare the need section) |
 | version | `codemap --version` | `codemap 0.0.41 · answer format 11 · schema 0.13` | `codemap 0.0.42 · answer format 11 · schema 0.13` |
 
+**0.0.42 published 2026-11-21:** [`codmap` 0.0.42](https://pypi.org/project/codmap/0.0.42/), schema 0.13,
+`ANSWER_FORMAT` 11. From `26cab65`: suite 1381 passed / 2 skipped (1383 collected), CI green, `twine check`
+PASSED. Reconciled from PyPI, both versions in clean venvs with an empty cache:
+
+```
+                                              0.0.41                              0.0.42
+advise --lang rust (first line)               # What codemap covers ...           ## Recipe for rust — what to use, per axis
+advise "dead code" --lang rust                dead-code (Python)                  rs-dead-code; avoid: roam-code, OntoIndex, ...
+advise "ts call graph" (GitNexus)             read only v1.6.9                    read only v1.6.12 · measured on rust only; not run on typescript
+advise "import cycles" --lang python (md5)    bde2fabf…                           bde2fabf… (identical)
+--version                                     codemap 0.0.41 · format 11          codemap 0.0.42 · answer format 11 · schema 0.13
+```
+
+Every expectation holds. Tag `v0.0.42` on both mirrors.
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 
