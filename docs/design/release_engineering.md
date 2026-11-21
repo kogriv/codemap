@@ -1246,6 +1246,20 @@ bquant check / bquearch gate                  exit 0                         exi
 
 Every expectation holds.
 
+**0.0.39 — the release check, pre-registered before the upload (2026-11-21).** Two items (R1-C108, R1-C109);
+schema **0.13**, **`ANSWER_FORMAT` stays 10**.
+
+| | tree form | 0.0.38 (expected) | 0.0.39 (expected) |
+|---|---|---|---|
+| C108 a | `codemap devkit status` in an empty git repo | `invalid choice: 'devkit'`, exit 2 | "No devkit here", exit 1 |
+| C108 b | `[architecture] allowed = [{ from = "a", to = "b" }]` over `a → b`, `b → c` | `unknown key \`allowed\``, exit 2 | rule `allowed` names `b → c`, exit 2; with `b → c` listed, exit 0 |
+| C108 c | `devkit init --package pkg` in an empty repo, then `status` | — | every artifact `current`, exit 0 |
+| C109 | `p/nsp/m.py` (no `__init__.py` in `p/nsp/`) with a function-local import; `p/nsp/migrations/0001_x.py` | no `imports` edge from `p.nsp.m`; `0001_x.py` `unread` | the edge (scope `function`); `p.nsp.migrations.0001_x` a node |
+| version | `codemap --version` | `codemap 0.0.38 · answer format 10 · schema 0.13` | `codemap 0.0.39 · answer format 10 · schema 0.13` |
+
+**Consumers:** `check` on bquant and the bquearch gate identical in markdown; graphs identical apart from the
+version (measured on the dev build, E3/E4).
+
 **Releases stay manual — decided, not deferred (2026-08-27).** A tag-triggered workflow with a trusted
 publisher was offered and declined; releases are cut by hand, the way 0.0.3 was:
 

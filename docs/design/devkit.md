@@ -1,6 +1,6 @@
 # Design — the devkit: codemap adopted by a project in one command, kept current by the suite
 
-**Status:** pre-registered (2026-11-21), before code. **Backlog:** R1-C108.
+**Status:** ✅ **done** (2026-11-21, 0.0.39; implementation c0f2988 + acceptance fixes), pre-registered in f35ecfc before code, reconciled below. **Backlog:** R1-C108.
 **Gap:** [`gaps/adoption_by_hand_2026-11-21.md`](../../gaps/adoption_by_hand_2026-11-21.md).
 
 ## Problem in one paragraph
@@ -205,3 +205,42 @@ E1, E2, E4–E11 and E13 fail on 0.0.38: there is no `allowed` key and no `devki
 | E13 | Project C clone: `devkit init --package <its package> --consumer tests` then `status` exit 0 and `check` green, with no hand step between them |
 
 Surprises go into the reconciliation.
+
+## Reconciliation (2026-11-21)
+
+| # | Result |
+|---|---|
+| E1 | ✅ fixture `a → b` (module), `b → c` (function-local): `allowed = [a→b]` → rule `allowed`, exactly `pkg.b.n → pkg.c.o`; three pairs → green, `allowed_unused = [c→a]`, the note names `--tighten`; an empty list fails both edges. 0.0.38 refuses the key (`unknown key \`allowed\``) |
+| E2 | ✅ one contract error naming the repeat, `from = to` and the extra key; nothing enforced |
+| E3 | ✅ with one surprise. bquant and bquearch `check` markdown byte-identical to 0.0.38; bquant JSON differs only by `applicability.allowed = {declared: 0, applicable: 0}`. Surprise: the answer-format pin moved — the refusal of an *invalid* contract lists the known keys, and `allowed` is one. Wording only; re-pinned without a format bump |
+| E4 | ✅ after R1-C109. First run: 608 pairs against 624 from the independent scan; reconciled by name: every missing pair started in one of three apps without `__init__.py`. That was a codemap defect, not the devkit's: namespace-subpackage modules had no source (R1-C109). After it: 624 = 624, no difference either way. Mutation (`i18n/phone.py` imports `structure.models`, a pair absent): `check` exit 2, exactly that edge named |
+| E5 | ✅ `--tighten` removed exactly the unused line; a reason comment, a free comment line and a hand-added pair kept byte for byte; an edit that would leave a repeated pair wrote nothing |
+| E6 | ✅ empty repo: every artifact, `status` 0. The `.mcp.json` command spawned with an MCP client: `initialize`, all 28 `MCP_TOOLS`, `callers` answers. A commit ran the hook: `rebuild.log` "full ok", graph and `index.json` present |
+| E7 | ✅ bquant clone: `AGENTS.md` outside the block identical, the block appended; `codemap.toml`, `.mcp.json` and the foreign hook byte-identical; the devkit's hook in `.codemap/devkit/post-commit`; exit 1 |
+| E8 | ✅ outdated → `update` → current; a hand edit kept with its diff, `--force` rewrote it; the pin kept, `--repin` moved it. Also seen live: raising `DEVKIT_VERSION` to 2 (below) made `status` say "v1 in this repository, v2 available" and `update` rewrote the regions |
+| E9 | ✅ misspelt flag, misspelt tool, template changed without a bump: each red, each green when restored |
+| E10 | ✅ `brief` on project C (196k lines + 148k of tests): 0.38 s median of 5; `touched` 0.23 s, valid JSON, importer count and top callers; outside the package nothing; no digest → one line. A real `claude -p` session in the E6 repo quoted the SessionStart line back verbatim |
+| E11 | ✅ after two counter defects were fixed (surprises). On a frozen copy of 13 transcripts: codemap 0 / 0, Grep 0 / 0, grep in Bash 512 / 512 against an independent `jq` + split count |
+| E12 | ✅ red: `allowed` check off (2), unused note off (1), hash guard off (1), foreign guard off (1), the scan skipping `.yml` (1), usage de-duplication off (1), misspelt tool (4), misspelt flag (3); cosmetic control green. Full suite 1322 passed, 2 skipped |
+| E13 | ✅ project C clone: `init --package <pkg> --consumer tests` 1 min 13 s (fast graph included), `status` 0, `check` green (608, then 624 after R1-C109) |
+
+**Surprises.**
+- **A codemap defect found by the acceptance, not the unit tests**: modules of a namespace subpackage carried
+  no source, so their function-local imports were lost (R1-C109, fixed in the same release). It also explained
+  R1-C105, whose hypothesis was wrong.
+- **The D7 guard caught the templates on its first run**: prose like "managed by \`codemap devkit\`" and
+  "\`codemap devkit init\` wrote it" reads as a command without its required arguments. Rewritten as prose.
+  Two strengthenings followed: per-template command counts are pinned, so the scan cannot silently stop
+  reading a file. And a git-history check makes sure `TEMPLATES_SHA256` never moves without `DEVKIT_VERSION`:
+  updating the hash alone would have silenced the guard.
+- **The GitLab snippet's path was wrong in D2**: `.codemap/devkit/gitlab-ci.yml` is under a gitignored
+  directory, so it could never be included. It is now `.gitlab/codemap-ci.yml`.
+- **The usage counter was wrong twice**. Transcripts store request blobs that repeat earlier tool calls without
+  a timestamp (1 301 of 16 536 on the run); only `assistant` records count now, once per tool-use id.
+  And a newline separates commands in bash, which the first regex missed. Subagent transcripts are counted too.
+- **`cwd = ".."` for Codex was an unverified assumption**. Codex reads `.codex/config.toml` only in a trusted
+  project, which was checked with a temporary `CODEX_HOME`, and resolves a relative `cwd` against `.codex/`.
+  The entry now names the absolute root. The template changed, so `DEVKIT_VERSION` is 2 at release.
+- The pin path kept a `..` (`e13/../dkv/bin/codemap`); now `abspath`.
+- Measured, not designed: on the same tree the per-machine `.mcp.json` and the git hook hold absolute paths,
+  and `.codex/config.toml` now does too. The devkit says so and leaves committing them to the project.

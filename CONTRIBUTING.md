@@ -34,6 +34,10 @@ just as importantly, what it does not catch.
 - **Tests required.** Each milestone ships acceptance tests (`tests/test_mNN_*.py`) with fixtures under
   `tests/fixtures/`. Keep the full suite green.
 - **One milestone per change.** Update [BACKLOG.md](BACKLOG.md) and [CHANGELOG.md](CHANGELOG.md).
+- **The devkit's templates are a product surface.** `codemap/devkit/templates/` is installed into other
+  repositories by `codemap devkit`. Renaming a command, flag or MCP tool fails `tests/test_r1c108_devkit.py`
+  until the templates follow. Changing a template means raising `DEVKIT_VERSION` and updating
+  `TEMPLATES_SHA256`; that release's note then says "run `codemap devkit update`".
 
 ## Reporting issues
 

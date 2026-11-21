@@ -5,6 +5,45 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.39] - 2026-11-21
+
+**`codemap devkit`: a repository adopts codemap in one command, and the adoption stays current.** Schema
+unchanged (**0.13**). **`ANSWER_FORMAT` stays 10:** a contract without the new key is judged and rendered
+exactly as before; JSON gains one additive key; the refusal of an invalid contract lists `allowed` among the
+known keys (wording).
+
+- **New: `codemap devkit init | update | status | ratchet | brief | touched | index | usage`** (R1-C108, design
+  [`docs/design/devkit.md`](docs/design/devkit.md), guide [`docs/devkit.md`](docs/devkit.md)).
+  - What `init` writes: the agent rules block in `AGENTS.md`, which Claude Code and Codex both read; the MCP
+    server for Claude Code (`.mcp.json`) and, opt-in, Codex; a post-commit graph rebuild; a starter
+    architecture contract written from the graph; opt-in Claude Code hooks; an opt-in CI gate.
+  - It writes only regions it owns. The hash of each is recorded in `.codemap-devkit.json`, so a region
+    edited by hand is kept and reported, and an artifact the devkit did not write is never overwritten
+    without `--force`. The pin stays the project's.
+  - Measured on a 196k-line project: `init` takes 1 min 13 s with the graph, and `status` and `check` are
+    green straight after.
+- **New: the `allowed` ratchet in `[architecture]`.** Every import between two layers must be a listed pair,
+  at every import scope. A pair nothing uses any more is a note, never a violation.
+  - `codemap devkit ratchet` writes the list from a graph, and `--tighten` removes unused pairs while keeping
+    hand lines.
+  - Measured on 53 tangled layers: 624 pairs, and a test import was named exactly.
+  - A contract with `allowed` needs codmap ≥ 0.0.39.
+- **What keeps the devkit current is the suite.** Every command in every template parses with the CLI
+  parser, every MCP tool named exists, and templates cannot change without `DEVKIT_VERSION` (now 2), also
+  checked over git history.
+- **New: `codemap devkit usage`** counts `mcp__codemap__*` calls against grep in local Claude Code
+  transcripts, so "is the tool used?" has a number.
+- **Fixed: modules of a namespace subpackage had no source** (R1-C109, design
+  [`docs/design/namespace_source.md`](docs/design/namespace_source.md)). Their function-local, class-body,
+  `TYPE_CHECKING` and dotted imports were silently lost, and a module file whose name is not an identifier
+  (`0001_initial.py`) was dropped as `unread`. Both have been wrong since 0.0.38 (R1-C94).
+  - On a Django project with three apps without `__init__.py`: 16 layer pairs and 18 `unread` migrations
+    recovered.
+  - On the R1-C94 corpus: two of 12 repositories gain function-local imports, and the other ten graphs are
+    identical.
+  - Closes R1-C105, whose hypothesis (a name clash with coverage.py) was wrong.
+- `python -m codemap` works (the devkit pins it when there is no console script).
+
 ## [0.0.38] - 2026-11-10
 
 **A repository root builds with its modules and its import edges.** Schema unchanged (**0.13**).

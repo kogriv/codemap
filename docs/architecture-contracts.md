@@ -48,6 +48,7 @@ exhaustive = false
 | `independent` | two layers in a group import each other | the edges between them |
 | `forbidden` | a declared `from → to` import exists | the edges |
 | `forbidden` with `indirect = true` | any chain of imports leads from `from` to `to`, through any module | the edges where the chain enters `to`, and a shortest chain for each |
+| `allowed` (R1-C108) | an import between two layers whose pair is not listed (every import scope counts) | the edges, grouped by pair; unused pairs as a note, never a violation |
 | `no_cycles` | the **eager** import graph has a cycle | the cycles |
 | `no_lazy_cycles` | a cycle is closed only by a function-local import | those cycles |
 | `no_type_only_cycles` | a cycle is closed only by an import under `if TYPE_CHECKING:` | those cycles |
@@ -56,6 +57,17 @@ exhaustive = false
 
 Rules that reference a layer not present in the graph are **inert** — you can write
 the contract ahead of the code.
+
+### The ratchet: `allowed` (R1-C108)
+
+When `allowed` is present, every import between two layers must be a listed `{ from, to }` pair. Every import
+scope counts: module level, function-local, `TYPE_CHECKING`, stub. Each is a dependency of one layer on the
+other. An empty list allows no cross-layer import at all. A listed pair that no import uses is reported in
+`allowed_unused` (JSON) and as a note, never as a violation: removing a dependency must not turn the gate red.
+It is the rule for a tree whose layers are too tangled for `layers`: it freezes what exists, so every new
+dependency between layers is argued in review. `codemap devkit ratchet` writes the list from a graph and
+`--tighten` removes unused pairs; see [devkit.md](devkit.md). Older codemap refuses the key (closed schema),
+so a contract with `allowed` needs codmap ≥ 0.0.39.
 
 ### No chain at all: `indirect = true` (R1-C78)
 

@@ -8,7 +8,7 @@ and a **SCIP index** for interop with Sourcegraph / Glean and other precise-code
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1300 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1324 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 31 ops (28 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -129,6 +129,17 @@ Dependencies: `griffe` (structure), `networkx` (query backend), `jedi` (deep cal
 Optional extras: `mcp` (Model Context Protocol server), `scip` (protobuf, for SCIP export).
 
 ## Quickstart
+
+**Adopting codemap in a repository?** One command installs the whole discipline — the agent rules in
+`AGENTS.md`, the MCP server for Claude Code (and Codex), a post-commit graph rebuild, an architecture contract
+written from the graph with the `allowed` ratchet, optional Claude Code hooks and a CI gate — and
+`codemap devkit status` says when it has drifted. See **[docs/devkit.md](docs/devkit.md)**.
+
+```bash
+codemap devkit init --package src/yourpkg --consumer tests
+```
+
+By hand:
 
 ```bash
 # build the canonical graph of a package (its directory name is the package name every id starts with)
@@ -282,6 +293,8 @@ the live graph, findings, and the milestone that closed them.
 - **[docs/export.md](docs/export.md)** — export recipes: RAG, mermaid, Obsidian vault, SCIP + ctags interop.
 - **[docs/accuracy.md](docs/accuracy.md)** — measured call-graph accuracy, the honest static ceiling, and
   the grep-vs-graph value proof (both harnesses guarded in CI).
+- **[docs/devkit.md](docs/devkit.md)** — `codemap devkit`: adopt codemap in a repository in one command
+  (agent rules, MCP, hooks, the ratchet contract) and keep the adoption current.
 - **[docs/architecture-contracts.md](docs/architecture-contracts.md)** — declare the intended architecture
   in `codemap.toml` and enforce it with `codemap check` (CI gate; codemap dogfoods its own).
 - **[docs/api-diff.md](docs/api-diff.md)** — `codemap diff` two snapshots for added/removed/changed symbols
