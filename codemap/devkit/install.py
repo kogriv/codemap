@@ -321,6 +321,29 @@ def _query(root: Path, st: dict):
     return Query(store.load(str(root / st.get("graph", GRAPH))))
 
 
+def graph_unfit(root: Path, graph: Path) -> str | None:
+    """Why ``graph`` must not be the base of a contract, or None (R1-C114).
+
+    A contract written from a graph built by another codemap, or from one behind its source tree,
+    allows pairs the gate (run with the pinned codemap on the current tree) will not see, or misses
+    pairs it will: the ratchet would be wrong on its first run.
+    """
+    from codemap import store
+    from codemap.serve.currency import graph_currency
+    g = store.load(str(graph))
+    prov = g.provenance or {}
+    built_by = (prov.get("tool") or {}).get("version")
+    running = _version()
+    if built_by and running != "unknown" and built_by != running:
+        return f"the graph was built by codemap {built_by}, this is codemap {running}"
+    cur = graph_currency(str(graph), prov.get("scope_id"), roots=prov.get("roots"), target=g.target,
+                         base=str(root))
+    if cur.get("status") == "behind":
+        parts = [f"{cur[k]} {k}" for k in ("changed", "added", "removed") if cur.get(k)]
+        return f"the graph is behind its source tree ({', '.join(parts) or 'the scope differs'})"
+    return None
+
+
 def _contract(root: Path, st: dict, *, ratchet: bool, dry_run: bool, notes: list[str]) -> None:
     from codemap.arch import layer_pairs
     from codemap.devkit.ratchet import RatchetError, edit_region, starter_flags
@@ -334,6 +357,11 @@ def _contract(root: Path, st: dict, *, ratchet: bool, dry_run: bool, notes: list
         return
     if not graph.is_file():
         notes.append("contract not written: no graph (`--no-build`); run `codemap devkit ratchet` after a build")
+        return
+    unfit = graph_unfit(root, graph)
+    if unfit:
+        notes.append(f"contract not written: {unfit}; rebuild it with the pinned codemap, then run "
+                     "`codemap devkit ratchet`")
         return
     q = _query(root, st)
     used = sorted(layer_pairs(q))

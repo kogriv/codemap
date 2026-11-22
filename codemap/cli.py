@@ -1112,6 +1112,11 @@ def _devkit_ratchet(root, args) -> int:
     from codemap.devkit.state import load_state
     st = load_state(root) or {}
     graph = args.graph or str(root / st.get("graph", ".codemap/graph.json"))
+    from codemap.devkit.install import graph_unfit
+    unfit = graph_unfit(root, Path(graph))
+    if unfit:
+        print(f"error: {unfit}; rebuild it with the pinned codemap, then run this again", file=sys.stderr)
+        return 2
     q = Query(store.load(graph))
     used = sorted(layer_pairs(q))
     try:
@@ -1539,7 +1544,8 @@ def build_parser() -> argparse.ArgumentParser:
     di.add_argument("--ci", choices=["github", "gitlab"], default=None, help="Also write a CI gate.")
     di.add_argument("--no-hook", dest="hook", action="store_false", help="Do not install the post-commit hook.")
     di.add_argument("--no-build", dest="build", action="store_false",
-                    help="Do not build the graph now (the contract is then not written).")
+                    help="Do not build a graph now. The contract is written from an existing graph, if it was "
+                         "built by this codemap and is not behind its tree; otherwise it is not written.")
     di.add_argument("--ratchet", action="store_true",
                     help="Add the `allowed` region to an existing `[architecture]` contract.")
     di.add_argument("--dry-run", action="store_true", help="Report what would change; write nothing.")

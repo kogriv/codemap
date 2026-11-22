@@ -5,6 +5,14 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+- **devkit writes the contract only from a graph this codemap built over the current tree** (R1-C114). `init` used
+  any `.codemap/graph.json` it found, with or without `--no-build`, and `devkit ratchet` did the same: a graph from
+  another codemap version, or one behind its tree, gave an `allowed` list the gate would not agree with on its
+  first run. Both now refuse such a graph and say why (`init` with a note, `ratchet` with exit 2). The `--no-build`
+  help no longer claims the contract is then not written. Reported by a consumer project after `init --ratchet
+  --no-build`.
+
 ## [0.0.42] - 2026-11-21
 
 **`advise` has a recipe for Rust.** Schema **0.13**, **`ANSWER_FORMAT` stays 11**: the `advise` answer gains an
