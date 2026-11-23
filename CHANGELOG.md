@@ -5,7 +5,10 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
-**Fixes for the follow-up audit of 0.0.46** (FU-01…FU-03, R1-C133…C135). The audit and the response:
+## [0.0.47] - 2026-11-23
+
+**A security release: fixes for the follow-up audit of 0.0.46** (FU-01…FU-03, R1-C133…C135). Schema 0.13;
+**`ANSWER_FORMAT` 12 unchanged**; devkit **v7** (templates unchanged) — run `codemap devkit update`. The audit and the response:
 [`docs/audits/2026-11-23-followup-response.md`](docs/audits/2026-11-23-followup-response.md).
 
 ### Security
