@@ -33,7 +33,7 @@ jobs:
       matrix:
         python: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
       # ~10% of the suite is dogfood against a real external package, which the tests look
       # for as a sibling of this checkout. Without it they skip, and a green run made of
       # skips is not a pass — the same standard the `interop` job is held to.
@@ -52,7 +52,7 @@ jobs:
       # every bquant-dependent test really did run against this tree. 274ab46 is the 0.0.7
       # release tree (tag v0.0.7 plus one changelog file); that exact tree is what was measured.
       - name: Check out the dogfood target (pinned)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           repository: kogriv/bquant
           ref: 274ab46c4b3e9fb17f56057dcec56a6154493d37
@@ -62,7 +62,7 @@ jobs:
           sibling="$(dirname "$GITHUB_WORKSPACE")/bquant"
           mv "$GITHUB_WORKSPACE/_dogfood" "$sibling"
           test -d "$sibling/bquant"   # source-only: it is read, never installed
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: ${{ matrix.python }}
       - name: Install
@@ -111,8 +111,8 @@ jobs:
     name: determinism (fast tier, byte-identical)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: Install
@@ -141,8 +141,8 @@ jobs:
     name: wheel installs and runs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: Build both distributions
@@ -174,12 +174,31 @@ jobs:
   # skip when the binaries are absent — which, on the only machine that has ever run this
   # suite, is always. They have therefore never executed. The binaries are installed here
   # and their presence is asserted, so a skip cannot quietly pass for a pass.
+  # R1-C128: known vulnerabilities in what `pip install codmap[mcp,scip]` brings in. Audited from a separate
+  # environment so the auditor's own dependencies are not what is judged. No upper bounds on the package's
+  # dependencies (a library's choice); this job is how a vulnerable resolution gets seen.
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install the package and the auditor apart
+        run: |
+          python -m venv /tmp/target
+          /tmp/target/bin/pip install --upgrade pip
+          /tmp/target/bin/pip install '.[mcp,scip]'
+          python -m pip install --upgrade pip pip-audit
+      - name: pip-audit
+        run: pip-audit --path /tmp/target/lib/python3.12/site-packages
+
   interop:
     name: interop (readtags + scip)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: Install the external CLIs
@@ -187,6 +206,9 @@ jobs:
           # Pinned, not "latest": the interop claim is verified against a stated version,
           # and a silently moving target would make a future red run ambiguous.
           SCIP_VERSION: v0.9.0
+          # R1-C128: the archive is checked before it is unpacked. Matches the digest GitHub publishes for the
+          # release asset; a change of SCIP_VERSION changes this line in the same commit.
+          SCIP_SHA256: fc2e7273e110be9f35924da1066000183791e8bfdb0391355de6eaaa070fec75
         run: |
           sudo apt-get update
           sudo apt-get install -y universal-ctags
@@ -195,8 +217,10 @@ jobs:
           # whole archive and locate the binary rather than assuming its position in it.
           mkdir -p "$HOME/.local/bin"
           tmp="$(mktemp -d)"
-          curl -fsSL "https://github.com/sourcegraph/scip/releases/download/${SCIP_VERSION}/scip-linux-amd64.tar.gz" \
-            | tar -xz -C "$tmp"
+          curl -fsSL -o "$tmp/scip.tgz" \
+            "https://github.com/sourcegraph/scip/releases/download/${SCIP_VERSION}/scip-linux-amd64.tar.gz"
+          echo "${SCIP_SHA256}  $tmp/scip.tgz" | sha256sum -c -
+          tar -xzf "$tmp/scip.tgz" -C "$tmp"
           find "$tmp" -type f -name scip -exec install -m 0755 {} "$HOME/.local/bin/scip" \;
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Refuse to pass by skipping

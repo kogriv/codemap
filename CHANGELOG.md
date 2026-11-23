@@ -14,12 +14,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   hook and CI unquoted. Now: only a pin of the shape the devkit writes, existing and not a file of the repository,
   is run or kept; paths must be relative, inside the repository after symbolic links, from `[A-Za-z0-9._/@+-]`,
   or the state is refused with exit 2 before any write; shell/YAML values are quoted; the python fallback pin is
-  `python -I -m codemap`. **devkit v6** — run `codemap devkit update`.
+  `python -I -m codemap`. **devkit v7** — run `codemap devkit update`.
 
 ### Added
 - **`check --require-current`** (R1-C127, audit F-13): fails (exit 2) unless the graph is checked current. An
   unknown currency (a graph handed over without provenance, roots not found) passes by default — the R1-C70
   decision stands — and a strict gate can now refuse it. Excludes `--allow-stale`. A graph from `--build` passes.
+- **CI supply chain** (R1-C128, audit F-15): GitHub Actions pinned by commit SHA (the same commits `@v4`/`@v5`
+  pointed to), in codemap's CI and in the workflow the devkit generates; the SCIP archive is checked against its
+  sha256 (equal to the digest GitHub publishes) before it is unpacked; a new `audit` job runs `pip-audit` over
+  what `codmap[mcp,scip]` installs. No upper bounds on the package's dependencies — a library's choice.
 
 ### Fixed
 - **`serve` survives any JSON value, and a reload no longer interleaves with a request** (R1-C122, audit F-04,
