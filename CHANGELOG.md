@@ -13,7 +13,8 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Security
 - **devkit no longer runs or writes what project files say** (R1-C121, external audit F-01/F-02/F-09;
-  [gap note](gaps/devkit_trusts_project_files_2026-11-23.md)). `devkit status` and `update` ran the codemap command
+  [gap note](gaps/devkit_trusts_project_files_2026-11-23.md); advisory
+  [GHSA-c3hp-596c-2p77](https://github.com/kogriv/codemap/security/advisories/GHSA-c3hp-596c-2p77), 0.0.39–0.0.45). `devkit status` and `update` ran the codemap command
   found in `.mcp.json` (`--version`, and an interpreter from its shebang), and `update` wrote it into the
   post-commit hook, where it ran on every commit. Paths in `.codemap-devkit.json` (`agents_file`, `graph`,
   `package`, roots) were not checked, so `../x` wrote outside the repository, and `package`/`graph` reached the
