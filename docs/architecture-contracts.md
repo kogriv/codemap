@@ -255,6 +255,7 @@ codemap check --build ./yourpkg                 # or build fresh
 codemap check --graph graph.json --root infra/   # the dir holding codemap.toml (default: cwd)
 codemap check --graph graph.json --require-contract   # a missing contract is a failure
 codemap check --graph graph.json --allow-stale        # do not fail on a graph behind its tree
+codemap check --graph graph.json --require-current    # fail unless the graph is checked current
 ```
 
 **A graph read from disk is checked against its source tree first** (R1-C70). `check --graph`
@@ -266,7 +267,9 @@ from:
   was. `--allow-stale` returns the verdict's own exit code and keeps the line.
 - If the graph matches its tree, one line says so.
 - If it cannot tell (no sidecar beside the graph, the build directory is gone), it says "graph
-  currency not checked" with the reason, and the exit code is the verdict's.
+  currency not checked" with the reason, and the exit code is the verdict's. A strict gate that must not
+  pass on an unchecked graph adds `--require-current` (R1-C127): then anything but "current" exits **2**.
+  The two flags exclude each other.
 
 `--build` needs none of this: the graph comes from the tree in the same run. Before, a graph built
 before a forbidden import was added answered "✅ Contract satisfied" and said nothing about its age.

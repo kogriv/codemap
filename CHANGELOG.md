@@ -16,6 +16,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   or the state is refused with exit 2 before any write; shell/YAML values are quoted; the python fallback pin is
   `python -I -m codemap`. **devkit v6** — run `codemap devkit update`.
 
+### Added
+- **`check --require-current`** (R1-C127, audit F-13): fails (exit 2) unless the graph is checked current. An
+  unknown currency (a graph handed over without provenance, roots not found) passes by default — the R1-C70
+  decision stands — and a strict gate can now refuse it. Excludes `--allow-stale`. A graph from `--build` passes.
+
 ### Fixed
 - **`serve` survives any JSON value, and a reload no longer interleaves with a request** (R1-C122, audit F-04,
   F-05). A line `null` (or `[]`, `42`, a string, `{"op": []}`) raised out of `Session.handle` and ended the

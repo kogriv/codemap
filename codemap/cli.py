@@ -1052,7 +1052,14 @@ def _cmd_check(args) -> int:
         raise SystemExit("error: no [architecture] contract found (--require-contract)")
     violations = check_contract(q, contract)
     _emit_answer(render_check(q, contract, violations, **kw))
-    return _check_exit(violations, currency, allow_stale)
+    rc = _check_exit(violations, currency, allow_stale)
+    # R1-C127: `unknown` passes by design (R1-C70: "I cannot tell" is not "behind"); a strict gate can refuse it.
+    if getattr(args, "require_current", False) and currency is not None and currency.get("status") != "current":
+        why = currency.get("reason") or f"{currency.get('status')}"
+        print(f"error: the graph is not known to match its source tree ({why}) — --require-current accepts "
+              "only a graph checked current, or one built in this run (--build)", file=sys.stderr)
+        return 2
+    return rc
 
 
 def _cmd_advise(args) -> int:
@@ -1596,9 +1603,13 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Dir with codemap.toml holding [architecture] (default: cwd).")
     ck.add_argument("--require-contract", action="store_true",
                     help="Fail if no [architecture] contract is present (default: no-op success).")
-    ck.add_argument("--allow-stale", action="store_true",
-                    help="With --graph: do not fail when the graph is behind its source tree "
-                         "(R1-C70); the 'behind' line is still printed.")
+    ck_stale = ck.add_mutually_exclusive_group()
+    ck_stale.add_argument("--allow-stale", action="store_true",
+                          help="With --graph: do not fail when the graph is behind its source tree "
+                               "(R1-C70); the 'behind' line is still printed.")
+    ck_stale.add_argument("--require-current", action="store_true",
+                          help="With --graph: fail unless the graph is checked current — an unknown currency "
+                               "(no provenance, roots not found) fails too (R1-C127).")
     ck.set_defaults(func=_cmd_check)
 
     # R1-C108: the devkit — adopt codemap in a repository and keep the adoption current.
