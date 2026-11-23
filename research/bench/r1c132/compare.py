@@ -5,7 +5,8 @@
 Recall: of the package-internal calls observed while the project's own tests ran, how many are `calls` edges.
 Precision: of the `calls` edges, how many are confirmed, and how many are contradicted — every call site in the
 caller naming the target ran, yet the target was never entered from that caller. Edges with a site that did not
-run (`unexercised`, `partly_run`, `caller_not_run`) or with no site naming the target (`no_site`) are not judged.
+run (`unexercised`, `partly_run`, `caller_not_run`), with no site naming the target (`no_site`), or whose target
+is an attribute rather than a function or class (`attribute_target`) are not judged.
 
 Definitions (fixed before the runs, docs in DESIGN.md):
 
@@ -226,6 +227,8 @@ def compare(graph: str, trace_path, src: str) -> dict:
     for (f, t), res in calls.items():
         if (f, t) in rt_keys or (nodes[t]["kind"] == "class" and (f, t + ".__init__") in rt_keys):
             out = "confirmed"
+        elif nodes[t]["kind"] not in ("function", "class"):
+            out = "attribute_target"  # e.g. `self._key(x)` where _key holds a caller's function: not observable
         else:
             out = sites.judge(f, t, started)
         judged[out] += 1

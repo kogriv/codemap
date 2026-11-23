@@ -67,3 +67,16 @@ def only_a():
 
 def never_called():
     return h(3)
+
+
+def gen():
+    yield h(4)
+
+
+def use_gen():
+    return gen()
+
+
+class G:
+    def items(self):
+        yield 1

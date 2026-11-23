@@ -42,6 +42,8 @@ EXPECTED = {
     ("ctl.pick", "ctl.A.run", "direct", False),
     ("ctl.only_a", "ctl.A", "direct", True),
     ("ctl.only_a", "ctl.A.run", "direct", False),
+    ("ctl.use_gen", "ctl.gen", "direct", False),             # a generator: taken where it is called, not where
+    ("ctl.gen", "ctl.h", "direct", False),                   # it first runs (the test, which iterates it)
 }
 
 
@@ -89,5 +91,5 @@ def test_c2b_on_the_control_package_codemap_is_judged_without_a_contradiction(tr
     for deep in (False, True):
         r = compare(str(_graph(tmp_path, deep)), str(trace), str(CONTROL))
         assert r["contradicted"] == [], (deep, r["contradicted"])
-        assert r["recall"]["explicit"]["pairs"] == 14    # 18 observed: minus the decorator, a pair seen two
+        assert r["recall"]["explicit"]["pairs"] == 16    # 20 observed: minus the decorator, a pair seen two
                                                          # ways, two __init__ standing behind a construction

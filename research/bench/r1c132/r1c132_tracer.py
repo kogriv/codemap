@@ -8,7 +8,9 @@ Environment:
 
 What counts as a call ``F → G`` (the same attribution codemap uses, checked on a probe package):
 - G is a named function of the package (module-level function or method; not a nested ``<locals>`` function,
-  not a lambda, not module code). Its frame starts (``PY_START``; a generator's first start).
+  not a lambda, not module code). Its frame starts (``PY_START``). A generator, coroutine or async generator
+  is taken at the call instruction instead (``CALL``): its frame first runs in whoever iterates it, so the frame
+  above it then is the consumer, not the caller.
 - F is the nearest frame above G's that belongs to a named package function or to module code. Frames of
   nested functions and lambdas are skipped (codemap attributes their calls to the enclosing function), and so
   are at most ``MAX_EXTERNAL`` frames of code outside the package (``functools``, ``contextlib`` …). A test
@@ -95,11 +97,19 @@ def _caller_of(fr):
     return None, 0
 
 
+#: a generator, coroutine or async generator starts running at its first ``next``/``send``/``await`` — in the
+#: consumer's frame, not the caller's — so its call is taken at the call instruction instead (``_on_call``)
+_LAZY = inspect.CO_GENERATOR | inspect.CO_COROUTINE | inspect.CO_ASYNC_GENERATOR | inspect.CO_ITERABLE_COROUTINE
+
+
 def _on_start(code, offset):
     ci = _code_info(code)
     if ci is None or ci[1] or ci[3] != "func":
         return mon.DISABLE            # outside the package, nested, module or class-body code: never a callee
     callee = ci[0]
+    if code.co_flags & _LAZY:
+        started[callee] += 1
+        return None                   # its caller is recorded where it was called
     frame = sys._getframe(1)
     started[callee] += 1
     caller, via = _caller_of(frame.f_back)
@@ -121,16 +131,27 @@ def _on_start(code, offset):
 
 
 def _on_call(code, offset, callable_, arg0):
-    """A call instruction: a package class called here is a construction, whatever its __init__ is (generated
-    by dataclasses, inherited from outside, absent). A site that calls something else is switched off."""
-    if not isinstance(callable_, type):
+    """A call instruction. A package class called here is a construction, whatever its __init__ is (generated
+    by dataclasses, inherited from outside, absent); a package generator or coroutine function called here is
+    its call. A site that calls anything else is switched off."""
+    if isinstance(callable_, type):
+        mod = getattr(callable_, "__module__", "") or ""
+        if not (mod == PKG or mod.startswith(PKG + ".")):
+            return mon.DISABLE
+        caller, via = _caller_of(sys._getframe(1))
+        if caller is not None:
+            edges[(caller, f"{mod}.{callable_.__qualname__}", via | 8)] += 1
+        return None
+    fn = getattr(callable_, "__func__", callable_)          # a bound method calls its function
+    fcode = getattr(fn, "__code__", None)
+    if fcode is None or not fcode.co_flags & _LAZY:
         return mon.DISABLE
-    mod = getattr(callable_, "__module__", "") or ""
-    if not (mod == PKG or mod.startswith(PKG + ".")):
+    ci = _code_info(fcode)
+    if ci is None or ci[1] or ci[3] != "func":
         return mon.DISABLE
     caller, via = _caller_of(sys._getframe(1))
     if caller is not None:
-        edges[(caller, f"{mod}.{callable_.__qualname__}", via | 8)] += 1
+        edges[(caller, ci[0], via)] += 1
     return None
 
 

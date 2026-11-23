@@ -122,3 +122,17 @@ caller. It answers "can I trust the list `callers` gives me".
   pairs.
 - Edges into third-party code.
 - Calls from tests into the package. The `tests` and `covers` answers deserve a separate benchmark.
+
+## Deviations (recorded as they happened)
+
+1. **Generator calls were attributed to the consumer, not the caller (tracer v1).** C5 found it on the first
+   run of more-itertools (33 "contradicted" deep edges, such as `strip → rstrip`). A generator's frame first
+   runs at `next()`, in whoever iterates it. The tracer now takes generators, coroutines and async generators
+   at the call instruction (`CALL`) and no longer at `PY_START`. The control package gained the case, and the
+   mutation of it turns C1 red.
+2. **Edges to attribute nodes are not judged.** In `self._key(x)`, `_key` holds a function the caller passed,
+   and codemap points the edge at the attribute node. The truth cannot see that call, so the outcome is
+   `attribute_target`, not judged.
+3. **The first launch raced on the shared codmap environment**, and click failed before it started. The
+   comparisons of the four finished projects came from tracer v1 and are discarded. All five projects are
+   rerun with the fixed harness. Nothing from the first run is used.
