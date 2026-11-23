@@ -1348,6 +1348,26 @@ Run from PyPI in clean venvs, both versions, on the same invented fixtures:
 | Russian block | `devkit init --agents-lang ru` | argparse error | block opens "## codemap — граф кода" |
 | version | `codemap --version` | `codemap 0.0.42 · answer format 11 · schema 0.13` | `codemap 0.0.43 · answer format 12 · schema 0.13` |
 
+**0.0.43 published 2026-11-23:** [`codmap` 0.0.43](https://pypi.org/project/codmap/0.0.43/), schema 0.13,
+`ANSWER_FORMAT` 12, devkit v5. From `6e64420`: suite 1412 passed / 2 skipped (1416 collected; the two failures of
+the first local run — the editable install a release behind, and the R1-C13 per-symbol grep claim — fixed before
+the commit), CI green, `twine check` PASSED. Reconciled from PyPI, both versions in clean venvs with an empty cache:
+
+```
+                                         0.0.42                                  0.0.43
+callback (self._h, prepare=self._m)      high, "no inbound calls, references…"   low, "referenced (references) by core×1"
+test call through a module (w._f())      _f high                                 "Called only from outside…: 1 private", tests×1
+public functions                         (silent); --public: unrecognized        "Not judged: 2 public…"; --public lists them
+build -o nodir/g.json                    [Errno 2]                               graph written, directory created
+check --graph <missing>                  [Errno 2]                               "no graph at …", the build command
+known_lazy_cycles, a pair grown to four  contract not read: unknown key          1 new tangle, "grew from the known (pkg.x, pkg.y)"
+rules file inside --docs, then check     exit 2                                  exit 0
+devkit init --agents-lang ru             unrecognized arguments                  "## codemap — граф кода `pkg`"
+--version                                answer format 11 · schema 0.13          codemap 0.0.43 · answer format 12 · schema 0.13
+```
+
+Every expectation holds. Tag `v0.0.43` on both mirrors.
+
 **0.0.42 — the release check, pre-registered before the upload (2026-11-21).** The Rust recipe (R1-C111/C112),
 `ANSWER_FORMAT` stays 11 (additive key `recipe`). Run from PyPI in clean venvs, both versions, same commands:
 
