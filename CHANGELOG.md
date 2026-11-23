@@ -12,7 +12,8 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [0.0.46] - 2026-11-23
 
-**A security release, and the external audit's other findings** (R1-C121…C129). Schema 0.13; **`ANSWER_FORMAT`
+**A security release, and the external audit's other findings** (R1-C121…C129). The audit and the response to it,
+finding by finding: [`docs/audits/`](docs/audits/2026-11-23-external-response.md). Schema 0.13; **`ANSWER_FORMAT`
 12 unchanged** (refusals and error texts change, no field is added); the `scope_id` value formula changes
 (R1-C126); **devkit v7** — run `codemap devkit update`.
 
