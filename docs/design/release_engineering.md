@@ -1355,7 +1355,7 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 
 **0.0.45 published 2026-11-23:** [`codmap` 0.0.45](https://pypi.org/project/codmap/0.0.45/), from `eb092b4`:
 suite 1419 passed / 2 skipped, CI green, `twine check` PASSED. Reconciled from PyPI: on the factory runner 0.0.44
-lists `pkg.tools.b.run` and `pkg.tools.b.empty` [high] beside `pkg.tools.a.helper`; 0.0.45 lists `a.helper` only;
+lists `a.run`, `b.run`, `b.empty` [high] beside `pkg.tools.a.helper`; 0.0.45 lists `a.helper` only;
 `--version` `codemap 0.0.45 · answer format 12 · schema 0.13`. Every expectation holds. Tag `v0.0.45`.
 
 **0.0.44 published 2026-11-23:** [`codmap` 0.0.44](https://pypi.org/project/codmap/0.0.44/), schema 0.13,
