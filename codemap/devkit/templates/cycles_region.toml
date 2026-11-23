@@ -1,0 +1,8 @@
+# >>> codemap-devkit cycles v{{devkit_version}} — the cycle ratchet: import cycles known today, each by its modules.
+#     A cycle inside a listed group passes; any other fails `check`, and so does a known cycle that grew.
+#     `codemap devkit ratchet` adds what the graph has; `--tighten` removes groups that hold no cycle any more.
+known_lazy_cycles = [
+{{lazy}}]
+known_type_only_cycles = [
+{{type_only}}]
+# <<< codemap-devkit cycles

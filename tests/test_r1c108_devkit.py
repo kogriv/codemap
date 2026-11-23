@@ -245,7 +245,8 @@ SAMPLE = {"devkit_version": 1, "codemap_version": "0.0.0", "package": "src/pkg",
           "build_args": "--consumer tests --mode full", "agents_file": "AGENTS.md", "pin_shell": "codemap",
           "pin_assign": "codemap", "pin_command_toml": '"codemap"', "pin_args_toml": "", "pairs": "",
           "flags": "no_cycles = true", "currency": "current", "devkit_note": "", "root_toml": '"/repo"',
-          "outside_languages": "; this repository also has typescript, which it does not read"}
+          "outside_languages": "; this repository also has typescript, which it does not read",
+          "lazy": "", "type_only": ""}
 
 _OPS = ("|", "||", "&&", ";", "&")
 
@@ -295,7 +296,8 @@ def _all_templates():
 #: gains or loses a command updates its count here, in the same commit.
 COMMANDS_PER_TEMPLATE = {"agents_block.md": 9, "brief.txt": 1, "claude_hooks.json": 2, "codex_region.toml": 1,
                          "contract_head.toml": 1, "github-workflow.yml": 2, "gitlab-ci.yml": 2,
-                         "mcp_claude.args": 1, "post-commit.sh": 3, "ratchet_region.toml": 2}
+                         "mcp_claude.args": 1, "post-commit.sh": 3, "ratchet_region.toml": 2,
+                         "cycles_region.toml": 1}
 
 
 def test_d7_every_command_in_every_template_parses_with_the_cli_parser():

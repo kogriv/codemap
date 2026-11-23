@@ -5,6 +5,14 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Added
+- **A ratchet for import cycles** (R1-C116): `known_lazy_cycles` and `known_type_only_cycles` in `[architecture]`
+  list today's cycles by their modules. A declared list turns its gate on; a cycle inside a listed group passes,
+  a new one or a known one that grew fails `check` (and says which group it grew from), a group with no cycle left
+  is a note. `codemap devkit ratchet --cycles` writes the region; later `ratchet` runs keep it current and
+  `--tighten` removes groups that hold no cycle. **devkit v4**: run `codemap devkit update`. Asked for by a consumer
+  whose contract recorded two lazy cycles in a comment while the tree had four.
+
 ### Fixed
 - **devkit writes the contract only from a graph this codemap built over the current tree** (R1-C114). `init` used
   any `.codemap/graph.json` it found, with or without `--no-build`, and `devkit ratchet` did the same: a graph from

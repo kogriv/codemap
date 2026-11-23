@@ -71,6 +71,29 @@ dependency between layers has to be argued in review. Measured on a 196k-line Dj
 pair with a reason comment. `--tighten` removes exactly the pairs no import uses and keeps every other line,
 comments included. An edit that would leave an invalid contract writes nothing.
 
+## The cycle ratchet: `known_lazy_cycles`
+
+```toml
+[architecture]
+known_lazy_cycles = [
+  ["pkg.orders", "pkg.pricing"],
+  ["pkg.auth", "pkg.roles", "pkg.sessions"],
+]
+known_type_only_cycles = [
+  ["pkg.models", "pkg.views"],
+]
+```
+
+`no_lazy_cycles` and `no_type_only_cycles` are all or nothing. A tree that already has such cycles can list them
+instead: a declared list turns its gate on (even beside `no_lazy_cycles = false`). A cycle whose modules all sit
+inside one listed group passes; one that has split or shrunk still does. Any other cycle fails, including a known
+one that grew a module: the line says which group it grew from. A listed group with no cycle left in it is a
+note, never a violation.
+
+`codemap devkit ratchet --cycles` writes both lists from the graph into a marked region; once the region exists,
+every `ratchet` run adds the cycles the graph has and `--tighten` removes the groups that hold none. Hand-added
+groups and comments in the region are kept.
+
 ## Is it used? `codemap devkit usage`
 
 It counts `mcp__codemap__*` tool calls against grep (the Grep tool and `grep`/`rg` in Bash) in the project's local

@@ -8,7 +8,7 @@ mechanical.
 
 from __future__ import annotations
 
-from codemap.arch import ArchitectureContract, Violation, allowed_unused, applicability
+from codemap.arch import ArchitectureContract, Violation, allowed_unused, applicability, known_stale
 
 _EDGE_CAP = 25   # offending edges listed per rule before "+N more"
 
@@ -131,6 +131,10 @@ def build_check(query, contract: ArchitectureContract, violations: list[Violatio
         # R1-C108: only when `allowed` is declared — pairs it lists that nothing uses today.
         **({"allowed_unused": [list(p) for p in allowed_unused(query, contract)]}
            if contract.allowed is not None and not contract.error else {}),
+        # R1-C116: only when a known-cycles list is declared — listed groups that hold no tangle today.
+        **({"known_stale": {k: [sorted(g) for g in v] for k, v in known_stale(query, contract).items()}}
+           if (contract.known_lazy_cycles is not None or contract.known_type_only_cycles is not None)
+           and not contract.error else {}),
     }
 
 
@@ -211,9 +215,9 @@ def _render_verdict(query, contract: ArchitectureContract, violations: list[Viol
         if contract.no_cycles:
             rules.append("no_cycles")
         if contract.no_lazy_cycles:
-            rules.append("no_lazy_cycles")
+            rules.append("no_lazy_cycles" + _known_count(contract.known_lazy_cycles))
         if contract.no_type_only_cycles:
-            rules.append("no_type_only_cycles")
+            rules.append("no_type_only_cycles" + _known_count(contract.known_type_only_cycles))
         if contract.exhaustive:
             rules.append("exhaustive")
         if contract.no_phantom_rules:
@@ -221,7 +225,7 @@ def _render_verdict(query, contract: ArchitectureContract, violations: list[Viol
         return (f"# Architecture check — `{target}`\n\n"
                 f"✅ **Contract satisfied.** Rules enforced: {', '.join(rules)}.\n"
                 + _phantom_note(appl, contract) + _unused_note(query, contract)
-                + _render_scope(query, contract))
+                + _stale_note(query, contract) + _render_scope(query, contract))
 
     out = [f"# Architecture check — `{target}`", "",
            f"❌ **{len(violations)} rule(s) broken.**", ""]
@@ -239,7 +243,23 @@ def _render_verdict(query, contract: ArchitectureContract, violations: list[Viol
     return ("\n".join(out).rstrip() + "\n"
             + _phantom_note(applicability(query, contract), contract)
             + _unused_note(query, contract)
+            + _stale_note(query, contract)
             + _render_scope(query, contract))
+
+
+def _known_count(known) -> str:
+    return "" if known is None else f" ({len(known)} known)"
+
+
+def _stale_note(query, contract: ArchitectureContract) -> str:
+    """Known-cycle groups that hold no tangle any more (R1-C116), or nothing — silent when none."""
+    stale = known_stale(query, contract)
+    if not stale:
+        return ""
+    parts = [f"`{k}`: " + "; ".join("(" + ", ".join(sorted(g)) + ")" for g in v) for k, v in stale.items()]
+    n = sum(len(v) for v in stale.values())
+    return (f"\n_{n} known cycle group(s) no longer hold a tangle — {' · '.join(parts)}. The ratchet can "
+            "tighten: `codemap devkit ratchet --tighten` removes them._\n")
 
 
 def _unused_note(query, contract: ArchitectureContract) -> str:

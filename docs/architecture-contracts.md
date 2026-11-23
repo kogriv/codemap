@@ -52,6 +52,7 @@ exhaustive = false
 | `no_cycles` | the **eager** import graph has a cycle | the cycles |
 | `no_lazy_cycles` | a cycle is closed only by a function-local import | those cycles |
 | `no_type_only_cycles` | a cycle is closed only by an import under `if TYPE_CHECKING:` | those cycles |
+| `known_lazy_cycles`, `known_type_only_cycles` (R1-C116) | the gate of that kind is on, and a cycle's modules are not all inside one listed group: a new cycle, or a known one that grew | the new cycles, a grown one with the group it grew from; a listed group with no cycle left as a note |
 | `exhaustive` | a core module's layer isn't declared in `layers` | the undeclared layers |
 | `no_phantom_rules` | a name the contract mentions doesn't exist in the graph | the absent names |
 

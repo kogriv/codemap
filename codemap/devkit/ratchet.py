@@ -18,7 +18,8 @@ from codemap.devkit import DEVKIT_VERSION, render, template
 BEGIN = re.compile(r"^# >>> codemap-devkit allowed v\d+")
 END = "# <<< codemap-devkit allowed"
 PAIR = re.compile(r'^\s*\{\s*from\s*=\s*"([^"]+)"\s*,\s*to\s*=\s*"([^"]+)"\s*\}\s*,?\s*(#.*)?$')
-TABLE = re.compile(r"^\s*\[")
+# A table header, not an array line: `  ["pkg.a", "pkg.b"],` inside the cycles region also opens with `[` (R1-C116).
+TABLE = re.compile(r'^\s*\[\[?[^\]",]*\]\]?\s*(#.*)?$')
 
 
 class RatchetError(Exception):
@@ -146,6 +147,121 @@ def edit_region(root: Path, used: list[tuple[str, str]], *, tighten: bool = Fals
     if not dry_run and new != text:
         path.write_text(new, encoding="utf-8")
     return res
+
+
+# --------------------------------------------------------------------------- R1-C116: the cycle region
+
+CBEGIN = re.compile(r"^# >>> codemap-devkit cycles v\d+")
+CEND = "# <<< codemap-devkit cycles"
+CKEY = re.compile(r"^\s*(known_lazy_cycles|known_type_only_cycles)\s*=\s*\[\s*$")
+GROUP = re.compile(r'^\s*\[\s*((?:"[^"]+"\s*,\s*)*"[^"]+")\s*,?\s*\]\s*,?\s*(#.*)?$')
+CYCLE_KEYS = ("known_lazy_cycles", "known_type_only_cycles")
+
+
+@dataclass
+class CyclesResult:
+    path: Path
+    added: dict[str, list[frozenset[str]]] = field(default_factory=dict)
+    removed: dict[str, list[frozenset[str]]] = field(default_factory=dict)
+    created_region: bool = False
+    text: str = ""
+
+
+def group_line(group) -> str:
+    return "  [" + ", ".join(f'"{m}"' for m in sorted(group)) + "],"
+
+
+def has_cycles_region(root: Path) -> bool:
+    path = root / "codemap.toml"
+    return path.is_file() and any(CBEGIN.match(ln) for ln in path.read_text(encoding="utf-8").splitlines())
+
+
+def edit_cycles_region(root: Path, now: dict[str, list[frozenset[str]]], *, tighten: bool = False,
+                       dry_run: bool = False) -> CyclesResult:
+    """Bring the known-cycles region in line with ``now`` (key → the graph's tangles as module sets).
+
+    No region: write one listing ``now``. A region: add each tangle no listed group contains; with ``tighten``,
+    remove group lines that contain no tangle. Other lines — comments, hand-added groups — are kept.
+    """
+    path = root / "codemap.toml"
+    text = path.read_text(encoding="utf-8") if path.is_file() else ""
+    lines = text.splitlines(keepends=True)
+    plain = [ln.rstrip("\n") for ln in lines]
+    res = CyclesResult(path=path)
+    table = _find_table(plain)
+    if table is None:
+        raise RatchetError(f"{path} has no `[architecture]` table; `codemap devkit init` writes one")
+    lo, hi = table
+    region = None
+    for i in range(lo + 1, hi):
+        if CBEGIN.match(plain[i]):
+            end = next((j for j in range(i + 1, hi) if plain[j].rstrip() == CEND), None)
+            if end is None:
+                raise RatchetError("the cycles region has a begin marker and no end marker")
+            region = (i, end)
+            break
+    if region is None:
+        for k in range(lo + 1, hi):
+            m = re.match(r"^\s*(known_lazy_cycles|known_type_only_cycles)\s*=", plain[k])
+            if m:
+                raise RatchetError(f"`{m.group(1)}` is written by hand outside the devkit's region; "
+                                   "`codemap devkit ratchet` edits only its own region")
+        body = {key: "".join(group_line(g) + "\n" for g in sorted(now.get(key, []), key=sorted))
+                for key in CYCLE_KEYS}
+        block = render(template("cycles_region.toml"), {"devkit_version": DEVKIT_VERSION,
+                                                        "lazy": body["known_lazy_cycles"],
+                                                        "type_only": body["known_type_only_cycles"]})
+        at = hi
+        while at > lo + 1 and not plain[at - 1].strip():
+            at -= 1
+        new = "".join(lines[:at]) + block + "".join(lines[at:])
+        res.added = {k: list(v) for k, v in now.items() if v}
+        res.created_region = True
+    else:
+        b, e = region
+        out = lines[:b + 1]
+        key = None
+        have: dict[str, list[frozenset[str]]] = {k: [] for k in CYCLE_KEYS}
+        close: dict[str, int] = {}
+        for k in range(b + 1, e):
+            km = CKEY.match(plain[k])
+            if km:
+                key = km.group(1)
+            elif key and plain[k].strip() == "]":
+                close[key] = len(out)
+                key = None
+            elif key:
+                g = GROUP.match(plain[k])
+                if g:
+                    group = frozenset(re.findall(r'"([^"]+)"', g.group(1)))
+                    tangles = now.get(key, [])
+                    if tighten and not any(t <= group for t in tangles):
+                        res.removed.setdefault(key, []).append(group)
+                        continue
+                    have[key].append(group)
+            out.append(lines[k])
+        missing_keys = [k for k in CYCLE_KEYS if k not in close]
+        if missing_keys:
+            raise RatchetError("the cycles region has no closing `]` for " + ", ".join(f"`{k}`" for k in missing_keys))
+        inserts = []
+        for k in CYCLE_KEYS:
+            add = sorted((t for t in now.get(k, []) if not any(t <= g for g in have[k])), key=sorted)
+            if add:
+                res.added[k] = add
+                inserts.append((close[k], [group_line(g) + "\n" for g in add]))
+        for at, rows in sorted(inserts, reverse=True):
+            out[at:at] = rows
+        new = "".join(out) + "".join(lines[e:])
+    _validate(new, path)
+    res.text = new
+    if not dry_run and new != text:
+        path.write_text(new, encoding="utf-8")
+    return res
+
+
+def tangles_now(query) -> dict[str, list[frozenset[str]]]:
+    return {"known_lazy_cycles": [frozenset(t["modules"]) for t in query.lazy_import_tangles()],
+            "known_type_only_cycles": [frozenset(t["modules"]) for t in query.type_only_import_tangles()]}
 
 
 def starter_flags(query) -> str:

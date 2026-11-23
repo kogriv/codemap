@@ -1124,6 +1124,26 @@ def _devkit_ratchet(root, args) -> int:
     except RatchetError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    from codemap.devkit.ratchet import edit_cycles_region, has_cycles_region, tangles_now
+    if getattr(args, "cycles", False) or has_cycles_region(root):
+        try:
+            cres = edit_cycles_region(root, tangles_now(q), tighten=args.tighten, dry_run=args.dry_run)
+        except RatchetError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        verb_c = "would change" if args.dry_run else "changed"
+        if cres.created_region:
+            n = sum(len(v) for v in cres.added.values())
+            print(f"codemap.toml {verb_c}: known-cycles region written — {n} cycle group(s) known as of this graph.")
+        for key, groups in cres.removed.items():
+            for g in groups:
+                print(f"  - {key}: ({', '.join(sorted(g))})   (no cycle inside it any more)")
+        if not cres.created_region:
+            for key, groups in cres.added.items():
+                for g in groups:
+                    print(f"  + {key}: ({', '.join(sorted(g))})")
+            if cres.added:
+                print("  Adding a cycle group accepts that coupling: say why in a comment, or break the cycle.")
     verb = "would change" if args.dry_run else "changed"
     if not res.added and not res.removed:
         print(f"codemap.toml: the `allowed` region already matches the graph ({len(used)} pair(s) used).")
@@ -1563,7 +1583,12 @@ def build_parser() -> argparse.ArgumentParser:
                                          "or remove pairs nothing uses (--tighten).")
     dr_.add_argument("--root", default=".")
     dr_.add_argument("--graph", default=None, help="Graph to read (default: the devkit's, .codemap/graph.json).")
-    dr_.add_argument("--tighten", action="store_true", help="Remove allowed pairs no import uses any more.")
+    dr_.add_argument("--tighten", action="store_true",
+                     help="Remove allowed pairs no import uses any more, and known cycle groups with no cycle.")
+    dr_.add_argument("--cycles", action="store_true",
+                     help="Also write the known-cycles region (known_lazy_cycles, known_type_only_cycles): "
+                          "the cycles of today pass, a new or grown one fails check. Once written, every "
+                          "ratchet run updates it.")
     dr_.add_argument("--dry-run", action="store_true")
     db = dks.add_parser("brief", help="SessionStart hook: graph currency and the rule, as plain text.")
     db.add_argument("--root", default=".")

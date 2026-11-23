@@ -73,6 +73,10 @@ class ArchitectureContract:
     # R1-C108 (design ``devkit.md`` D3): the ratchet. ``None`` = not declared; ``()`` = declared
     # empty, which allows no cross-layer import at all. The two must stay apart.
     allowed: tuple[tuple[str, str], ...] | None = None
+    # R1-C116: the cycle ratchet. ``None`` = not declared. A declared list turns its gate on; a tangle whose
+    # modules all sit inside one listed group is known and passes, any other tangle breaks the rule.
+    known_lazy_cycles: tuple[frozenset[str], ...] | None = None
+    known_type_only_cycles: tuple[frozenset[str], ...] | None = None
     error: str | None = None
     # R1-C35: the file this contract was looked for in. "No contract found" is only
     # actionable next to *where* we looked — a reader in the wrong directory cannot tell
@@ -139,7 +143,8 @@ def _near_miss_tables(data: dict) -> str | None:
 
 #: R1-C69: the closed schema of ``[architecture]``. A key outside it is an error, not a skip.
 _FLAGS = ("no_cycles", "no_lazy_cycles", "no_type_only_cycles", "exhaustive", "no_phantom_rules")
-_KNOWN_KEYS = ("layers", "independent", "forbidden", "allowed") + _FLAGS
+_KNOWN_CYCLES = ("known_lazy_cycles", "known_type_only_cycles")
+_KNOWN_KEYS = ("layers", "independent", "forbidden", "allowed") + _FLAGS + _KNOWN_CYCLES
 
 
 def _is_str_list(v) -> bool:
@@ -222,6 +227,9 @@ def contract_problems(section) -> list[str]:
                     problems.append(f"`forbidden[{i}]`: `from` and `to` are both `{item['from']}`")
     if "allowed" in section:
         problems.extend(_allowed_problems(section["allowed"]))
+    for key in _KNOWN_CYCLES:
+        if key in section:
+            problems.extend(_known_cycles_problems(key, section[key]))
     for flag in _FLAGS:
         if flag in section and not isinstance(section[flag], bool):
             problems.append(f"`{flag}` must be true or false, got {type(section[flag]).__name__} "
@@ -262,6 +270,28 @@ def _allowed_problems(items) -> list[str]:
     return problems
 
 
+def _known_cycles_problems(key: str, groups) -> list[str]:
+    """Schema of a known-cycles list (R1-C116): groups of at least two distinct module names, no group twice."""
+    if not isinstance(groups, list):
+        return [f"`{key}` must be a list of lists of module names"]
+    problems: list[str] = []
+    seen: set[frozenset[str]] = set()
+    for i, grp in enumerate(groups):
+        if not _is_str_list(grp) or len(set(grp)) < 2:
+            problems.append(f"`{key}[{i}]` must be a list of at least 2 different module names")
+            continue
+        for name in _repeated(grp):
+            problems.append(f"`{key}[{i}]` repeats `{name}`")
+        if frozenset(grp) in seen:
+            problems.append(f"`{key}[{i}]` repeats an earlier group")
+        seen.add(frozenset(grp))
+    return problems
+
+
+def _known(section: dict, key: str) -> tuple[frozenset[str], ...] | None:
+    return None if key not in section else tuple(frozenset(g) for g in section[key])
+
+
 def parse_contract(section: dict) -> ArchitectureContract:
     """Build a contract from the parsed ``[architecture]`` table.
 
@@ -291,12 +321,15 @@ def parse_contract(section: dict) -> ArchitectureContract:
         forbidden=tuple(forbidden),
         forbidden_indirect=tuple(indirect),
         no_cycles=bool(section.get("no_cycles", False)),
-        no_lazy_cycles=bool(section.get("no_lazy_cycles", False)),
-        no_type_only_cycles=bool(section.get("no_type_only_cycles", False)),
+        no_lazy_cycles=bool(section.get("no_lazy_cycles", False)) or "known_lazy_cycles" in section,
+        no_type_only_cycles=(bool(section.get("no_type_only_cycles", False))
+                             or "known_type_only_cycles" in section),
         exhaustive=bool(section.get("exhaustive", False)),
         no_phantom_rules=bool(section.get("no_phantom_rules", False)),
         allowed=(None if "allowed" not in section
                  else tuple((str(i["from"]), str(i["to"])) for i in section["allowed"])),
+        known_lazy_cycles=_known(section, "known_lazy_cycles"),
+        known_type_only_cycles=_known(section, "known_type_only_cycles"),
     )
 
 
@@ -377,6 +410,41 @@ def allowed_unused(query, contract: ArchitectureContract) -> list[tuple[str, str
         return []
     used = set(layer_pairs(query))
     return [p for p in contract.allowed if p not in used]
+
+
+def split_known(tangles: list[dict], known: tuple[frozenset[str], ...] | None) -> tuple[list[dict], list[dict]]:
+    """``(new, known)`` tangles (R1-C116): a tangle inside one listed group is known — it may have split or
+    shrunk, never grown. With no list declared every tangle is new, as before."""
+    if not known:
+        return list(tangles), []
+    new, old = [], []
+    for t in tangles:
+        (old if any(set(t["modules"]) <= k for k in known) else new).append(t)
+    return new, old
+
+
+def known_stale(query, contract: ArchitectureContract) -> dict[str, list[frozenset[str]]]:
+    """Listed groups that hold no tangle any more, per key — a cycle ratchet that can tighten (R1-C116).
+
+    Reported, never a violation, like `allowed_unused`: breaking a cycle must not turn the gate red.
+    """
+    out: dict[str, list[frozenset[str]]] = {}
+    for key, known, tangles in (("known_lazy_cycles", contract.known_lazy_cycles, query.lazy_import_tangles),
+                                ("known_type_only_cycles", contract.known_type_only_cycles,
+                                 query.type_only_import_tangles)):
+        if known:
+            now = [set(t["modules"]) for t in tangles()]
+            stale = [k for k in known if not any(m <= k for m in now)]
+            if stale:
+                out[key] = stale
+    return out
+
+
+def _grew(tangle: dict, known: tuple[frozenset[str], ...] | None) -> str:
+    overlap = [k for k in known or () if k & set(tangle["modules"])]
+    if not overlap:
+        return ""
+    return " — grew from the known " + "; ".join("(" + ", ".join(sorted(k)) + ")" for k in overlap)
 
 
 def _tangle_line(tangle: dict) -> str:
@@ -555,13 +623,14 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
     # not a gate, and a lazy import is the accepted way to break an import cycle — so this
     # is the contract owner's call to state, not a default to pick on their behalf.
     if contract.no_lazy_cycles:
-        lazy = query.lazy_import_tangles()
+        lazy, _ = split_known(query.lazy_import_tangles(), contract.known_lazy_cycles)
         if lazy:
             violations.append(Violation(
                 "no_lazy_cycles",
-                f"{len(lazy)} tangle(s) closed only by a function-local import, "
+                f"{len(lazy)} {'new ' if contract.known_lazy_cycles is not None else ''}"
+                f"tangle(s) closed only by a function-local import, "
                 f"{sum(t['size'] for t in lazy)} module(s)",
-                modules=tuple(_tangle_line(t) for t in lazy),
+                modules=tuple(_tangle_line(t) + _grew(t, contract.known_lazy_cycles) for t in lazy),
             ))
 
     # -- no_type_only_cycles: the third kind, and the one with no runtime dependency ----
@@ -572,14 +641,16 @@ def check_contract(query, contract: ArchitectureContract) -> list[Violation]:
     # against lazy imports used as a way around `no_cycles`, and the standard typing
     # idiom is not that.
     if contract.no_type_only_cycles:
-        type_only = query.type_only_import_tangles()
+        type_only, _ = split_known(query.type_only_import_tangles(), contract.known_type_only_cycles)
         if type_only:
             violations.append(Violation(
                 "no_type_only_cycles",
-                f"{len(type_only)} tangle(s) closed only by an import that never runs "
+                f"{len(type_only)} {'new ' if contract.known_type_only_cycles is not None else ''}"
+                f"tangle(s) closed only by an import that never runs "
                 f"(`if TYPE_CHECKING:` or a `.pyi`), "
                 f"{sum(t['size'] for t in type_only)} module(s)",
-                modules=tuple(_tangle_line(t) for t in type_only),
+                modules=tuple(_tangle_line(t) + _grew(t, contract.known_type_only_cycles)
+                              for t in type_only),
             ))
 
     # -- exhaustive: every core module's layer must be declared -----------------

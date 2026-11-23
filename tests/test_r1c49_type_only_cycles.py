@@ -218,7 +218,9 @@ def test_every_enforced_rule_names_itself_in_the_passing_line(tmp_path):
     quiet = Query(extract(str(_pkg(tmp_path, {"a": "from .b import x\n", "b": "x = 1\n"}))))
     # `forbidden_indirect` (R1-C78) is not a rule but a flag per `forbidden` item; it has its own
     # probe below, so skipping it here does not let it go unnamed.
-    skip = {"error", "path", "forbidden_indirect"}
+    # The known-cycles lists (R1-C116) are likewise not rules: parsing one turns its gate's flag on, which is
+    # the rule this loop names; tests/test_r1c116_known_cycles.py probes them through the parser.
+    skip = {"error", "path", "forbidden_indirect", "known_lazy_cycles", "known_type_only_cycles"}
     names = [f.name for f in dataclasses.fields(arch.ArchitectureContract) if f.name not in skip]
     chained = arch.ArchitectureContract(forbidden=(("core", "data"),), forbidden_indirect=(True,))
     md = render_check(quiet, chained, arch.check_contract(quiet, chained))
