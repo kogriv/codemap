@@ -1343,6 +1343,23 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 | Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
 | version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
 
+**0.0.46 — the release check, pre-registered before the upload (2026-11-23).** The external audit's findings
+(R1-C121…C129); a **security** release for the devkit (R1-C121). `ANSWER_FORMAT` stays **12** (no answer field
+added; refusals and error texts change), schema 0.13 (the `scope_id` *value* formula changes, not the artifact's
+structure), devkit **v7**. From PyPI, clean venvs, both versions, invented fixtures, harmless markers:
+
+| | question | 0.0.45 (expected) | 0.0.46 (expected) |
+|---|---|---|---|
+| F-01 pin | `.mcp.json` pin set to `/bin/sh -c "touch M"`, then `devkit status` | `M` created | no `M`; note "was not run and is not kept" |
+| F-02 path | state `agents_file: "../outside.md"`, then `devkit update` | `../outside.md` written | exit 2 "refused", nothing written |
+| F-09 metachar | state `package: "pkg;touch M"`, then `devkit update` | hook rendered with it | exit 2 "only letters, digits" |
+| F-04 serve | `null` then `{"op":"stats"}` to `serve` | process dies, second unanswered | error, then the stats answer |
+| F-08 cycles | known `{c,p,s}`, cycle now `{d,p,s}`, `check` | "absorbed into a larger new tangle" | "no longer hold a tangle … --tighten" |
+| F-14 graph | node `file: "../x.py"`, `check --graph` | loads | refused, names `nodes[i].file` |
+| F-07 scope | `scope` id of a tree | `sha256:…` | `sha256r:…`; a 0.0.45 graph checked by 0.0.46 is `current`, not behind |
+| F-13 strict | graph without provenance, `check --require-current` | argparse error | exit 2 "not known to match its source tree" |
+| version | `codemap --version` | `codemap 0.0.45 · answer format 12 · schema 0.13` | `codemap 0.0.46 · answer format 12 · schema 0.13` |
+
 **0.0.45 — the release check, pre-registered before the upload (2026-11-23).** R1-C120/f1 only; format 12, schema
 0.13, devkit v5 unchanged. From PyPI, clean venvs, an invented runner: a factory `module_for(x)` returning
 `import_module(f"pkg.tools.{x}")`, and `getattr(module, "run")` / `"empty"` in two other functions.
