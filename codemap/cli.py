@@ -902,27 +902,41 @@ def _cmd_refresh(args) -> int:
         raise SystemExit(f"error: the recorded recipe beside {args.graph} is not repeated — {problem}; "
                          f"rebuild by hand with `codemap build <package> -o {args.graph}`")
     cwd = meta.get("cwd")
-    if cwd and os.path.isdir(cwd):
-        os.chdir(cwd)  # recorded argv may use paths relative to the build cwd
+    if cwd:
+        os.chdir(cwd)  # recorded argv may use paths relative to the build cwd; _recipe_problem checked from it
     print(f"rebuilding {args.graph} …", file=sys.stderr)
     return main(meta["argv"])
 
 
 def _recipe_problem(meta: dict, graph: str) -> str | None:
-    """Why a sidecar's ``argv`` is not a rebuild of ``graph`` (R1-C125): `refresh` repeats it as a command, and
-    the sidecar is a file anyone can edit. Only `build`, writing back to this same graph, is repeated."""
+    """Why a sidecar's ``argv`` is not a rebuild of ``graph`` (R1-C125, R1-C134): `refresh` repeats it as a command,
+    and the sidecar is a file anyone can edit. Only `build`, writing back to this same graph, is repeated.
+
+    The recipe is read by the very parser that will run it — a repeated `-o`, an abbreviated `--ou`, an attached
+    `-oX` mean to the check what they mean to `build` — and from the working directory it will run in.
+    """
+    import contextlib
+    import io
     argv = meta.get("argv")
     if not isinstance(argv, list) or not argv or not all(isinstance(a, str) for a in argv):
         return "it is not a list of arguments"
     if argv[0] != "build":
         return f"it runs `{argv[0]}`, not `build`"
-    out = next((argv[i + 1] for i, a in enumerate(argv[:-1]) if a in ("-o", "--out")), None)
-    out = out or next((a.split("=", 1)[1] for a in argv if a.startswith("--out=")), None)
-    if out is None:
+    try:
+        with contextlib.redirect_stderr(io.StringIO()) as err:
+            args = build_parser().parse_args(argv)
+    except SystemExit:
+        last = err.getvalue().strip().splitlines()
+        return f"`build` does not take it ({last[-1] if last else 'unparsable'})"
+    if args.command != "build":
+        return f"it runs `{args.command}`, not `build`"
+    if not args.out:
         return "it writes no graph file"
-    cwd = meta.get("cwd") if isinstance(meta.get("cwd"), str) else os.getcwd()
-    if (Path(cwd) / out).resolve() != Path(graph).resolve():
-        return f"it writes {out!r}, not this graph"
+    cwd = meta.get("cwd")
+    if cwd is not None and not (isinstance(cwd, str) and os.path.isdir(cwd)):
+        return f"its working directory {cwd!r} is not a directory here"
+    if (Path(cwd or os.getcwd()) / args.out).resolve() != Path(graph).resolve():
+        return f"it writes {args.out!r}, not this graph"
     return None
 
 

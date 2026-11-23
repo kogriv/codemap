@@ -5,7 +5,28 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+**Fixes for the follow-up audit of 0.0.46** (FU-01…FU-03, R1-C133…C135). The audit and the response:
+[`docs/audits/2026-11-23-followup-response.md`](docs/audits/2026-11-23-followup-response.md).
+
+### Security
+- **devkit: a pin reached through a link the repository carries is refused** (R1-C133, follow-up audit FU-01; a
+  bypass of the 0.0.46 fix for GHSA-c3hp-596c-2p77). 0.0.46 asked git whether the pin was a file of the
+  repository only after following links, so a committed link `tools/codemap → /bin/sh` named in `.mcp.json`
+  passed, and `devkit update` wrote it into the post-commit hook (reproduced: a commit ran a committed script).
+  Now git is asked about the path as written and every directory on it, a console script is accepted by its
+  content (it starts `codemap.cli`) rather than its name, and outside a git repository a pin inside the root is
+  refused. A wrapper script named `codemap` is no longer kept as the pin (the devkit names it in a note and uses
+  `python -I -m codemap`). Run `codemap devkit update`: it checks the pin again and rewrites the hook.
+- **`refresh` reads the recorded recipe as `build` will** (R1-C134, FU-02). The check took the first `-o`,
+  argparse the last; an abbreviated `--ou`, an attached `-oX`, and a recorded working directory that does not
+  exist also slipped by, and the graph was written elsewhere. The recipe is now parsed by the same parser and
+  its effective output compared from the directory the build will run in.
+
 ### Fixed
+- **advise cache: two `--refresh` at once no longer lose the cache** (R1-C135, FU-03). Each publisher removed
+  every generation but its own, so `current` could name a removed one and the packaged catalog was served
+  without a word. A generation is now removed only when `current` does not name it and it is older than ten
+  minutes; a split read is retried; a dangling pointer is reported in the notes.
 - **devkit no longer promises a hook that is off**: with `hook: false`, `devkit status` (graph absent) and the
   `init` note said the post-commit hook would keep or deepen the graph; they now say to refresh it by hand.
   Reported by a consumer.

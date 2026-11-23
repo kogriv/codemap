@@ -32,7 +32,7 @@ def _fake_codemap(where: Path) -> str:
     """An installed-looking `codemap` outside the repository (R1-C121 keeps only such a pin)."""
     where.mkdir(parents=True, exist_ok=True)
     exe = where / "codemap"
-    exe.write_text("#!/bin/sh\necho codemap 0.0.0\n")
+    exe.write_text("#!/bin/sh\n# stands in for `from codemap.cli import main`\necho codemap 0.0.0\n")
     exe.chmod(0o755)
     return str(exe)
 

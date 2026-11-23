@@ -54,7 +54,8 @@ def running_pin() -> list[str]:
     repository — a `codemap/` package committed there would be what runs.
     """
     argv0 = Path(sys.argv[0]) if sys.argv and sys.argv[0] else None
-    if argv0 is not None and argv0.name == "codemap" and argv0.exists():
+    # R1-C133: a pin this codemap writes must pass the check `status` applies to it (a wrapper is not a script)
+    if argv0 is not None and argv0.name == "codemap" and argv0.is_file() and _console_script_problem(argv0) is None:
         # abspath, not resolve: `..` is folded, a venv's symlinked bin is kept as the user named it
         return [os.path.abspath(argv0)]
     return [sys.executable, "-I", "-m", "codemap"]
@@ -63,23 +64,73 @@ def running_pin() -> list[str]:
 _PYTHON = re.compile(r"python(\d+(\.\d+)*)?(\.exe)?")
 
 
-def _tracked(root: Path, path: Path) -> bool:
-    """Is ``path`` a file the repository carries (so whoever pushed chose its content)?"""
+def _inside(root: Path, path: str) -> Path | None:
+    """``path`` relative to ``root`` as written (``..`` folded, links not followed), or None when outside."""
+    p = Path(os.path.abspath(path))
+    for base in {Path(os.path.abspath(root)), root.resolve()}:
+        try:
+            return p.relative_to(base)
+        except ValueError:
+            continue
+    return None
+
+
+def _carried(root: Path, path: str) -> str | None:
+    """Why ``path`` is a file the repository carries — so whoever pushed chose what runs — or None.
+
+    R1-C133: asked of the path as written *and* of each directory on it, before any link is followed: a tracked
+    link ``tools/codemap → /bin/sh`` resolves outside the root, and asking git about the resolved path said
+    "not ours". The resolved path is asked too (a link from outside into the repository).
+    """
+    rels = []
+    lexical = _inside(root, path)
+    if lexical is not None:
+        parts = lexical.parts
+        rels += [Path(*parts[:i]).as_posix() for i in range(1, len(parts) + 1)]
     try:
-        rel = path.resolve().relative_to(root.resolve())
+        rels.append(Path(path).resolve().relative_to(root.resolve()).as_posix())
     except ValueError:
-        return False
-    r = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", str(rel)],
+        pass
+    if not rels:
+        return None
+    r = subprocess.run(["git", "--literal-pathspecs", "-C", str(root), "ls-files", "-s", "-z", "--", *rels],
                        capture_output=True)
-    return r.returncode == 0
+    if r.returncode != 0:
+        return "it is inside a directory that is not a git repository, so who wrote it cannot be told"
+    listed = {entry.split(b"\t", 1)[1].decode("utf-8", "replace") for entry in r.stdout.split(b"\0") if b"\t" in entry}
+    hit = next((rel for rel in rels if rel in listed), None)
+    if hit is None:
+        return None
+    if lexical is not None and hit == lexical.as_posix():
+        return "it is a file of this repository"
+    return f"`{hit}` on its way is carried by this repository"
+
+
+#: R1-C133: what an installed console script for codemap holds (pip, pipx, uv write `from codemap.cli import main`)
+_CONSOLE_MARK = b"codemap.cli"
+
+
+def _console_script_problem(exe: Path) -> str | None:
+    """Is ``exe`` (followed to its target) a console script that starts codemap? Asked of the content, not the name."""
+    try:
+        with open(exe, "rb") as fh:
+            head = fh.read(4096 if exe.suffix.lower() != ".exe" else 8 << 20)
+    except OSError as exc:
+        return f"it cannot be read ({exc.strerror})"
+    if exe.suffix.lower() == ".exe":
+        ok = _CONSOLE_MARK in head                       # the launcher carries its script as a stored zip
+    else:
+        ok = head.startswith(b"#!") and _CONSOLE_MARK in head
+    return None if ok else "it is not a console script that starts codemap"
 
 
 def pin_problem(root: Path, pin: list[str] | None) -> str | None:
-    """Why ``pin`` is not a codemap the devkit may run or write into the hook, or None (R1-C121).
+    """Why ``pin`` is not a codemap the devkit may run or write into the hook, or None (R1-C121, R1-C133).
 
     `.mcp.json` is a project file: the command in it is whatever the last push said. Accepted are only the
     shapes the devkit itself writes — the absolute path of a `codemap` console script, or an absolute python
-    run as `-I -m codemap` — and never a file the repository carries.
+    run as `-I -m codemap` — never a file the repository carries, nor one reached through a directory or link
+    it carries; and a console script is accepted by what it holds, not by its name.
     """
     if not pin or not all(isinstance(a, str) and a for a in pin):
         return "no command"
@@ -96,8 +147,13 @@ def pin_problem(root: Path, pin: list[str] | None) -> str | None:
         return f"{shlex.join(pin)!r} is not `<codemap>` or `<python> -I -m codemap`"
     if not exe.is_file():
         return f"{pin[0]} does not exist"
-    if _tracked(root, exe):
-        return f"{pin[0]} is a file of this repository, not an installed codemap"
+    carried = _carried(root, pin[0])
+    if carried:
+        return f"{pin[0]}: {carried}, not an installed codemap"
+    if len(pin) == 1:
+        script = _console_script_problem(exe)
+        if script:
+            return f"{pin[0]}: {script}"
     return None
 
 

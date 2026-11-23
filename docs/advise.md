@@ -71,7 +71,11 @@ languages found outside Python.
 ## How the catalog stays current
 
 The catalog is `codemap/advise/data/matrix.toml` (reviewed claims) plus `feed.json` (latest releases, news).
-Both ship in the package and are published on `main`, and `--refresh` caches the newer copies. The inventory
+Both ship in the package and are published on `main`, and `--refresh` caches the newer copies. The cache holds
+them as one generation: both files go into a new `gen-*` directory, then the pointer file `current` is replaced.
+An old generation is removed only when `current` does not name it and it is older than ten minutes, so a second
+`--refresh` running at the same time, or a reader that has just taken the old path, still finds a whole pair. A
+pointer to a missing generation is reported in the catalog's notes (R1-C124, R1-C135). The inventory
 page [`research/matrix.md`](../research/matrix.md) is generated from them.
 
 - **Every week** a script reads PyPI, npm and GitHub for every watched tool. It records the latest release and

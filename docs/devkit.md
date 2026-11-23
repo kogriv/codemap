@@ -52,7 +52,11 @@ note when you edited it. A translated block replaces an untouched one; an edited
 **What the devkit trusts (R1-C121).** `.codemap-devkit.json` and `.mcp.json` come with the repository, so the
 devkit treats them as input. It runs or writes into the hook only a pin of the shape it writes itself — the
 absolute path of a `codemap` console script, or an absolute python as `-I -m codemap` — that exists and is not a
-file of the repository; any other command in `.mcp.json` is not run and is replaced, with a note. Every path it
+file of the repository; any other command in `.mcp.json` is not run and is replaced, with a note. "Not a file of
+the repository" is asked of the path as written and of every directory on it, before symbolic links are
+followed, so a committed link `tools/codemap → /bin/sh` is the repository's file (R1-C133). A console script is
+accepted by its content (it starts `codemap.cli`), not by its name. Outside a git repository, a pin inside the
+root is refused, since nothing says who wrote it. Every path it
 stores is relative, stays inside the repository after symbolic links are followed, and uses only
 `[A-Za-z0-9._/@+-]`; a state naming anything else is refused (exit 2) before anything is written. Values rendered
 into the hook and the CI file are shell-quoted as well.

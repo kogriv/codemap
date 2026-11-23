@@ -104,14 +104,17 @@ class Catalog:
 CURRENT = "current"
 
 
-def _served_dir(cdir: Path) -> Path:
-    """The generation ``current`` names, or the cache itself for a pair written before generations existed."""
+def _served_dir(cdir: Path) -> tuple[Path, str | None]:
+    """The generation ``current`` names, or the cache itself for a pair written before generations existed; and a
+    note when ``current`` names a generation that is not there (R1-C135: said, not silently replaced)."""
     try:
         name = (cdir / CURRENT).read_text(encoding="utf-8").strip()
     except OSError:
-        return cdir
+        return cdir, None
     gen = cdir / name
-    return gen if name.startswith("gen-") and "/" not in name and gen.is_dir() else cdir
+    if name.startswith("gen-") and "/" not in name and gen.is_dir():
+        return gen, None
+    return cdir, f"cache pointer `{CURRENT}` names {name!r}, which is not there; run `codemap advise --refresh`"
 
 
 def cache_dir() -> Path:
@@ -146,7 +149,13 @@ def load(cache: Path | None = None, packaged: Path | None = None) -> Catalog:
     cdir = cache if cache is not None else cache_dir()
     if not cdir.is_dir():
         return cat
-    cm, cf, cerrs = _read_pair(_served_dir(cdir))
+    for _ in range(3):                    # R1-C135: one file there and the other gone = a publish in between
+        served, note = _served_dir(cdir)
+        cm, cf, cerrs = _read_pair(served)
+        if (cm is None) == (cf is None):
+            break
+    if note:
+        cat.notes.append(note)
     cat.notes.extend(f"cache ignored: {e}" for e in cerrs)
     m, f, src = pm, pf, {"matrix": "packaged", "feed": "packaged"}
     if cm is not None and cm.get("meta", {}).get("as_of", "") > pm.get("meta", {}).get("as_of", ""):

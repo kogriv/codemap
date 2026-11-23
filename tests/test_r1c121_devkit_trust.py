@@ -69,7 +69,7 @@ def test_e2_only_the_shapes_the_devkit_writes_are_accepted(tmp_path, pin, ok):
     bindir = tmp_path / "bin"
     bindir.mkdir()
     for name in ("codemap", "python3.12", "sh"):
-        (bindir / name).write_text("#!/bin/sh\n")
+        (bindir / name).write_text("#!/bin/sh\nfrom codemap.cli import main\n")
     pin = [a.replace("{bin}", str(bindir)) for a in pin]
     assert (install.pin_problem(root, pin) is None) is ok, install.pin_problem(root, pin)
 
@@ -81,7 +81,7 @@ def test_e2_a_codemap_the_repository_carries_is_refused(tmp_path):
     subprocess.run(["git", "-C", str(root), "add", "tools/codemap"], check=True)
     assert "a file of this repository" in install.pin_problem(root, [str(root / "tools/codemap")])
     (root / ".venv/bin").mkdir(parents=True)                     # untracked venv inside the root: fine
-    (root / ".venv/bin/codemap").write_text("#!/bin/sh\n")
+    (root / ".venv/bin/codemap").write_text("#!/bin/sh\nfrom codemap.cli import main\n")
     assert install.pin_problem(root, [str(root / ".venv/bin/codemap")]) is None
 
 

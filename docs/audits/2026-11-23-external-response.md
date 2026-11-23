@@ -3,6 +3,9 @@
 **Аудит:** [`2026-11-23-external-audit.md`](2026-11-23-external-audit.md) — текст как получен, без правок.
 **Снимок аудита:** `def00ce` (0.0.43) и коммиты `39c86a0`/`cd1e416` (0.0.44).
 **Ответ написан на:** 0.0.46 (`32a7a64`), выпущенном по итогам аудита, и `main` после него.
+**Повторный аудит 0.0.46** нашёл три обхода исправлений (FU-01…FU-03):
+[`2026-11-23-followup-audit.md`](2026-11-23-followup-audit.md), ответ —
+[`2026-11-23-followup-response.md`](2026-11-23-followup-response.md).
 
 > *English summary.* Of the sixteen findings, the four most serious were reproduced by running them with a harmless
 > marker (F-01, F-02, F-04, and F-09 through F-01's path); the others were confirmed by reading the code. F-12 is

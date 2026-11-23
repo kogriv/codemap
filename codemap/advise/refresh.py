@@ -57,10 +57,18 @@ def refresh(base: str | None = None, cache: Path | None = None) -> dict:
     return out
 
 
+#: R1-C135: a generation is removed only once it is this old and `current` does not name it — a reader that took
+#: its path a moment ago, or a second publisher that has just pointed `current` at it, still finds it whole.
+GRACE_SECONDS = 600
+
+
 def publish_pair(cdir: Path, mraw: bytes, fraw: bytes) -> None:
     """Publish matrix + feed as one generation (R1-C124): both files go to a new directory, then the pointer
     file ``current`` is replaced atomically. A failure before that leaves the previous pair served whole; a reader
-    never sees one file of one generation beside the other file of another."""
+    never sees one file of one generation beside the other file of another.
+
+    Old generations are collected by :func:`collect`, not all at once (R1-C135): two publishers each removing
+    every generation but its own left `current` naming a removed one."""
     import shutil
     import tempfile
 
@@ -74,11 +82,31 @@ def publish_pair(cdir: Path, mraw: bytes, fraw: bytes) -> None:
     except BaseException:
         shutil.rmtree(gen, ignore_errors=True)
         raise
-    for old in cdir.glob("gen-*"):                       # previous generations, and any torn leftovers
-        if old.is_dir() and old.name != gen.name:
-            shutil.rmtree(old, ignore_errors=True)
-    for legacy in ("matrix.toml", "feed.json"):          # a pre-0.0.46 pair at the top level
+    collect(cdir)
+    for legacy in ("matrix.toml", "feed.json"):          # a pre-0.0.46 pair at the top level (load retries a split read)
         try:
             (cdir / legacy).unlink()
         except FileNotFoundError:
             pass
+
+
+def collect(cdir: Path, now: float | None = None) -> list[str]:
+    """Remove generations `current` does not name *now* and that are older than :data:`GRACE_SECONDS`; the names."""
+    import shutil
+    import time
+
+    now = time.time() if now is None else now
+    try:
+        served = (cdir / CURRENT).read_text(encoding="utf-8").strip()
+    except OSError:
+        served = None
+    gone = []
+    for old in sorted(cdir.glob("gen-*")):
+        try:
+            young = now - old.stat().st_mtime < GRACE_SECONDS
+        except OSError:
+            continue
+        if old.is_dir() and old.name != served and not young:
+            shutil.rmtree(old, ignore_errors=True)
+            gone.append(old.name)
+    return gone

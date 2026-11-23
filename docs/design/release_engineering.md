@@ -1343,6 +1343,22 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 | Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
 | version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
 
+**0.0.47 — the release check, pre-registered before the upload (2026-11-23).** The follow-up audit's findings
+FU-01…FU-03 (R1-C133…C135); a **security** release for the devkit (R1-C133 bypasses the 0.0.46 fix of
+GHSA-c3hp-596c-2p77). `ANSWER_FORMAT` stays **12**, schema 0.13, devkit **v7** (templates unchanged). From PyPI,
+clean venvs, both versions, invented fixtures, harmless markers. The last row answers the follow-up audit's §8.5:
+the 0.0.46 F-09 probe on 0.0.45 ran with the tampered pin still in place, so here F-09 is probed alone.
+
+| | question | 0.0.46 (expected) | 0.0.47 (expected) |
+|---|---|---|---|
+| FU-01 link | committed link `tools/codemap → /bin/sh` named in `.mcp.json`, committed `build` touches `M`; `devkit update`, run the hook | hook `C=<root>/tools/codemap`; `M` created | note "a file of this repository … not an installed codemap"; hook pins the venv's codemap; no `M` |
+| FU-02 repeat | sidecar argv `build pkg -o graph.json -o other.json`; `refresh` | exit 0, `other.json` written | exit 1 "not this graph", no `other.json` |
+| FU-02 abbrev | `-o graph.json --ou other.json` | exit 0, written | exit 1, not written |
+| FU-02 cwd | recorded `cwd` that does not exist, `-o` right only from it | exit 0, graph written in another directory | exit 1 "is not a directory here" |
+| FU-03 pair | two `publish_pair` meeting after the pointer write (threads, barrier) | `current` names a removed generation; `load` serves packaged | `current` names a whole generation; `load` serves refreshed |
+| version | `codemap --version` | `codemap 0.0.46 · answer format 12 · schema 0.13` | `codemap 0.0.47 · answer format 12 · schema 0.13` |
+| F-09 alone, **0.0.45** | genuine pin (the venv's own codemap), state `package: "pkg;touch M;:"`, `devkit update`, run the hook | `M` created by the hook | (0.0.47) exit 2 "only letters, digits", nothing written |
+
 **0.0.46 — the release check, pre-registered before the upload (2026-11-23).** The external audit's findings
 (R1-C121…C129); a **security** release for the devkit (R1-C121). `ANSWER_FORMAT` stays **12** (no answer field
 added; refusals and error texts change), schema 0.13 (the `scope_id` *value* formula changes, not the artifact's
