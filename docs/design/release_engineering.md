@@ -1331,6 +1331,23 @@ advise "semantic search"                      jevgrep measured               jev
 
 Every expectation holds. Tag `v0.0.41` on both mirrors.
 
+**0.0.43 — the release check, pre-registered before the upload (2026-11-23).** Consumer findings: R1-C114…C119.
+`ANSWER_FORMAT` **12** (`report dead-code` JSON gains `called_only_from_outside`, `uncalled_public`; `check` JSON
+gains `known_stale` under a known-cycles list; new route `references:self`), schema 0.13 unchanged, devkit **v5**.
+Run from PyPI in clean venvs, both versions, on the same invented fixtures:
+
+| | question | 0.0.42 (expected) | 0.0.43 (expected) |
+|---|---|---|---|
+| callback | `report dead-code` on a class that does `bus.on("x", self._h)` and `prepare=self._m` | both **high** | both **low**, "referenced (references) by core" |
+| test call through a module | same fixture, a test doing `from pkg import w; w._f()` | `_f` **high** | `_f` not a candidate; "Called only from outside the package: 1 private" names it, tests×1 |
+| public functions | same fixture | no word about them | "Not judged: 2 public module-level function(s)…"; `--public` lists them |
+| first build | `build pkg -o nodir/g.json` | `[Errno 2]` after the parse | graph written |
+| missing graph | `check --graph nodir2/g.json` | `[Errno 2]` | "no graph at …", the `build` command |
+| cycle ratchet | `check` with `known_lazy_cycles` listing a pair that grew to four | contract error: unknown key | one new tangle, "grew from the known (…)" |
+| rules in docs | `devkit init --docs docs --agents-file docs/r.md --ratchet --no-hook`, then `check` | exit 2, behind | exit 0 |
+| Russian block | `devkit init --agents-lang ru` | argparse error | block opens "## codemap — граф кода" |
+| version | `codemap --version` | `codemap 0.0.42 · answer format 11 · schema 0.13` | `codemap 0.0.43 · answer format 12 · schema 0.13` |
+
 **0.0.42 — the release check, pre-registered before the upload (2026-11-21).** The Rust recipe (R1-C111/C112),
 `ANSWER_FORMAT` stays 11 (additive key `recipe`). Run from PyPI in clean venvs, both versions, same commands:
 

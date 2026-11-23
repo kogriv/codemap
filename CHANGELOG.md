@@ -5,6 +5,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.43] - 2026-11-23
+
+**Consumer findings, fixed.** Schema **0.13** unchanged; **`ANSWER_FORMAT` 12**: `report dead-code` (JSON) gains
+`called_only_from_outside` and `uncalled_public`, `check` (JSON) gains `known_stale` when a known-cycles list is
+declared, and a bound method handed on as a value is a new `references` route (`self`). **devkit v5** — run
+`codemap devkit update`.
+
 ### Added
 - **A ratchet for import cycles** (R1-C116): `known_lazy_cycles` and `known_type_only_cycles` in `[architecture]`
   list today's cycles by their modules. A declared list turns its gate on; a cycle inside a listed group passes,
