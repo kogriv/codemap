@@ -108,3 +108,25 @@ def test_c1_the_russian_block_names_other_languages_in_russian(tmp_path):
     assert install.outside_languages(tmp_path, "ru") == "; в этом репозитории есть ещё javascript, их codemap не читает"
     assert "which it does not read" in install.outside_languages(tmp_path)
     assert "{{outside_languages}}" in template("agents_block.ru.md")
+
+
+def test_c123_partial_overlap_is_not_absorption(tmp_path):
+    """R1-C123 (audit F-08): known `{p,s,c}`, now `{p,s,d}` — `c` left the cycle. Stale, tightened away; the
+    ratchet adds `{p,s,d}`, so the `p↔s` part stays covered."""
+    q = _cyc(tmp_path, {"pkg/s.py": EAGER.format("p"), "pkg/p.py": LAZY.format("d"), "pkg/d.py": LAZY.format("s"),
+                        "pkg/c.py": "x = 1\n"})
+    (tmp_path / "codemap.toml").write_text('[architecture]\n'
+                                           '# >>> codemap-devkit cycles v6 — test\n'
+                                           'known_lazy_cycles = [\n  ["pkg.c", "pkg.p", "pkg.s"],\n]\n'
+                                           'known_type_only_cycles = [\n]\n# <<< codemap-devkit cycles\n')
+    c = arch.load_contract(tmp_path)
+    assert arch.known_absorbed(q, c) == {}
+    assert arch.known_stale(q, c) == {"known_lazy_cycles": [frozenset({"pkg.c", "pkg.p", "pkg.s"})]}
+    md = render_check(q, c, arch.check_contract(q, c))
+    assert "absorbed" not in md and "--tighten" in md
+    now = tangles_now(q)
+    edit_cycles_region(tmp_path, now, tighten=True)
+    kept = arch.load_contract(tmp_path).known_lazy_cycles
+    assert kept == (frozenset({"pkg.d", "pkg.p", "pkg.s"}),)
+    q2 = _cyc(tmp_path / "later", {"pkg/s.py": EAGER.format("p"), "pkg/p.py": LAZY.format("s")})
+    assert arch.check_contract(q2, arch.load_contract(tmp_path)) == []      # p↔s after d is gone: still known

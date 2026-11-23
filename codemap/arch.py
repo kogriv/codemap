@@ -441,9 +441,14 @@ def known_stale(query, contract: ArchitectureContract) -> dict[str, list[frozens
 
 
 def _absorbing(group: frozenset[str], now: list[set[str]]) -> set[str] | None:
-    """A current tangle that holds ≥2 of ``group``'s modules without fitting inside it (R1-C120): the known
-    cycle is alive, inside a larger new one — not gone."""
-    return next((m for m in now if len(m & group) >= 2 and not m <= group), None)
+    """A current tangle that holds **all** of ``group`` and more (R1-C120, criterion R1-C123): the known cycle is
+    alive inside a larger new one — not gone.
+
+    A tangle that shares only part of the group is not that: `{a,b,c}` known and `{a,b,d}` now means `c` left the
+    cycle, and keeping `{a,b,c}` listed would let a future `a↔c` pass unseen. Such a group is stale; the ratchet
+    that tightens it also adds the new `{a,b,d}`, so `{a,b}` stays covered (external audit F-08).
+    """
+    return next((m for m in now if group < m), None)
 
 
 def known_absorbed(query, contract: ArchitectureContract) -> dict[str, list[tuple[frozenset[str], list[str]]]]:

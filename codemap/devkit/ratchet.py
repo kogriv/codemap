@@ -236,7 +236,7 @@ def edit_cycles_region(root: Path, now: dict[str, list[frozenset[str]]], *, tigh
                     group = frozenset(re.findall(r'"([^"]+)"', g.group(1)))
                     tangles = now.get(key, [])
                     if tighten and not any(t <= group for t in tangles) and not any(
-                            len(t & group) >= 2 for t in tangles):   # absorbed: alive inside a larger one
+                            group < t for t in tangles):   # absorbed whole: alive inside a larger one (R1-C123)
                         res.removed.setdefault(key, []).append(group)
                         continue
                     have[key].append(group)

@@ -22,6 +22,10 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   process; now each gets a structured error and the next request is answered. `handle` holds a session lock for
   the whole request: the `--watch` thread's reload and a threaded MCP transport used to share the per-request
   fields (`resolved`, `limit`, `filter`, `scope`) and could swap `graph`/`query` mid-request.
+- **A known cycle group counts as absorbed only when a larger cycle holds all of it** (R1-C123, audit F-08). 0.0.44
+  took any overlap of two modules: `{a,b,c}` known and `{a,b,d}` now kept `{a,b,c}` listed and called it
+  absorbed, so a later `a↔c` would have passed unseen. It is now stale and `ratchet --tighten` removes it; the
+  ratchet adds `{a,b,d}`, so the `a↔b` part stays covered.
 
 ## [0.0.45] - 2026-11-23
 
