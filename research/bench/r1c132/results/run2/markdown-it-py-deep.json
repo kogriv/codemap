@@ -1,0 +1,789 @@
+{
+ "graph": "deep.json",
+ "tier": "deep",
+ "nodes": 610,
+ "functions": 215,
+ "functions_started": 192,
+ "calls_edges": 294,
+ "runtime_pairs": 472,
+ "unmapped_runtime": {
+  "callee": 1
+ },
+ "categories": {
+  "call": 357,
+  "construct": 32,
+  "init": 17,
+  "implicit": 34,
+  "property": 32
+ },
+ "recall": {
+  "explicit": {
+   "pairs": 389,
+   "found": 273,
+   "recall": 0.7018,
+   "found_calls_or_references": 283,
+   "by_via": {
+    "direct": {
+     "pairs": 365,
+     "found": 272
+    },
+    "nested": {
+     "pairs": 2,
+     "found": 1
+    },
+    "external": {
+     "pairs": 14,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 8,
+     "found": 0
+    }
+   }
+  },
+  "implicit": {
+   "pairs": 34,
+   "found": 6,
+   "recall": 0.1765,
+   "found_calls_or_references": 6,
+   "by_via": {
+    "direct": {
+     "pairs": 16,
+     "found": 6
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 18,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "property": {
+   "pairs": 32,
+   "found": 1,
+   "recall": 0.0312,
+   "found_calls_or_references": 1,
+   "by_via": {
+    "direct": {
+     "pairs": 30,
+     "found": 1
+    },
+    "nested": {
+     "pairs": 2,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "decorator": {
+   "pairs": 0,
+   "found": 0,
+   "recall": null,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 0,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  }
+ },
+ "precision": {
+  "outcomes": {
+   "unexercised": 2,
+   "confirmed": 280,
+   "no_site": 1,
+   "contradicted": 9,
+   "caller_not_run": 2
+  },
+  "decided": 0.9689,
+  "by_grade": {
+   "heuristic": {
+    "confirmed": 2,
+    "decided": 1.0
+   },
+   "inferred": {
+    "unexercised": 2,
+    "confirmed": 278,
+    "no_site": 1,
+    "contradicted": 9,
+    "caller_not_run": 2,
+    "decided": 0.9686
+   }
+  },
+  "by_resolution": {
+   "deep": {
+    "unexercised": 2,
+    "confirmed": 278,
+    "no_site": 1,
+    "contradicted": 9,
+    "caller_not_run": 2,
+    "decided": 0.9686
+   },
+   "protocol": {
+    "confirmed": 2,
+    "decided": 1.0
+   }
+  }
+ },
+ "callers_complete": {
+  "callees": 178,
+  "complete": 112,
+  "share": 0.6292
+ },
+ "misses": [
+  [
+   "markdown_it.main.MarkdownIt.__init__",
+   "markdown_it.renderer.RendererHTML",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.configure",
+   "markdown_it.ruler.Ruler.enableOnly",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.use",
+   "markdown_it.parser_inline.ParserInline.add_terminator_char",
+   "external"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.use",
+   "markdown_it.ruler.Ruler.after",
+   "external"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.use",
+   "markdown_it.ruler.Ruler.at",
+   "external"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.use",
+   "markdown_it.ruler.Ruler.before",
+   "external"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.__init__",
+   "markdown_it.ruler.Ruler",
+   "external"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.code.code",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.lheading.lheading",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.paragraph.paragraph",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.reference.reference",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.state_block.StateBlock.getLines",
+   "wrapper"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "wrapper"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "wrapper"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.state_block.StateBlock.skipCharsStr",
+   "wrapper"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.state_block.StateBlock.skipSpaces",
+   "wrapper"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.table.table",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.__init__",
+   "markdown_it.ruler.Ruler",
+   "external"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.block.block",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.inline.inline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.linkify.linkify",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.normalize.normalize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.replacements.replace",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.smartquotes.smartquotes",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.text_join.text_join",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.__init__",
+   "markdown_it.ruler.Ruler",
+   "external"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.rules_inline.balance_pairs.link_pairs",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.rules_inline.emphasis.postProcess",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.rules_inline.fragments_join.fragments_join",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.rules_inline.strikethrough.postProcess",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.autolink.autolink",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.backticks.backtick",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.emphasis.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.entity.entity",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.escape.escape",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.html_inline.html_inline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.image.image",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.link.link",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.linkify.linkify",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.newline.newline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.strikethrough.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.text.text",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.autolink.autolink",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.backticks.backtick",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.emphasis.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.entity.entity",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.escape.escape",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.html_inline.html_inline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.image.image",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.link.link",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.linkify.linkify",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.newline.newline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "external"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.strikethrough.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.text.text",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.render",
+   "markdown_it.renderer.RendererHTML.code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.render",
+   "markdown_it.renderer.RendererHTML.fence",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.render",
+   "markdown_it.renderer.RendererHTML.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.render",
+   "markdown_it.renderer.RendererHTML.list_item_open",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.code_inline",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.hardbreak",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.html_inline",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.image",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.softbreak",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.text",
+   "direct"
+  ],
+  [
+   "markdown_it.ruler.Ruler.after",
+   "markdown_it.ruler.Rule",
+   "external"
+  ],
+  [
+   "markdown_it.ruler.Ruler.before",
+   "markdown_it.ruler.Rule",
+   "external"
+  ],
+  [
+   "markdown_it.ruler.Ruler.disable",
+   "markdown_it.ruler.Ruler.getRules",
+   "external"
+  ],
+  [
+   "markdown_it.ruler.Ruler.enable",
+   "markdown_it.ruler.Ruler.getRules",
+   "external"
+  ],
+  [
+   "markdown_it.ruler.Ruler.push",
+   "markdown_it.ruler.Rule",
+   "external"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.state_block.StateBlock.skipCharsStr",
+   "wrapper"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.table.table",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "wrapper"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.state_block.StateBlock.skipCharsStr",
+   "wrapper"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.table.table",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.state_block.StateBlock.__init__",
+   "markdown_it.ruler.Ruler.get_active_rules",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_core.replacements.replace_scoped",
+   "markdown_it.rules_core.replacements.replaceFn",
+   "direct"
+  ],
+  [
+   "markdown_it.token.Token.as_dict",
+   "markdown_it.token.Token.as_dict",
+   "direct"
+  ],
+  [
+   "markdown_it.token.Token.copy",
+   "markdown_it.token.Token",
+   "external"
+  ],
+  [
+   "markdown_it.token.Token.from_dict",
+   "markdown_it.token.Token",
+   "direct"
+  ],
+  [
+   "markdown_it.tree.SyntaxTreeNode._add_child",
+   "markdown_it.tree.SyntaxTreeNode",
+   "direct"
+  ],
+  [
+   "markdown_it.tree.SyntaxTreeNode.pretty",
+   "markdown_it.tree.SyntaxTreeNode.pretty",
+   "direct"
+  ],
+  [
+   "markdown_it.tree.SyntaxTreeNode.to_tokens",
+   "markdown_it.token.Token.copy",
+   "nested"
+  ],
+  [
+   "markdown_it.tree.SyntaxTreeNode.walk",
+   "markdown_it.tree.SyntaxTreeNode.walk",
+   "direct"
+  ]
+ ],
+ "contradicted": [
+  [
+   "markdown_it.cli.parse.convert_file",
+   "markdown_it.main.MarkdownIt",
+   "deep"
+  ],
+  [
+   "markdown_it.cli.parse.convert_stdin",
+   "markdown_it.main.MarkdownIt",
+   "deep"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.render",
+   "markdown_it.renderer.RendererProtocol.render",
+   "deep"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.renderInline",
+   "markdown_it.renderer.RendererProtocol.render",
+   "deep"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.getLines",
+   "deep"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "deep"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "deep"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.skipCharsStr",
+   "deep"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.skipSpaces",
+   "deep"
+  ]
+ ]
+}

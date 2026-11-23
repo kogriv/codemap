@@ -1,0 +1,1269 @@
+{
+ "graph": "deep.json",
+ "tier": "deep",
+ "nodes": 1066,
+ "functions": 483,
+ "functions_started": 408,
+ "calls_edges": 567,
+ "runtime_pairs": 739,
+ "unmapped_runtime": {
+  "callee": 3
+ },
+ "categories": {
+  "implicit": 44,
+  "construct": 60,
+  "init": 54,
+  "call": 549,
+  "property": 32
+ },
+ "recall": {
+  "explicit": {
+   "pairs": 609,
+   "found": 438,
+   "recall": 0.7192,
+   "found_calls_or_references": 447,
+   "by_via": {
+    "direct": {
+     "pairs": 528,
+     "found": 425
+    },
+    "nested": {
+     "pairs": 16,
+     "found": 13
+    },
+    "external": {
+     "pairs": 40,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 25,
+     "found": 0
+    }
+   }
+  },
+  "implicit": {
+   "pairs": 44,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 28,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 1,
+     "found": 0
+    },
+    "external": {
+     "pairs": 13,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 2,
+     "found": 0
+    }
+   }
+  },
+  "property": {
+   "pairs": 32,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 28,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 3,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 1,
+     "found": 0
+    }
+   }
+  },
+  "decorator": {
+   "pairs": 0,
+   "found": 0,
+   "recall": null,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 0,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  }
+ },
+ "precision": {
+  "outcomes": {
+   "no_site": 8,
+   "caller_not_run": 42,
+   "confirmed": 438,
+   "attribute_target": 21,
+   "partly_run": 1,
+   "contradicted": 48,
+   "unexercised": 9
+  },
+  "decided": 0.9012,
+  "by_grade": {
+   "exact": {
+    "attribute_target": 6,
+    "decided": null
+   },
+   "inferred": {
+    "no_site": 8,
+    "caller_not_run": 42,
+    "confirmed": 438,
+    "attribute_target": 15,
+    "partly_run": 1,
+    "contradicted": 48,
+    "unexercised": 9,
+    "decided": 0.9012
+   }
+  },
+  "by_resolution": {
+   "deep": {
+    "no_site": 8,
+    "caller_not_run": 42,
+    "confirmed": 438,
+    "attribute_target": 15,
+    "partly_run": 1,
+    "contradicted": 48,
+    "unexercised": 9,
+    "decided": 0.9012
+   },
+   "module": {
+    "attribute_target": 1,
+    "decided": null
+   },
+   "self": {
+    "attribute_target": 5,
+    "decided": null
+   }
+  }
+ },
+ "callers_complete": {
+  "callees": 345,
+  "complete": 225,
+  "share": 0.6522
+ },
+ "misses": [
+  [
+   "click._compat._NonClosingTextIOWrapper.__init__",
+   "click._compat._FixupStream.readable",
+   "direct"
+  ],
+  [
+   "click._compat._NonClosingTextIOWrapper.__init__",
+   "click._compat._FixupStream.seekable",
+   "direct"
+  ],
+  [
+   "click._compat._NonClosingTextIOWrapper.__init__",
+   "click._compat._FixupStream.writable",
+   "direct"
+  ],
+  [
+   "click._compat._force_correct_text_stream",
+   "click._compat._find_binary_reader",
+   "direct"
+  ],
+  [
+   "click._compat._force_correct_text_stream",
+   "click._compat._is_binary_reader",
+   "direct"
+  ],
+  [
+   "click._compat._force_correct_text_stream",
+   "click._compat._is_binary_writer",
+   "direct"
+  ],
+  [
+   "click._compat._is_binary_reader",
+   "click.testing.EchoingStdin.read",
+   "direct"
+  ],
+  [
+   "click._compat._is_binary_writer",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click._termui_impl.ProgressBar.__init__",
+   "click._compat.get_text_stdout",
+   "wrapper"
+  ],
+  [
+   "click._termui_impl.ProgressBar.render_finish",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click._termui_impl.ProgressBar.render_finish",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click._termui_impl.ProgressBar.render_progress",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click._termui_impl._PagerWriter.flush",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click._termui_impl._PagerWriter.flush",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click._termui_impl._pager_contextmanager",
+   "click._compat.get_text_stdout",
+   "wrapper"
+  ],
+  [
+   "click.core.Argument.make_metavar",
+   "click.types.Choice.get_metavar",
+   "direct"
+  ],
+  [
+   "click.core.Argument.make_metavar",
+   "click.types.DateTime.get_metavar",
+   "direct"
+  ],
+  [
+   "click.core.Command.collect_usage_pieces",
+   "click.core.Argument.get_usage_pieces",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_arguments",
+   "click.core.Argument.get_help_record",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_help",
+   "click.core.Group.format_options",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_options",
+   "click.core.Argument.get_help_record",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_options",
+   "click.core.Option.get_help_record",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_usage",
+   "click.core.Group.collect_usage_pieces",
+   "direct"
+  ],
+  [
+   "click.core.Command.get_help_option",
+   "click.core.Option",
+   "wrapper"
+  ],
+  [
+   "click.core.Command.get_help_option",
+   "click.decorators._param_memo",
+   "wrapper"
+  ],
+  [
+   "click.core.Command.main",
+   "click.core.Group.invoke",
+   "direct"
+  ],
+  [
+   "click.core.Command.main",
+   "click.core._echo_aborted",
+   "direct"
+  ],
+  [
+   "click.core.Command.main",
+   "click.exceptions.ClickException.show",
+   "direct"
+  ],
+  [
+   "click.core.Command.main",
+   "click.exceptions.NoArgsIsHelpError.show",
+   "direct"
+  ],
+  [
+   "click.core.Command.main",
+   "click.exceptions.UsageError.show",
+   "direct"
+  ],
+  [
+   "click.core.Command.make_context",
+   "click.core.Context",
+   "direct"
+  ],
+  [
+   "click.core.Command.make_context",
+   "click.core.Group.parse_args",
+   "direct"
+  ],
+  [
+   "click.core.Command.make_parser",
+   "click.core.Argument.add_to_parser",
+   "direct"
+  ],
+  [
+   "click.core.Command.make_parser",
+   "click.core.Option.add_to_parser",
+   "direct"
+  ],
+  [
+   "click.core.Command.to_info_dict",
+   "click.core.Option.to_info_dict",
+   "direct"
+  ],
+  [
+   "click.core.Context.__init__",
+   "click.testing._NamedTextIOWrapper.close",
+   "external"
+  ],
+  [
+   "click.core.Context._close_with_exception_info",
+   "click.globals.get_current_context",
+   "external"
+  ],
+  [
+   "click.core.Context._close_with_exception_info",
+   "click.testing.BytesIOCopy.flush",
+   "wrapper"
+  ],
+  [
+   "click.core.Context._close_with_exception_info",
+   "click.utils._LazyFile.close_intelligently",
+   "external"
+  ],
+  [
+   "click.core.Context._make_sub_context",
+   "click.core.Context",
+   "direct"
+  ],
+  [
+   "click.core.Context.command_path",
+   "click.core.Argument.get_usage_pieces",
+   "direct"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click._compat._AtomicFile.close",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click._termui_impl.ProgressBar.update",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Context.call_on_close",
+   "wrapper"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Context.ensure_object",
+   "wrapper"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Context.exit",
+   "wrapper"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Context.find_object",
+   "wrapper"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Context.forward",
+   "wrapper"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Context.get_parameter_source",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Context.invoke",
+   "wrapper"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Option.get_default",
+   "direct"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.globals.get_current_context",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.confirm",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.echo_via_pager",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.getchar",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.pause",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.progressbar",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.prompt",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.secho",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.style",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.BytesIOCopy.flush",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.BytesIOCopy.write",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.CliRunner",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.CliRunner.invoke",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.EchoingStdin.read",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.EchoingStdin.read1",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing._NamedTextIOWrapper.fileno",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.utils._get_binary_stream",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.utils.echo",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.utils.open_file",
+   "external"
+  ],
+  [
+   "click.core.Context.make_formatter",
+   "click.formatting.HelpFormatter",
+   "direct"
+  ],
+  [
+   "click.core.Group.command",
+   "click.core.Command",
+   "wrapper"
+  ],
+  [
+   "click.core.Group.group",
+   "click.core.Group",
+   "wrapper"
+  ],
+  [
+   "click.core.Group.invoke",
+   "click.core.Group.invoke",
+   "direct"
+  ],
+  [
+   "click.core.Group.to_info_dict",
+   "click.core.Group.to_info_dict",
+   "direct"
+  ],
+  [
+   "click.core.Option.get_help_extra",
+   "click.types._NumberRangeBase._describe_range",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.__init__",
+   "click.core.Argument._parse_decls",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.__init__",
+   "click.core.Option._parse_decls",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.consume_value",
+   "click.core.Option.get_default",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.consume_value",
+   "click.core.Option.value_from_envvar",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.handle_parse_result",
+   "click.core.Option.consume_value",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.handle_parse_result",
+   "click.core.Option.process_value",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.handle_parse_result",
+   "click.globals.get_current_context",
+   "external"
+  ],
+  [
+   "click.core.Parameter.make_metavar",
+   "click.types.Choice.get_metavar",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.make_metavar",
+   "click.types.DateTime.get_metavar",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.core.Context.call_on_close",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.core.Context.exit",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.core.Context.find_root",
+   "wrapper"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.core.Context.get_help",
+   "wrapper"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.core.Context.get_parameter_source",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.exceptions.BadParameter",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.globals.get_current_context",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.utils.echo",
+   "external"
+  ],
+  [
+   "click.core.Parameter.shell_complete",
+   "click.types.Choice.shell_complete",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.shell_complete",
+   "click.types.File.shell_complete",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.shell_complete",
+   "click.types.Path.shell_complete",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.type_cast_value",
+   "click.types.ParamType.__call__",
+   "nested"
+  ],
+  [
+   "click.decorators.command",
+   "click.core.Command",
+   "nested"
+  ],
+  [
+   "click.decorators.group",
+   "click.core.Group",
+   "wrapper"
+  ],
+  [
+   "click.exceptions.BadParameter.format_message",
+   "click.core.Argument.get_error_hint",
+   "direct"
+  ],
+  [
+   "click.exceptions.BadParameter.format_message",
+   "click.core.Option.get_error_hint",
+   "direct"
+  ],
+  [
+   "click.exceptions.ClickException.show",
+   "click.exceptions.FileError.format_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.ClickException.show",
+   "click.termui.style",
+   "external"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.core.Argument.get_error_hint",
+   "direct"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.core.Option.get_error_hint",
+   "direct"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.types.Choice.get_missing_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.UsageError.show",
+   "click.exceptions.BadParameter.format_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.UsageError.show",
+   "click.exceptions.MissingParameter.format_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.UsageError.show",
+   "click.exceptions.NoSuchCommand.format_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.UsageError.show",
+   "click.exceptions.NoSuchOption.format_message",
+   "direct"
+  ],
+  [
+   "click.formatting.HelpFormatter.section",
+   "click.termui.style",
+   "external"
+  ],
+  [
+   "click.formatting.wrap_text",
+   "click._textwrap.TextWrapper._wrap_chunks",
+   "external"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.BashComplete.format_completion",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.BashComplete.get_completion_args",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.FishComplete.format_completion",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.FishComplete.get_completion_args",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.PowerShellComplete.format_completion",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.PowerShellComplete.get_completion_args",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ZshComplete.format_completion",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ZshComplete.get_completion_args",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.get_completions",
+   "click.core.Group.shell_complete",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.get_completions",
+   "click.core.Parameter.shell_complete",
+   "direct"
+  ],
+  [
+   "click.shell_completion._resolve_context",
+   "click.core.Group.resolve_command",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.BashComplete",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.BashComplete.source",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.FishComplete",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.PowerShellComplete",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.ZshComplete",
+   "direct"
+  ],
+  [
+   "click.termui._readline_prompt",
+   "click.testing.BytesIOCopy.flush",
+   "wrapper"
+  ],
+  [
+   "click.termui._readline_prompt",
+   "click.testing.BytesIOCopy.write",
+   "wrapper"
+  ],
+  [
+   "click.termui._readline_prompt",
+   "click.testing.EchoingStdin.read1",
+   "wrapper"
+  ],
+  [
+   "click.termui.echo_via_pager",
+   "click._termui_impl._PagerWriter.flush",
+   "direct"
+  ],
+  [
+   "click.termui.echo_via_pager",
+   "click._termui_impl._PagerWriter.write",
+   "direct"
+  ],
+  [
+   "click.termui.echo_via_pager",
+   "click.utils.echo",
+   "external"
+  ],
+  [
+   "click.termui.getchar",
+   "click.testing.BytesIOCopy.flush",
+   "wrapper"
+  ],
+  [
+   "click.termui.getchar",
+   "click.testing.BytesIOCopy.write",
+   "wrapper"
+  ],
+  [
+   "click.termui.getchar",
+   "click.testing.EchoingStdin.read1",
+   "wrapper"
+  ],
+  [
+   "click.termui.prompt",
+   "click.core.Option.process_value",
+   "wrapper"
+  ],
+  [
+   "click.termui.prompt",
+   "click.types.ParamType.__call__",
+   "direct"
+  ],
+  [
+   "click.testing.CliRunner.invoke",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click.testing.CliRunner.invoke",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click.testing.CliRunner.invoke",
+   "click.testing._NamedTextIOWrapper.close",
+   "external"
+  ],
+  [
+   "click.testing.CliRunner.isolation",
+   "click.testing._NamedTextIOWrapper.close",
+   "direct"
+  ],
+  [
+   "click.testing.EchoingStdin._echo",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.core.Context.get_parameter_source",
+   "external"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.BoolParamType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.Choice.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.DateTime.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.File.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.FuncParamType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.ParamType.fail",
+   "external"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.Path",
+   "external"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.Path.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.StringParamType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.Tuple.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.UUIDParameterType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.UnprocessedParamType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types._NumberParamTypeBase.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types._NumberRangeBase.convert",
+   "direct"
+  ],
+  [
+   "click.types.Tuple.convert",
+   "click.types.ParamType.__call__",
+   "nested"
+  ],
+  [
+   "click.types._NumberRangeBase.convert",
+   "click.types.FloatRange._clamp",
+   "direct"
+  ],
+  [
+   "click.types._NumberRangeBase.convert",
+   "click.types.IntRange._clamp",
+   "direct"
+  ],
+  [
+   "click.utils._LazyFile.close",
+   "click._compat._AtomicFile.close",
+   "direct"
+  ],
+  [
+   "click.utils._get_binary_stream",
+   "click._compat.get_binary_stdin",
+   "direct"
+  ],
+  [
+   "click.utils._get_binary_stream",
+   "click._compat.get_binary_stdout",
+   "direct"
+  ],
+  [
+   "click.utils.echo",
+   "click._compat.get_text_stderr",
+   "wrapper"
+  ],
+  [
+   "click.utils.echo",
+   "click._compat.get_text_stdout",
+   "wrapper"
+  ],
+  [
+   "click.utils.echo",
+   "click._termui_impl._PagerWriter.flush",
+   "direct"
+  ],
+  [
+   "click.utils.echo",
+   "click._termui_impl._PagerWriter.write",
+   "direct"
+  ],
+  [
+   "click.utils.echo",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click.utils.echo",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ]
+ ],
+ "contradicted": [
+  [
+   "click._termui_impl._pager_contextmanager",
+   "click._termui_impl._pipepager",
+   "deep"
+  ],
+  [
+   "click._termui_impl._pager_contextmanager",
+   "click._termui_impl._tempfilepager",
+   "deep"
+  ],
+  [
+   "click.core.Command.format_arguments",
+   "click.core.Parameter.get_help_record",
+   "deep"
+  ],
+  [
+   "click.core.Command.format_arguments",
+   "click.formatting.HelpFormatter.section",
+   "deep"
+  ],
+  [
+   "click.core.Command.format_help_text",
+   "click.formatting.HelpFormatter.indentation",
+   "deep"
+  ],
+  [
+   "click.core.Command.format_options",
+   "click.core.Parameter.get_help_record",
+   "deep"
+  ],
+  [
+   "click.core.Command.format_options",
+   "click.formatting.HelpFormatter.section",
+   "deep"
+  ],
+  [
+   "click.core.Command.main",
+   "click.exceptions.Abort",
+   "deep"
+  ],
+  [
+   "click.core.Command.make_context",
+   "click.core.Context.scope",
+   "deep"
+  ],
+  [
+   "click.core.Command.make_parser",
+   "click.core.Parameter.add_to_parser",
+   "deep"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Parameter.get_default",
+   "deep"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.augment_usage_errors",
+   "deep"
+  ],
+  [
+   "click.core.Group.format_commands",
+   "click.formatting.HelpFormatter.section",
+   "deep"
+  ],
+  [
+   "click.core.Group.to_info_dict",
+   "click.core.Context.scope",
+   "deep"
+  ],
+  [
+   "click.core.Option.prompt_for_value",
+   "click.core.Option.process_value",
+   "deep"
+  ],
+  [
+   "click.core.Parameter.__init__",
+   "click.core.Parameter._parse_decls",
+   "deep"
+  ],
+  [
+   "click.core.Parameter.handle_parse_result",
+   "click.core.augment_usage_errors",
+   "deep"
+  ],
+  [
+   "click.decorators.argument",
+   "click.decorators._param_memo",
+   "deep"
+  ],
+  [
+   "click.decorators.custom_version_option",
+   "click.core.Context.exit",
+   "deep"
+  ],
+  [
+   "click.decorators.custom_version_option",
+   "click.utils.echo",
+   "deep"
+  ],
+  [
+   "click.decorators.help_option",
+   "click.core.Context.exit",
+   "deep"
+  ],
+  [
+   "click.decorators.help_option",
+   "click.core.Context.get_help",
+   "deep"
+  ],
+  [
+   "click.decorators.help_option",
+   "click.utils.echo",
+   "deep"
+  ],
+  [
+   "click.decorators.make_pass_decorator",
+   "click.core.Context.ensure_object",
+   "deep"
+  ],
+  [
+   "click.decorators.make_pass_decorator",
+   "click.core.Context.find_object",
+   "deep"
+  ],
+  [
+   "click.decorators.make_pass_decorator",
+   "click.core.Context.invoke",
+   "deep"
+  ],
+  [
+   "click.decorators.make_pass_decorator",
+   "click.globals.get_current_context",
+   "deep"
+  ],
+  [
+   "click.decorators.option",
+   "click.decorators._param_memo",
+   "deep"
+  ],
+  [
+   "click.decorators.pass_context",
+   "click.globals.get_current_context",
+   "deep"
+  ],
+  [
+   "click.decorators.pass_meta_key",
+   "click.core.Context.invoke",
+   "deep"
+  ],
+  [
+   "click.decorators.pass_meta_key",
+   "click.globals.get_current_context",
+   "deep"
+  ],
+  [
+   "click.decorators.pass_obj",
+   "click.globals.get_current_context",
+   "deep"
+  ],
+  [
+   "click.decorators.version_option",
+   "click.core.Context.exit",
+   "deep"
+  ],
+  [
+   "click.decorators.version_option",
+   "click.core.Context.find_root",
+   "deep"
+  ],
+  [
+   "click.decorators.version_option",
+   "click.utils.echo",
+   "deep"
+  ],
+  [
+   "click.exceptions.BadParameter.format_message",
+   "click.core.Parameter.get_error_hint",
+   "deep"
+  ],
+  [
+   "click.exceptions.ClickException.show",
+   "click.exceptions.ClickException.format_message",
+   "deep"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.core.Parameter.get_error_hint",
+   "deep"
+  ],
+  [
+   "click.formatting.wrap_text",
+   "click._textwrap.TextWrapper.extra_indent",
+   "deep"
+  ],
+  [
+   "click.shell_completion.BashComplete.source",
+   "click.shell_completion.BashComplete._check_version",
+   "deep"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ShellComplete.format_completion",
+   "deep"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ShellComplete.get_completion_args",
+   "deep"
+  ],
+  [
+   "click.termui.get_pager_file",
+   "click._termui_impl.get_pager_file",
+   "deep"
+  ],
+  [
+   "click.termui.pause",
+   "click.termui.getchar",
+   "deep"
+  ],
+  [
+   "click.testing.CliRunner.invoke",
+   "click.testing.CliRunner.isolation",
+   "deep"
+  ],
+  [
+   "click.testing.CliRunner.isolation",
+   "click.testing._pause_echo",
+   "deep"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.ParamType.convert",
+   "deep"
+  ],
+  [
+   "click.types._NumberRangeBase.convert",
+   "click.types._NumberRangeBase._clamp",
+   "deep"
+  ]
+ ]
+}

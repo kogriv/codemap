@@ -11,17 +11,25 @@ What counts as a call ``F → G`` (the same attribution codemap uses, checked on
   not a lambda, not module code). Its frame starts (``PY_START``). A generator, coroutine or async generator
   is taken at the call instruction instead (``CALL``): its frame first runs in whoever iterates it, so the frame
   above it then is the consumer, not the caller.
-- F is the nearest frame above G's that belongs to a named package function or to module code. Frames of
-  nested functions and lambdas are skipped (codemap attributes their calls to the enclosing function), and so
-  are at most ``MAX_EXTERNAL`` frames of code outside the package (``functools``, ``contextlib`` …). A test
-  function, pytest or more external frames than that end the walk: G was called from outside.
+- F is found from the nearest package frame above G's, after at most ``MAX_EXTERNAL`` frames of code outside
+  the package (``functools``, ``contextlib`` …). A test function, pytest or more external frames than that
+  end the walk: G was called from outside.
+  - A named package function or module code is F.
+  - A nested function, lambda or generator expression is attributed lexically, to the named function it is
+    defined in, as codemap does, whether or not that function is still on the stack: a closure a factory
+    returned, a generator expression consumed by the caller, a lambda passed elsewhere.
+  - Except a wrapper: a nested frame that holds G itself as a value (``fn`` in a decorator's wrapper) calls
+    it on behalf of whoever called the wrapper, so the walk goes on up the stack to that named function.
 - ``via`` records what was skipped: 1 = a nested function of F itself (lexical, codemap sees it as F),
-  2 = a nested function of another function (a wrapper, e.g. a decorator's), 4 = external frames.
+  2 = a wrapper of another function, 4 = external frames.
 - A construction yields ``F → class`` with flag 8, since codemap points a construction at the class: seen at
   the call instruction (``CALL`` with a package class as the callable — this catches dataclasses and classes
   without a Python ``__init__``) and at a started ``__init__`` whose caller is not the same object's
-  ``__init__`` (``super().__init__()`` is a call, not a construction). A call site whose callable is not a
-  package class is switched off after its first event — a site that alternates may be missed.
+  ``__init__`` (``super().__init__()`` is a call, not a construction). A call site stays on while it calls
+  classes or generator functions, foreign ones too: a name a test monkeypatched, ``contextlib``'s one site
+  that starts every ``@contextmanager``. A site is switched off at its first event only when that callable is
+  a builtin type, a C callable or a plain Python function — a site that later calls a package class or
+  generator from there is missed.
 
 Lines executed in package files are recorded once each (``LINE``, then disabled) — the precision side uses them.
 """
@@ -33,6 +41,7 @@ import json
 import os
 import sys
 from collections import Counter
+from types import FunctionType, MethodType
 
 MAX_EXTERNAL = 3
 ROOT = os.path.realpath(os.environ["R1C132_PKG_ROOT"])
@@ -76,10 +85,27 @@ def _code_info(code):
     return r
 
 
-def _caller_of(fr):
-    """The named package function (or module / class-body code) a frame belongs to, and how it was reached."""
+def _holds(fr, target) -> bool:
+    """Does this frame hold the callee itself as a value — a wrapper's ``fn``?"""
+    if target is None:
+        return False
+    try:
+        values = list(fr.f_locals.values())
+    except Exception:  # noqa: BLE001 - a probe never breaks the tests it watches
+        return False
+    for v in values:                  # by exact type: no attribute lookup, so no user __getattr__ runs here
+        if type(v) is MethodType:
+            v = v.__func__
+        if v is target or (type(v) is FunctionType and v.__code__ is target):
+            return True
+    return False
+
+
+def _caller_of(fr, target=None):
+    """The named package function (or module / class-body code) a call from frame ``fr`` belongs to, and how
+    it was reached. ``target`` is the callee (its code, or the class constructed) — to tell a wrapper."""
     ext = 0
-    owners = []                       # owners of the nested-function frames skipped on the way
+    owners = []                       # owners of the wrapper frames skipped on the way
     while fr is not None:
         c2 = _code_info(fr.f_code)
         if c2 is None:
@@ -87,6 +113,8 @@ def _caller_of(fr):
             if ext > MAX_EXTERNAL:
                 return None, 0
         elif c2[1]:
+            if not owners and not _holds(fr, target):
+                return c2[2], (4 if ext else 0) | 1     # lexical: the function the nested code is defined in
             owners.append(c2[2])
         else:
             via = 4 if ext else 0
@@ -112,7 +140,7 @@ def _on_start(code, offset):
         return None                   # its caller is recorded where it was called
     frame = sys._getframe(1)
     started[callee] += 1
-    caller, via = _caller_of(frame.f_back)
+    caller, via = _caller_of(frame.f_back, code)
     if caller is None:
         return None                   # called from a test, from pytest, or through too much foreign code
     edges[(caller, callee, via)] += 1
@@ -133,12 +161,12 @@ def _on_start(code, offset):
 def _on_call(code, offset, callable_, arg0):
     """A call instruction. A package class called here is a construction, whatever its __init__ is (generated
     by dataclasses, inherited from outside, absent); a package generator or coroutine function called here is
-    its call. A site that calls anything else is switched off."""
+    its call. A site stays on while it calls classes or generator functions (see the module docstring)."""
     if isinstance(callable_, type):
         mod = getattr(callable_, "__module__", "") or ""
         if not (mod == PKG or mod.startswith(PKG + ".")):
-            return mon.DISABLE
-        caller, via = _caller_of(sys._getframe(1))
+            return mon.DISABLE if mod == "builtins" else None
+        caller, via = _caller_of(sys._getframe(1), callable_)
         if caller is not None:
             edges[(caller, f"{mod}.{callable_.__qualname__}", via | 8)] += 1
         return None
@@ -148,8 +176,8 @@ def _on_call(code, offset, callable_, arg0):
         return mon.DISABLE
     ci = _code_info(fcode)
     if ci is None or ci[1] or ci[3] != "func":
-        return mon.DISABLE
-    caller, via = _caller_of(sys._getframe(1))
+        return None
+    caller, via = _caller_of(sys._getframe(1), fcode)
     if caller is not None:
         edges[(caller, ci[0], via)] += 1
     return None

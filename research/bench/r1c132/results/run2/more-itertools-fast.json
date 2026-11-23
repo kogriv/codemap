@@ -1,0 +1,224 @@
+{
+ "graph": "fast.json",
+ "tier": "fast",
+ "nodes": 362,
+ "functions": 265,
+ "functions_started": 256,
+ "calls_edges": 95,
+ "runtime_pairs": 114,
+ "unmapped_runtime": {},
+ "categories": {
+  "implicit": 16,
+  "call": 83,
+  "construct": 5,
+  "init": 5,
+  "property": 5
+ },
+ "recall": {
+  "explicit": {
+   "pairs": 88,
+   "found": 79,
+   "recall": 0.8977,
+   "found_calls_or_references": 80,
+   "by_via": {
+    "direct": {
+     "pairs": 84,
+     "found": 76
+    },
+    "nested": {
+     "pairs": 3,
+     "found": 3
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 1,
+     "found": 0
+    }
+   }
+  },
+  "implicit": {
+   "pairs": 16,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 16,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "property": {
+   "pairs": 5,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 0,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 5,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "decorator": {
+   "pairs": 0,
+   "found": 0,
+   "recall": null,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 0,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  }
+ },
+ "precision": {
+  "outcomes": {
+   "confirmed": 79,
+   "attribute_target": 11,
+   "contradicted": 3,
+   "caller_not_run": 1,
+   "unexercised": 1
+  },
+  "decided": 0.9634,
+  "by_grade": {
+   "exact": {
+    "confirmed": 79,
+    "contradicted": 3,
+    "caller_not_run": 1,
+    "attribute_target": 11,
+    "unexercised": 1,
+    "decided": 0.9634
+   }
+  },
+  "by_resolution": {
+   "imported": {
+    "attribute_target": 2,
+    "confirmed": 12,
+    "decided": 1.0
+   },
+   "module": {
+    "confirmed": 57,
+    "contradicted": 3,
+    "caller_not_run": 1,
+    "attribute_target": 3,
+    "unexercised": 1,
+    "decided": 0.95
+   },
+   "self": {
+    "attribute_target": 6,
+    "confirmed": 10,
+    "decided": 1.0
+   }
+  }
+ },
+ "callers_complete": {
+  "callees": 71,
+  "complete": 65,
+  "share": 0.9155
+ },
+ "misses": [
+  [
+   "more_itertools.more._random_ordered_indices",
+   "more_itertools.recipes._batched",
+   "direct"
+  ],
+  [
+   "more_itertools.more.iequals",
+   "more_itertools.recipes.all_equal",
+   "direct"
+  ],
+  [
+   "more_itertools.more.outer_product",
+   "more_itertools.recipes._batched",
+   "direct"
+  ],
+  [
+   "more_itertools.more.seekable.peek",
+   "more_itertools.more.peekable.peek",
+   "direct"
+  ],
+  [
+   "more_itertools.more.side_effect",
+   "more_itertools.recipes.take",
+   "direct"
+  ],
+  [
+   "more_itertools.recipes.first_true",
+   "more_itertools.recipes.is_prime",
+   "direct"
+  ],
+  [
+   "more_itertools.recipes.matmul",
+   "more_itertools.recipes._batched",
+   "direct"
+  ],
+  [
+   "more_itertools.recipes.reshape",
+   "more_itertools.recipes._batched",
+   "direct"
+  ],
+  [
+   "more_itertools.recipes.take",
+   "more_itertools.more.ilen",
+   "wrapper"
+  ]
+ ],
+ "contradicted": [
+  [
+   "more_itertools.more.callback_iter._reader",
+   "more_itertools.more.AbortThread",
+   "module"
+  ],
+  [
+   "more_itertools.more.run_length.encode",
+   "more_itertools.more.ilen",
+   "module"
+  ],
+  [
+   "more_itertools.more.synchronized",
+   "more_itertools.more.serialize",
+   "module"
+  ]
+ ]
+}

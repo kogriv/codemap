@@ -5,6 +5,15 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Research
+- **An independent call-graph accuracy benchmark** (R1-C132). Five public projects codemap was never tuned on
+  (more-itertools, click, rich, markdown-it-py, jinja) are measured against the calls their own test suites
+  make at runtime, with pre-registered predictions and controls. In 105 contradicted edges read by hand, one is
+  a false edge. Deep explicit recall is 60–89%. Most misses on both sides are virtual dispatch: a call resolved
+  to the declaring class's method entered an override. Results:
+  [`research/bench/r1c132/RESULTS.md`](research/bench/r1c132/RESULTS.md) and
+  [`docs/accuracy.md`](docs/accuracy.md#an-independent-benchmark-five-projects-against-their-own-tests).
+
 ## [0.0.47] - 2026-11-23
 
 **A security release: fixes for the follow-up audit of 0.0.46** (FU-01…FU-03, R1-C133…C135). Schema 0.13;

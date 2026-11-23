@@ -1,5 +1,6 @@
 """R1-C132 control package: every shape of call the tracer must attribute the way codemap does."""
 
+import contextlib
 import functools
 
 def g():
@@ -80,3 +81,41 @@ def use_gen():
 class G:
     def items(self):
         yield 1
+
+
+def make_rule():
+    def rule():
+        return h(5)            # runs later, from run_rules: still make_rule's call, as codemap reads it
+    return rule
+
+
+def make_rule_with(obj):
+    def rule():
+        return h(5) if obj is not None else 0     # the closure holds an object a lookup would break on
+    return rule
+
+
+def run_rules(rules):
+    return [r() for r in rules]
+
+
+def lazy_h():
+    return (h(i) for i in range(2))   # a generator expression: runs where it is consumed
+
+
+@contextlib.contextmanager
+def cm():
+    yield h(6)
+
+
+def use_cm():
+    with cm() as v:            # started at contextlib's one call site, which foreign context managers share
+        return v
+
+
+class Err(Exception):
+    pass
+
+
+def raise_err():
+    raise Err()                # the same call site first meets a class a test patched in

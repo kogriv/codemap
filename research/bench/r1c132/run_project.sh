@@ -32,10 +32,13 @@ run_tests() {  # $1 label, rest: extra args
   log "pytest $label: $(tail -1 "pytest-$label.txt")"
 }
 export PYTHONDONTWRITEBYTECODE=1
-run_tests plain
+# R1C132_CONCURRENT=1 runs the three suites side by side (a long suite); C6 would show any interference.
+if [ "${R1C132_CONCURRENT:-0}" = 1 ]; then BG='&'; else BG=''; fi
+eval "run_tests plain $BG"
 for i in 1 2; do
-  R1C132_PKG_ROOT=$ROOT R1C132_OUT=$D/trace$i.json PYTHONPATH=$BENCH run_tests traced$i -p r1c132_tracer
+  eval "R1C132_PKG_ROOT=$ROOT R1C132_OUT=$D/trace$i.json PYTHONPATH=$BENCH run_tests traced$i -p r1c132_tracer $BG"
 done
+wait
 "$CM/bin/codemap" build "$ROOT" -o fast.json > build-fast.txt 2>&1
 "$CM/bin/codemap" build "$ROOT" --deep --repeat 3 -o deep.json > build-deep.txt 2>&1
 for t in fast deep; do

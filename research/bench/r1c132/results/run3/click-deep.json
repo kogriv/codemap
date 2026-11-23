@@ -1,0 +1,1737 @@
+{
+ "graph": "deep.json",
+ "tier": "deep",
+ "nodes": 1066,
+ "functions": 483,
+ "functions_started": 408,
+ "calls_edges": 567,
+ "runtime_pairs": 777,
+ "unmapped_runtime": {
+  "callee": 3
+ },
+ "categories": {
+  "implicit": 45,
+  "construct": 64,
+  "init": 53,
+  "call": 582,
+  "property": 33
+ },
+ "recall": {
+  "explicit": {
+   "pairs": 646,
+   "found": 473,
+   "recall": 0.7322,
+   "found_calls_or_references": 484,
+   "by_via": {
+    "direct": {
+     "pairs": 530,
+     "found": 426
+    },
+    "nested": {
+     "pairs": 43,
+     "found": 32
+    },
+    "external": {
+     "pairs": 64,
+     "found": 15
+    },
+    "wrapper": {
+     "pairs": 9,
+     "found": 0
+    }
+   }
+  },
+  "implicit": {
+   "pairs": 45,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 28,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 2,
+     "found": 0
+    },
+    "external": {
+     "pairs": 15,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "property": {
+   "pairs": 33,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 28,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 1,
+     "found": 0
+    },
+    "external": {
+     "pairs": 4,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "decorator": {
+   "pairs": 0,
+   "found": 0,
+   "recall": null,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 0,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  }
+ },
+ "precision": {
+  "outcomes": {
+   "no_site": 8,
+   "caller_not_run": 42,
+   "confirmed": 473,
+   "attribute_target": 21,
+   "contradicted": 14,
+   "unexercised": 9
+  },
+  "decided": 0.9713,
+  "by_grade": {
+   "exact": {
+    "attribute_target": 6,
+    "decided": null
+   },
+   "inferred": {
+    "no_site": 8,
+    "caller_not_run": 42,
+    "confirmed": 473,
+    "attribute_target": 15,
+    "contradicted": 14,
+    "unexercised": 9,
+    "decided": 0.9713
+   }
+  },
+  "by_resolution": {
+   "deep": {
+    "no_site": 8,
+    "caller_not_run": 42,
+    "confirmed": 473,
+    "attribute_target": 15,
+    "contradicted": 14,
+    "unexercised": 9,
+    "decided": 0.9713
+   },
+   "module": {
+    "attribute_target": 1,
+    "decided": null
+   },
+   "self": {
+    "attribute_target": 5,
+    "decided": null
+   }
+  }
+ },
+ "callers_complete": {
+  "callees": 357,
+  "complete": 240,
+  "share": 0.6723
+ },
+ "misses": [
+  [
+   "click._compat._NonClosingTextIOWrapper.__init__",
+   "click._compat._FixupStream.readable",
+   "direct"
+  ],
+  [
+   "click._compat._NonClosingTextIOWrapper.__init__",
+   "click._compat._FixupStream.seekable",
+   "direct"
+  ],
+  [
+   "click._compat._NonClosingTextIOWrapper.__init__",
+   "click._compat._FixupStream.writable",
+   "direct"
+  ],
+  [
+   "click._compat._force_correct_text_stream",
+   "click._compat._find_binary_reader",
+   "direct"
+  ],
+  [
+   "click._compat._force_correct_text_stream",
+   "click._compat._is_binary_reader",
+   "direct"
+  ],
+  [
+   "click._compat._force_correct_text_stream",
+   "click._compat._is_binary_writer",
+   "direct"
+  ],
+  [
+   "click._compat._is_binary_reader",
+   "click.testing.EchoingStdin.read",
+   "direct"
+  ],
+  [
+   "click._compat._is_binary_writer",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click._termui_impl.ProgressBar.__init__",
+   "click._compat.get_text_stdout",
+   "wrapper"
+  ],
+  [
+   "click._termui_impl.ProgressBar.render_finish",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click._termui_impl.ProgressBar.render_finish",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click._termui_impl.ProgressBar.render_progress",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click._termui_impl._PagerWriter.flush",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click._termui_impl._PagerWriter.flush",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click._termui_impl._pager_contextmanager",
+   "click._compat.get_text_stdout",
+   "wrapper"
+  ],
+  [
+   "click.core.Argument.make_metavar",
+   "click.types.Choice.get_metavar",
+   "direct"
+  ],
+  [
+   "click.core.Argument.make_metavar",
+   "click.types.DateTime.get_metavar",
+   "direct"
+  ],
+  [
+   "click.core.Command.collect_usage_pieces",
+   "click.core.Argument.get_usage_pieces",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_arguments",
+   "click.core.Argument.get_help_record",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_help",
+   "click.core.Group.format_options",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_options",
+   "click.core.Argument.get_help_record",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_options",
+   "click.core.Option.get_help_record",
+   "direct"
+  ],
+  [
+   "click.core.Command.format_usage",
+   "click.core.Group.collect_usage_pieces",
+   "direct"
+  ],
+  [
+   "click.core.Command.get_help_option",
+   "click.core.Option",
+   "wrapper"
+  ],
+  [
+   "click.core.Command.main",
+   "click.core.Group.invoke",
+   "direct"
+  ],
+  [
+   "click.core.Command.main",
+   "click.core._echo_aborted",
+   "direct"
+  ],
+  [
+   "click.core.Command.main",
+   "click.exceptions.ClickException.show",
+   "direct"
+  ],
+  [
+   "click.core.Command.main",
+   "click.exceptions.NoArgsIsHelpError.show",
+   "direct"
+  ],
+  [
+   "click.core.Command.main",
+   "click.exceptions.UsageError.show",
+   "direct"
+  ],
+  [
+   "click.core.Command.make_context",
+   "click.core.Context",
+   "direct"
+  ],
+  [
+   "click.core.Command.make_context",
+   "click.core.Group.parse_args",
+   "direct"
+  ],
+  [
+   "click.core.Command.make_parser",
+   "click.core.Argument.add_to_parser",
+   "direct"
+  ],
+  [
+   "click.core.Command.make_parser",
+   "click.core.Option.add_to_parser",
+   "direct"
+  ],
+  [
+   "click.core.Command.to_info_dict",
+   "click.core.Option.to_info_dict",
+   "direct"
+  ],
+  [
+   "click.core.Context.__init__",
+   "click.testing._NamedTextIOWrapper.close",
+   "direct"
+  ],
+  [
+   "click.core.Context._close_with_exception_info",
+   "click.globals.get_current_context",
+   "external"
+  ],
+  [
+   "click.core.Context._close_with_exception_info",
+   "click.testing.BytesIOCopy.flush",
+   "wrapper"
+  ],
+  [
+   "click.core.Context._close_with_exception_info",
+   "click.utils._LazyFile.close_intelligently",
+   "external"
+  ],
+  [
+   "click.core.Context._make_sub_context",
+   "click.core.Context",
+   "direct"
+  ],
+  [
+   "click.core.Context.command_path",
+   "click.core.Argument.get_usage_pieces",
+   "direct"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click._compat._AtomicFile.close",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click._termui_impl.ProgressBar.update",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Context.get_parameter_source",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Option.get_default",
+   "direct"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.globals.get_current_context",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.confirm",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.echo_via_pager",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.getchar",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.pause",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.progressbar",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.prompt",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.secho",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.termui.style",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.BytesIOCopy.flush",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.BytesIOCopy.write",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.CliRunner",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.CliRunner.invoke",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.EchoingStdin.read",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing.EchoingStdin.read1",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.testing._NamedTextIOWrapper.fileno",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.utils._get_binary_stream",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.utils.echo",
+   "external"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.utils.open_file",
+   "external"
+  ],
+  [
+   "click.core.Context.make_formatter",
+   "click.formatting.HelpFormatter",
+   "direct"
+  ],
+  [
+   "click.core.Group.command",
+   "click.core.Command",
+   "wrapper"
+  ],
+  [
+   "click.core.Group.group",
+   "click.core.Group",
+   "wrapper"
+  ],
+  [
+   "click.core.Group.invoke",
+   "click.core.Group.invoke",
+   "direct"
+  ],
+  [
+   "click.core.Group.to_info_dict",
+   "click.core.Group.to_info_dict",
+   "direct"
+  ],
+  [
+   "click.core.Option.get_help_extra",
+   "click.types._NumberRangeBase._describe_range",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.__init__",
+   "click.core.Argument._parse_decls",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.__init__",
+   "click.core.Option._parse_decls",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.consume_value",
+   "click.core.Option.get_default",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.consume_value",
+   "click.core.Option.value_from_envvar",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.handle_parse_result",
+   "click.core.Option.consume_value",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.handle_parse_result",
+   "click.core.Option.process_value",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.handle_parse_result",
+   "click.globals.get_current_context",
+   "external"
+  ],
+  [
+   "click.core.Parameter.make_metavar",
+   "click.types.Choice.get_metavar",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.make_metavar",
+   "click.types.DateTime.get_metavar",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.core.Context.call_on_close",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.core.Context.exit",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.core.Context.get_parameter_source",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.exceptions.BadParameter",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.globals.get_current_context",
+   "external"
+  ],
+  [
+   "click.core.Parameter.process_value",
+   "click.utils.echo",
+   "external"
+  ],
+  [
+   "click.core.Parameter.shell_complete",
+   "click.types.Choice.shell_complete",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.shell_complete",
+   "click.types.File.shell_complete",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.shell_complete",
+   "click.types.Path.shell_complete",
+   "direct"
+  ],
+  [
+   "click.core.Parameter.type_cast_value",
+   "click.testing._NamedTextIOWrapper.close",
+   "nested"
+  ],
+  [
+   "click.core.Parameter.type_cast_value",
+   "click.types.ParamType.__call__",
+   "nested"
+  ],
+  [
+   "click.decorators.argument",
+   "click.core.Argument",
+   "nested"
+  ],
+  [
+   "click.decorators.command",
+   "click.core.Command",
+   "nested"
+  ],
+  [
+   "click.decorators.command",
+   "click.core.Group",
+   "nested"
+  ],
+  [
+   "click.decorators.group",
+   "click.core.Group",
+   "wrapper"
+  ],
+  [
+   "click.decorators.option",
+   "click.core.Option",
+   "nested"
+  ],
+  [
+   "click.decorators.pass_context",
+   "click.core.Context.call_on_close",
+   "external"
+  ],
+  [
+   "click.decorators.pass_context",
+   "click.core.Context.exit",
+   "external"
+  ],
+  [
+   "click.decorators.pass_context",
+   "click.core.Context.forward",
+   "external"
+  ],
+  [
+   "click.decorators.pass_context",
+   "click.core.Context.get_parameter_source",
+   "external"
+  ],
+  [
+   "click.decorators.pass_context",
+   "click.core.Context.invoke",
+   "external"
+  ],
+  [
+   "click.decorators.pass_context",
+   "click.utils.echo",
+   "external"
+  ],
+  [
+   "click.decorators.pass_obj",
+   "click.utils.echo",
+   "external"
+  ],
+  [
+   "click.exceptions.BadParameter.format_message",
+   "click.core.Argument.get_error_hint",
+   "direct"
+  ],
+  [
+   "click.exceptions.BadParameter.format_message",
+   "click.core.Option.get_error_hint",
+   "direct"
+  ],
+  [
+   "click.exceptions.ClickException.show",
+   "click.exceptions.FileError.format_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.ClickException.show",
+   "click.termui.style",
+   "external"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.core.Argument.get_error_hint",
+   "direct"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.core.Option.get_error_hint",
+   "direct"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.types.Choice.get_missing_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.UsageError.show",
+   "click.exceptions.BadParameter.format_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.UsageError.show",
+   "click.exceptions.MissingParameter.format_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.UsageError.show",
+   "click.exceptions.NoSuchCommand.format_message",
+   "direct"
+  ],
+  [
+   "click.exceptions.UsageError.show",
+   "click.exceptions.NoSuchOption.format_message",
+   "direct"
+  ],
+  [
+   "click.formatting.HelpFormatter.section",
+   "click.termui.style",
+   "external"
+  ],
+  [
+   "click.formatting.wrap_text",
+   "click._textwrap.TextWrapper._wrap_chunks",
+   "external"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.BashComplete.format_completion",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.BashComplete.get_completion_args",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.FishComplete.format_completion",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.FishComplete.get_completion_args",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.PowerShellComplete.format_completion",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.PowerShellComplete.get_completion_args",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ZshComplete.format_completion",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ZshComplete.get_completion_args",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.get_completions",
+   "click.core.Group.shell_complete",
+   "direct"
+  ],
+  [
+   "click.shell_completion.ShellComplete.get_completions",
+   "click.core.Parameter.shell_complete",
+   "direct"
+  ],
+  [
+   "click.shell_completion._resolve_context",
+   "click.core.Group.resolve_command",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.BashComplete",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.BashComplete.source",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.FishComplete",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.PowerShellComplete",
+   "direct"
+  ],
+  [
+   "click.shell_completion.shell_complete",
+   "click.shell_completion.ZshComplete",
+   "direct"
+  ],
+  [
+   "click.termui._readline_prompt",
+   "click.testing._pause_echo",
+   "external"
+  ],
+  [
+   "click.termui.echo_via_pager",
+   "click._termui_impl._PagerWriter.flush",
+   "direct"
+  ],
+  [
+   "click.termui.echo_via_pager",
+   "click._termui_impl._PagerWriter.write",
+   "direct"
+  ],
+  [
+   "click.termui.echo_via_pager",
+   "click.utils.echo",
+   "external"
+  ],
+  [
+   "click.termui.getchar",
+   "click.testing._pause_echo",
+   "external"
+  ],
+  [
+   "click.termui.prompt",
+   "click.types.ParamType.__call__",
+   "direct"
+  ],
+  [
+   "click.testing.CliRunner.invoke",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click.testing.CliRunner.invoke",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click.testing.CliRunner.invoke",
+   "click.testing._NamedTextIOWrapper.close",
+   "external"
+  ],
+  [
+   "click.testing.CliRunner.isolation",
+   "click.testing.BytesIOCopy.flush",
+   "nested"
+  ],
+  [
+   "click.testing.CliRunner.isolation",
+   "click.testing.BytesIOCopy.write",
+   "nested"
+  ],
+  [
+   "click.testing.CliRunner.isolation",
+   "click.testing.EchoingStdin.read1",
+   "nested"
+  ],
+  [
+   "click.testing.CliRunner.isolation",
+   "click.testing._NamedTextIOWrapper.close",
+   "direct"
+  ],
+  [
+   "click.testing.EchoingStdin._echo",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ],
+  [
+   "click.testing._NamedTextIOWrapper.__init__",
+   "click.testing._NamedTextIOWrapper.close",
+   "external"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.core.Context.get_parameter_source",
+   "external"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.BoolParamType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.Choice.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.DateTime.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.File.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.FuncParamType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.ParamType.fail",
+   "external"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.Path",
+   "external"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.Path.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.StringParamType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.Tuple.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.UUIDParameterType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.UnprocessedParamType.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types._NumberParamTypeBase.convert",
+   "direct"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types._NumberRangeBase.convert",
+   "direct"
+  ],
+  [
+   "click.types.Tuple.convert",
+   "click.types.ParamType.__call__",
+   "nested"
+  ],
+  [
+   "click.types._NumberRangeBase.convert",
+   "click.types.FloatRange._clamp",
+   "direct"
+  ],
+  [
+   "click.types._NumberRangeBase.convert",
+   "click.types.IntRange._clamp",
+   "direct"
+  ],
+  [
+   "click.utils._LazyFile.close",
+   "click._compat._AtomicFile.close",
+   "direct"
+  ],
+  [
+   "click.utils._get_binary_stream",
+   "click._compat.get_binary_stdin",
+   "direct"
+  ],
+  [
+   "click.utils._get_binary_stream",
+   "click._compat.get_binary_stdout",
+   "direct"
+  ],
+  [
+   "click.utils._safecall",
+   "click.testing.BytesIOCopy.flush",
+   "nested"
+  ],
+  [
+   "click.utils.echo",
+   "click._compat.get_text_stderr",
+   "wrapper"
+  ],
+  [
+   "click.utils.echo",
+   "click._compat.get_text_stdout",
+   "wrapper"
+  ],
+  [
+   "click.utils.echo",
+   "click._termui_impl._PagerWriter.flush",
+   "direct"
+  ],
+  [
+   "click.utils.echo",
+   "click._termui_impl._PagerWriter.write",
+   "direct"
+  ],
+  [
+   "click.utils.echo",
+   "click.testing.BytesIOCopy.flush",
+   "direct"
+  ],
+  [
+   "click.utils.echo",
+   "click.testing.BytesIOCopy.write",
+   "direct"
+  ]
+ ],
+ "contradicted": [
+  [
+   "click.core.Command.format_arguments",
+   "click.core.Parameter.get_help_record",
+   "deep"
+  ],
+  [
+   "click.core.Command.format_options",
+   "click.core.Parameter.get_help_record",
+   "deep"
+  ],
+  [
+   "click.core.Command.make_parser",
+   "click.core.Parameter.add_to_parser",
+   "deep"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Parameter.get_default",
+   "deep"
+  ],
+  [
+   "click.core.Parameter.__init__",
+   "click.core.Parameter._parse_decls",
+   "deep"
+  ],
+  [
+   "click.exceptions.BadParameter.format_message",
+   "click.core.Parameter.get_error_hint",
+   "deep"
+  ],
+  [
+   "click.exceptions.ClickException.show",
+   "click.exceptions.ClickException.format_message",
+   "deep"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.core.Parameter.get_error_hint",
+   "deep"
+  ],
+  [
+   "click.shell_completion.BashComplete.source",
+   "click.shell_completion.BashComplete._check_version",
+   "deep"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ShellComplete.format_completion",
+   "deep"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ShellComplete.get_completion_args",
+   "deep"
+  ],
+  [
+   "click.termui.pause",
+   "click.termui.getchar",
+   "deep"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.ParamType.convert",
+   "deep"
+  ],
+  [
+   "click.types._NumberRangeBase.convert",
+   "click.types._NumberRangeBase._clamp",
+   "deep"
+  ]
+ ],
+ "contradicted_same_name": [
+  [
+   "click.core.Command.format_arguments",
+   "click.core.Parameter.get_help_record",
+   "deep"
+  ],
+  [
+   "click.core.Command.format_options",
+   "click.core.Parameter.get_help_record",
+   "deep"
+  ],
+  [
+   "click.core.Command.make_parser",
+   "click.core.Parameter.add_to_parser",
+   "deep"
+  ],
+  [
+   "click.core.Context.invoke",
+   "click.core.Parameter.get_default",
+   "deep"
+  ],
+  [
+   "click.core.Parameter.__init__",
+   "click.core.Parameter._parse_decls",
+   "deep"
+  ],
+  [
+   "click.exceptions.BadParameter.format_message",
+   "click.core.Parameter.get_error_hint",
+   "deep"
+  ],
+  [
+   "click.exceptions.ClickException.show",
+   "click.exceptions.ClickException.format_message",
+   "deep"
+  ],
+  [
+   "click.exceptions.MissingParameter.format_message",
+   "click.core.Parameter.get_error_hint",
+   "deep"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ShellComplete.format_completion",
+   "deep"
+  ],
+  [
+   "click.shell_completion.ShellComplete.complete",
+   "click.shell_completion.ShellComplete.get_completion_args",
+   "deep"
+  ],
+  [
+   "click.types.ParamType.__call__",
+   "click.types.ParamType.convert",
+   "deep"
+  ],
+  [
+   "click.types._NumberRangeBase.convert",
+   "click.types._NumberRangeBase._clamp",
+   "deep"
+  ]
+ ],
+ "edge_outcomes": {
+  "click._compat -> click._compat._make_cached_stream_func": "no_site",
+  "click._compat._AtomicFile.__exit__ -> click._compat._AtomicFile.close": "caller_not_run",
+  "click._compat._NonClosingTextIOWrapper.__init__ -> click._compat._FixupStream": "confirmed",
+  "click._compat._find_binary_reader -> click._compat._is_binary_reader": "confirmed",
+  "click._compat._find_binary_writer -> click._compat._is_binary_writer": "confirmed",
+  "click._compat._force_correct_text_reader -> click._compat._force_correct_text_stream": "confirmed",
+  "click._compat._force_correct_text_stream -> click._compat._is_compatible_text_stream": "confirmed",
+  "click._compat._force_correct_text_stream -> click._compat._make_text_stream": "confirmed",
+  "click._compat._force_correct_text_stream -> click._compat._stream_is_misconfigured": "confirmed",
+  "click._compat._force_correct_text_writer -> click._compat._force_correct_text_stream": "confirmed",
+  "click._compat._is_compatible_text_stream -> click._compat._is_compat_stream_attr": "confirmed",
+  "click._compat._make_text_stream -> click._compat._NonClosingTextIOWrapper": "confirmed",
+  "click._compat._make_text_stream -> click._compat.get_best_encoding": "confirmed",
+  "click._compat._stream_is_misconfigured -> click._compat.is_ascii_encoding": "confirmed",
+  "click._compat.get_best_encoding -> click._compat.is_ascii_encoding": "confirmed",
+  "click._compat.get_binary_stderr -> click._compat._find_binary_writer": "caller_not_run",
+  "click._compat.get_binary_stdin -> click._compat._find_binary_reader": "confirmed",
+  "click._compat.get_binary_stdout -> click._compat._find_binary_writer": "confirmed",
+  "click._compat.get_text_stderr -> click._compat._force_correct_text_writer": "confirmed",
+  "click._compat.get_text_stderr -> click._compat._get_windows_console_stream": "confirmed",
+  "click._compat.get_text_stdin -> click._compat._force_correct_text_reader": "confirmed",
+  "click._compat.get_text_stdin -> click._compat._get_windows_console_stream": "confirmed",
+  "click._compat.get_text_stdout -> click._compat._force_correct_text_writer": "confirmed",
+  "click._compat.get_text_stdout -> click._compat._get_windows_console_stream": "confirmed",
+  "click._compat.open_stream -> click._compat._AtomicFile": "confirmed",
+  "click._compat.open_stream -> click._compat._wrap_io_open": "confirmed",
+  "click._compat.open_stream -> click._compat.get_binary_stdin": "confirmed",
+  "click._compat.open_stream -> click._compat.get_binary_stdout": "confirmed",
+  "click._compat.open_stream -> click._compat.get_text_stdin": "confirmed",
+  "click._compat.open_stream -> click._compat.get_text_stdout": "confirmed",
+  "click._compat.should_strip_ansi -> click._compat._is_jupyter_kernel_output": "confirmed",
+  "click._compat.should_strip_ansi -> click._compat.isatty": "confirmed",
+  "click._compat.term_len -> click._compat.strip_ansi": "confirmed",
+  "click._termui_impl.Editor.edit -> click._termui_impl.Editor.edit_files": "confirmed",
+  "click._termui_impl.Editor.edit_files -> click._termui_impl.Editor.get_editor": "confirmed",
+  "click._termui_impl.Editor.edit_files -> click.exceptions.ClickException": "confirmed",
+  "click._termui_impl.ProgressBar.__enter__ -> click._termui_impl.ProgressBar.render_progress": "confirmed",
+  "click._termui_impl.ProgressBar.__exit__ -> click._termui_impl.ProgressBar.render_finish": "confirmed",
+  "click._termui_impl.ProgressBar.__init__ -> click._compat._default_text_stdout": "attribute_target",
+  "click._termui_impl.ProgressBar.__init__ -> click._compat.isatty": "confirmed",
+  "click._termui_impl.ProgressBar.__iter__ -> click._termui_impl.ProgressBar.generator": "confirmed",
+  "click._termui_impl.ProgressBar.__iter__ -> click._termui_impl.ProgressBar.render_progress": "confirmed",
+  "click._termui_impl.ProgressBar.format_progress_line -> click._termui_impl.ProgressBar.format_bar": "confirmed",
+  "click._termui_impl.ProgressBar.format_progress_line -> click._termui_impl.ProgressBar.format_eta": "confirmed",
+  "click._termui_impl.ProgressBar.format_progress_line -> click._termui_impl.ProgressBar.format_pct": "confirmed",
+  "click._termui_impl.ProgressBar.format_progress_line -> click._termui_impl.ProgressBar.format_pos": "confirmed",
+  "click._termui_impl.ProgressBar.format_progress_line -> click._termui_impl.ProgressBar.item_show_func": "attribute_target",
+  "click._termui_impl.ProgressBar.generator -> click._termui_impl.ProgressBar.finish": "confirmed",
+  "click._termui_impl.ProgressBar.generator -> click._termui_impl.ProgressBar.render_progress": "confirmed",
+  "click._termui_impl.ProgressBar.generator -> click._termui_impl.ProgressBar.update": "confirmed",
+  "click._termui_impl.ProgressBar.render_finish -> click._termui_impl.ProgressBar.make_step": "confirmed",
+  "click._termui_impl.ProgressBar.render_finish -> click._termui_impl.ProgressBar.render_progress": "confirmed",
+  "click._termui_impl.ProgressBar.render_progress -> click._compat.term_len": "confirmed",
+  "click._termui_impl.ProgressBar.render_progress -> click._termui_impl.ProgressBar.format_progress_line": "confirmed",
+  "click._termui_impl.ProgressBar.render_progress -> click.utils.echo": "confirmed",
+  "click._termui_impl.ProgressBar.update -> click._termui_impl.ProgressBar.make_step": "confirmed",
+  "click._termui_impl.ProgressBar.update -> click._termui_impl.ProgressBar.render_progress": "confirmed",
+  "click._termui_impl._PagerWriter.write -> click._compat.strip_ansi": "confirmed",
+  "click._termui_impl._PagerWriter.writelines -> click._termui_impl._PagerWriter.write": "caller_not_run",
+  "click._termui_impl._pager_contextmanager -> click._compat._default_text_stdout": "attribute_target",
+  "click._termui_impl._pager_contextmanager -> click._compat.isatty": "confirmed",
+  "click._termui_impl._pager_contextmanager -> click._termui_impl._nullpager": "confirmed",
+  "click._termui_impl._pager_contextmanager -> click._termui_impl._pipepager": "confirmed",
+  "click._termui_impl._pager_contextmanager -> click._termui_impl._resolve_pager_command": "confirmed",
+  "click._termui_impl._pager_contextmanager -> click._termui_impl._tempfilepager": "confirmed",
+  "click._termui_impl._pipepager -> click._termui_impl._less_uses_raw_mode": "confirmed",
+  "click._termui_impl._tempfilepager -> click._compat.get_best_encoding": "confirmed",
+  "click._termui_impl.get_pager_file -> click._termui_impl._PagerWriter": "confirmed",
+  "click._termui_impl.get_pager_file -> click._termui_impl._PagerWriter.flush": "confirmed",
+  "click._termui_impl.get_pager_file -> click._termui_impl._pager_contextmanager": "confirmed",
+  "click._termui_impl.getchar -> click._compat.get_best_encoding": "caller_not_run",
+  "click._termui_impl.getchar -> click._compat.isatty": "caller_not_run",
+  "click._termui_impl.getchar -> click._termui_impl._translate_ch_to_exc": "caller_not_run",
+  "click._termui_impl.getchar -> click._termui_impl.raw_terminal": "caller_not_run",
+  "click._termui_impl.raw_terminal -> click._compat.isatty": "caller_not_run",
+  "click._textwrap.TextWrapper._handle_long_word -> click._textwrap._truncate_visible": "confirmed",
+  "click._textwrap.TextWrapper._wrap_chunks -> click._compat.term_len": "confirmed",
+  "click._textwrap.TextWrapper._wrap_chunks -> click._textwrap.TextWrapper._handle_long_word": "confirmed",
+  "click._winconsole -> click._winconsole.GetStdHandle": "attribute_target",
+  "click._winconsole.ConsoleStream.writelines -> click._winconsole.ConsoleStream.write": "caller_not_run",
+  "click._winconsole._WindowsConsoleReader.readinto -> click._winconsole.GetLastError": "attribute_target",
+  "click._winconsole._WindowsConsoleReader.readinto -> click._winconsole.ReadConsoleW": "attribute_target",
+  "click._winconsole._WindowsConsoleReader.readinto -> click._winconsole.get_buffer": "caller_not_run",
+  "click._winconsole._WindowsConsoleWriter.write -> click._winconsole.GetLastError": "attribute_target",
+  "click._winconsole._WindowsConsoleWriter.write -> click._winconsole.WriteConsoleW": "attribute_target",
+  "click._winconsole._WindowsConsoleWriter.write -> click._winconsole._WindowsConsoleWriter._get_error_message": "caller_not_run",
+  "click._winconsole._WindowsConsoleWriter.write -> click._winconsole.get_buffer": "caller_not_run",
+  "click._winconsole._get_text_stderr -> click._compat._NonClosingTextIOWrapper": "caller_not_run",
+  "click._winconsole._get_text_stderr -> click._winconsole.ConsoleStream": "caller_not_run",
+  "click._winconsole._get_text_stderr -> click._winconsole._WindowsConsoleWriter": "caller_not_run",
+  "click._winconsole._get_text_stdin -> click._compat._NonClosingTextIOWrapper": "caller_not_run",
+  "click._winconsole._get_text_stdin -> click._winconsole.ConsoleStream": "caller_not_run",
+  "click._winconsole._get_text_stdin -> click._winconsole._WindowsConsoleReader": "caller_not_run",
+  "click._winconsole._get_text_stdout -> click._compat._NonClosingTextIOWrapper": "caller_not_run",
+  "click._winconsole._get_text_stdout -> click._winconsole.ConsoleStream": "caller_not_run",
+  "click._winconsole._get_text_stdout -> click._winconsole._WindowsConsoleWriter": "caller_not_run",
+  "click._winconsole._get_windows_console_stream -> click._winconsole._is_console": "caller_not_run",
+  "click._winconsole._is_console -> click._winconsole.GetConsoleMode": "attribute_target",
+  "click._winconsole.get_buffer -> click._winconsole.PyBuffer_Release": "attribute_target",
+  "click._winconsole.get_buffer -> click._winconsole.PyObject_GetBuffer": "attribute_target",
+  "click._winconsole.get_buffer -> click._winconsole.Py_buffer": "caller_not_run",
+  "click.core.Argument.__init__ -> click.core.Parameter.__init__": "confirmed",
+  "click.core.Argument.add_to_parser -> click.parser._OptionParser.add_argument": "confirmed",
+  "click.core.Argument.get_error_hint -> click.core.Argument.make_metavar": "confirmed",
+  "click.core.Argument.get_help_record -> click.core.Argument.make_metavar": "confirmed",
+  "click.core.Argument.get_usage_pieces -> click.core.Argument.make_metavar": "confirmed",
+  "click.core.Argument.make_metavar -> click.types.ParamType.get_metavar": "confirmed",
+  "click.core.Command.__call__ -> click.core.Command.main": "caller_not_run",
+  "click.core.Command._main_shell_completion -> click.shell_completion.shell_complete": "confirmed",
+  "click.core.Command.collect_usage_pieces -> click.core.Command.get_params": "confirmed",
+  "click.core.Command.collect_usage_pieces -> click.core.Parameter.get_usage_pieces": "confirmed",
+  "click.core.Command.format_arguments -> click.core.Command.get_params": "confirmed",
+  "click.core.Command.format_arguments -> click.core.Parameter.get_help_record": "contradicted",
+  "click.core.Command.format_arguments -> click.formatting.HelpFormatter.section": "confirmed",
+  "click.core.Command.format_arguments -> click.formatting.HelpFormatter.write_dl": "confirmed",
+  "click.core.Command.format_epilog -> click.formatting.HelpFormatter.indentation": "unexercised",
+  "click.core.Command.format_epilog -> click.formatting.HelpFormatter.write_paragraph": "unexercised",
+  "click.core.Command.format_epilog -> click.formatting.HelpFormatter.write_text": "unexercised",
+  "click.core.Command.format_help -> click.core.Command.format_arguments": "confirmed",
+  "click.core.Command.format_help -> click.core.Command.format_epilog": "confirmed",
+  "click.core.Command.format_help -> click.core.Command.format_help_text": "confirmed",
+  "click.core.Command.format_help -> click.core.Command.format_options": "confirmed",
+  "click.core.Command.format_help -> click.core.Command.format_usage": "confirmed",
+  "click.core.Command.format_help_text -> click.core._format_deprecated_label": "confirmed",
+  "click.core.Command.format_help_text -> click.formatting.HelpFormatter.indentation": "confirmed",
+  "click.core.Command.format_help_text -> click.formatting.HelpFormatter.write_paragraph": "confirmed",
+  "click.core.Command.format_help_text -> click.formatting.HelpFormatter.write_text": "confirmed",
+  "click.core.Command.format_options -> click.core.Command.get_params": "confirmed",
+  "click.core.Command.format_options -> click.core.Parameter.get_help_record": "contradicted",
+  "click.core.Command.format_options -> click.formatting.HelpFormatter.section": "confirmed",
+  "click.core.Command.format_options -> click.formatting.HelpFormatter.write_dl": "confirmed",
+  "click.core.Command.format_usage -> click.core.Command.collect_usage_pieces": "confirmed",
+  "click.core.Command.format_usage -> click.formatting.HelpFormatter.write_usage": "confirmed",
+  "click.core.Command.get_help -> click.core.Command.format_help": "confirmed",
+  "click.core.Command.get_help -> click.core.Context.make_formatter": "confirmed",
+  "click.core.Command.get_help -> click.formatting.HelpFormatter.getvalue": "confirmed",
+  "click.core.Command.get_help_option -> click.core.Command.get_help_option_names": "confirmed",
+  "click.core.Command.get_help_option -> click.decorators.help_option": "confirmed",
+  "click.core.Command.get_params -> click.core.Command.get_help_option": "confirmed",
+  "click.core.Command.get_short_help_str -> click.core._format_deprecated_label": "confirmed",
+  "click.core.Command.get_short_help_str -> click.utils._make_default_short_help": "confirmed",
+  "click.core.Command.get_usage -> click.core.Command.format_usage": "confirmed",
+  "click.core.Command.get_usage -> click.core.Context.make_formatter": "confirmed",
+  "click.core.Command.get_usage -> click.formatting.HelpFormatter.getvalue": "confirmed",
+  "click.core.Command.invoke -> click.core.Context.invoke": "confirmed",
+  "click.core.Command.invoke -> click.core._format_deprecated_suffix": "confirmed",
+  "click.core.Command.invoke -> click.termui.style": "confirmed",
+  "click.core.Command.invoke -> click.utils.echo": "confirmed",
+  "click.core.Command.main -> click.core.Command._main_shell_completion": "confirmed",
+  "click.core.Command.main -> click.core.Command.invoke": "confirmed",
+  "click.core.Command.main -> click.core.Command.make_context": "confirmed",
+  "click.core.Command.main -> click.core.Context.exit": "confirmed",
+  "click.core.Command.main -> click.exceptions.Abort": "confirmed",
+  "click.core.Command.main -> click.utils._PacifyFlushWrapper": "unexercised",
+  "click.core.Command.main -> click.utils._detect_program_name": "unexercised",
+  "click.core.Command.main -> click.utils._expand_args": "unexercised",
+  "click.core.Command.main -> click.utils.echo": "confirmed",
+  "click.core.Command.make_context -> click.core.Command.context_class": "attribute_target",
+  "click.core.Command.make_context -> click.core.Command.parse_args": "confirmed",
+  "click.core.Command.make_context -> click.core.Context.scope": "confirmed",
+  "click.core.Command.make_parser -> click.core.Command.get_params": "confirmed",
+  "click.core.Command.make_parser -> click.core.Parameter.add_to_parser": "contradicted",
+  "click.core.Command.make_parser -> click.parser._OptionParser": "confirmed",
+  "click.core.Command.parse_args -> click.core.Command.get_params": "confirmed",
+  "click.core.Command.parse_args -> click.core.Command.make_parser": "confirmed",
+  "click.core.Command.parse_args -> click.core.Context.fail": "confirmed",
+  "click.core.Command.parse_args -> click.core.Parameter.handle_parse_result": "confirmed",
+  "click.core.Command.parse_args -> click.core.iter_params_for_processing": "confirmed",
+  "click.core.Command.parse_args -> click.exceptions.NoArgsIsHelpError": "confirmed",
+  "click.core.Command.parse_args -> click.parser._OptionParser.parse_args": "confirmed",
+  "click.core.Command.shell_complete -> click.core.Command.get_params": "confirmed",
+  "click.core.Command.shell_complete -> click.core.Command.get_short_help_str": "confirmed",
+  "click.core.Command.shell_complete -> click.core.Context.get_parameter_source": "confirmed",
+  "click.core.Command.shell_complete -> click.core._complete_visible_commands": "confirmed",
+  "click.core.Command.shell_complete -> click.shell_completion.CompletionItem": "confirmed",
+  "click.core.Command.to_info_dict -> click.core.Command.get_params": "confirmed",
+  "click.core.Command.to_info_dict -> click.core.Parameter.to_info_dict": "confirmed",
+  "click.core.CommandCollection.__init__ -> click.core.Group.__init__": "caller_not_run",
+  "click.core.CommandCollection.get_command -> click.core.Group.get_command": "caller_not_run",
+  "click.core.CommandCollection.get_command -> click.core._check_nested_chain": "caller_not_run",
+  "click.core.CommandCollection.list_commands -> click.core.Group.list_commands": "caller_not_run",
+  "click.core.Context.__enter__ -> click.globals.push_context": "confirmed",
+  "click.core.Context.__exit__ -> click.core.Context._close_with_exception_info": "confirmed",
+  "click.core.Context.__exit__ -> click.globals.pop_context": "confirmed",
+  "click.core.Context.abort -> click.exceptions.Abort": "caller_not_run",
+  "click.core.Context.close -> click.core.Context._close_with_exception_info": "confirmed",
+  "click.core.Context.command_path -> click.core.Command.get_params": "confirmed",
+  "click.core.Context.command_path -> click.core.Parameter.get_usage_pieces": "confirmed",
+  "click.core.Context.ensure_object -> click.core.Context.find_object": "confirmed",
+  "click.core.Context.exit -> click.core.Context.close": "confirmed",
+  "click.core.Context.exit -> click.exceptions.Exit": "confirmed",
+  "click.core.Context.fail -> click.exceptions.UsageError": "confirmed",
+  "click.core.Context.forward -> click.core.Context.invoke": "confirmed",
+  "click.core.Context.get_help -> click.core.Command.get_help": "confirmed",
+  "click.core.Context.get_usage -> click.core.Command.get_usage": "confirmed",
+  "click.core.Context.invoke -> click.core.Context._make_sub_context": "confirmed",
+  "click.core.Context.invoke -> click.core.Parameter.get_default": "contradicted",
+  "click.core.Context.invoke -> click.core.Parameter.type_cast_value": "confirmed",
+  "click.core.Context.invoke -> click.core.augment_usage_errors": "confirmed",
+  "click.core.Context.lookup_default -> click.core.Context._default_map_has": "confirmed",
+  "click.core.Context.make_formatter -> click.core.Context.formatter_class": "attribute_target",
+  "click.core.Context.to_info_dict -> click.core.Command.to_info_dict": "confirmed",
+  "click.core.Group.__init__ -> click.core.Command.__init__": "confirmed",
+  "click.core.Group.add_command -> click.core._check_nested_chain": "confirmed",
+  "click.core.Group.collect_usage_pieces -> click.core.Command.collect_usage_pieces": "confirmed",
+  "click.core.Group.command -> click.core.Group.add_command": "confirmed",
+  "click.core.Group.command -> click.decorators.command": "confirmed",
+  "click.core.Group.format_commands -> click.core.Command.get_short_help_str": "confirmed",
+  "click.core.Group.format_commands -> click.core.Group.get_command": "confirmed",
+  "click.core.Group.format_commands -> click.core.Group.list_commands": "confirmed",
+  "click.core.Group.format_commands -> click.formatting.HelpFormatter.section": "confirmed",
+  "click.core.Group.format_commands -> click.formatting.HelpFormatter.write_dl": "confirmed",
+  "click.core.Group.format_options -> click.core.Command.format_options": "confirmed",
+  "click.core.Group.format_options -> click.core.Group.format_commands": "confirmed",
+  "click.core.Group.group -> click.core.Group.add_command": "confirmed",
+  "click.core.Group.group -> click.decorators.group": "confirmed",
+  "click.core.Group.invoke -> click.core.Command.invoke": "confirmed",
+  "click.core.Group.invoke -> click.core.Command.make_context": "confirmed",
+  "click.core.Group.invoke -> click.core.Context.fail": "confirmed",
+  "click.core.Group.invoke -> click.core.Context.invoke": "confirmed",
+  "click.core.Group.invoke -> click.core.Group.resolve_command": "confirmed",
+  "click.core.Group.parse_args -> click.core.Command.parse_args": "confirmed",
+  "click.core.Group.parse_args -> click.exceptions.NoArgsIsHelpError": "confirmed",
+  "click.core.Group.resolve_command -> click.core.Group.get_command": "confirmed",
+  "click.core.Group.resolve_command -> click.core.Group.parse_args": "confirmed",
+  "click.core.Group.resolve_command -> click.exceptions.NoSuchCommand": "confirmed",
+  "click.core.Group.resolve_command -> click.parser._split_opt": "confirmed",
+  "click.core.Group.resolve_command -> click.utils.make_str": "confirmed",
+  "click.core.Group.shell_complete -> click.core.Command.get_short_help_str": "confirmed",
+  "click.core.Group.shell_complete -> click.core.Command.shell_complete": "confirmed",
+  "click.core.Group.shell_complete -> click.core._complete_visible_commands": "confirmed",
+  "click.core.Group.shell_complete -> click.shell_completion.CompletionItem": "confirmed",
+  "click.core.Group.to_info_dict -> click.core.Command.to_info_dict": "confirmed",
+  "click.core.Group.to_info_dict -> click.core.Context._make_sub_context": "confirmed",
+  "click.core.Group.to_info_dict -> click.core.Context.scope": "confirmed",
+  "click.core.Group.to_info_dict -> click.core.Group.get_command": "confirmed",
+  "click.core.Group.to_info_dict -> click.core.Group.list_commands": "confirmed",
+  "click.core.Option.__init__ -> click.core.Option._infer_flag_kind": "confirmed",
+  "click.core.Option.__init__ -> click.core.Option._pick_type": "confirmed",
+  "click.core.Option.__init__ -> click.core.Option._validate": "confirmed",
+  "click.core.Option.__init__ -> click.core.Parameter.__init__": "confirmed",
+  "click.core.Option._parse_decls -> click.parser._split_opt": "confirmed",
+  "click.core.Option._pick_type -> click.types.BoolParamType": "confirmed",
+  "click.core.Option._pick_type -> click.types.IntRange": "confirmed",
+  "click.core.Option._pick_type -> click.types.convert_type": "confirmed",
+  "click.core.Option.add_to_parser -> click.parser._OptionParser.add_option": "confirmed",
+  "click.core.Option.consume_value -> click.core.Option.prompt_for_value": "confirmed",
+  "click.core.Option.consume_value -> click.core.Parameter.consume_value": "confirmed",
+  "click.core.Option.get_default -> click.core.Option._resolve_lazy_default": "confirmed",
+  "click.core.Option.get_default -> click.core.Parameter.get_default": "confirmed",
+  "click.core.Option.get_error_hint -> click.core.Parameter.get_error_hint": "confirmed",
+  "click.core.Option.get_help_extra -> click.core.Option.get_default": "confirmed",
+  "click.core.Option.get_help_extra -> click.parser._split_opt": "confirmed",
+  "click.core.Option.get_help_record -> click.core.Option.get_help_extra": "confirmed",
+  "click.core.Option.get_help_record -> click.core.Option.get_help_spec": "confirmed",
+  "click.core.Option.get_help_spec -> click.core.Parameter.make_metavar": "confirmed",
+  "click.core.Option.get_help_spec -> click.formatting.join_options": "confirmed",
+  "click.core.Option.process_value -> click.core.Parameter.callback": "attribute_target",
+  "click.core.Option.process_value -> click.core.Parameter.process_value": "confirmed",
+  "click.core.Option.prompt_for_value -> click.core.Option.get_default": "confirmed",
+  "click.core.Option.prompt_for_value -> click.core.Option.process_value": "confirmed",
+  "click.core.Option.prompt_for_value -> click.core.Parameter._hide_unset": "confirmed",
+  "click.core.Option.prompt_for_value -> click.termui.confirm": "confirmed",
+  "click.core.Option.prompt_for_value -> click.termui.prompt": "confirmed",
+  "click.core.Option.resolve_envvar_value -> click.core.Parameter.resolve_envvar_value": "confirmed",
+  "click.core.Option.to_info_dict -> click.core.Option._resolve_lazy_default": "confirmed",
+  "click.core.Option.to_info_dict -> click.core.Parameter._hide_unset": "confirmed",
+  "click.core.Option.to_info_dict -> click.core.Parameter.to_info_dict": "confirmed",
+  "click.core.Option.value_from_envvar -> click.core.Option.resolve_envvar_value": "confirmed",
+  "click.core.Option.value_from_envvar -> click.core.batch": "confirmed",
+  "click.core.Option.value_from_envvar -> click.types.BoolParamType.str_to_bool": "confirmed",
+  "click.core.Option.value_from_envvar -> click.types.ParamType.split_envvar_value": "confirmed",
+  "click.core.Parameter.__init__ -> click.core.Parameter._parse_decls": "contradicted",
+  "click.core.Parameter.__init__ -> click.core._format_deprecated_label": "confirmed",
+  "click.core.Parameter.__init__ -> click.types.convert_type": "confirmed",
+  "click.core.Parameter.consume_value -> click.core.Context._default_map_has": "confirmed",
+  "click.core.Parameter.consume_value -> click.core.Context.lookup_default": "confirmed",
+  "click.core.Parameter.consume_value -> click.core.Parameter.get_default": "confirmed",
+  "click.core.Parameter.consume_value -> click.core.Parameter.value_from_envvar": "confirmed",
+  "click.core.Parameter.consume_value -> click.types.ParamType.split_envvar_value": "confirmed",
+  "click.core.Parameter.get_default -> click.core.Context._default_map_has": "confirmed",
+  "click.core.Parameter.get_default -> click.core.Context.lookup_default": "confirmed",
+  "click.core.Parameter.handle_parse_result -> click.core.Context.get_parameter_source": "confirmed",
+  "click.core.Parameter.handle_parse_result -> click.core.Context.set_parameter_source": "confirmed",
+  "click.core.Parameter.handle_parse_result -> click.core.Parameter.consume_value": "confirmed",
+  "click.core.Parameter.handle_parse_result -> click.core.Parameter.process_value": "confirmed",
+  "click.core.Parameter.handle_parse_result -> click.core._format_deprecated_suffix": "confirmed",
+  "click.core.Parameter.handle_parse_result -> click.core.augment_usage_errors": "confirmed",
+  "click.core.Parameter.handle_parse_result -> click.termui.style": "confirmed",
+  "click.core.Parameter.handle_parse_result -> click.utils.echo": "confirmed",
+  "click.core.Parameter.make_metavar -> click.types.ParamType.get_metavar": "confirmed",
+  "click.core.Parameter.process_value -> click.core.Parameter.callback": "attribute_target",
+  "click.core.Parameter.process_value -> click.core.Parameter.type_cast_value": "confirmed",
+  "click.core.Parameter.process_value -> click.core.Parameter.value_is_missing": "confirmed",
+  "click.core.Parameter.process_value -> click.exceptions.MissingParameter": "confirmed",
+  "click.core.Parameter.shell_complete -> click.core.Parameter._custom_shell_complete": "attribute_target",
+  "click.core.Parameter.shell_complete -> click.shell_completion.CompletionItem": "confirmed",
+  "click.core.Parameter.shell_complete -> click.types.ParamType.shell_complete": "confirmed",
+  "click.core.Parameter.to_info_dict -> click.core.Parameter._hide_unset": "confirmed",
+  "click.core.Parameter.to_info_dict -> click.types.ParamType.to_info_dict": "confirmed",
+  "click.core.Parameter.type_cast_value -> click.core._check_iter": "confirmed",
+  "click.core.Parameter.type_cast_value -> click.exceptions.BadParameter": "confirmed",
+  "click.core.Parameter.value_from_envvar -> click.core.Parameter.resolve_envvar_value": "confirmed",
+  "click.core.Parameter.value_from_envvar -> click.types.ParamType.split_envvar_value": "confirmed",
+  "click.core._complete_visible_commands -> click.core.Group.get_command": "confirmed",
+  "click.core._complete_visible_commands -> click.core.Group.list_commands": "confirmed",
+  "click.core._echo_aborted -> click.utils.echo": "confirmed",
+  "click.decorators.argument -> click.decorators._param_memo": "confirmed",
+  "click.decorators.confirmation_option -> click.core.Context.abort": "caller_not_run",
+  "click.decorators.confirmation_option -> click.decorators.option": "caller_not_run",
+  "click.decorators.custom_version_option -> click.core.Context.exit": "confirmed",
+  "click.decorators.custom_version_option -> click.decorators.option": "confirmed",
+  "click.decorators.custom_version_option -> click.utils.echo": "confirmed",
+  "click.decorators.group -> click.decorators.command": "confirmed",
+  "click.decorators.help_option -> click.core.Context.exit": "confirmed",
+  "click.decorators.help_option -> click.core.Context.get_help": "confirmed",
+  "click.decorators.help_option -> click.decorators.option": "confirmed",
+  "click.decorators.help_option -> click.utils.echo": "confirmed",
+  "click.decorators.make_pass_decorator -> click.core.Context.ensure_object": "confirmed",
+  "click.decorators.make_pass_decorator -> click.core.Context.find_object": "confirmed",
+  "click.decorators.make_pass_decorator -> click.core.Context.invoke": "confirmed",
+  "click.decorators.make_pass_decorator -> click.globals.get_current_context": "confirmed",
+  "click.decorators.option -> click.decorators._param_memo": "confirmed",
+  "click.decorators.pass_context -> click.globals.get_current_context": "confirmed",
+  "click.decorators.pass_meta_key -> click.core.Context.invoke": "confirmed",
+  "click.decorators.pass_meta_key -> click.globals.get_current_context": "confirmed",
+  "click.decorators.pass_obj -> click.globals.get_current_context": "confirmed",
+  "click.decorators.password_option -> click.decorators.option": "caller_not_run",
+  "click.decorators.version_option -> click.core.Context.exit": "confirmed",
+  "click.decorators.version_option -> click.core.Context.find_root": "confirmed",
+  "click.decorators.version_option -> click.decorators.option": "confirmed",
+  "click.decorators.version_option -> click.utils.echo": "confirmed",
+  "click.exceptions.BadOptionUsage.__init__ -> click.exceptions.UsageError.__init__": "confirmed",
+  "click.exceptions.BadParameter.__init__ -> click.exceptions.UsageError.__init__": "confirmed",
+  "click.exceptions.BadParameter.format_message -> click.core.Parameter.get_error_hint": "contradicted",
+  "click.exceptions.BadParameter.format_message -> click.exceptions._join_param_hints": "confirmed",
+  "click.exceptions.ClickException.__init__ -> click.globals.resolve_color_default": "confirmed",
+  "click.exceptions.ClickException.show -> click._compat.get_text_stderr": "confirmed",
+  "click.exceptions.ClickException.show -> click.exceptions.ClickException.format_message": "contradicted",
+  "click.exceptions.ClickException.show -> click.utils.echo": "confirmed",
+  "click.exceptions.FileError.__init__ -> click.exceptions.ClickException.__init__": "confirmed",
+  "click.exceptions.FileError.__init__ -> click.utils.format_filename": "confirmed",
+  "click.exceptions.MissingParameter.__init__ -> click.exceptions.BadParameter.__init__": "confirmed",
+  "click.exceptions.MissingParameter.format_message -> click.core.Parameter.get_error_hint": "contradicted",
+  "click.exceptions.MissingParameter.format_message -> click.exceptions._join_param_hints": "confirmed",
+  "click.exceptions.MissingParameter.format_message -> click.types.ParamType.get_missing_message": "confirmed",
+  "click.exceptions.NoArgsIsHelpError.__init__ -> click.core.Context.get_help": "confirmed",
+  "click.exceptions.NoArgsIsHelpError.__init__ -> click.exceptions.UsageError.__init__": "confirmed",
+  "click.exceptions.NoArgsIsHelpError.show -> click.exceptions.ClickException.format_message": "confirmed",
+  "click.exceptions.NoArgsIsHelpError.show -> click.utils.echo": "confirmed",
+  "click.exceptions.NoSuchCommand.__init__ -> click.exceptions.UsageError.__init__": "confirmed",
+  "click.exceptions.NoSuchCommand.format_message -> click.exceptions._format_possibilities": "confirmed",
+  "click.exceptions.NoSuchOption.__init__ -> click.exceptions.UsageError.__init__": "confirmed",
+  "click.exceptions.NoSuchOption.format_message -> click.exceptions._format_possibilities": "confirmed",
+  "click.exceptions.UsageError.__init__ -> click.exceptions.ClickException.__init__": "confirmed",
+  "click.exceptions.UsageError.show -> click._compat.get_text_stderr": "confirmed",
+  "click.exceptions.UsageError.show -> click.core.Command.get_help_option": "confirmed",
+  "click.exceptions.UsageError.show -> click.core.Command.get_help_option_names": "confirmed",
+  "click.exceptions.UsageError.show -> click.core.Context.get_usage": "confirmed",
+  "click.exceptions.UsageError.show -> click.exceptions.ClickException.format_message": "confirmed",
+  "click.exceptions.UsageError.show -> click.utils.echo": "confirmed",
+  "click.formatting.HelpFormatter.indentation -> click.formatting.HelpFormatter.dedent": "confirmed",
+  "click.formatting.HelpFormatter.indentation -> click.formatting.HelpFormatter.indent": "confirmed",
+  "click.formatting.HelpFormatter.section -> click.formatting.HelpFormatter.dedent": "confirmed",
+  "click.formatting.HelpFormatter.section -> click.formatting.HelpFormatter.indent": "confirmed",
+  "click.formatting.HelpFormatter.section -> click.formatting.HelpFormatter.write_heading": "confirmed",
+  "click.formatting.HelpFormatter.section -> click.formatting.HelpFormatter.write_paragraph": "confirmed",
+  "click.formatting.HelpFormatter.write_dl -> click._compat.term_len": "confirmed",
+  "click.formatting.HelpFormatter.write_dl -> click.formatting.HelpFormatter.write": "confirmed",
+  "click.formatting.HelpFormatter.write_dl -> click.formatting.iter_rows": "confirmed",
+  "click.formatting.HelpFormatter.write_dl -> click.formatting.measure_table": "confirmed",
+  "click.formatting.HelpFormatter.write_dl -> click.formatting.wrap_text": "confirmed",
+  "click.formatting.HelpFormatter.write_heading -> click.formatting.HelpFormatter.write": "confirmed",
+  "click.formatting.HelpFormatter.write_paragraph -> click.formatting.HelpFormatter.write": "confirmed",
+  "click.formatting.HelpFormatter.write_text -> click.formatting.HelpFormatter.write": "confirmed",
+  "click.formatting.HelpFormatter.write_text -> click.formatting.wrap_text": "confirmed",
+  "click.formatting.HelpFormatter.write_usage -> click._compat.term_len": "confirmed",
+  "click.formatting.HelpFormatter.write_usage -> click.formatting.HelpFormatter.write": "confirmed",
+  "click.formatting.HelpFormatter.write_usage -> click.formatting.wrap_text": "confirmed",
+  "click.formatting.join_options -> click.parser._split_opt": "confirmed",
+  "click.formatting.measure_table -> click._compat.term_len": "confirmed",
+  "click.formatting.wrap_text -> click._compat.term_len": "confirmed",
+  "click.formatting.wrap_text -> click._textwrap.TextWrapper": "confirmed",
+  "click.formatting.wrap_text -> click._textwrap.TextWrapper.extra_indent": "confirmed",
+  "click.formatting.wrap_text -> click._textwrap.TextWrapper.indent_only": "confirmed",
+  "click.globals.resolve_color_default -> click.globals.get_current_context": "confirmed",
+  "click.parser._Argument.process -> click.exceptions.BadArgumentUsage": "confirmed",
+  "click.parser._Option.__init__ -> click.parser._split_opt": "confirmed",
+  "click.parser._OptionParser._get_value_from_state -> click.exceptions.BadOptionUsage": "confirmed",
+  "click.parser._OptionParser._match_long_opt -> click.exceptions.BadOptionUsage": "unexercised",
+  "click.parser._OptionParser._match_long_opt -> click.exceptions.NoSuchOption": "confirmed",
+  "click.parser._OptionParser._match_long_opt -> click.parser._Option.process": "confirmed",
+  "click.parser._OptionParser._match_long_opt -> click.parser._OptionParser._get_value_from_state": "confirmed",
+  "click.parser._OptionParser._match_short_opt -> click.exceptions.NoSuchOption": "confirmed",
+  "click.parser._OptionParser._match_short_opt -> click.parser._Option.process": "confirmed",
+  "click.parser._OptionParser._match_short_opt -> click.parser._OptionParser._get_value_from_state": "confirmed",
+  "click.parser._OptionParser._match_short_opt -> click.parser._normalize_opt": "confirmed",
+  "click.parser._OptionParser._process_args_for_args -> click.parser._Argument.process": "confirmed",
+  "click.parser._OptionParser._process_args_for_args -> click.parser._unpack_args": "confirmed",
+  "click.parser._OptionParser._process_args_for_options -> click.parser._OptionParser._process_opts": "confirmed",
+  "click.parser._OptionParser._process_opts -> click.parser._OptionParser._match_long_opt": "confirmed",
+  "click.parser._OptionParser._process_opts -> click.parser._OptionParser._match_short_opt": "confirmed",
+  "click.parser._OptionParser._process_opts -> click.parser._normalize_opt": "confirmed",
+  "click.parser._OptionParser.add_argument -> click.parser._Argument": "confirmed",
+  "click.parser._OptionParser.add_option -> click.parser._Option": "confirmed",
+  "click.parser._OptionParser.add_option -> click.parser._normalize_opt": "confirmed",
+  "click.parser._OptionParser.parse_args -> click.parser._OptionParser._process_args_for_args": "confirmed",
+  "click.parser._OptionParser.parse_args -> click.parser._OptionParser._process_args_for_options": "confirmed",
+  "click.parser._OptionParser.parse_args -> click.parser._ParsingState": "confirmed",
+  "click.parser._normalize_opt -> click.parser._split_opt": "confirmed",
+  "click.shell_completion.BashComplete._check_version -> click.utils.echo": "caller_not_run",
+  "click.shell_completion.BashComplete.get_completion_args -> click.shell_completion.split_arg_string": "confirmed",
+  "click.shell_completion.BashComplete.source -> click.shell_completion.BashComplete._check_version": "contradicted",
+  "click.shell_completion.BashComplete.source -> click.shell_completion.ShellComplete.source": "confirmed",
+  "click.shell_completion.FishComplete.get_completion_args -> click.shell_completion.split_arg_string": "confirmed",
+  "click.shell_completion.PowerShellComplete.get_completion_args -> click.shell_completion.split_arg_string": "confirmed",
+  "click.shell_completion.ShellComplete.complete -> click.shell_completion.ShellComplete.format_completion": "contradicted",
+  "click.shell_completion.ShellComplete.complete -> click.shell_completion.ShellComplete.get_completion_args": "contradicted",
+  "click.shell_completion.ShellComplete.complete -> click.shell_completion.ShellComplete.get_completions": "confirmed",
+  "click.shell_completion.ShellComplete.get_completions -> click.core.Command.shell_complete": "confirmed",
+  "click.shell_completion.ShellComplete.get_completions -> click.shell_completion._resolve_context": "confirmed",
+  "click.shell_completion.ShellComplete.get_completions -> click.shell_completion._resolve_incomplete": "confirmed",
+  "click.shell_completion.ShellComplete.source -> click.shell_completion.ShellComplete.source_vars": "confirmed",
+  "click.shell_completion.ZshComplete.get_completion_args -> click.shell_completion.split_arg_string": "confirmed",
+  "click.shell_completion._is_incomplete_argument -> click.core.Context.get_parameter_source": "confirmed",
+  "click.shell_completion._is_incomplete_option -> click.shell_completion._start_of_option": "confirmed",
+  "click.shell_completion._resolve_context -> click.core.Command.make_context": "confirmed",
+  "click.shell_completion._resolve_incomplete -> click.core.Command.get_params": "confirmed",
+  "click.shell_completion._resolve_incomplete -> click.shell_completion._is_incomplete_argument": "confirmed",
+  "click.shell_completion._resolve_incomplete -> click.shell_completion._is_incomplete_option": "confirmed",
+  "click.shell_completion._resolve_incomplete -> click.shell_completion._start_of_option": "confirmed",
+  "click.shell_completion.shell_complete -> click.shell_completion.ShellComplete.complete": "confirmed",
+  "click.shell_completion.shell_complete -> click.shell_completion.ShellComplete.source": "confirmed",
+  "click.shell_completion.shell_complete -> click.shell_completion.get_completion_class": "confirmed",
+  "click.shell_completion.shell_complete -> click.utils.echo": "confirmed",
+  "click.termui._build_prompt -> click.termui._format_default": "confirmed",
+  "click.termui._readline_prompt -> click._compat.should_strip_ansi": "confirmed",
+  "click.termui._readline_prompt -> click._compat.strip_ansi": "confirmed",
+  "click.termui._readline_prompt -> click.globals.resolve_color_default": "confirmed",
+  "click.termui.clear -> click._compat.isatty": "caller_not_run",
+  "click.termui.clear -> click.utils.echo": "caller_not_run",
+  "click.termui.confirm -> click.exceptions.Abort": "confirmed",
+  "click.termui.confirm -> click.termui._build_prompt": "confirmed",
+  "click.termui.confirm -> click.termui._readline_prompt": "confirmed",
+  "click.termui.confirm -> click.utils.echo": "confirmed",
+  "click.termui.echo_via_pager -> click.termui.get_pager_file": "confirmed",
+  "click.termui.edit -> click._termui_impl.Editor": "confirmed",
+  "click.termui.edit -> click._termui_impl.Editor.edit": "confirmed",
+  "click.termui.edit -> click._termui_impl.Editor.edit_files": "confirmed",
+  "click.termui.get_pager_file -> click._termui_impl.get_pager_file": "confirmed",
+  "click.termui.get_pager_file -> click.globals.resolve_color_default": "confirmed",
+  "click.termui.getchar -> click.termui._getchar": "attribute_target",
+  "click.termui.launch -> click._termui_impl.open_url": "caller_not_run",
+  "click.termui.pause -> click._compat.isatty": "confirmed",
+  "click.termui.pause -> click.termui.getchar": "contradicted",
+  "click.termui.pause -> click.utils.echo": "confirmed",
+  "click.termui.progressbar -> click._termui_impl.ProgressBar": "confirmed",
+  "click.termui.progressbar -> click.globals.resolve_color_default": "confirmed",
+  "click.termui.prompt -> click.exceptions.Abort": "confirmed",
+  "click.termui.prompt -> click.termui._build_prompt": "confirmed",
+  "click.termui.prompt -> click.termui._mask_hidden_input": "confirmed",
+  "click.termui.prompt -> click.termui._readline_prompt": "confirmed",
+  "click.termui.prompt -> click.types.convert_type": "confirmed",
+  "click.termui.prompt -> click.utils.echo": "confirmed",
+  "click.termui.raw_terminal -> click._termui_impl.raw_terminal": "no_site",
+  "click.termui.secho -> click.termui.style": "confirmed",
+  "click.termui.secho -> click.utils.echo": "confirmed",
+  "click.termui.style -> click.termui._interpret_color": "confirmed",
+  "click.termui.unstyle -> click._compat.strip_ansi": "confirmed",
+  "click.testing.CliRunner.invoke -> click.core.Command.main": "confirmed",
+  "click.testing.CliRunner.invoke -> click.testing.CliRunner.get_default_prog_name": "confirmed",
+  "click.testing.CliRunner.invoke -> click.testing.CliRunner.isolation": "confirmed",
+  "click.testing.CliRunner.invoke -> click.testing.Result": "confirmed",
+  "click.testing.CliRunner.invoke -> click.testing._FDCapture": "confirmed",
+  "click.testing.CliRunner.invoke -> click.testing._FDCapture.start": "confirmed",
+  "click.testing.CliRunner.invoke -> click.testing._FDCapture.stop": "confirmed",
+  "click.testing.CliRunner.isolation -> click.testing.CliRunner.make_env": "confirmed",
+  "click.testing.CliRunner.isolation -> click.testing.EchoingStdin": "confirmed",
+  "click.testing.CliRunner.isolation -> click.testing.StreamMixer": "confirmed",
+  "click.testing.CliRunner.isolation -> click.testing._NamedTextIOWrapper": "confirmed",
+  "click.testing.CliRunner.isolation -> click.testing._pause_echo": "confirmed",
+  "click.testing.CliRunner.isolation -> click.testing.make_input_stream": "confirmed",
+  "click.testing.EchoingStdin.__iter__ -> click.testing.EchoingStdin._echo": "caller_not_run",
+  "click.testing.EchoingStdin.read -> click.testing.EchoingStdin._echo": "confirmed",
+  "click.testing.EchoingStdin.read1 -> click.testing.EchoingStdin._echo": "confirmed",
+  "click.testing.EchoingStdin.readline -> click.testing.EchoingStdin._echo": "caller_not_run",
+  "click.testing.EchoingStdin.readlines -> click.testing.EchoingStdin._echo": "caller_not_run",
+  "click.testing.StreamMixer.__init__ -> click.testing.BytesIOCopy": "confirmed",
+  "click.testing.make_input_stream -> click._compat._find_binary_reader": "confirmed",
+  "click.types -> click.types.BoolParamType": "no_site",
+  "click.types -> click.types.FloatParamType": "no_site",
+  "click.types -> click.types.IntParamType": "no_site",
+  "click.types -> click.types.StringParamType": "no_site",
+  "click.types -> click.types.UUIDParameterType": "no_site",
+  "click.types -> click.types.UnprocessedParamType": "no_site",
+  "click.types.BoolParamType.convert -> click.types.BoolParamType.str_to_bool": "confirmed",
+  "click.types.BoolParamType.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types.Choice._normalized_mapping -> click.types.Choice.normalize_choice": "confirmed",
+  "click.types.Choice.convert -> click.types.Choice._normalized_mapping": "confirmed",
+  "click.types.Choice.convert -> click.types.Choice.get_invalid_choice_message": "confirmed",
+  "click.types.Choice.convert -> click.types.Choice.normalize_choice": "confirmed",
+  "click.types.Choice.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types.Choice.get_invalid_choice_message -> click.types.Choice._normalized_mapping": "confirmed",
+  "click.types.Choice.get_metavar -> click.types.Choice._normalized_mapping": "confirmed",
+  "click.types.Choice.get_metavar -> click.types.convert_type": "confirmed",
+  "click.types.Choice.get_missing_message -> click.types.Choice._normalized_mapping": "confirmed",
+  "click.types.Choice.shell_complete -> click.shell_completion.CompletionItem": "confirmed",
+  "click.types.Choice.shell_complete -> click.types.Choice.normalize_choice": "confirmed",
+  "click.types.Choice.to_info_dict -> click.types.ParamType.to_info_dict": "confirmed",
+  "click.types.DateTime.convert -> click.types.DateTime._try_to_convert_date": "confirmed",
+  "click.types.DateTime.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types.DateTime.to_info_dict -> click.types.ParamType.to_info_dict": "confirmed",
+  "click.types.File.convert -> click._compat.open_stream": "confirmed",
+  "click.types.File.convert -> click.core.Context.call_on_close": "confirmed",
+  "click.types.File.convert -> click.types.File.resolve_lazy_flag": "confirmed",
+  "click.types.File.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types.File.convert -> click.types._is_file_like": "confirmed",
+  "click.types.File.convert -> click.utils._LazyFile": "confirmed",
+  "click.types.File.convert -> click.utils._safecall": "confirmed",
+  "click.types.File.convert -> click.utils.format_filename": "confirmed",
+  "click.types.File.shell_complete -> click.shell_completion.CompletionItem": "confirmed",
+  "click.types.File.to_info_dict -> click.types.ParamType.to_info_dict": "confirmed",
+  "click.types.FloatRange.__init__ -> click.types._NumberRangeBase.__init__": "confirmed",
+  "click.types.FuncParamType.convert -> click.types.FuncParamType.func": "attribute_target",
+  "click.types.FuncParamType.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types.FuncParamType.to_info_dict -> click.types.ParamType.to_info_dict": "confirmed",
+  "click.types.ParamType.__call__ -> click.types.ParamType.convert": "contradicted",
+  "click.types.ParamType.fail -> click.exceptions.BadParameter": "confirmed",
+  "click.types.Path.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types.Path.convert -> click.types.Path.coerce_path_result": "confirmed",
+  "click.types.Path.convert -> click.utils.format_filename": "confirmed",
+  "click.types.Path.shell_complete -> click.shell_completion.CompletionItem": "confirmed",
+  "click.types.Path.to_info_dict -> click.types.ParamType.to_info_dict": "confirmed",
+  "click.types.StringParamType.convert -> click._compat._get_argv_encoding": "confirmed",
+  "click.types.Tuple.__init__ -> click.types.convert_type": "confirmed",
+  "click.types.Tuple.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types.Tuple.to_info_dict -> click.types.ParamType.to_info_dict": "confirmed",
+  "click.types.UUIDParameterType.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types._NumberParamTypeBase.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types._NumberParamTypeBase.convert -> click.types._NumberParamTypeBase._number_class": "attribute_target",
+  "click.types._NumberRangeBase.__repr__ -> click.types._NumberRangeBase._describe_range": "caller_not_run",
+  "click.types._NumberRangeBase.convert -> click.types.ParamType.fail": "confirmed",
+  "click.types._NumberRangeBase.convert -> click.types._NumberParamTypeBase.convert": "confirmed",
+  "click.types._NumberRangeBase.convert -> click.types._NumberRangeBase._clamp": "contradicted",
+  "click.types._NumberRangeBase.convert -> click.types._NumberRangeBase._describe_range": "confirmed",
+  "click.types._NumberRangeBase.to_info_dict -> click.types.ParamType.to_info_dict": "confirmed",
+  "click.types.convert_type -> click.types.FuncParamType": "confirmed",
+  "click.types.convert_type -> click.types.Tuple": "confirmed",
+  "click.types.convert_type -> click.types._guess_type": "confirmed",
+  "click.utils._LazyFile.__exit__ -> click.utils._LazyFile.close_intelligently": "confirmed",
+  "click.utils._LazyFile.__getattr__ -> click.utils._LazyFile.open": "confirmed",
+  "click.utils._LazyFile.__init__ -> click._compat.open_stream": "unexercised",
+  "click.utils._LazyFile.__iter__ -> click.utils._LazyFile.open": "confirmed",
+  "click.utils._LazyFile.__repr__ -> click.utils.format_filename": "caller_not_run",
+  "click.utils._LazyFile.close_intelligently -> click.utils._LazyFile.close": "confirmed",
+  "click.utils._LazyFile.open -> click._compat.open_stream": "confirmed",
+  "click.utils._LazyFile.open -> click.exceptions.FileError": "confirmed",
+  "click.utils.echo -> click._compat._default_text_stderr": "attribute_target",
+  "click.utils.echo -> click._compat._default_text_stdout": "attribute_target",
+  "click.utils.echo -> click._compat._find_binary_writer": "confirmed",
+  "click.utils.echo -> click._compat.should_strip_ansi": "confirmed",
+  "click.utils.echo -> click._compat.strip_ansi": "confirmed",
+  "click.utils.echo -> click.globals.resolve_color_default": "confirmed",
+  "click.utils.get_app_dir -> click.utils._posixify": "caller_not_run",
+  "click.utils.open_file -> click._compat.open_stream": "confirmed",
+  "click.utils.open_file -> click.utils._KeepOpenFile": "confirmed",
+  "click.utils.open_file -> click.utils._LazyFile": "unexercised"
+ }
+}

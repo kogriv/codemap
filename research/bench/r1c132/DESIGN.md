@@ -1,6 +1,7 @@
 # R1-C132 — an independent benchmark of call-graph accuracy
 
-**Status:** pre-registered 2026-11-23, before any run on the projects below. Results go in
+**Status:** pre-registered 2026-11-23, before any run on the projects below. **Done (run 3, 2026-11-23)** —
+reconciled in [`RESULTS.md`](RESULTS.md). Results go in
 [`RESULTS.md`](RESULTS.md) and a section of [`docs/accuracy.md`](../../../docs/accuracy.md), reconciled against
 this page; anything not listed here is reported as a surprise.
 
@@ -136,3 +137,33 @@ caller. It answers "can I trust the list `callers` gives me".
 3. **The first launch raced on the shared codmap environment**, and click failed before it started. The
    comparisons of the four finished projects came from tracer v1 and are discarded. All five projects are
    rerun with the fixed harness. Nothing from the first run is used.
+4. **Run 2 (tracer v2): C5 found three more defects of the truth, not of codemap.** Reading the contradicted
+   edges of run 2 turned up three causes, each with its own control case and mutation:
+   - **A closure, lambda or generator expression lost its owner when the owner was no longer on the stack.**
+     Examples: a decorator factory's inner function, a rule a factory returned (`make_fence_rule`), a
+     generator expression the caller consumed (`run_length.encode → ilen`). The tracer walked up the stack,
+     while codemap attributes lexically. Nested code is now attributed lexically, to the function it is
+     defined in. The exception is a wrapper: a nested frame that holds the callee itself as a value (a
+     decorator's `fn`), which keeps the stack walk.
+   - **A call site was switched off after its first foreign class or generator.** contextlib has one site
+     that starts every `@contextmanager`, and a site whose name a test monkeypatched first met the test's
+     class (click's `raise Abort()`). These sites now stay on. Only builtin types, C callables and plain
+     functions switch a site off.
+   - These changed the truth only. codemap's graphs, the projects and the measures are unchanged. Run 2's
+     tables are kept in [`RESULTS.md`](RESULTS.md#appendix-run-2-tracer-v2), not discarded.
+5. **A third C5 label, "dispatched elsewhere" (post hoc).** Some contradicted edges' sites ran and their calls
+   ran, but they entered another function of the same name: a subclass override (`Parameter.__init__ →
+   Parameter._parse_decls` entered `Option._parse_decls`), a protocol's implementation, or a definition for
+   another platform. They are neither a false edge nor a measurement artifact, so they get their own label.
+   compare.py counts them mechanically (`contradicted_same_name`, guarded in C2). Precision is given both
+   ways: strict (they count as false) and dispatch-aware (they count as confirmed).
+6. **In the deep graph, nearly every `calls` edge has resolution `deep` (grade `inferred`).** That includes
+   edges the fast graph resolves exactly, so the deep tier's `exact` grade is nearly empty. H1's deep half is
+   therefore read on what is there. A post-hoc split of deep precision (edges in both graphs vs deep only) is
+   reported, labelled as such.
+7. **click's three suites (plain, traced ×2) ran side by side** (`R1C132_CONCURRENT=1`), because its plain
+   suite takes 53 minutes here. C6 would show any interference.
+8. **The first launch of run 3 was stopped.** C6 caught interference on rich: one test fails only under the
+   tracer (`test_broken_getattr`). The new wrapper check looked attributes up on arbitrary objects, and an
+   object whose `__getattr__` raises broke it. The check now goes by exact type, without lookups, and the
+   control package gained the case. All five projects were rerun. Nothing from that launch is used.

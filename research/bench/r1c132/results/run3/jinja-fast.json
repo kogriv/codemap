@@ -1,0 +1,4972 @@
+{
+ "graph": "fast.json",
+ "tier": "fast",
+ "nodes": 1565,
+ "functions": 688,
+ "functions_started": 625,
+ "calls_edges": 789,
+ "runtime_pairs": 1773,
+ "unmapped_runtime": {
+  "callee": 3
+ },
+ "categories": {
+  "call": 1257,
+  "construct": 219,
+  "implicit": 124,
+  "init": 144,
+  "property": 28,
+  "decorator": 1
+ },
+ "recall": {
+  "explicit": {
+   "pairs": 1476,
+   "found": 681,
+   "recall": 0.4614,
+   "found_calls_or_references": 699,
+   "by_via": {
+    "direct": {
+     "pairs": 1203,
+     "found": 672
+    },
+    "nested": {
+     "pairs": 38,
+     "found": 4
+    },
+    "external": {
+     "pairs": 190,
+     "found": 2
+    },
+    "wrapper": {
+     "pairs": 45,
+     "found": 3
+    }
+   }
+  },
+  "implicit": {
+   "pairs": 124,
+   "found": 1,
+   "recall": 0.0081,
+   "found_calls_or_references": 1,
+   "by_via": {
+    "direct": {
+     "pairs": 79,
+     "found": 1
+    },
+    "nested": {
+     "pairs": 5,
+     "found": 0
+    },
+    "external": {
+     "pairs": 40,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "property": {
+   "pairs": 28,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 27,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 1,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "decorator": {
+   "pairs": 1,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 1,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  }
+ },
+ "precision": {
+  "outcomes": {
+   "caller_not_run": 21,
+   "confirmed": 682,
+   "unexercised": 52,
+   "contradicted": 3,
+   "attribute_target": 29,
+   "no_site": 2
+  },
+  "decided": 0.9956,
+  "by_grade": {
+   "exact": {
+    "caller_not_run": 21,
+    "confirmed": 682,
+    "attribute_target": 29,
+    "unexercised": 52,
+    "no_site": 2,
+    "contradicted": 3,
+    "decided": 0.9956
+   }
+  },
+  "by_resolution": {
+   "imported": {
+    "caller_not_run": 6,
+    "confirmed": 130,
+    "attribute_target": 7,
+    "unexercised": 23,
+    "no_site": 1,
+    "decided": 1.0
+   },
+   "module": {
+    "confirmed": 123,
+    "unexercised": 9,
+    "caller_not_run": 8,
+    "no_site": 1,
+    "decided": 1.0
+   },
+   "self": {
+    "confirmed": 429,
+    "unexercised": 20,
+    "contradicted": 3,
+    "caller_not_run": 7,
+    "attribute_target": 22,
+    "decided": 0.9931
+   }
+  }
+ },
+ "callers_complete": {
+  "callees": 611,
+  "complete": 235,
+  "share": 0.3846
+ },
+ "misses": [
+  [
+   "jinja2.async_utils._IteratorToAsyncIterator.__anext__",
+   "jinja2.filters.ignore_case",
+   "wrapper"
+  ],
+  [
+   "jinja2.async_utils.auto_await",
+   "jinja2.async_utils.auto_aiter",
+   "external"
+  ],
+  [
+   "jinja2.async_utils.auto_await",
+   "jinja2.async_utils.auto_await",
+   "external"
+  ],
+  [
+   "jinja2.async_utils.auto_await",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.async_utils.auto_await",
+   "jinja2.runtime.AsyncLoopContext",
+   "external"
+  ],
+  [
+   "jinja2.async_utils.auto_await",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.async_utils.auto_await",
+   "jinja2.tests.test_defined",
+   "external"
+  ],
+  [
+   "jinja2.bccache.BytecodeCache.get_bucket",
+   "jinja2.bccache.FileSystemBytecodeCache.load_bytecode",
+   "direct"
+  ],
+  [
+   "jinja2.bccache.BytecodeCache.set_bucket",
+   "jinja2.bccache.FileSystemBytecodeCache.dump_bytecode",
+   "direct"
+  ],
+  [
+   "jinja2.bccache.FileSystemBytecodeCache.dump_bytecode",
+   "jinja2.bccache.Bucket.write_bytecode",
+   "direct"
+  ],
+  [
+   "jinja2.bccache.MemcachedBytecodeCache.dump_bytecode",
+   "jinja2.bccache.Bucket.bytecode_to_string",
+   "direct"
+  ],
+  [
+   "jinja2.bccache.MemcachedBytecodeCache.load_bytecode",
+   "jinja2.bccache.Bucket.bytecode_from_string",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_post",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_pre",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.compiler.CodeGenerator._default_finalize",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.And.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.BinExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Compare.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Concat.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.CondExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Dict.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Filter.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Getitem.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.MarkSafeIfAutoescape.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Or.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.TemplateData.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.Tuple.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes.UnaryExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator._output_child_to_const",
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.dump_local_context",
+   "jinja2.idtracking.Symbols.dump_stores",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.macro_body",
+   "jinja2.compiler.Frame.inner",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.macro_body",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.macro_body",
+   "jinja2.idtracking.Symbols.declare_parameter",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.macro_body",
+   "jinja2.idtracking.Symbols.ref",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.macro_body",
+   "jinja2.meta.TrackingCodeGenerator.enter_frame",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.macro_def",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.pop_assign_tracking",
+   "jinja2.idtracking.Symbols.ref",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.pull_dependencies",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.push_parameter_definitions",
+   "jinja2.idtracking.Symbols.dump_param_targets",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.signature",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Assign",
+   "jinja2.idtracking.Symbols.ref",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Assign",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Assign",
+   "jinja2.nodes.Node.find_all",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_AssignBlock",
+   "jinja2.compiler.Frame.inner",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_AssignBlock",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Call",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_CondExpr",
+   "jinja2.compiler.CodeGenerator.position",
+   "nested"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_CondExpr",
+   "jinja2.compiler.Frame.soft",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Const",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_EvalContextModifier",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_EvalContextModifier",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_FilterBlock",
+   "jinja2.compiler.Frame.inner",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_FilterBlock",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_For",
+   "jinja2.compiler.Frame.inner",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_For",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_For",
+   "jinja2.idtracking.Symbols.declare_parameter",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_For",
+   "jinja2.meta.TrackingCodeGenerator.enter_frame",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_For",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_For",
+   "jinja2.nodes.Node.find_all",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_For",
+   "jinja2.nodes.Node.iter_child_nodes",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_FromImport",
+   "jinja2.idtracking.Symbols.ref",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_If",
+   "jinja2.compiler.Frame.soft",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Import",
+   "jinja2.idtracking.Symbols.ref",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Include",
+   "jinja2.compiler.CodeGenerator.simple_write",
+   "nested"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Macro",
+   "jinja2.idtracking.Symbols.ref",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Macro",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_NSRef",
+   "jinja2.idtracking.Symbols.ref",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Name",
+   "jinja2.idtracking.Symbols.find_load",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Name",
+   "jinja2.idtracking.Symbols.ref",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Name",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Output",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Output",
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_post",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Output",
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_pre",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Output",
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Output",
+   "jinja2.nativetypes.NativeCodeGenerator._output_const_repr",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_OverlayScope",
+   "jinja2.compiler.Frame.inner",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_OverlayScope",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Scope",
+   "jinja2.compiler.Frame.inner",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Scope",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_ScopedEvalContextModifier",
+   "jinja2.nodes.EvalContext.revert",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_ScopedEvalContextModifier",
+   "jinja2.nodes.EvalContext.save",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Template",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Template",
+   "jinja2.idtracking.Symbols.declare_parameter",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Template",
+   "jinja2.meta.TrackingCodeGenerator.enter_frame",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Template",
+   "jinja2.nodes.Node.find",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_Template",
+   "jinja2.nodes.Node.find_all",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_TemplateData",
+   "jinja2.nodes.TemplateData.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_With",
+   "jinja2.compiler.Frame.inner",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.visit_With",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.CodeGenerator.writeline",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.Frame.copy",
+   "jinja2.idtracking.Symbols.copy",
+   "direct"
+  ],
+  [
+   "jinja2.compiler._make_binop",
+   "jinja2.compiler.CodeGenerator.write",
+   "nested"
+  ],
+  [
+   "jinja2.compiler._make_binop",
+   "jinja2.meta.TrackingCodeGenerator.write",
+   "nested"
+  ],
+  [
+   "jinja2.compiler._make_binop",
+   "jinja2.visitor.NodeVisitor.visit",
+   "nested"
+  ],
+  [
+   "jinja2.compiler._make_unop",
+   "jinja2.compiler.CodeGenerator.write",
+   "nested"
+  ],
+  [
+   "jinja2.compiler._make_unop",
+   "jinja2.visitor.NodeVisitor.visit",
+   "nested"
+  ],
+  [
+   "jinja2.compiler.find_undeclared",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.generate",
+   "jinja2.compiler.CodeGenerator",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.generate",
+   "jinja2.nativetypes.NativeCodeGenerator",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.generate",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.compiler.optimizeconst",
+   "jinja2.visitor.NodeVisitor.visit",
+   "nested"
+  ],
+  [
+   "jinja2.debug.get_template_locals",
+   "jinja2.runtime.Context.get_all",
+   "direct"
+  ],
+  [
+   "jinja2.debug.rewrite_traceback_stack",
+   "jinja2.environment.Template.get_corresponding_lineno",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._filter_test_common",
+   "jinja2.filters.do_int",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._filter_test_common",
+   "jinja2.filters.do_sum",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Environment._filter_test_common",
+   "jinja2.filters.sync_do_sum",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Environment._filter_test_common",
+   "jinja2.tests.test_filter",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._filter_test_common",
+   "jinja2.tests.test_odd",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._filter_test_common",
+   "jinja2.tests.test_test",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._load_template",
+   "jinja2.loaders.BaseLoader.load",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._load_template",
+   "jinja2.loaders.ChoiceLoader.load",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._load_template",
+   "jinja2.loaders.ModuleLoader.load",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._load_template",
+   "jinja2.loaders.PrefixLoader.load",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._load_template",
+   "jinja2.utils.LRUCache.get",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._parse",
+   "jinja2.parser.Parser.parse",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._tokenize",
+   "jinja2.ext.Extension.filter_stream",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment._tokenize",
+   "jinja2.lexer.Lexer.tokenize",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.compile_expression",
+   "jinja2.nodes.Node.set_environment",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.compile_expression",
+   "jinja2.parser.Parser.parse_expression",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.compile_templates",
+   "jinja2.loaders.DictLoader.get_source",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.compile_templates",
+   "jinja2.loaders.PrefixLoader.get_source",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.from_string",
+   "jinja2.environment.Template.from_code",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.getattr",
+   "jinja2.runtime.ChainableUndefined",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.getattr",
+   "jinja2.runtime.DebugUndefined",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.getattr",
+   "jinja2.runtime.StrictUndefined",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.getattr",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.getitem",
+   "jinja2.runtime.ChainableUndefined",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.getitem",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.lex",
+   "jinja2.lexer.Lexer.tokeniter",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.list_templates",
+   "jinja2.loaders.DictLoader.list_templates",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.list_templates",
+   "jinja2.loaders.PrefixLoader.list_templates",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.overlay",
+   "jinja2.ext.Extension.bind",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Environment.preprocess",
+   "jinja2.ext.Extension.preprocess",
+   "nested"
+  ],
+  [
+   "jinja2.environment.Environment.select_template",
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Template.__new__",
+   "jinja2.environment.Environment.from_string",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Template.generate",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate",
+   "jinja2.environment.Template.generate_async",
+   "nested"
+  ],
+  [
+   "jinja2.environment.Template.generate",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate",
+   "jinja2.runtime.LoopContext",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate_async",
+   "jinja2.async_utils.auto_aiter",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate_async",
+   "jinja2.async_utils.auto_await",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate_async",
+   "jinja2.environment.Environment.get_template",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate_async",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate_async",
+   "jinja2.runtime.AsyncLoopContext",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate_async",
+   "jinja2.runtime.Context.get_all",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate_async",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.generate_async",
+   "jinja2.runtime.TemplateReference",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.make_module_async",
+   "jinja2.async_utils.auto_aiter",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.make_module_async",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.make_module_async",
+   "jinja2.runtime.Macro",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.make_module_async",
+   "jinja2.runtime.Undefined",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.environment.Environment.get_or_select_template",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.environment.Environment.get_template",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.environment.Environment.getitem",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.environment.Environment.handle_exception",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.environment.Environment.select_template",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.environment.Template._get_default_module",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.environment.Template.make_module",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.exceptions.TemplateRuntimeError",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_attr",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_batch",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_default",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_dictsort",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_float",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_forceescape",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_format",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_indent",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_int",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_items",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_last",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_lower",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_max",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_min",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_pprint",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_random",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_replace",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_reverse",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_sort",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_striptags",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_title",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_tojson",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_trim",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_truncate",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_upper",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_urlencode",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_wordcount",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_wordwrap",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.do_xmlattr",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_first",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_groupby",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_join",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_list",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_reject",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_rejectattr",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_select",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_selectattr",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.filters.sync_do_sum",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.nodes.EvalContext.revert",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.nodes.EvalContext.save",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.ChainableUndefined",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Context.derived",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Context.get_all",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Context.resolve",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Context.super",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.DebugUndefined",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.LoopContext",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Macro",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.StrictUndefined",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.TemplateReference",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Undefined",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.identity",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.runtime.str_join",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.sandbox.SandboxedEnvironment.call",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.sandbox.SandboxedEnvironment.call_binop",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.sandbox.SandboxedEnvironment.call_unop",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.sandbox.SandboxedEnvironment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.sandbox.SandboxedEnvironment.getitem",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.tests.test_defined",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.tests.test_escaped",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.tests.test_even",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.tests.test_iterable",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.tests.test_mapping",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.tests.test_number",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.tests.test_sameas",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render",
+   "jinja2.utils.internalcode",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.async_utils.auto_aiter",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.async_utils.auto_await",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.environment.Environment.get_or_select_template",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.environment.Environment.get_template",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.environment.Environment.getitem",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.environment.Environment.handle_exception",
+   "direct"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.environment.Environment.select_template",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.environment.Template._get_default_module_async",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.environment.Template.make_module_async",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_default",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_first",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_groupby",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_join",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_list",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_map",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_reject",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_select",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_selectattr",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_slice",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_sum",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.filters.do_unique",
+   "wrapper"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.runtime.AsyncLoopContext",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.runtime.Context.get_all",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.runtime.Macro",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.runtime.TemplateReference",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.runtime.Undefined",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.tests.test_defined",
+   "external"
+  ],
+  [
+   "jinja2.environment.Template.render_async",
+   "jinja2.tests.test_even",
+   "external"
+  ],
+  [
+   "jinja2.environment.TemplateExpression.__call__",
+   "jinja2.environment.Template.new_context",
+   "direct"
+  ],
+  [
+   "jinja2.environment.TemplateModule.__init__",
+   "jinja2.filters.do_trim",
+   "external"
+  ],
+  [
+   "jinja2.environment.TemplateModule.__init__",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.environment.TemplateModule.__init__",
+   "jinja2.runtime.Context.get_exported",
+   "direct"
+  ],
+  [
+   "jinja2.environment.TemplateModule.__init__",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.environment.TemplateModule.__init__",
+   "jinja2.runtime.Macro",
+   "external"
+  ],
+  [
+   "jinja2.environment.TemplateModule.__init__",
+   "jinja2.runtime.Undefined",
+   "external"
+  ],
+  [
+   "jinja2.environment.TemplateModule.__init__",
+   "jinja2.runtime.identity",
+   "external"
+  ],
+  [
+   "jinja2.environment.get_spontaneous_environment",
+   "jinja2.environment.Environment",
+   "direct"
+  ],
+  [
+   "jinja2.environment.get_spontaneous_environment",
+   "jinja2.nativetypes.NativeEnvironment",
+   "direct"
+  ],
+  [
+   "jinja2.environment.load_extensions",
+   "jinja2.ext.DebugExtension",
+   "direct"
+  ],
+  [
+   "jinja2.environment.load_extensions",
+   "jinja2.ext.ExprStmtExtension",
+   "direct"
+  ],
+  [
+   "jinja2.environment.load_extensions",
+   "jinja2.ext.InternationalizationExtension",
+   "direct"
+  ],
+  [
+   "jinja2.environment.load_extensions",
+   "jinja2.ext.LoopControlExtension",
+   "direct"
+  ],
+  [
+   "jinja2.exceptions.TemplateNotFound.__init__",
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "direct"
+  ],
+  [
+   "jinja2.exceptions.TemplateSyntaxError.__init__",
+   "jinja2.exceptions.TemplateError.__init__",
+   "direct"
+  ],
+  [
+   "jinja2.exceptions.TemplatesNotFound.__init__",
+   "jinja2.exceptions.TemplateNotFound.__init__",
+   "direct"
+  ],
+  [
+   "jinja2.ext.DebugExtension._render",
+   "jinja2.runtime.Context.get_all",
+   "direct"
+  ],
+  [
+   "jinja2.ext.DebugExtension.parse",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.ext.ExprStmtExtension.parse",
+   "jinja2.parser.Parser.parse_tuple",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.__init__",
+   "jinja2.environment.Environment.extend",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.__init__",
+   "jinja2.ext.Extension.__init__",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension._parse_block",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension._parse_block",
+   "jinja2.parser.Parser.fail",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.parse",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.parse",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.parse",
+   "jinja2.lexer.TokenStream.next_if",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.parse",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.parse",
+   "jinja2.nodes.Node.set_lineno",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.parse",
+   "jinja2.parser.Parser.fail",
+   "direct"
+  ],
+  [
+   "jinja2.ext.InternationalizationExtension.parse",
+   "jinja2.parser.Parser.parse_expression",
+   "direct"
+  ],
+  [
+   "jinja2.ext._gettext_alias",
+   "jinja2.runtime.Context.call",
+   "direct"
+  ],
+  [
+   "jinja2.ext._gettext_alias",
+   "jinja2.runtime.Context.resolve",
+   "direct"
+  ],
+  [
+   "jinja2.ext._make_new_gettext",
+   "jinja2.runtime.Context.call",
+   "nested"
+  ],
+  [
+   "jinja2.ext._make_new_gettext",
+   "jinja2.utils.pass_context",
+   "direct"
+  ],
+  [
+   "jinja2.ext._make_new_ngettext",
+   "jinja2.runtime.Context.call",
+   "nested"
+  ],
+  [
+   "jinja2.ext._make_new_ngettext",
+   "jinja2.utils.pass_context",
+   "direct"
+  ],
+  [
+   "jinja2.ext._make_new_npgettext",
+   "jinja2.runtime.Context.call",
+   "nested"
+  ],
+  [
+   "jinja2.ext._make_new_npgettext",
+   "jinja2.utils.pass_context",
+   "direct"
+  ],
+  [
+   "jinja2.ext._make_new_pgettext",
+   "jinja2.runtime.Context.call",
+   "nested"
+  ],
+  [
+   "jinja2.ext._make_new_pgettext",
+   "jinja2.utils.pass_context",
+   "direct"
+  ],
+  [
+   "jinja2.ext.babel_extract",
+   "jinja2.environment.Environment.lex",
+   "direct"
+  ],
+  [
+   "jinja2.ext.babel_extract",
+   "jinja2.environment.Environment.parse",
+   "direct"
+  ],
+  [
+   "jinja2.ext.babel_extract",
+   "jinja2.environment.Environment.preprocess",
+   "direct"
+  ],
+  [
+   "jinja2.ext.babel_extract",
+   "jinja2.ext._CommentFinder.find_comments",
+   "direct"
+  ],
+  [
+   "jinja2.ext.extract_from_ast",
+   "jinja2.nodes.Node.find_all",
+   "direct"
+  ],
+  [
+   "jinja2.filters._min_or_max",
+   "jinja2.filters.ignore_case",
+   "wrapper"
+  ],
+  [
+   "jinja2.filters._min_or_max",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.filters.do_attr",
+   "jinja2.environment.Environment.getattr",
+   "direct"
+  ],
+  [
+   "jinja2.filters.do_attr",
+   "jinja2.sandbox.SandboxedEnvironment.getattr",
+   "direct"
+  ],
+  [
+   "jinja2.filters.do_groupby",
+   "jinja2.filters.ignore_case",
+   "wrapper"
+  ],
+  [
+   "jinja2.filters.do_sort",
+   "jinja2.filters.ignore_case",
+   "wrapper"
+  ],
+  [
+   "jinja2.filters.do_wordcount",
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "external"
+  ],
+  [
+   "jinja2.filters.make_attrgetter",
+   "jinja2.environment.Environment.getitem",
+   "nested"
+  ],
+  [
+   "jinja2.filters.make_multi_attrgetter",
+   "jinja2.environment.Environment.getitem",
+   "nested"
+  ],
+  [
+   "jinja2.filters.prepare_map",
+   "jinja2.environment.Environment.call_filter",
+   "nested"
+  ],
+  [
+   "jinja2.filters.prepare_select_or_reject",
+   "jinja2.environment.Environment.call_test",
+   "nested"
+  ],
+  [
+   "jinja2.filters.sync_do_groupby",
+   "jinja2.filters.ignore_case",
+   "wrapper"
+  ],
+  [
+   "jinja2.filters.sync_do_list",
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "direct"
+  ],
+  [
+   "jinja2.filters.sync_do_unique",
+   "jinja2.filters.ignore_case",
+   "wrapper"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_FromImport",
+   "jinja2.idtracking.Symbols.store",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_If",
+   "jinja2.idtracking.Symbols.branch_update",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_If",
+   "jinja2.idtracking.Symbols.copy",
+   "nested"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Import",
+   "jinja2.idtracking.Symbols.store",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Macro",
+   "jinja2.idtracking.Symbols.store",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_NSRef",
+   "jinja2.idtracking.Symbols.load",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Name",
+   "jinja2.idtracking.Symbols.declare_parameter",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Name",
+   "jinja2.idtracking.Symbols.load",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Name",
+   "jinja2.idtracking.Symbols.store",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.RootVisitor._simple_visit",
+   "jinja2.nodes.Node.iter_child_nodes",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.RootVisitor._simple_visit",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.RootVisitor.visit_AssignBlock",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.RootVisitor.visit_CallBlock",
+   "jinja2.nodes.Node.iter_child_nodes",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.RootVisitor.visit_CallBlock",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.RootVisitor.visit_For",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.RootVisitor.visit_OverlayScope",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.RootVisitor.visit_With",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.Symbols.analyze_node",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.Symbols.find_load",
+   "jinja2.idtracking.Symbols.find_load",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.Symbols.find_ref",
+   "jinja2.idtracking.Symbols.find_ref",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.Symbols.store",
+   "jinja2.idtracking.Symbols.find_ref",
+   "direct"
+  ],
+  [
+   "jinja2.idtracking.symbols_for_node",
+   "jinja2.idtracking.Symbols.analyze_node",
+   "direct"
+  ],
+  [
+   "jinja2.lexer.Lexer.__init__",
+   "jinja2.lexer.OptionalLStrip.__new__",
+   "direct"
+  ],
+  [
+   "jinja2.lexer.TokenStream.__next__",
+   "jinja2.lexer.Token",
+   "external"
+  ],
+  [
+   "jinja2.lexer.TokenStream.__next__",
+   "jinja2.lexer.count_newlines",
+   "external"
+  ],
+  [
+   "jinja2.lexer.TokenStream.expect",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.lexer.TokenStream.next_if",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.lexer.TokenStreamIterator.__next__",
+   "jinja2.lexer.TokenStream.close",
+   "direct"
+  ],
+  [
+   "jinja2.lexer.get_lexer",
+   "jinja2.utils.LRUCache.get",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.bccache.BytecodeCache.get_bucket",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.bccache.BytecodeCache.set_bucket",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.environment.Environment.compile",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.environment.Template.from_code",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.loaders.DictLoader.get_source",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.loaders.FileSystemLoader.get_source",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.loaders.FunctionLoader.get_source",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.loaders.PackageLoader.get_source",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.ChoiceLoader.load",
+   "jinja2.loaders.BaseLoader.load",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.ChoiceLoader.load",
+   "jinja2.loaders.ModuleLoader.load",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.ModuleLoader.load",
+   "jinja2.environment.Template.from_module_dict",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.PrefixLoader.get_source",
+   "jinja2.loaders.DictLoader.get_source",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.PrefixLoader.get_source",
+   "jinja2.loaders.FileSystemLoader.get_source",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.PrefixLoader.list_templates",
+   "jinja2.loaders.DictLoader.list_templates",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.PrefixLoader.list_templates",
+   "jinja2.loaders.FileSystemLoader.list_templates",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.PrefixLoader.load",
+   "jinja2.loaders.BaseLoader.load",
+   "direct"
+  ],
+  [
+   "jinja2.loaders.PrefixLoader.load",
+   "jinja2.loaders.ModuleLoader.load",
+   "direct"
+  ],
+  [
+   "jinja2.meta.TrackingCodeGenerator.__init__",
+   "jinja2.compiler.CodeGenerator.__init__",
+   "direct"
+  ],
+  [
+   "jinja2.meta.TrackingCodeGenerator.enter_frame",
+   "jinja2.compiler.CodeGenerator.enter_frame",
+   "direct"
+  ],
+  [
+   "jinja2.meta.find_referenced_templates",
+   "jinja2.nodes.Node.find_all",
+   "direct"
+  ],
+  [
+   "jinja2.meta.find_undeclared_variables",
+   "jinja2.visitor.NodeVisitor.visit",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nativetypes.NativeCodeGenerator._default_finalize",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.BinExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.Compare.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.Filter.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.Getitem.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes.TemplateData.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const",
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeTemplate.render",
+   "jinja2.environment.Environment.handle_exception",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeTemplate.render",
+   "jinja2.nativetypes.native_concat",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeTemplate.render_async",
+   "jinja2.nativetypes.native_concat",
+   "direct"
+  ],
+  [
+   "jinja2.nativetypes.NativeTemplate.render_async",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.environment.Environment.getitem",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.filters.do_int",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.runtime.LoopContext",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.runtime.Macro",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.runtime.TemplateReference",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.runtime.Undefined",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "external"
+  ],
+  [
+   "jinja2.nativetypes.native_concat",
+   "jinja2.tests.test_defined",
+   "external"
+  ],
+  [
+   "jinja2.nodes.And.as_const",
+   "jinja2.nodes.And.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.And.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.BinExpr.as_const",
+   "jinja2.nodes.BinExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.BinExpr.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.BinExpr.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.BinExpr.as_const",
+   "jinja2.nodes.Filter.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.BinExpr.as_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.BinExpr.as_const",
+   "jinja2.nodes.MarkSafeIfAutoescape.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Compare.as_const",
+   "jinja2.nodes.BinExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Compare.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Compare.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Compare.as_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Compare.as_const",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Concat.as_const",
+   "jinja2.nodes.Const.as_const",
+   "nested"
+  ],
+  [
+   "jinja2.nodes.Concat.as_const",
+   "jinja2.nodes.Getattr.as_const",
+   "nested"
+  ],
+  [
+   "jinja2.nodes.Concat.as_const",
+   "jinja2.nodes.List.as_const",
+   "nested"
+  ],
+  [
+   "jinja2.nodes.CondExpr.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.CondExpr.as_const",
+   "jinja2.nodes.UnaryExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.CondExpr.as_const",
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Const.from_untrusted",
+   "jinja2.nodes.Const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Dict.as_const",
+   "jinja2.nodes.Pair.as_const",
+   "nested"
+  ],
+  [
+   "jinja2.nodes.Filter.as_const",
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getattr.as_const",
+   "jinja2.environment.Environment.getattr",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getattr.as_const",
+   "jinja2.nodes.CondExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getattr.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getattr.as_const",
+   "jinja2.nodes.Dict.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getattr.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getattr.as_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getattr.as_const",
+   "jinja2.nodes.Getitem.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getattr.as_const",
+   "jinja2.sandbox.SandboxedEnvironment.getattr",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getitem.as_const",
+   "jinja2.environment.Environment.getitem",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getitem.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getitem.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getitem.as_const",
+   "jinja2.nodes.Filter.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getitem.as_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getitem.as_const",
+   "jinja2.nodes.Getitem.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getitem.as_const",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Getitem.as_const",
+   "jinja2.nodes.Slice.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Keyword.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Keyword.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Keyword.as_const",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.List.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.List.as_const",
+   "jinja2.nodes.Filter.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.List.as_const",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.MarkSafeIfAutoescape.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Node.find_all",
+   "jinja2.nodes.Node.find_all",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Node.set_ctx",
+   "jinja2.nodes.Node.iter_child_nodes",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Node.set_environment",
+   "jinja2.nodes.Node.iter_child_nodes",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Node.set_lineno",
+   "jinja2.nodes.Node.iter_child_nodes",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Or.as_const",
+   "jinja2.nodes.And.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Or.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Or.as_const",
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Pair.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Pair.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Slice.as_const",
+   "jinja2.nodes.Const.as_const",
+   "nested"
+  ],
+  [
+   "jinja2.nodes.Slice.as_const",
+   "jinja2.nodes.UnaryExpr.as_const",
+   "nested"
+  ],
+  [
+   "jinja2.nodes.Tuple.as_const",
+   "jinja2.nodes.Const.as_const",
+   "nested"
+  ],
+  [
+   "jinja2.nodes.Tuple.can_assign",
+   "jinja2.nodes.NSRef.can_assign",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.Tuple.can_assign",
+   "jinja2.nodes.Name.can_assign",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.UnaryExpr.as_const",
+   "jinja2.nodes.Compare.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.UnaryExpr.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.UnaryExpr.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.UnaryExpr.as_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.UnaryExpr.as_const",
+   "jinja2.nodes.Getitem.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.UnaryExpr.as_const",
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_attr",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_capitalize",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_center",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_default",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_filesizeformat",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_format",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_indent",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_lower",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_mark_safe",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_max",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_min",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_pprint",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_reverse",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_round",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_sort",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_title",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_truncate",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_upper",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_urlize",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_wordcount",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.do_xmlattr",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.sync_do_first",
+   "wrapper"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.sync_do_groupby",
+   "wrapper"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.sync_do_join",
+   "wrapper"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.sync_do_list",
+   "wrapper"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.filters.sync_do_sum",
+   "wrapper"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.nodes.BinExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.nodes.Dict.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.nodes.Filter.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.nodes.UnaryExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_boolean",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_defined",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_even",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_false",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_float",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_in",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_integer",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_iterable",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_lower",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_mapping",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_none",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_number",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_odd",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_sameas",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_sequence",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_string",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_true",
+   "direct"
+  ],
+  [
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "jinja2.tests.test_upper",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.BinExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.Dict.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.Keyword.as_const",
+   "nested"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.Tuple.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.nodes.args_as_const",
+   "jinja2.nodes.UnaryExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.BinExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Compare.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Concat.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.CondExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Const.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Dict.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Expr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Filter.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Getattr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Getitem.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.List.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.MarkSafeIfAutoescape.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Slice.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.Tuple.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes.UnaryExpr.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.nodes._FilterTestCommon.as_const",
+   "direct"
+  ],
+  [
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "jinja2.visitor.NodeTransformer.generic_visit",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.__init__",
+   "jinja2.environment.Environment._tokenize",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.__init__",
+   "jinja2.environment.Environment.iter_extensions",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser._fail_ut_eof",
+   "jinja2.lexer.describe_token_expr",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.fail",
+   "jinja2.exceptions.TemplateAssertionError",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.fail",
+   "jinja2.exceptions.TemplateSyntaxError",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.is_tuple_end",
+   "jinja2.lexer.Token.test_any",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse",
+   "jinja2.nodes.Node.set_environment",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_and",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_assign_target",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_assign_target",
+   "jinja2.nodes.Expr.can_assign",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_assign_target",
+   "jinja2.nodes.NSRef.can_assign",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_assign_target",
+   "jinja2.nodes.Name.can_assign",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_assign_target",
+   "jinja2.nodes.Node.set_ctx",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_assign_target",
+   "jinja2.nodes.Tuple.can_assign",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_block",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_block",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_call_args",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_call_args",
+   "jinja2.lexer.TokenStream.look",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_call_args",
+   "jinja2.lexer.TokenStream.skip",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_call_args",
+   "jinja2.parser.Parser.fail",
+   "nested"
+  ],
+  [
+   "jinja2.parser.Parser.parse_compare",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_compare",
+   "jinja2.lexer.TokenStream.look",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_compare",
+   "jinja2.lexer.TokenStream.skip",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_compare",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_condexpr",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_dict",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_filter",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_for",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_for",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_from",
+   "jinja2.lexer.Token.test",
+   "nested"
+  ],
+  [
+   "jinja2.parser.Parser.parse_from",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_from",
+   "jinja2.lexer.TokenStream.look",
+   "nested"
+  ],
+  [
+   "jinja2.parser.Parser.parse_from",
+   "jinja2.lexer.TokenStream.skip",
+   "nested"
+  ],
+  [
+   "jinja2.parser.Parser.parse_from",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_if",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_if",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_import",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_import_context",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_import_context",
+   "jinja2.lexer.Token.test_any",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_import_context",
+   "jinja2.lexer.TokenStream.look",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_import_context",
+   "jinja2.lexer.TokenStream.skip",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_include",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_include",
+   "jinja2.lexer.TokenStream.look",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_include",
+   "jinja2.lexer.TokenStream.skip",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_list",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_math1",
+   "jinja2.nodes.Add",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_math1",
+   "jinja2.nodes.Sub",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_math2",
+   "jinja2.nodes.Div",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_math2",
+   "jinja2.nodes.FloorDiv",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_math2",
+   "jinja2.nodes.Mod",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_math2",
+   "jinja2.nodes.Mul",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_not",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_or",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_primary",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_set",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_signature",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_signature",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_signature",
+   "jinja2.nodes.Node.set_ctx",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.ext.DebugExtension.parse",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.ext.ExprStmtExtension.parse",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.ext.Extension.attr",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.ext.Extension.call_method",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.ext.InternationalizationExtension.parse",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.ext.LoopControlExtension.parse",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.lexer.TokenStream.expect",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.Assign",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.ContextReference",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.DerivedContextReference",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.EnvironmentAttribute",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.ImportedName",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.Node.set_lineno",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.Output",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.OverlayScope",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.nodes.Scope",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_assign_target",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_autoescape",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_block",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_expression",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_extends",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_for",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_from",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_import",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_include",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_macro",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_print",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_set",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_statements",
+   "external"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statement",
+   "jinja2.parser.Parser.parse_with",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statements",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_statements",
+   "jinja2.lexer.TokenStream.skip_if",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_subscript",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_test",
+   "jinja2.lexer.Token.test",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_test",
+   "jinja2.lexer.Token.test_any",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_test",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_tuple",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_tuple",
+   "jinja2.parser.Parser.parse_expression",
+   "nested"
+  ],
+  [
+   "jinja2.parser.Parser.parse_tuple",
+   "jinja2.parser.Parser.parse_primary",
+   "nested"
+  ],
+  [
+   "jinja2.parser.Parser.parse_with",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.parse_with",
+   "jinja2.nodes.Node.set_ctx",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.subparse",
+   "jinja2.lexer.Token.test_any",
+   "direct"
+  ],
+  [
+   "jinja2.parser.Parser.subparse",
+   "jinja2.lexer.TokenStream.expect",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.AsyncLoopContext.__anext__",
+   "jinja2.async_utils.auto_aiter",
+   "external"
+  ],
+  [
+   "jinja2.runtime.AsyncLoopContext.__anext__",
+   "jinja2.async_utils.auto_await",
+   "external"
+  ],
+  [
+   "jinja2.runtime.AsyncLoopContext.__anext__",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.runtime.AsyncLoopContext.__anext__",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.runtime.AsyncLoopContext.__anext__",
+   "jinja2.tests.test_even",
+   "external"
+  ],
+  [
+   "jinja2.runtime.AsyncLoopContext.nextitem",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.BlockReference.__call__",
+   "jinja2.nativetypes.native_concat",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.BlockReference.__call__",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.runtime.BlockReference.__call__",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.runtime.BlockReference.__call__",
+   "jinja2.runtime.Context.super",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.ext.DebugExtension._render",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.ext._gettext_alias",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.BlockReference.__call__",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.Context.derived",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.Context.get",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.Context.resolve",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.LoopContext.__call__",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.LoopContext.changed",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.LoopContext.cycle",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.Macro.__call__",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Context.call",
+   "jinja2.sandbox.safe_range",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.LoopContext.__call__",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.runtime.LoopContext.__call__",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.runtime.LoopContext.__call__",
+   "jinja2.runtime.LoopContext",
+   "external"
+  ],
+  [
+   "jinja2.runtime.LoopContext.__call__",
+   "jinja2.tests.test_defined",
+   "external"
+  ],
+  [
+   "jinja2.runtime.LoopContext.__init__",
+   "jinja2.runtime.AsyncLoopContext._to_iterator",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.LoopContext.__next__",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.runtime.LoopContext.__next__",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.runtime.LoopContext.__next__",
+   "jinja2.tests.test_even",
+   "external"
+  ],
+  [
+   "jinja2.runtime.LoopContext.nextitem",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.LoopContext.previtem",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Macro.__call__",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Macro._async_invoke",
+   "jinja2.async_utils.auto_await",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._async_invoke",
+   "jinja2.environment.Environment.get_template",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._async_invoke",
+   "jinja2.environment.Template.new_context",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._async_invoke",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._async_invoke",
+   "jinja2.runtime.Context.get_all",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._async_invoke",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._async_invoke",
+   "jinja2.runtime.Macro",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._async_invoke",
+   "jinja2.runtime.Undefined",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.environment.Environment.get_template",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.environment.Environment.getattr",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.environment.Template.new_context",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.filters.sync_do_join",
+   "wrapper"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.nativetypes.native_concat",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.runtime.Context.call",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.runtime.Context.get_all",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.runtime.LoopContext",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.runtime.Macro",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.runtime.Undefined",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.runtime.identity",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.tests.test_defined",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Macro._invoke",
+   "jinja2.tests.test_undefined",
+   "external"
+  ],
+  [
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "jinja2.exceptions.SecurityError",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "jinja2.exceptions.UndefinedError",
+   "direct"
+  ],
+  [
+   "jinja2.runtime.make_logging_undefined",
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "nested"
+  ],
+  [
+   "jinja2.runtime.new_context",
+   "jinja2.runtime.Context",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.ImmutableSandboxedEnvironment.is_safe_attribute",
+   "jinja2.sandbox.SandboxedEnvironment.is_safe_attribute",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.__init__",
+   "jinja2.environment.Environment.__init__",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.call",
+   "jinja2.runtime.Context.call",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.call",
+   "jinja2.sandbox.SandboxedEnvironment.is_safe_callable",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.call_binop",
+   "jinja2.exceptions.TemplateRuntimeError",
+   "external"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.call_unop",
+   "jinja2.exceptions.TemplateRuntimeError",
+   "external"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.getattr",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.getattr",
+   "jinja2.runtime.Undefined._fail_with_undefined_error",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.getattr",
+   "jinja2.sandbox.ImmutableSandboxedEnvironment.is_safe_attribute",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.unsafe_undefined",
+   "jinja2.runtime.Undefined",
+   "direct"
+  ],
+  [
+   "jinja2.sandbox.SandboxedEnvironment.wrap_str_format",
+   "jinja2.sandbox.SandboxedFormatter.get_field",
+   "external"
+  ],
+  [
+   "jinja2.sandbox.SandboxedFormatter.get_field",
+   "jinja2.sandbox.SandboxedEnvironment.getattr",
+   "direct"
+  ],
+  [
+   "jinja2.utils.LRUCache.copy",
+   "jinja2.utils.LRUCache",
+   "direct"
+  ],
+  [
+   "jinja2.utils.consume",
+   "jinja2.runtime.Context.resolve_or_missing",
+   "external"
+  ],
+  [
+   "jinja2.utils.consume",
+   "jinja2.runtime.Undefined",
+   "external"
+  ],
+  [
+   "jinja2.visitor.NodeTransformer.generic_visit",
+   "jinja2.nodes.Node.iter_fields",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.generic_visit",
+   "jinja2.nodes.Node.iter_child_nodes",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Assign",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_AssignBlock",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Block",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Break",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Call",
+   "wrapper"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_CallBlock",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Compare",
+   "wrapper"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Concat",
+   "wrapper"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_CondExpr",
+   "wrapper"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Const",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_ContextReference",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Continue",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_DerivedContextReference",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Dict",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_EnvironmentAttribute",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_ExprStmt",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Extends",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_ExtensionAttribute",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Filter",
+   "wrapper"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_FilterBlock",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_For",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_FromImport",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Getattr",
+   "wrapper"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Getitem",
+   "wrapper"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_If",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Import",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_ImportedName",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Include",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Keyword",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_List",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Macro",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_MarkSafeIfAutoescape",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_NSRef",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Name",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Operand",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Output",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_OverlayScope",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Scope",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_ScopedEvalContextModifier",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Slice",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Template",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_TemplateData",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Test",
+   "wrapper"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_Tuple",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.visit_With",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.CodeGenerator.write",
+   "external"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.DependencyFinderVisitor.visit_Block",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.DependencyFinderVisitor.visit_Filter",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.DependencyFinderVisitor.visit_Test",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.UndeclaredNameVisitor.visit_Block",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.compiler.UndeclaredNameVisitor.visit_Name",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Assign",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_AssignBlock",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Block",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_CallBlock",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_FilterBlock",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_For",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_FromImport",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_If",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Import",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Macro",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_NSRef",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Name",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_OverlayScope",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_Scope",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.FrameSymbolVisitor.visit_With",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.RootVisitor._simple_visit",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.RootVisitor.visit_AssignBlock",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.RootVisitor.visit_CallBlock",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.RootVisitor.visit_For",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.RootVisitor.visit_OverlayScope",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.idtracking.RootVisitor.visit_With",
+   "direct"
+  ],
+  [
+   "jinja2.visitor.NodeVisitor.visit",
+   "jinja2.optimizer.Optimizer.generic_visit",
+   "direct"
+  ]
+ ],
+ "contradicted": [
+  [
+   "jinja2.bccache.BytecodeCache.get_bucket",
+   "jinja2.bccache.BytecodeCache.load_bytecode",
+   "self"
+  ],
+  [
+   "jinja2.bccache.BytecodeCache.set_bucket",
+   "jinja2.bccache.BytecodeCache.dump_bytecode",
+   "self"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.loaders.BaseLoader.get_source",
+   "self"
+  ]
+ ],
+ "contradicted_same_name": [
+  [
+   "jinja2.bccache.BytecodeCache.get_bucket",
+   "jinja2.bccache.BytecodeCache.load_bytecode",
+   "self"
+  ],
+  [
+   "jinja2.bccache.BytecodeCache.set_bucket",
+   "jinja2.bccache.BytecodeCache.dump_bytecode",
+   "self"
+  ],
+  [
+   "jinja2.loaders.BaseLoader.load",
+   "jinja2.loaders.BaseLoader.get_source",
+   "self"
+  ]
+ ],
+ "edge_outcomes": {
+  "jinja2.async_utils.async_variant -> jinja2.utils._PassArg.from_obj": "caller_not_run",
+  "jinja2.async_utils.async_variant -> jinja2.utils.pass_eval_context": "caller_not_run",
+  "jinja2.async_utils.auto_aiter -> jinja2.async_utils._IteratorToAsyncIterator": "confirmed",
+  "jinja2.async_utils.auto_to_list -> jinja2.async_utils.auto_aiter": "confirmed",
+  "jinja2.bccache.Bucket.__init__ -> jinja2.bccache.Bucket.reset": "confirmed",
+  "jinja2.bccache.Bucket.bytecode_from_string -> jinja2.bccache.Bucket.load_bytecode": "confirmed",
+  "jinja2.bccache.Bucket.bytecode_to_string -> jinja2.bccache.Bucket.write_bytecode": "confirmed",
+  "jinja2.bccache.Bucket.load_bytecode -> jinja2.bccache.Bucket.reset": "unexercised",
+  "jinja2.bccache.BytecodeCache.get_bucket -> jinja2.bccache.Bucket": "confirmed",
+  "jinja2.bccache.BytecodeCache.get_bucket -> jinja2.bccache.BytecodeCache.get_cache_key": "confirmed",
+  "jinja2.bccache.BytecodeCache.get_bucket -> jinja2.bccache.BytecodeCache.get_source_checksum": "confirmed",
+  "jinja2.bccache.BytecodeCache.get_bucket -> jinja2.bccache.BytecodeCache.load_bytecode": "contradicted",
+  "jinja2.bccache.BytecodeCache.set_bucket -> jinja2.bccache.BytecodeCache.dump_bytecode": "contradicted",
+  "jinja2.bccache.FileSystemBytecodeCache.__init__ -> jinja2.bccache.FileSystemBytecodeCache._get_default_cache_dir": "unexercised",
+  "jinja2.bccache.FileSystemBytecodeCache.dump_bytecode -> jinja2.bccache.FileSystemBytecodeCache._get_cache_filename": "confirmed",
+  "jinja2.bccache.FileSystemBytecodeCache.load_bytecode -> jinja2.bccache.FileSystemBytecodeCache._get_cache_filename": "confirmed",
+  "jinja2.compiler.CodeGenerator -> jinja2.compiler._make_binop": "unexercised",
+  "jinja2.compiler.CodeGenerator -> jinja2.compiler._make_unop": "unexercised",
+  "jinja2.compiler.CodeGenerator.__init__ -> jinja2.optimizer.Optimizer": "confirmed",
+  "jinja2.compiler.CodeGenerator._filter_test_common -> jinja2.compiler.CodeGenerator.fail": "confirmed",
+  "jinja2.compiler.CodeGenerator._filter_test_common -> jinja2.compiler.CodeGenerator.signature": "confirmed",
+  "jinja2.compiler.CodeGenerator._filter_test_common -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator._filter_test_common -> jinja2.utils._PassArg.from_obj": "confirmed",
+  "jinja2.compiler.CodeGenerator._import_common -> jinja2.compiler.CodeGenerator.choose_async": "confirmed",
+  "jinja2.compiler.CodeGenerator._import_common -> jinja2.compiler.CodeGenerator.dump_local_context": "confirmed",
+  "jinja2.compiler.CodeGenerator._import_common -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator._import_common -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator._make_finalize -> jinja2.compiler.CodeGenerator._FinalizeInfo": "confirmed",
+  "jinja2.compiler.CodeGenerator._make_finalize -> jinja2.utils._PassArg.from_obj": "confirmed",
+  "jinja2.compiler.CodeGenerator._output_child_post -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator._output_child_pre -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator._output_const_repr -> jinja2.utils.concat": "attribute_target",
+  "jinja2.compiler.CodeGenerator.blockvisit -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.blockvisit -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.buffer -> jinja2.compiler.CodeGenerator.temporary_identifier": "confirmed",
+  "jinja2.compiler.CodeGenerator.buffer -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.derive_context -> jinja2.compiler.CodeGenerator.dump_local_context": "confirmed",
+  "jinja2.compiler.CodeGenerator.derive_context -> jinja2.compiler.CodeGenerator.get_context_ref": "confirmed",
+  "jinja2.compiler.CodeGenerator.end_write -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.enter_frame -> jinja2.compiler.CodeGenerator.get_resolve_func": "confirmed",
+  "jinja2.compiler.CodeGenerator.enter_frame -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.fail -> jinja2.exceptions.TemplateAssertionError": "confirmed",
+  "jinja2.compiler.CodeGenerator.func -> jinja2.compiler.CodeGenerator.choose_async": "confirmed",
+  "jinja2.compiler.CodeGenerator.leave_frame -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.buffer": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.enter_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.fail": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.func": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.leave_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.mark_parameter_stored": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.pop_parameter_definitions": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.push_parameter_definitions": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.return_buffer_contents": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.MacroRef": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.compiler.find_undeclared": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_body -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.macro_def -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.pop_assign_tracking -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.pop_assign_tracking -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.pull_dependencies -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.pull_dependencies -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.pull_dependencies -> jinja2.compiler.CodeGenerator.temporary_identifier": "confirmed",
+  "jinja2.compiler.CodeGenerator.pull_dependencies -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.pull_dependencies -> jinja2.compiler.DependencyFinderVisitor": "confirmed",
+  "jinja2.compiler.CodeGenerator.return_buffer_contents -> jinja2.compiler.CodeGenerator.indent": "unexercised",
+  "jinja2.compiler.CodeGenerator.return_buffer_contents -> jinja2.compiler.CodeGenerator.outdent": "unexercised",
+  "jinja2.compiler.CodeGenerator.return_buffer_contents -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.signature -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.signature -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.simple_write -> jinja2.compiler.CodeGenerator.end_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.simple_write -> jinja2.compiler.CodeGenerator.start_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.simple_write -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.start_write -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Assign -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Assign -> jinja2.compiler.CodeGenerator.newline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Assign -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Assign -> jinja2.compiler.CodeGenerator.pop_assign_tracking": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Assign -> jinja2.compiler.CodeGenerator.push_assign_tracking": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Assign -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Assign -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Assign -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.buffer": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.enter_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.leave_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.newline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.pop_assign_tracking": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.push_assign_tracking": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.visit_Filter": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_AssignBlock -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Block -> jinja2.compiler.CodeGenerator.choose_async": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Block -> jinja2.compiler.CodeGenerator.derive_context": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Block -> jinja2.compiler.CodeGenerator.get_context_ref": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Block -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Block -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Block -> jinja2.compiler.CodeGenerator.simple_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Block -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Break -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Call -> jinja2.compiler.CodeGenerator.signature": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Call -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Call -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_CallBlock -> jinja2.compiler.CodeGenerator.end_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_CallBlock -> jinja2.compiler.CodeGenerator.macro_body": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_CallBlock -> jinja2.compiler.CodeGenerator.macro_def": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_CallBlock -> jinja2.compiler.CodeGenerator.start_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_CallBlock -> jinja2.compiler.CodeGenerator.visit_Call": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_CallBlock -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Compare -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Compare -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Concat -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Concat -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_CondExpr -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_CondExpr -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Const -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ContextReference -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Continue -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_DerivedContextReference -> jinja2.compiler.CodeGenerator.derive_context": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_DerivedContextReference -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Dict -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Dict -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_EnvironmentAttribute -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_EvalContextModifier -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_EvalContextModifier -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ExprStmt -> jinja2.compiler.CodeGenerator.newline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ExprStmt -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Extends -> jinja2.compiler.CodeGenerator.fail": "unexercised",
+  "jinja2.compiler.CodeGenerator.visit_Extends -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Extends -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Extends -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Extends -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Extends -> jinja2.compiler.CompilerExit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Extends -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ExtensionAttribute -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Filter -> jinja2.compiler.CodeGenerator._filter_test_common": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Filter -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Filter -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FilterBlock -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FilterBlock -> jinja2.compiler.CodeGenerator.buffer": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FilterBlock -> jinja2.compiler.CodeGenerator.end_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FilterBlock -> jinja2.compiler.CodeGenerator.enter_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FilterBlock -> jinja2.compiler.CodeGenerator.leave_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FilterBlock -> jinja2.compiler.CodeGenerator.start_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FilterBlock -> jinja2.compiler.CodeGenerator.visit_Filter": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.buffer": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.choose_async": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.end_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.enter_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.fail": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.func": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.leave_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.return_buffer_contents": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.start_write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.temporary_identifier": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.compiler.find_undeclared": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_For -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FromImport -> jinja2.compiler.CodeGenerator._import_common": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FromImport -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FromImport -> jinja2.compiler.CodeGenerator.newline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FromImport -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FromImport -> jinja2.compiler.CodeGenerator.position": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FromImport -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_FromImport -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Getattr -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Getattr -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Getitem -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Getitem -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_If -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_If -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_If -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_If -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_If -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_If -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Import -> jinja2.compiler.CodeGenerator._import_common": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Import -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Import -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ImportedName -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Include -> jinja2.compiler.CodeGenerator.choose_async": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Include -> jinja2.compiler.CodeGenerator.dump_local_context": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Include -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Include -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Include -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Include -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Include -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_InternalName -> jinja2.compiler.CodeGenerator.write": "caller_not_run",
+  "jinja2.compiler.CodeGenerator.visit_Keyword -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Keyword -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_List -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_List -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Macro -> jinja2.compiler.CodeGenerator.macro_body": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Macro -> jinja2.compiler.CodeGenerator.macro_def": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Macro -> jinja2.compiler.CodeGenerator.newline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Macro -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Macro -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_MarkSafe -> jinja2.compiler.CodeGenerator.write": "caller_not_run",
+  "jinja2.compiler.CodeGenerator.visit_MarkSafe -> jinja2.visitor.NodeVisitor.visit": "caller_not_run",
+  "jinja2.compiler.CodeGenerator.visit_MarkSafeIfAutoescape -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_MarkSafeIfAutoescape -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_NSRef -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Name -> jinja2.compiler.CodeGenerator.parameter_is_undeclared": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Name -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Operand -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Operand -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator._make_finalize": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator._output_child_post": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator._output_child_pre": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator._output_child_to_const": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator._output_const_repr": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator.newline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Output -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.compiler.CodeGenerator.derive_context": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.compiler.CodeGenerator.enter_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.compiler.CodeGenerator.leave_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.compiler.CodeGenerator.pop_context_reference": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.compiler.CodeGenerator.push_context_reference": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.compiler.CodeGenerator.temporary_identifier": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_OverlayScope -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Scope -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Scope -> jinja2.compiler.CodeGenerator.enter_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Scope -> jinja2.compiler.CodeGenerator.leave_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ScopedEvalContextModifier -> jinja2.compiler.CodeGenerator.temporary_identifier": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ScopedEvalContextModifier -> jinja2.compiler.CodeGenerator.visit_EvalContextModifier": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ScopedEvalContextModifier -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_ScopedEvalContextModifier -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Slice -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Slice -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.enter_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.fail": "unexercised",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.func": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.indent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.leave_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.outdent": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.pull_dependencies": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.temporary_identifier": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.write_commons": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.Frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.compiler.find_undeclared": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Template -> jinja2.nodes.EvalContext": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_TemplateData -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Test -> jinja2.compiler.CodeGenerator._filter_test_common": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Test -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Tuple -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_Tuple -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_With -> jinja2.compiler.CodeGenerator.blockvisit": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_With -> jinja2.compiler.CodeGenerator.enter_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_With -> jinja2.compiler.CodeGenerator.leave_frame": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_With -> jinja2.compiler.CodeGenerator.newline": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_With -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.CodeGenerator.visit_With -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.compiler.CodeGenerator.write_commons -> jinja2.compiler.CodeGenerator.writeline": "confirmed",
+  "jinja2.compiler.CodeGenerator.writeline -> jinja2.compiler.CodeGenerator.newline": "confirmed",
+  "jinja2.compiler.CodeGenerator.writeline -> jinja2.compiler.CodeGenerator.write": "confirmed",
+  "jinja2.compiler.DependencyFinderVisitor.visit_Filter -> jinja2.visitor.NodeVisitor.generic_visit": "confirmed",
+  "jinja2.compiler.DependencyFinderVisitor.visit_Test -> jinja2.visitor.NodeVisitor.generic_visit": "confirmed",
+  "jinja2.compiler.Frame.__init__ -> jinja2.idtracking.Symbols": "confirmed",
+  "jinja2.compiler.Frame.inner -> jinja2.compiler.Frame": "confirmed",
+  "jinja2.compiler.Frame.soft -> jinja2.compiler.Frame.copy": "confirmed",
+  "jinja2.compiler.UndeclaredNameVisitor.visit_Name -> jinja2.compiler.VisitorExit": "confirmed",
+  "jinja2.compiler.find_undeclared -> jinja2.compiler.UndeclaredNameVisitor": "confirmed",
+  "jinja2.compiler.has_safe_repr -> jinja2.compiler.has_safe_repr": "confirmed",
+  "jinja2.debug.fake_traceback -> jinja2.debug.get_template_locals": "confirmed",
+  "jinja2.debug.rewrite_traceback_stack -> jinja2.debug.fake_traceback": "confirmed",
+  "jinja2.environment.Environment.__init__ -> jinja2.environment._environment_config_check": "confirmed",
+  "jinja2.environment.Environment.__init__ -> jinja2.environment.create_cache": "confirmed",
+  "jinja2.environment.Environment.__init__ -> jinja2.environment.load_extensions": "confirmed",
+  "jinja2.environment.Environment._filter_test_common -> jinja2.exceptions.TemplateRuntimeError": "unexercised",
+  "jinja2.environment.Environment._filter_test_common -> jinja2.nodes.EvalContext": "unexercised",
+  "jinja2.environment.Environment._filter_test_common -> jinja2.utils._PassArg.from_obj": "confirmed",
+  "jinja2.environment.Environment._generate -> jinja2.compiler.generate": "confirmed",
+  "jinja2.environment.Environment._load_template -> jinja2.environment.Environment.make_globals": "confirmed",
+  "jinja2.environment.Environment._parse -> jinja2.parser.Parser": "confirmed",
+  "jinja2.environment.Environment._tokenize -> jinja2.environment.Environment.iter_extensions": "confirmed",
+  "jinja2.environment.Environment._tokenize -> jinja2.environment.Environment.preprocess": "confirmed",
+  "jinja2.environment.Environment._tokenize -> jinja2.lexer.TokenStream": "confirmed",
+  "jinja2.environment.Environment.add_extension -> jinja2.environment.load_extensions": "caller_not_run",
+  "jinja2.environment.Environment.call_filter -> jinja2.environment.Environment._filter_test_common": "confirmed",
+  "jinja2.environment.Environment.call_test -> jinja2.environment.Environment._filter_test_common": "confirmed",
+  "jinja2.environment.Environment.compile -> jinja2.environment.Environment._compile": "confirmed",
+  "jinja2.environment.Environment.compile -> jinja2.environment.Environment._generate": "confirmed",
+  "jinja2.environment.Environment.compile -> jinja2.environment.Environment._parse": "confirmed",
+  "jinja2.environment.Environment.compile -> jinja2.environment.Environment.handle_exception": "confirmed",
+  "jinja2.environment.Environment.compile_expression -> jinja2.environment.Environment.from_string": "confirmed",
+  "jinja2.environment.Environment.compile_expression -> jinja2.environment.Environment.handle_exception": "unexercised",
+  "jinja2.environment.Environment.compile_expression -> jinja2.environment.TemplateExpression": "confirmed",
+  "jinja2.environment.Environment.compile_expression -> jinja2.exceptions.TemplateSyntaxError": "unexercised",
+  "jinja2.environment.Environment.compile_expression -> jinja2.nodes.Assign": "confirmed",
+  "jinja2.environment.Environment.compile_expression -> jinja2.nodes.Name": "confirmed",
+  "jinja2.environment.Environment.compile_expression -> jinja2.nodes.Template": "confirmed",
+  "jinja2.environment.Environment.compile_expression -> jinja2.parser.Parser": "confirmed",
+  "jinja2.environment.Environment.compile_templates -> jinja2.environment.Environment.compile": "confirmed",
+  "jinja2.environment.Environment.compile_templates -> jinja2.environment.Environment.list_templates": "confirmed",
+  "jinja2.environment.Environment.compile_templates -> jinja2.loaders.ModuleLoader.get_module_filename": "confirmed",
+  "jinja2.environment.Environment.from_string -> jinja2.environment.Environment.compile": "confirmed",
+  "jinja2.environment.Environment.from_string -> jinja2.environment.Environment.make_globals": "confirmed",
+  "jinja2.environment.Environment.get_or_select_template -> jinja2.environment.Environment.get_template": "confirmed",
+  "jinja2.environment.Environment.get_or_select_template -> jinja2.environment.Environment.select_template": "confirmed",
+  "jinja2.environment.Environment.get_template -> jinja2.environment.Environment._load_template": "confirmed",
+  "jinja2.environment.Environment.get_template -> jinja2.environment.Environment.join_path": "confirmed",
+  "jinja2.environment.Environment.getattr -> jinja2.environment.Environment.undefined": "attribute_target",
+  "jinja2.environment.Environment.getitem -> jinja2.environment.Environment.undefined": "attribute_target",
+  "jinja2.environment.Environment.handle_exception -> jinja2.debug.rewrite_traceback_stack": "confirmed",
+  "jinja2.environment.Environment.lex -> jinja2.environment.Environment.handle_exception": "unexercised",
+  "jinja2.environment.Environment.lexer -> jinja2.lexer.get_lexer": "confirmed",
+  "jinja2.environment.Environment.overlay -> jinja2.environment._environment_config_check": "confirmed",
+  "jinja2.environment.Environment.overlay -> jinja2.environment.copy_cache": "confirmed",
+  "jinja2.environment.Environment.overlay -> jinja2.environment.create_cache": "unexercised",
+  "jinja2.environment.Environment.overlay -> jinja2.environment.load_extensions": "unexercised",
+  "jinja2.environment.Environment.parse -> jinja2.environment.Environment._parse": "confirmed",
+  "jinja2.environment.Environment.parse -> jinja2.environment.Environment.handle_exception": "unexercised",
+  "jinja2.environment.Environment.preprocess -> jinja2.environment.Environment.iter_extensions": "confirmed",
+  "jinja2.environment.Environment.select_template -> jinja2.environment.Environment._load_template": "confirmed",
+  "jinja2.environment.Environment.select_template -> jinja2.environment.Environment.join_path": "unexercised",
+  "jinja2.environment.Environment.select_template -> jinja2.exceptions.TemplatesNotFound": "confirmed",
+  "jinja2.environment.Template.__new__ -> jinja2.environment.get_spontaneous_environment": "confirmed",
+  "jinja2.environment.Template._get_default_module -> jinja2.environment.Template.make_module": "confirmed",
+  "jinja2.environment.Template._get_default_module_async -> jinja2.environment.Template.make_module_async": "confirmed",
+  "jinja2.environment.Template.from_code -> jinja2.environment.Template._from_namespace": "confirmed",
+  "jinja2.environment.Template.from_module_dict -> jinja2.environment.Template._from_namespace": "confirmed",
+  "jinja2.environment.Template.generate -> jinja2.environment.Template.new_context": "confirmed",
+  "jinja2.environment.Template.generate -> jinja2.environment.Template.root_render_func": "attribute_target",
+  "jinja2.environment.Template.generate_async -> jinja2.environment.Template.new_context": "confirmed",
+  "jinja2.environment.Template.generate_async -> jinja2.environment.Template.root_render_func": "attribute_target",
+  "jinja2.environment.Template.is_up_to_date -> jinja2.environment.Template._uptodate": "attribute_target",
+  "jinja2.environment.Template.make_module -> jinja2.environment.Template.new_context": "confirmed",
+  "jinja2.environment.Template.make_module -> jinja2.environment.TemplateModule": "confirmed",
+  "jinja2.environment.Template.make_module_async -> jinja2.environment.Template.new_context": "confirmed",
+  "jinja2.environment.Template.make_module_async -> jinja2.environment.Template.root_render_func": "attribute_target",
+  "jinja2.environment.Template.make_module_async -> jinja2.environment.TemplateModule": "confirmed",
+  "jinja2.environment.Template.module -> jinja2.environment.Template._get_default_module": "confirmed",
+  "jinja2.environment.Template.new_context -> jinja2.runtime.new_context": "confirmed",
+  "jinja2.environment.Template.render -> jinja2.environment.Template.new_context": "confirmed",
+  "jinja2.environment.Template.render -> jinja2.environment.Template.render_async": "confirmed",
+  "jinja2.environment.Template.render -> jinja2.environment.Template.root_render_func": "attribute_target",
+  "jinja2.environment.Template.render_async -> jinja2.environment.Template.new_context": "confirmed",
+  "jinja2.environment.Template.render_async -> jinja2.environment.Template.root_render_func": "attribute_target",
+  "jinja2.environment.Template.stream -> jinja2.environment.Template.generate": "confirmed",
+  "jinja2.environment.Template.stream -> jinja2.environment.TemplateStream": "confirmed",
+  "jinja2.environment.TemplateExpression.__call__ -> jinja2.utils.consume": "confirmed",
+  "jinja2.environment.TemplateModule.__html__ -> jinja2.utils.concat": "attribute_target",
+  "jinja2.environment.TemplateModule.__str__ -> jinja2.utils.concat": "attribute_target",
+  "jinja2.environment.TemplateStream.__init__ -> jinja2.environment.TemplateStream.disable_buffering": "confirmed",
+  "jinja2.environment.TemplateStream._buffered_generator -> jinja2.utils.concat": "attribute_target",
+  "jinja2.environment.TemplateStream.enable_buffering -> jinja2.environment.TemplateStream._buffered_generator": "confirmed",
+  "jinja2.environment.copy_cache -> jinja2.utils.LRUCache": "confirmed",
+  "jinja2.environment.create_cache -> jinja2.utils.LRUCache": "confirmed",
+  "jinja2.environment.load_extensions -> jinja2.utils.import_string": "confirmed",
+  "jinja2.ext.DebugExtension.parse -> jinja2.ext.Extension.call_method": "confirmed",
+  "jinja2.ext.DebugExtension.parse -> jinja2.nodes.ContextReference": "confirmed",
+  "jinja2.ext.DebugExtension.parse -> jinja2.nodes.Output": "confirmed",
+  "jinja2.ext.ExprStmtExtension.parse -> jinja2.nodes.ExprStmt": "confirmed",
+  "jinja2.ext.Extension.attr -> jinja2.nodes.ExtensionAttribute": "confirmed",
+  "jinja2.ext.Extension.call_method -> jinja2.ext.Extension.attr": "confirmed",
+  "jinja2.ext.Extension.call_method -> jinja2.nodes.Call": "confirmed",
+  "jinja2.ext.InternationalizationExtension._extract -> jinja2.ext.extract_from_ast": "caller_not_run",
+  "jinja2.ext.InternationalizationExtension._install -> jinja2.ext.InternationalizationExtension._install_callables": "caller_not_run",
+  "jinja2.ext.InternationalizationExtension._install_callables -> jinja2.ext._make_new_gettext": "confirmed",
+  "jinja2.ext.InternationalizationExtension._install_callables -> jinja2.ext._make_new_ngettext": "confirmed",
+  "jinja2.ext.InternationalizationExtension._install_callables -> jinja2.ext._make_new_npgettext": "confirmed",
+  "jinja2.ext.InternationalizationExtension._install_callables -> jinja2.ext._make_new_pgettext": "confirmed",
+  "jinja2.ext.InternationalizationExtension._install_null -> jinja2.ext.InternationalizationExtension._install_callables": "caller_not_run",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.Call": "confirmed",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.Const": "confirmed",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.Dict": "confirmed",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.Keyword": "confirmed",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.MarkSafeIfAutoescape": "confirmed",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.Mod": "confirmed",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.Name": "confirmed",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.Output": "confirmed",
+  "jinja2.ext.InternationalizationExtension._make_node -> jinja2.nodes.Pair": "confirmed",
+  "jinja2.ext.InternationalizationExtension._parse_block -> jinja2.utils.concat": "attribute_target",
+  "jinja2.ext.InternationalizationExtension.parse -> jinja2.ext.InternationalizationExtension._make_node": "confirmed",
+  "jinja2.ext.InternationalizationExtension.parse -> jinja2.ext.InternationalizationExtension._parse_block": "confirmed",
+  "jinja2.ext.InternationalizationExtension.parse -> jinja2.ext.InternationalizationExtension._trim_whitespace": "confirmed",
+  "jinja2.ext.InternationalizationExtension.parse -> jinja2.nodes.Assign": "confirmed",
+  "jinja2.ext.InternationalizationExtension.parse -> jinja2.nodes.Name": "confirmed",
+  "jinja2.ext.LoopControlExtension.parse -> jinja2.nodes.Break": "confirmed",
+  "jinja2.ext.LoopControlExtension.parse -> jinja2.nodes.Continue": "confirmed",
+  "jinja2.ext._CommentFinder.find_comments -> jinja2.ext._CommentFinder.find_backwards": "confirmed",
+  "jinja2.ext.babel_extract -> jinja2.environment.Environment": "confirmed",
+  "jinja2.ext.babel_extract -> jinja2.ext._CommentFinder": "confirmed",
+  "jinja2.ext.babel_extract -> jinja2.ext.extract_from_ast": "confirmed",
+  "jinja2.ext.babel_extract -> jinja2.utils.import_string": "unexercised",
+  "jinja2.filters._min_or_max -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.filters.async_select_or_reject -> jinja2.async_utils.auto_aiter": "confirmed",
+  "jinja2.filters.async_select_or_reject -> jinja2.filters.prepare_select_or_reject": "confirmed",
+  "jinja2.filters.do_dictsort -> jinja2.exceptions.FilterArgumentError": "unexercised",
+  "jinja2.filters.do_dictsort -> jinja2.filters.ignore_case": "confirmed",
+  "jinja2.filters.do_first -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_first -> jinja2.async_utils.auto_aiter": "confirmed",
+  "jinja2.filters.do_format -> jinja2.exceptions.FilterArgumentError": "unexercised",
+  "jinja2.filters.do_groupby -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_groupby -> jinja2.async_utils.auto_to_list": "confirmed",
+  "jinja2.filters.do_groupby -> jinja2.filters._GroupTuple": "confirmed",
+  "jinja2.filters.do_groupby -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.filters.do_join -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_join -> jinja2.async_utils.auto_to_list": "confirmed",
+  "jinja2.filters.do_join -> jinja2.filters.sync_do_join": "confirmed",
+  "jinja2.filters.do_list -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_list -> jinja2.async_utils.auto_to_list": "confirmed",
+  "jinja2.filters.do_map -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_map -> jinja2.async_utils.auto_aiter": "confirmed",
+  "jinja2.filters.do_map -> jinja2.async_utils.auto_await": "confirmed",
+  "jinja2.filters.do_map -> jinja2.filters.prepare_map": "confirmed",
+  "jinja2.filters.do_max -> jinja2.filters._min_or_max": "confirmed",
+  "jinja2.filters.do_min -> jinja2.filters._min_or_max": "confirmed",
+  "jinja2.filters.do_pprint -> jinja2.utils.pformat": "confirmed",
+  "jinja2.filters.do_reject -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_reject -> jinja2.filters.async_select_or_reject": "confirmed",
+  "jinja2.filters.do_rejectattr -> jinja2.async_utils.async_variant": "caller_not_run",
+  "jinja2.filters.do_rejectattr -> jinja2.filters.async_select_or_reject": "caller_not_run",
+  "jinja2.filters.do_reverse -> jinja2.exceptions.FilterArgumentError": "unexercised",
+  "jinja2.filters.do_round -> jinja2.exceptions.FilterArgumentError": "unexercised",
+  "jinja2.filters.do_select -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_select -> jinja2.filters.async_select_or_reject": "confirmed",
+  "jinja2.filters.do_selectattr -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_selectattr -> jinja2.filters.async_select_or_reject": "confirmed",
+  "jinja2.filters.do_slice -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_slice -> jinja2.async_utils.auto_to_list": "confirmed",
+  "jinja2.filters.do_slice -> jinja2.filters.sync_do_slice": "confirmed",
+  "jinja2.filters.do_sort -> jinja2.filters.make_multi_attrgetter": "confirmed",
+  "jinja2.filters.do_sum -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_sum -> jinja2.async_utils.auto_aiter": "confirmed",
+  "jinja2.filters.do_sum -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.filters.do_tojson -> jinja2.utils.htmlsafe_json_dumps": "confirmed",
+  "jinja2.filters.do_unique -> jinja2.async_utils.async_variant": "unexercised",
+  "jinja2.filters.do_unique -> jinja2.async_utils.auto_to_list": "confirmed",
+  "jinja2.filters.do_unique -> jinja2.filters.sync_do_unique": "confirmed",
+  "jinja2.filters.do_urlencode -> jinja2.utils.url_quote": "confirmed",
+  "jinja2.filters.do_urlize -> jinja2.exceptions.FilterArgumentError": "unexercised",
+  "jinja2.filters.do_urlize -> jinja2.utils.urlize": "confirmed",
+  "jinja2.filters.make_attrgetter -> jinja2.filters._prepare_attribute_parts": "confirmed",
+  "jinja2.filters.make_multi_attrgetter -> jinja2.filters._prepare_attribute_parts": "confirmed",
+  "jinja2.filters.prepare_map -> jinja2.exceptions.FilterArgumentError": "unexercised",
+  "jinja2.filters.prepare_map -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.filters.prepare_select_or_reject -> jinja2.exceptions.FilterArgumentError": "unexercised",
+  "jinja2.filters.prepare_select_or_reject -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.filters.select_or_reject -> jinja2.filters.prepare_select_or_reject": "confirmed",
+  "jinja2.filters.sync_do_groupby -> jinja2.filters._GroupTuple": "confirmed",
+  "jinja2.filters.sync_do_groupby -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.filters.sync_do_join -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.filters.sync_do_map -> jinja2.filters.prepare_map": "confirmed",
+  "jinja2.filters.sync_do_reject -> jinja2.filters.select_or_reject": "confirmed",
+  "jinja2.filters.sync_do_rejectattr -> jinja2.filters.select_or_reject": "confirmed",
+  "jinja2.filters.sync_do_select -> jinja2.filters.select_or_reject": "confirmed",
+  "jinja2.filters.sync_do_selectattr -> jinja2.filters.select_or_reject": "confirmed",
+  "jinja2.filters.sync_do_sum -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.filters.sync_do_unique -> jinja2.filters.make_attrgetter": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_Assign -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_AssignBlock -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_CallBlock -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_FilterBlock -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_For -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_FromImport -> jinja2.visitor.NodeVisitor.generic_visit": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_If -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_Import -> jinja2.visitor.NodeVisitor.generic_visit": "confirmed",
+  "jinja2.idtracking.FrameSymbolVisitor.visit_With -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.idtracking.RootVisitor.__init__ -> jinja2.idtracking.FrameSymbolVisitor": "confirmed",
+  "jinja2.idtracking.Symbols.analyze_node -> jinja2.idtracking.RootVisitor": "confirmed",
+  "jinja2.idtracking.Symbols.branch_update -> jinja2.idtracking.Symbols.find_ref": "confirmed",
+  "jinja2.idtracking.Symbols.declare_parameter -> jinja2.idtracking.Symbols._define_ref": "confirmed",
+  "jinja2.idtracking.Symbols.dump_stores -> jinja2.idtracking.Symbols.find_ref": "confirmed",
+  "jinja2.idtracking.Symbols.load -> jinja2.idtracking.Symbols._define_ref": "confirmed",
+  "jinja2.idtracking.Symbols.load -> jinja2.idtracking.Symbols.find_ref": "confirmed",
+  "jinja2.idtracking.Symbols.ref -> jinja2.idtracking.Symbols.find_ref": "confirmed",
+  "jinja2.idtracking.Symbols.store -> jinja2.idtracking.Symbols._define_ref": "confirmed",
+  "jinja2.idtracking.find_symbols -> jinja2.idtracking.FrameSymbolVisitor": "caller_not_run",
+  "jinja2.idtracking.find_symbols -> jinja2.idtracking.Symbols": "caller_not_run",
+  "jinja2.idtracking.symbols_for_node -> jinja2.idtracking.Symbols": "confirmed",
+  "jinja2.lexer -> jinja2.utils.LRUCache": "no_site",
+  "jinja2.lexer.Failure.__call__ -> jinja2.lexer.Failure.error_class": "attribute_target",
+  "jinja2.lexer.Lexer.__init__ -> jinja2.lexer.Failure": "confirmed",
+  "jinja2.lexer.Lexer.__init__ -> jinja2.lexer.OptionalLStrip": "confirmed",
+  "jinja2.lexer.Lexer.__init__ -> jinja2.lexer._Rule": "confirmed",
+  "jinja2.lexer.Lexer.__init__ -> jinja2.lexer.compile_rules": "confirmed",
+  "jinja2.lexer.Lexer.tokeniter -> jinja2.exceptions.TemplateSyntaxError": "confirmed",
+  "jinja2.lexer.Lexer.tokenize -> jinja2.lexer.Lexer.tokeniter": "confirmed",
+  "jinja2.lexer.Lexer.tokenize -> jinja2.lexer.Lexer.wrap": "confirmed",
+  "jinja2.lexer.Lexer.tokenize -> jinja2.lexer.TokenStream": "confirmed",
+  "jinja2.lexer.Lexer.wrap -> jinja2.exceptions.TemplateSyntaxError": "confirmed",
+  "jinja2.lexer.Lexer.wrap -> jinja2.lexer.Lexer._normalize_newlines": "confirmed",
+  "jinja2.lexer.Lexer.wrap -> jinja2.lexer.Token": "confirmed",
+  "jinja2.lexer.Token.__str__ -> jinja2.lexer.describe_token": "caller_not_run",
+  "jinja2.lexer.Token.test_any -> jinja2.lexer.Token.test": "confirmed",
+  "jinja2.lexer.TokenStream.__init__ -> jinja2.lexer.Token": "confirmed",
+  "jinja2.lexer.TokenStream.__iter__ -> jinja2.lexer.TokenStreamIterator": "confirmed",
+  "jinja2.lexer.TokenStream.__next__ -> jinja2.lexer.TokenStream.close": "confirmed",
+  "jinja2.lexer.TokenStream.close -> jinja2.lexer.Token": "confirmed",
+  "jinja2.lexer.TokenStream.expect -> jinja2.exceptions.TemplateSyntaxError": "confirmed",
+  "jinja2.lexer.TokenStream.expect -> jinja2.lexer.describe_token": "confirmed",
+  "jinja2.lexer.TokenStream.expect -> jinja2.lexer.describe_token_expr": "confirmed",
+  "jinja2.lexer.TokenStream.look -> jinja2.lexer.TokenStream.push": "confirmed",
+  "jinja2.lexer.TokenStream.skip_if -> jinja2.lexer.TokenStream.next_if": "confirmed",
+  "jinja2.lexer.describe_token -> jinja2.lexer._describe_token_type": "confirmed",
+  "jinja2.lexer.describe_token_expr -> jinja2.lexer._describe_token_type": "confirmed",
+  "jinja2.lexer.get_lexer -> jinja2.lexer.Lexer": "confirmed",
+  "jinja2.loaders.BaseLoader.get_source -> jinja2.exceptions.TemplateNotFound": "caller_not_run",
+  "jinja2.loaders.BaseLoader.load -> jinja2.loaders.BaseLoader.get_source": "contradicted",
+  "jinja2.loaders.ChoiceLoader.get_source -> jinja2.exceptions.TemplateNotFound": "caller_not_run",
+  "jinja2.loaders.ChoiceLoader.load -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.loaders.DictLoader.get_source -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.loaders.FileSystemLoader.get_source -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.loaders.FileSystemLoader.get_source -> jinja2.loaders.split_template_path": "confirmed",
+  "jinja2.loaders.FunctionLoader.get_source -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.loaders.FunctionLoader.get_source -> jinja2.loaders.FunctionLoader.load_func": "attribute_target",
+  "jinja2.loaders.ModuleLoader.__init__ -> jinja2.loaders._TemplateModule": "confirmed",
+  "jinja2.loaders.ModuleLoader.get_module_filename -> jinja2.loaders.ModuleLoader.get_template_key": "confirmed",
+  "jinja2.loaders.ModuleLoader.load -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.loaders.ModuleLoader.load -> jinja2.loaders.ModuleLoader.get_template_key": "confirmed",
+  "jinja2.loaders.PackageLoader.get_source -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.loaders.PackageLoader.get_source -> jinja2.loaders.split_template_path": "confirmed",
+  "jinja2.loaders.PackageLoader.list_templates -> jinja2.loaders._get_zipimporter_files": "confirmed",
+  "jinja2.loaders.PrefixLoader.get_loader -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.loaders.PrefixLoader.get_source -> jinja2.exceptions.TemplateNotFound": "unexercised",
+  "jinja2.loaders.PrefixLoader.get_source -> jinja2.loaders.PrefixLoader.get_loader": "confirmed",
+  "jinja2.loaders.PrefixLoader.load -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.loaders.PrefixLoader.load -> jinja2.loaders.PrefixLoader.get_loader": "confirmed",
+  "jinja2.loaders.split_template_path -> jinja2.exceptions.TemplateNotFound": "confirmed",
+  "jinja2.meta.find_undeclared_variables -> jinja2.meta.TrackingCodeGenerator": "confirmed",
+  "jinja2.nativetypes.NativeCodeGenerator._output_child_post -> jinja2.compiler.CodeGenerator.write": "unexercised",
+  "jinja2.nativetypes.NativeCodeGenerator._output_child_pre -> jinja2.compiler.CodeGenerator.write": "unexercised",
+  "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const -> jinja2.compiler.has_safe_repr": "confirmed",
+  "jinja2.nativetypes.NativeCodeGenerator._output_child_to_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nativetypes.NativeTemplate.render -> jinja2.environment.Template.new_context": "confirmed",
+  "jinja2.nativetypes.NativeTemplate.render -> jinja2.environment.Template.root_render_func": "attribute_target",
+  "jinja2.nativetypes.NativeTemplate.render_async -> jinja2.environment.Template.new_context": "confirmed",
+  "jinja2.nativetypes.NativeTemplate.render_async -> jinja2.environment.Template.root_render_func": "attribute_target",
+  "jinja2.nodes.And.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.BinExpr.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.BinExpr.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Compare.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.Compare.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Concat.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.CondExpr.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.CondExpr.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Const.from_untrusted -> jinja2.compiler.has_safe_repr": "confirmed",
+  "jinja2.nodes.Const.from_untrusted -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.Dict.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Expr.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.Filter.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.Getattr.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.Getattr.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Getitem.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.Getitem.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Keyword.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.List.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.MarkSafe.as_const -> jinja2.nodes.get_eval_context": "caller_not_run",
+  "jinja2.nodes.MarkSafeIfAutoescape.as_const -> jinja2.nodes.Impossible": "unexercised",
+  "jinja2.nodes.MarkSafeIfAutoescape.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Node.__eq__ -> jinja2.nodes.Node.iter_fields": "confirmed",
+  "jinja2.nodes.Node.find -> jinja2.nodes.Node.find_all": "confirmed",
+  "jinja2.nodes.Node.find_all -> jinja2.nodes.Node.iter_child_nodes": "confirmed",
+  "jinja2.nodes.Node.iter_child_nodes -> jinja2.nodes.Node.iter_fields": "confirmed",
+  "jinja2.nodes.Or.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Pair.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Slice.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.TemplateData.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.TemplateData.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.Tuple.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes.UnaryExpr.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes.UnaryExpr.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes._FilterTestCommon.as_const -> jinja2.nodes.Impossible": "confirmed",
+  "jinja2.nodes._FilterTestCommon.as_const -> jinja2.nodes.args_as_const": "confirmed",
+  "jinja2.nodes._FilterTestCommon.as_const -> jinja2.nodes.get_eval_context": "confirmed",
+  "jinja2.nodes._FilterTestCommon.as_const -> jinja2.utils._PassArg.from_obj": "confirmed",
+  "jinja2.nodes.args_as_const -> jinja2.nodes.Impossible": "unexercised",
+  "jinja2.nodes.get_eval_context -> jinja2.nodes.EvalContext": "unexercised",
+  "jinja2.optimizer.Optimizer.generic_visit -> jinja2.nodes.Const.from_untrusted": "confirmed",
+  "jinja2.optimizer.optimize -> jinja2.optimizer.Optimizer": "caller_not_run",
+  "jinja2.parser.Parser._fail_ut_eof -> jinja2.parser.Parser.fail": "confirmed",
+  "jinja2.parser.Parser.fail_eof -> jinja2.parser.Parser._fail_ut_eof": "confirmed",
+  "jinja2.parser.Parser.fail_unknown_tag -> jinja2.parser.Parser._fail_ut_eof": "confirmed",
+  "jinja2.parser.Parser.free_identifier -> jinja2.nodes.Node.__init__": "caller_not_run",
+  "jinja2.parser.Parser.parse -> jinja2.nodes.Template": "confirmed",
+  "jinja2.parser.Parser.parse -> jinja2.parser.Parser.subparse": "confirmed",
+  "jinja2.parser.Parser.parse_and -> jinja2.nodes.And": "confirmed",
+  "jinja2.parser.Parser.parse_and -> jinja2.parser.Parser.parse_not": "confirmed",
+  "jinja2.parser.Parser.parse_assign_target -> jinja2.nodes.Name": "confirmed",
+  "jinja2.parser.Parser.parse_assign_target -> jinja2.parser.Parser.fail": "confirmed",
+  "jinja2.parser.Parser.parse_assign_target -> jinja2.parser.Parser.parse_primary": "unexercised",
+  "jinja2.parser.Parser.parse_assign_target -> jinja2.parser.Parser.parse_tuple": "confirmed",
+  "jinja2.parser.Parser.parse_autoescape -> jinja2.nodes.Keyword": "confirmed",
+  "jinja2.parser.Parser.parse_autoescape -> jinja2.nodes.Scope": "confirmed",
+  "jinja2.parser.Parser.parse_autoescape -> jinja2.nodes.ScopedEvalContextModifier": "confirmed",
+  "jinja2.parser.Parser.parse_autoescape -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_autoescape -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.parse_block -> jinja2.nodes.Block": "confirmed",
+  "jinja2.parser.Parser.parse_block -> jinja2.parser.Parser.fail": "confirmed",
+  "jinja2.parser.Parser.parse_block -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.parse_call -> jinja2.nodes.Call": "confirmed",
+  "jinja2.parser.Parser.parse_call -> jinja2.parser.Parser.parse_call_args": "confirmed",
+  "jinja2.parser.Parser.parse_call_args -> jinja2.nodes.Keyword": "confirmed",
+  "jinja2.parser.Parser.parse_call_args -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_call_block -> jinja2.nodes.CallBlock": "confirmed",
+  "jinja2.parser.Parser.parse_call_block -> jinja2.parser.Parser.fail": "unexercised",
+  "jinja2.parser.Parser.parse_call_block -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_call_block -> jinja2.parser.Parser.parse_signature": "confirmed",
+  "jinja2.parser.Parser.parse_call_block -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.parse_compare -> jinja2.nodes.Compare": "confirmed",
+  "jinja2.parser.Parser.parse_compare -> jinja2.nodes.Operand": "confirmed",
+  "jinja2.parser.Parser.parse_compare -> jinja2.parser.Parser.parse_math1": "confirmed",
+  "jinja2.parser.Parser.parse_concat -> jinja2.nodes.Concat": "confirmed",
+  "jinja2.parser.Parser.parse_concat -> jinja2.parser.Parser.parse_math2": "confirmed",
+  "jinja2.parser.Parser.parse_condexpr -> jinja2.nodes.CondExpr": "confirmed",
+  "jinja2.parser.Parser.parse_condexpr -> jinja2.parser.Parser.parse_condexpr": "confirmed",
+  "jinja2.parser.Parser.parse_condexpr -> jinja2.parser.Parser.parse_or": "confirmed",
+  "jinja2.parser.Parser.parse_dict -> jinja2.nodes.Dict": "confirmed",
+  "jinja2.parser.Parser.parse_dict -> jinja2.nodes.Pair": "confirmed",
+  "jinja2.parser.Parser.parse_dict -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_expression -> jinja2.parser.Parser.parse_condexpr": "confirmed",
+  "jinja2.parser.Parser.parse_expression -> jinja2.parser.Parser.parse_or": "confirmed",
+  "jinja2.parser.Parser.parse_extends -> jinja2.nodes.Extends": "confirmed",
+  "jinja2.parser.Parser.parse_extends -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_filter -> jinja2.nodes.Filter": "confirmed",
+  "jinja2.parser.Parser.parse_filter -> jinja2.parser.Parser.parse_call_args": "confirmed",
+  "jinja2.parser.Parser.parse_filter_block -> jinja2.nodes.FilterBlock": "confirmed",
+  "jinja2.parser.Parser.parse_filter_block -> jinja2.parser.Parser.parse_filter": "confirmed",
+  "jinja2.parser.Parser.parse_filter_block -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.parse_filter_expr -> jinja2.parser.Parser.parse_call": "confirmed",
+  "jinja2.parser.Parser.parse_filter_expr -> jinja2.parser.Parser.parse_filter": "confirmed",
+  "jinja2.parser.Parser.parse_filter_expr -> jinja2.parser.Parser.parse_test": "confirmed",
+  "jinja2.parser.Parser.parse_for -> jinja2.nodes.For": "confirmed",
+  "jinja2.parser.Parser.parse_for -> jinja2.parser.Parser.parse_assign_target": "confirmed",
+  "jinja2.parser.Parser.parse_for -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_for -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.parse_for -> jinja2.parser.Parser.parse_tuple": "confirmed",
+  "jinja2.parser.Parser.parse_from -> jinja2.nodes.FromImport": "confirmed",
+  "jinja2.parser.Parser.parse_from -> jinja2.parser.Parser.fail": "unexercised",
+  "jinja2.parser.Parser.parse_from -> jinja2.parser.Parser.parse_assign_target": "confirmed",
+  "jinja2.parser.Parser.parse_from -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_if -> jinja2.nodes.If": "confirmed",
+  "jinja2.parser.Parser.parse_if -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.parse_if -> jinja2.parser.Parser.parse_tuple": "confirmed",
+  "jinja2.parser.Parser.parse_import -> jinja2.nodes.Import": "confirmed",
+  "jinja2.parser.Parser.parse_import -> jinja2.parser.Parser.parse_assign_target": "confirmed",
+  "jinja2.parser.Parser.parse_import -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_import -> jinja2.parser.Parser.parse_import_context": "confirmed",
+  "jinja2.parser.Parser.parse_include -> jinja2.nodes.Include": "confirmed",
+  "jinja2.parser.Parser.parse_include -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_include -> jinja2.parser.Parser.parse_import_context": "confirmed",
+  "jinja2.parser.Parser.parse_list -> jinja2.nodes.List": "confirmed",
+  "jinja2.parser.Parser.parse_list -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_macro -> jinja2.nodes.Macro": "confirmed",
+  "jinja2.parser.Parser.parse_macro -> jinja2.parser.Parser.parse_assign_target": "confirmed",
+  "jinja2.parser.Parser.parse_macro -> jinja2.parser.Parser.parse_signature": "confirmed",
+  "jinja2.parser.Parser.parse_macro -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.parse_math1 -> jinja2.parser.Parser.parse_concat": "confirmed",
+  "jinja2.parser.Parser.parse_math2 -> jinja2.parser.Parser.parse_pow": "confirmed",
+  "jinja2.parser.Parser.parse_not -> jinja2.nodes.Not": "confirmed",
+  "jinja2.parser.Parser.parse_not -> jinja2.parser.Parser.parse_compare": "confirmed",
+  "jinja2.parser.Parser.parse_not -> jinja2.parser.Parser.parse_not": "confirmed",
+  "jinja2.parser.Parser.parse_or -> jinja2.nodes.Or": "confirmed",
+  "jinja2.parser.Parser.parse_or -> jinja2.parser.Parser.parse_and": "confirmed",
+  "jinja2.parser.Parser.parse_postfix -> jinja2.parser.Parser.parse_call": "confirmed",
+  "jinja2.parser.Parser.parse_postfix -> jinja2.parser.Parser.parse_subscript": "confirmed",
+  "jinja2.parser.Parser.parse_pow -> jinja2.nodes.Pow": "confirmed",
+  "jinja2.parser.Parser.parse_pow -> jinja2.parser.Parser.parse_unary": "confirmed",
+  "jinja2.parser.Parser.parse_primary -> jinja2.lexer.describe_token": "confirmed",
+  "jinja2.parser.Parser.parse_primary -> jinja2.nodes.Const": "confirmed",
+  "jinja2.parser.Parser.parse_primary -> jinja2.nodes.NSRef": "confirmed",
+  "jinja2.parser.Parser.parse_primary -> jinja2.nodes.Name": "confirmed",
+  "jinja2.parser.Parser.parse_primary -> jinja2.parser.Parser.fail": "confirmed",
+  "jinja2.parser.Parser.parse_primary -> jinja2.parser.Parser.parse_dict": "confirmed",
+  "jinja2.parser.Parser.parse_primary -> jinja2.parser.Parser.parse_list": "confirmed",
+  "jinja2.parser.Parser.parse_primary -> jinja2.parser.Parser.parse_tuple": "confirmed",
+  "jinja2.parser.Parser.parse_print -> jinja2.nodes.Output": "confirmed",
+  "jinja2.parser.Parser.parse_print -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_set -> jinja2.nodes.Assign": "confirmed",
+  "jinja2.parser.Parser.parse_set -> jinja2.nodes.AssignBlock": "confirmed",
+  "jinja2.parser.Parser.parse_set -> jinja2.parser.Parser.parse_assign_target": "confirmed",
+  "jinja2.parser.Parser.parse_set -> jinja2.parser.Parser.parse_filter": "confirmed",
+  "jinja2.parser.Parser.parse_set -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.parse_set -> jinja2.parser.Parser.parse_tuple": "confirmed",
+  "jinja2.parser.Parser.parse_signature -> jinja2.parser.Parser.fail": "confirmed",
+  "jinja2.parser.Parser.parse_signature -> jinja2.parser.Parser.parse_assign_target": "confirmed",
+  "jinja2.parser.Parser.parse_signature -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_statement -> jinja2.parser.Parser.fail": "unexercised",
+  "jinja2.parser.Parser.parse_statement -> jinja2.parser.Parser.fail_unknown_tag": "confirmed",
+  "jinja2.parser.Parser.parse_statement -> jinja2.parser.Parser.parse_call_block": "confirmed",
+  "jinja2.parser.Parser.parse_statement -> jinja2.parser.Parser.parse_filter_block": "confirmed",
+  "jinja2.parser.Parser.parse_statements -> jinja2.parser.Parser.fail_eof": "confirmed",
+  "jinja2.parser.Parser.parse_statements -> jinja2.parser.Parser.subparse": "confirmed",
+  "jinja2.parser.Parser.parse_subscribed -> jinja2.nodes.Slice": "confirmed",
+  "jinja2.parser.Parser.parse_subscribed -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_subscript -> jinja2.nodes.Const": "confirmed",
+  "jinja2.parser.Parser.parse_subscript -> jinja2.nodes.Getattr": "confirmed",
+  "jinja2.parser.Parser.parse_subscript -> jinja2.nodes.Getitem": "confirmed",
+  "jinja2.parser.Parser.parse_subscript -> jinja2.nodes.Tuple": "confirmed",
+  "jinja2.parser.Parser.parse_subscript -> jinja2.parser.Parser.fail": "unexercised",
+  "jinja2.parser.Parser.parse_subscript -> jinja2.parser.Parser.parse_subscribed": "confirmed",
+  "jinja2.parser.Parser.parse_test -> jinja2.nodes.Not": "confirmed",
+  "jinja2.parser.Parser.parse_test -> jinja2.nodes.Test": "confirmed",
+  "jinja2.parser.Parser.parse_test -> jinja2.parser.Parser.fail": "confirmed",
+  "jinja2.parser.Parser.parse_test -> jinja2.parser.Parser.parse_call_args": "confirmed",
+  "jinja2.parser.Parser.parse_test -> jinja2.parser.Parser.parse_postfix": "confirmed",
+  "jinja2.parser.Parser.parse_test -> jinja2.parser.Parser.parse_primary": "confirmed",
+  "jinja2.parser.Parser.parse_tuple -> jinja2.lexer.describe_token": "confirmed",
+  "jinja2.parser.Parser.parse_tuple -> jinja2.nodes.Tuple": "confirmed",
+  "jinja2.parser.Parser.parse_tuple -> jinja2.parser.Parser.fail": "confirmed",
+  "jinja2.parser.Parser.parse_tuple -> jinja2.parser.Parser.is_tuple_end": "confirmed",
+  "jinja2.parser.Parser.parse_unary -> jinja2.nodes.Neg": "confirmed",
+  "jinja2.parser.Parser.parse_unary -> jinja2.nodes.Pos": "confirmed",
+  "jinja2.parser.Parser.parse_unary -> jinja2.parser.Parser.parse_filter_expr": "confirmed",
+  "jinja2.parser.Parser.parse_unary -> jinja2.parser.Parser.parse_postfix": "confirmed",
+  "jinja2.parser.Parser.parse_unary -> jinja2.parser.Parser.parse_primary": "confirmed",
+  "jinja2.parser.Parser.parse_unary -> jinja2.parser.Parser.parse_unary": "confirmed",
+  "jinja2.parser.Parser.parse_with -> jinja2.nodes.With": "confirmed",
+  "jinja2.parser.Parser.parse_with -> jinja2.parser.Parser.parse_assign_target": "confirmed",
+  "jinja2.parser.Parser.parse_with -> jinja2.parser.Parser.parse_expression": "confirmed",
+  "jinja2.parser.Parser.parse_with -> jinja2.parser.Parser.parse_statements": "confirmed",
+  "jinja2.parser.Parser.subparse -> jinja2.nodes.Output": "confirmed",
+  "jinja2.parser.Parser.subparse -> jinja2.nodes.TemplateData": "confirmed",
+  "jinja2.parser.Parser.subparse -> jinja2.parser.Parser.parse_statement": "confirmed",
+  "jinja2.parser.Parser.subparse -> jinja2.parser.Parser.parse_tuple": "confirmed",
+  "jinja2.runtime.AsyncLoopContext._to_iterator -> jinja2.async_utils.auto_aiter": "confirmed",
+  "jinja2.runtime.AsyncLoopContext.last -> jinja2.runtime.AsyncLoopContext._peek_next": "confirmed",
+  "jinja2.runtime.AsyncLoopContext.length -> jinja2.runtime.AsyncLoopContext._to_iterator": "confirmed",
+  "jinja2.runtime.AsyncLoopContext.nextitem -> jinja2.runtime.AsyncLoopContext._peek_next": "confirmed",
+  "jinja2.runtime.AsyncLoopContext.nextitem -> jinja2.runtime.LoopContext._undefined": "attribute_target",
+  "jinja2.runtime.BlockReference.__call__ -> jinja2.runtime.BlockReference._async_call": "confirmed",
+  "jinja2.runtime.BlockReference.super -> jinja2.runtime.BlockReference": "unexercised",
+  "jinja2.runtime.Context -> jinja2.runtime._dict_method_all": "unexercised",
+  "jinja2.runtime.Context.__getitem__ -> jinja2.runtime.Context.resolve_or_missing": "confirmed",
+  "jinja2.runtime.Context.__init__ -> jinja2.nodes.EvalContext": "confirmed",
+  "jinja2.runtime.Context.__repr__ -> jinja2.runtime.Context.get_all": "caller_not_run",
+  "jinja2.runtime.Context.call -> jinja2.utils._PassArg.from_obj": "confirmed",
+  "jinja2.runtime.Context.derived -> jinja2.runtime.Context.get_all": "confirmed",
+  "jinja2.runtime.Context.derived -> jinja2.runtime.new_context": "confirmed",
+  "jinja2.runtime.Context.resolve -> jinja2.runtime.Context.resolve_or_missing": "confirmed",
+  "jinja2.runtime.Context.super -> jinja2.runtime.BlockReference": "confirmed",
+  "jinja2.runtime.DebugUndefined.__str__ -> jinja2.utils.object_type_repr": "confirmed",
+  "jinja2.runtime.LoopContext.__call__ -> jinja2.runtime.LoopContext._recurse": "attribute_target",
+  "jinja2.runtime.LoopContext.__init__ -> jinja2.runtime.LoopContext._to_iterator": "confirmed",
+  "jinja2.runtime.LoopContext.last -> jinja2.runtime.LoopContext._peek_next": "confirmed",
+  "jinja2.runtime.LoopContext.length -> jinja2.runtime.LoopContext._to_iterator": "confirmed",
+  "jinja2.runtime.LoopContext.nextitem -> jinja2.runtime.LoopContext._peek_next": "confirmed",
+  "jinja2.runtime.LoopContext.nextitem -> jinja2.runtime.LoopContext._undefined": "attribute_target",
+  "jinja2.runtime.LoopContext.previtem -> jinja2.runtime.LoopContext._undefined": "attribute_target",
+  "jinja2.runtime.Macro.__call__ -> jinja2.runtime.Macro._invoke": "confirmed",
+  "jinja2.runtime.Macro._async_invoke -> jinja2.runtime.Macro._func": "attribute_target",
+  "jinja2.runtime.Macro._invoke -> jinja2.runtime.Macro._async_invoke": "confirmed",
+  "jinja2.runtime.Macro._invoke -> jinja2.runtime.Macro._func": "attribute_target",
+  "jinja2.runtime.TemplateReference.__getitem__ -> jinja2.runtime.BlockReference": "confirmed",
+  "jinja2.runtime.Undefined.__getattr__ -> jinja2.runtime.Undefined._fail_with_undefined_error": "confirmed",
+  "jinja2.runtime.Undefined.__ne__ -> jinja2.runtime.Undefined.__eq__": "confirmed",
+  "jinja2.runtime.Undefined._fail_with_undefined_error -> jinja2.runtime.Undefined._undefined_exception": "attribute_target",
+  "jinja2.runtime.Undefined._undefined_message -> jinja2.utils.object_type_repr": "confirmed",
+  "jinja2.runtime.markup_join -> jinja2.utils.concat": "attribute_target",
+  "jinja2.runtime.str_join -> jinja2.utils.concat": "attribute_target",
+  "jinja2.sandbox.ImmutableSandboxedEnvironment.is_safe_attribute -> jinja2.sandbox.modifies_known_mutable": "confirmed",
+  "jinja2.sandbox.SandboxedEnvironment.call -> jinja2.exceptions.SecurityError": "confirmed",
+  "jinja2.sandbox.SandboxedEnvironment.getattr -> jinja2.environment.Environment.undefined": "attribute_target",
+  "jinja2.sandbox.SandboxedEnvironment.getattr -> jinja2.sandbox.SandboxedEnvironment.is_safe_attribute": "confirmed",
+  "jinja2.sandbox.SandboxedEnvironment.getattr -> jinja2.sandbox.SandboxedEnvironment.unsafe_undefined": "confirmed",
+  "jinja2.sandbox.SandboxedEnvironment.getattr -> jinja2.sandbox.SandboxedEnvironment.wrap_str_format": "confirmed",
+  "jinja2.sandbox.SandboxedEnvironment.getitem -> jinja2.environment.Environment.undefined": "attribute_target",
+  "jinja2.sandbox.SandboxedEnvironment.getitem -> jinja2.sandbox.SandboxedEnvironment.is_safe_attribute": "unexercised",
+  "jinja2.sandbox.SandboxedEnvironment.getitem -> jinja2.sandbox.SandboxedEnvironment.unsafe_undefined": "unexercised",
+  "jinja2.sandbox.SandboxedEnvironment.getitem -> jinja2.sandbox.SandboxedEnvironment.wrap_str_format": "unexercised",
+  "jinja2.sandbox.SandboxedEnvironment.is_safe_attribute -> jinja2.sandbox.is_internal_attribute": "confirmed",
+  "jinja2.sandbox.SandboxedEnvironment.unsafe_undefined -> jinja2.environment.Environment.undefined": "attribute_target",
+  "jinja2.sandbox.SandboxedEnvironment.wrap_str_format -> jinja2.sandbox.SandboxedEscapeFormatter": "confirmed",
+  "jinja2.sandbox.SandboxedEnvironment.wrap_str_format -> jinja2.sandbox.SandboxedFormatter": "confirmed",
+  "jinja2.utils -> jinja2.utils._MissingType": "no_site",
+  "jinja2.utils.LRUCache.__init__ -> jinja2.utils.LRUCache._postinit": "confirmed",
+  "jinja2.utils.LRUCache.__setstate__ -> jinja2.utils.LRUCache._postinit": "confirmed",
+  "jinja2.utils.LRUCache.values -> jinja2.utils.LRUCache.items": "confirmed",
+  "jinja2.visitor.NodeTransformer.generic_visit -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.visitor.NodeTransformer.visit_list -> jinja2.visitor.NodeVisitor.visit": "caller_not_run",
+  "jinja2.visitor.NodeVisitor.generic_visit -> jinja2.visitor.NodeVisitor.visit": "confirmed",
+  "jinja2.visitor.NodeVisitor.visit -> jinja2.visitor.NodeVisitor.generic_visit": "confirmed",
+  "jinja2.visitor.NodeVisitor.visit -> jinja2.visitor.NodeVisitor.get_visitor": "confirmed"
+ }
+}

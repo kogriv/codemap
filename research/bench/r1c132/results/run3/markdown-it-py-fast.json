@@ -1,0 +1,1503 @@
+{
+ "graph": "fast.json",
+ "tier": "fast",
+ "nodes": 610,
+ "functions": 215,
+ "functions_started": 192,
+ "calls_edges": 166,
+ "runtime_pairs": 469,
+ "unmapped_runtime": {
+  "callee": 1
+ },
+ "categories": {
+  "call": 354,
+  "construct": 32,
+  "init": 17,
+  "implicit": 34,
+  "property": 32
+ },
+ "recall": {
+  "explicit": {
+   "pairs": 386,
+   "found": 154,
+   "recall": 0.399,
+   "found_calls_or_references": 164,
+   "by_via": {
+    "direct": {
+     "pairs": 365,
+     "found": 153
+    },
+    "nested": {
+     "pairs": 7,
+     "found": 1
+    },
+    "external": {
+     "pairs": 14,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "implicit": {
+   "pairs": 34,
+   "found": 6,
+   "recall": 0.1765,
+   "found_calls_or_references": 6,
+   "by_via": {
+    "direct": {
+     "pairs": 16,
+     "found": 6
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 18,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "property": {
+   "pairs": 32,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 30,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 2,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "decorator": {
+   "pairs": 0,
+   "found": 0,
+   "recall": null,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 0,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  }
+ },
+ "precision": {
+  "outcomes": {
+   "unexercised": 2,
+   "confirmed": 160,
+   "no_site": 1,
+   "contradicted": 2,
+   "caller_not_run": 1
+  },
+  "decided": 0.9877,
+  "by_grade": {
+   "exact": {
+    "unexercised": 2,
+    "confirmed": 160,
+    "no_site": 1,
+    "contradicted": 2,
+    "caller_not_run": 1,
+    "decided": 0.9877
+   }
+  },
+  "by_resolution": {
+   "imported": {
+    "contradicted": 2,
+    "confirmed": 79,
+    "decided": 0.9753
+   },
+   "module": {
+    "unexercised": 2,
+    "confirmed": 41,
+    "no_site": 1,
+    "decided": 1.0
+   },
+   "self": {
+    "confirmed": 40,
+    "caller_not_run": 1,
+    "decided": 1.0
+   }
+  }
+ },
+ "callers_complete": {
+  "callees": 178,
+  "complete": 82,
+  "share": 0.4607
+ },
+ "misses": [
+  [
+   "markdown_it.cli.parse.convert_file",
+   "markdown_it.main.MarkdownIt.render",
+   "direct"
+  ],
+  [
+   "markdown_it.cli.parse.convert_stdin",
+   "markdown_it.main.MarkdownIt.render",
+   "direct"
+  ],
+  [
+   "markdown_it.cli.parse.interactive",
+   "markdown_it.main.MarkdownIt.render",
+   "direct"
+  ],
+  [
+   "markdown_it.cli.parse.main",
+   "markdown_it.main.MarkdownIt.enable",
+   "direct"
+  ],
+  [
+   "markdown_it.helpers.parse_link_label.parseLinkLabel",
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.__init__",
+   "markdown_it.renderer.RendererHTML",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.configure",
+   "markdown_it.ruler.Ruler.enableOnly",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.disable",
+   "markdown_it.ruler.Ruler.disable",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.enable",
+   "markdown_it.ruler.Ruler.enable",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.get_active_rules",
+   "markdown_it.ruler.Ruler.get_active_rules",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.get_all_rules",
+   "markdown_it.ruler.Ruler.get_all_rules",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.parse",
+   "markdown_it.parser_core.ParserCore.process",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.parseInline",
+   "markdown_it.parser_core.ParserCore.process",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.render",
+   "markdown_it.renderer.RendererHTML.render",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.renderInline",
+   "markdown_it.renderer.RendererHTML.render",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.reset_rules",
+   "markdown_it.ruler.Ruler.enableOnly",
+   "direct"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.use",
+   "markdown_it.parser_inline.ParserInline.add_terminator_char",
+   "external"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.use",
+   "markdown_it.ruler.Ruler.after",
+   "external"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.use",
+   "markdown_it.ruler.Ruler.at",
+   "external"
+  ],
+  [
+   "markdown_it.main.MarkdownIt.use",
+   "markdown_it.ruler.Ruler.before",
+   "external"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.__init__",
+   "markdown_it.ruler.Ruler",
+   "external"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.__init__",
+   "markdown_it.ruler.Ruler.push",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.code.code",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.lheading.lheading",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.paragraph.paragraph",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.reference.reference",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.state_block.StateBlock.isEmpty",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.state_block.StateBlock.skipEmptyLines",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "markdown_it.rules_block.table.table",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.__init__",
+   "markdown_it.ruler.Ruler",
+   "external"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.__init__",
+   "markdown_it.ruler.Ruler.push",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.block.block",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.inline.inline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.linkify.linkify",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.normalize.normalize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.replacements.replace",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.smartquotes.smartquotes",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_core.ParserCore.process",
+   "markdown_it.rules_core.text_join.text_join",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.__init__",
+   "markdown_it.ruler.Ruler",
+   "external"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.__init__",
+   "markdown_it.ruler.Ruler.push",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.rules_inline.balance_pairs.link_pairs",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.rules_inline.emphasis.postProcess",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.rules_inline.fragments_join.fragments_join",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.parse",
+   "markdown_it.rules_inline.strikethrough.postProcess",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.autolink.autolink",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.backticks.backtick",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.emphasis.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.entity.entity",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.escape.escape",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.html_inline.html_inline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.image.image",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.link.link",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.linkify.linkify",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.newline.newline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.strikethrough.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.skipToken",
+   "markdown_it.rules_inline.text.text",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.autolink.autolink",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.backticks.backtick",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.emphasis.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.entity.entity",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.escape.escape",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.html_inline.html_inline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.image.image",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.link.link",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.linkify.linkify",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.newline.newline",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.state_inline.StateInline.append_pending",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "external"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.state_inline.StateInline.pushPending",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.strikethrough.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "markdown_it.rules_inline.text.text",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.fence",
+   "markdown_it.token.Token.attrJoin",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.image",
+   "markdown_it.token.Token.attrSet",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.render",
+   "markdown_it.renderer.RendererHTML.code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.render",
+   "markdown_it.renderer.RendererHTML.fence",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.render",
+   "markdown_it.renderer.RendererHTML.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.render",
+   "markdown_it.renderer.RendererHTML.list_item_open",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderAttrs",
+   "markdown_it.token.Token.attrItems",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.code_inline",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.hardbreak",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.html_inline",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.image",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.softbreak",
+   "direct"
+  ],
+  [
+   "markdown_it.renderer.RendererHTML.renderInline",
+   "markdown_it.renderer.RendererHTML.text",
+   "direct"
+  ],
+  [
+   "markdown_it.ruler.Ruler.after",
+   "markdown_it.ruler.Rule",
+   "external"
+  ],
+  [
+   "markdown_it.ruler.Ruler.before",
+   "markdown_it.ruler.Rule",
+   "external"
+  ],
+  [
+   "markdown_it.ruler.Ruler.disable",
+   "markdown_it.ruler.Ruler.getRules",
+   "external"
+  ],
+  [
+   "markdown_it.ruler.Ruler.enable",
+   "markdown_it.ruler.Ruler.getRules",
+   "external"
+  ],
+  [
+   "markdown_it.ruler.Ruler.push",
+   "markdown_it.ruler.Rule",
+   "external"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.blockquote.blockquote",
+   "markdown_it.token.Token.attrSet",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.code.code",
+   "markdown_it.rules_block.state_block.StateBlock.getLines",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.code.code",
+   "markdown_it.rules_block.state_block.StateBlock.isEmpty",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.code.code",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.code.code",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.getLines",
+   "nested"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "nested"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "nested"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.skipCharsStr",
+   "nested"
+  ],
+  [
+   "markdown_it.rules_block.fence.make_fence_rule",
+   "markdown_it.rules_block.state_block.StateBlock.skipSpaces",
+   "nested"
+  ],
+  [
+   "markdown_it.rules_block.heading.heading",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.heading.heading",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.heading.heading",
+   "markdown_it.rules_block.state_block.StateBlock.skipCharsStrBack",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.heading.heading",
+   "markdown_it.rules_block.state_block.StateBlock.skipSpacesBack",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.hr.hr",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.hr.hr",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.html_block.html_block",
+   "markdown_it.rules_block.state_block.StateBlock.getLines",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.html_block.html_block",
+   "markdown_it.rules_block.state_block.StateBlock.isEmpty",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.html_block.html_block",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.html_block.html_block",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.state_block.StateBlock.getLines",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.state_block.StateBlock.isEmpty",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.state_block.StateBlock.skipCharsStr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.state_block.StateBlock.skipSpaces",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.lheading.lheading",
+   "markdown_it.rules_block.table.table",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.parser_block.ParserBlock.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.rules_block.state_block.StateBlock.isEmpty",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.rules_block.state_block.StateBlock.skipSpaces",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.list.list_block",
+   "markdown_it.token.Token.attrJoin",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.state_block.StateBlock.getLines",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.state_block.StateBlock.isEmpty",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.paragraph.paragraph",
+   "markdown_it.rules_block.table.table",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.state_block.StateBlock.isEmpty",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.getNextLine",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.reference",
+   "markdown_it.helpers.parse_link_destination.parseLinkDestination",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.reference",
+   "markdown_it.helpers.parse_link_title.parseLinkTitle",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.reference",
+   "markdown_it.main.MarkdownIt.normalizeLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.reference",
+   "markdown_it.main.MarkdownIt.validateLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.reference",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.reference.reference",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.state_block.StateBlock.__init__",
+   "markdown_it.ruler.Ruler.get_active_rules",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.ruler.Ruler.getRules",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.blockquote.blockquote",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.heading.heading",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.hr.hr",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.html_block.html_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.list.list_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.state_block.StateBlock.is_code_block",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_block.table.table",
+   "markdown_it.rules_block.state_block.StateBlock.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_core.block.block",
+   "markdown_it.parser_block.ParserBlock.parse",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_core.inline.inline",
+   "markdown_it.parser_inline.ParserInline.parse",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_core.linkify.linkify",
+   "markdown_it.main.MarkdownIt.normalizeLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_core.linkify.linkify",
+   "markdown_it.main.MarkdownIt.normalizeLinkText",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_core.linkify.linkify",
+   "markdown_it.main.MarkdownIt.validateLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_core.replacements.replace_scoped",
+   "markdown_it.rules_core.replacements.replaceFn",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.autolink.autolink",
+   "markdown_it.main.MarkdownIt.normalizeLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.autolink.autolink",
+   "markdown_it.main.MarkdownIt.normalizeLinkText",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.autolink.autolink",
+   "markdown_it.main.MarkdownIt.validateLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.autolink.autolink",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.backticks.backtick",
+   "markdown_it.rules_inline.state_inline.StateInline.append_pending",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.backticks.backtick",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.emphasis.tokenize",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.emphasis.tokenize",
+   "markdown_it.rules_inline.state_inline.StateInline.scanDelims",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.entity.entity",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.escape.escape",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.html_inline.html_inline",
+   "markdown_it.rules_inline.state_inline.StateInline.html_terminator_last",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.html_inline.html_inline",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.image.image",
+   "markdown_it.helpers.parse_link_destination.parseLinkDestination",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.image.image",
+   "markdown_it.helpers.parse_link_label.parseLinkLabel",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.image.image",
+   "markdown_it.helpers.parse_link_title.parseLinkTitle",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.image.image",
+   "markdown_it.main.MarkdownIt.normalizeLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.image.image",
+   "markdown_it.main.MarkdownIt.validateLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.image.image",
+   "markdown_it.parser_inline.ParserInline.parse",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.image.image",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.image.image",
+   "markdown_it.token.Token.attrSet",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.link.link",
+   "markdown_it.helpers.parse_link_destination.parseLinkDestination",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.link.link",
+   "markdown_it.helpers.parse_link_label.parseLinkLabel",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.link.link",
+   "markdown_it.helpers.parse_link_title.parseLinkTitle",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.link.link",
+   "markdown_it.main.MarkdownIt.normalizeLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.link.link",
+   "markdown_it.main.MarkdownIt.validateLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.link.link",
+   "markdown_it.parser_inline.ParserInline.tokenize",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.link.link",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.link.link",
+   "markdown_it.token.Token.attrSet",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.linkify.linkify",
+   "markdown_it.main.MarkdownIt.normalizeLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.linkify.linkify",
+   "markdown_it.main.MarkdownIt.normalizeLinkText",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.linkify.linkify",
+   "markdown_it.main.MarkdownIt.validateLink",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.linkify.linkify",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.newline.newline",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.strikethrough.tokenize",
+   "markdown_it.rules_inline.state_inline.StateInline.push",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.strikethrough.tokenize",
+   "markdown_it.rules_inline.state_inline.StateInline.scanDelims",
+   "direct"
+  ],
+  [
+   "markdown_it.rules_inline.text.text",
+   "markdown_it.rules_inline.state_inline.StateInline.append_pending",
+   "direct"
+  ],
+  [
+   "markdown_it.token.Token.as_dict",
+   "markdown_it.token.Token.as_dict",
+   "direct"
+  ],
+  [
+   "markdown_it.token.Token.copy",
+   "markdown_it.token.Token",
+   "external"
+  ],
+  [
+   "markdown_it.token.Token.from_dict",
+   "markdown_it.token.Token",
+   "direct"
+  ],
+  [
+   "markdown_it.tree.SyntaxTreeNode._add_child",
+   "markdown_it.tree.SyntaxTreeNode",
+   "direct"
+  ],
+  [
+   "markdown_it.tree.SyntaxTreeNode.pretty",
+   "markdown_it.tree.SyntaxTreeNode.pretty",
+   "direct"
+  ],
+  [
+   "markdown_it.tree.SyntaxTreeNode.to_tokens",
+   "markdown_it.token.Token.copy",
+   "nested"
+  ],
+  [
+   "markdown_it.tree.SyntaxTreeNode.walk",
+   "markdown_it.tree.SyntaxTreeNode.walk",
+   "direct"
+  ]
+ ],
+ "contradicted": [
+  [
+   "markdown_it.cli.parse.convert_file",
+   "markdown_it.main.MarkdownIt",
+   "imported"
+  ],
+  [
+   "markdown_it.cli.parse.convert_stdin",
+   "markdown_it.main.MarkdownIt",
+   "imported"
+  ]
+ ],
+ "contradicted_same_name": [],
+ "edge_outcomes": {
+  "markdown_it._punycode.to_ascii -> markdown_it._punycode.encode": "unexercised",
+  "markdown_it._punycode.to_ascii -> markdown_it._punycode.map_domain": "confirmed",
+  "markdown_it._punycode.to_unicode -> markdown_it._punycode.decode": "unexercised",
+  "markdown_it._punycode.to_unicode -> markdown_it._punycode.map_domain": "confirmed",
+  "markdown_it.cli.parse -> markdown_it.cli.parse.main": "no_site",
+  "markdown_it.cli.parse.convert -> markdown_it.cli.parse.convert_file": "confirmed",
+  "markdown_it.cli.parse.convert_file -> markdown_it.main.MarkdownIt": "contradicted",
+  "markdown_it.cli.parse.convert_stdin -> markdown_it.main.MarkdownIt": "contradicted",
+  "markdown_it.cli.parse.interactive -> markdown_it.cli.parse.print_heading": "confirmed",
+  "markdown_it.cli.parse.interactive -> markdown_it.main.MarkdownIt": "confirmed",
+  "markdown_it.cli.parse.main -> markdown_it.cli.parse.convert": "confirmed",
+  "markdown_it.cli.parse.main -> markdown_it.cli.parse.convert_stdin": "confirmed",
+  "markdown_it.cli.parse.main -> markdown_it.cli.parse.interactive": "confirmed",
+  "markdown_it.cli.parse.main -> markdown_it.cli.parse.parse_args": "confirmed",
+  "markdown_it.cli.parse.main -> markdown_it.main.MarkdownIt": "confirmed",
+  "markdown_it.cli.parse.parse_args -> markdown_it.cli.parse._eof_keys": "confirmed",
+  "markdown_it.cli.parse.print_heading -> markdown_it.cli.parse._eof_keys": "confirmed",
+  "markdown_it.common.normalize_url.normalizeLink -> markdown_it._punycode.to_ascii": "confirmed",
+  "markdown_it.common.normalize_url.normalizeLinkText -> markdown_it._punycode.to_unicode": "confirmed",
+  "markdown_it.common.utils.normalizeReference -> markdown_it.common.utils.mdTrim": "confirmed",
+  "markdown_it.common.utils.replaceEntityPattern -> markdown_it.common.utils.fromCodePoint": "confirmed",
+  "markdown_it.common.utils.replaceEntityPattern -> markdown_it.common.utils.isValidEntityCode": "confirmed",
+  "markdown_it.common.utils.unescapeAll -> markdown_it.common.utils.replaceEntityPattern": "confirmed",
+  "markdown_it.helpers.parse_link_destination.parseLinkDestination -> markdown_it.common.utils.charCodeAt": "confirmed",
+  "markdown_it.helpers.parse_link_destination.parseLinkDestination -> markdown_it.common.utils.unescapeAll": "confirmed",
+  "markdown_it.helpers.parse_link_destination.parseLinkDestination -> markdown_it.helpers.parse_link_destination._Result": "confirmed",
+  "markdown_it.helpers.parse_link_title.parseLinkTitle -> markdown_it.common.utils.charCodeAt": "confirmed",
+  "markdown_it.helpers.parse_link_title.parseLinkTitle -> markdown_it.common.utils.unescapeAll": "confirmed",
+  "markdown_it.helpers.parse_link_title.parseLinkTitle -> markdown_it.helpers.parse_link_title._State": "confirmed",
+  "markdown_it.main -> markdown_it.presets.commonmark.make": "confirmed",
+  "markdown_it.main -> markdown_it.presets.default.make": "confirmed",
+  "markdown_it.main -> markdown_it.presets.gfm_like.make": "confirmed",
+  "markdown_it.main -> markdown_it.presets.gfm_like2.make": "confirmed",
+  "markdown_it.main -> markdown_it.presets.zero.make": "confirmed",
+  "markdown_it.main.MarkdownIt.__init__ -> markdown_it.main.MarkdownIt.configure": "confirmed",
+  "markdown_it.main.MarkdownIt.__init__ -> markdown_it.parser_block.ParserBlock": "confirmed",
+  "markdown_it.main.MarkdownIt.__init__ -> markdown_it.parser_core.ParserCore": "confirmed",
+  "markdown_it.main.MarkdownIt.__init__ -> markdown_it.parser_inline.ParserInline": "confirmed",
+  "markdown_it.main.MarkdownIt.configure -> markdown_it.main.MarkdownIt.set": "confirmed",
+  "markdown_it.main.MarkdownIt.normalizeLink -> markdown_it.common.normalize_url.normalizeLink": "confirmed",
+  "markdown_it.main.MarkdownIt.normalizeLinkText -> markdown_it.common.normalize_url.normalizeLinkText": "confirmed",
+  "markdown_it.main.MarkdownIt.parse -> markdown_it.rules_core.state_core.StateCore": "confirmed",
+  "markdown_it.main.MarkdownIt.parseInline -> markdown_it.rules_core.state_core.StateCore": "confirmed",
+  "markdown_it.main.MarkdownIt.render -> markdown_it.main.MarkdownIt.parse": "confirmed",
+  "markdown_it.main.MarkdownIt.renderInline -> markdown_it.main.MarkdownIt.parseInline": "confirmed",
+  "markdown_it.main.MarkdownIt.reset_rules -> markdown_it.main.MarkdownIt.get_active_rules": "confirmed",
+  "markdown_it.main.MarkdownIt.set -> markdown_it.utils.OptionsDict": "confirmed",
+  "markdown_it.main.MarkdownIt.validateLink -> markdown_it.common.normalize_url.validateLink": "confirmed",
+  "markdown_it.parser_block.ParserBlock.parse -> markdown_it.parser_block.ParserBlock.tokenize": "confirmed",
+  "markdown_it.parser_block.ParserBlock.parse -> markdown_it.rules_block.state_block.StateBlock": "confirmed",
+  "markdown_it.parser_inline.ParserInline.__init__ -> markdown_it.parser_inline._default_terminator_re": "confirmed",
+  "markdown_it.parser_inline.ParserInline.parse -> markdown_it.parser_inline.ParserInline.tokenize": "confirmed",
+  "markdown_it.parser_inline.ParserInline.parse -> markdown_it.rules_inline.state_inline.StateInline": "confirmed",
+  "markdown_it.presets.gfm_like.make -> markdown_it.presets.commonmark.make": "confirmed",
+  "markdown_it.presets.gfm_like2.make -> markdown_it.presets.gfm_like.make": "confirmed",
+  "markdown_it.renderer.RendererHTML.code_block -> markdown_it.common.utils.escapeHtml": "confirmed",
+  "markdown_it.renderer.RendererHTML.code_block -> markdown_it.renderer.RendererHTML.renderAttrs": "confirmed",
+  "markdown_it.renderer.RendererHTML.code_inline -> markdown_it.common.utils.escapeHtml": "confirmed",
+  "markdown_it.renderer.RendererHTML.code_inline -> markdown_it.renderer.RendererHTML.renderAttrs": "confirmed",
+  "markdown_it.renderer.RendererHTML.fence -> markdown_it.common.utils.escapeHtml": "confirmed",
+  "markdown_it.renderer.RendererHTML.fence -> markdown_it.common.utils.mdTrim": "confirmed",
+  "markdown_it.renderer.RendererHTML.fence -> markdown_it.common.utils.unescapeAll": "confirmed",
+  "markdown_it.renderer.RendererHTML.fence -> markdown_it.renderer.RendererHTML.renderAttrs": "confirmed",
+  "markdown_it.renderer.RendererHTML.fence -> markdown_it.token.Token": "confirmed",
+  "markdown_it.renderer.RendererHTML.image -> markdown_it.renderer.RendererHTML.renderInlineAsText": "confirmed",
+  "markdown_it.renderer.RendererHTML.image -> markdown_it.renderer.RendererHTML.renderToken": "confirmed",
+  "markdown_it.renderer.RendererHTML.list_item_open -> markdown_it.renderer.RendererHTML.renderToken": "confirmed",
+  "markdown_it.renderer.RendererHTML.render -> markdown_it.renderer.RendererHTML.renderInline": "confirmed",
+  "markdown_it.renderer.RendererHTML.render -> markdown_it.renderer.RendererHTML.renderToken": "confirmed",
+  "markdown_it.renderer.RendererHTML.renderAttrs -> markdown_it.common.utils.escapeHtml": "confirmed",
+  "markdown_it.renderer.RendererHTML.renderInline -> markdown_it.renderer.RendererHTML.renderToken": "confirmed",
+  "markdown_it.renderer.RendererHTML.renderInlineAsText -> markdown_it.renderer.RendererHTML.renderInlineAsText": "confirmed",
+  "markdown_it.renderer.RendererHTML.renderToken -> markdown_it.renderer.RendererHTML.renderAttrs": "confirmed",
+  "markdown_it.renderer.RendererHTML.text -> markdown_it.common.utils.escapeHtml": "confirmed",
+  "markdown_it.ruler.Ruler.after -> markdown_it.ruler.Ruler.__find__": "confirmed",
+  "markdown_it.ruler.Ruler.at -> markdown_it.ruler.Ruler.__find__": "confirmed",
+  "markdown_it.ruler.Ruler.before -> markdown_it.ruler.Ruler.__find__": "confirmed",
+  "markdown_it.ruler.Ruler.disable -> markdown_it.ruler.Ruler.__find__": "confirmed",
+  "markdown_it.ruler.Ruler.enable -> markdown_it.ruler.Ruler.__find__": "confirmed",
+  "markdown_it.ruler.Ruler.enableOnly -> markdown_it.ruler.Ruler.enable": "confirmed",
+  "markdown_it.ruler.Ruler.getRules -> markdown_it.ruler.Ruler.__compile__": "confirmed",
+  "markdown_it.rules_block.blockquote.blockquote -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.blockquote.blockquote -> markdown_it.rules_block.blockquote._detect_alert": "confirmed",
+  "markdown_it.rules_block.fence -> markdown_it.rules_block.fence.make_fence_rule": "confirmed",
+  "markdown_it.rules_block.heading.heading -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.heading.heading -> markdown_it.common.utils.mdTrim": "confirmed",
+  "markdown_it.rules_block.hr.hr -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.lheading.lheading -> markdown_it.common.utils.mdTrim": "confirmed",
+  "markdown_it.rules_block.list.list_block -> markdown_it.rules_block.list._detect_task_checkbox": "confirmed",
+  "markdown_it.rules_block.list.list_block -> markdown_it.rules_block.list.markTightParagraphs": "confirmed",
+  "markdown_it.rules_block.list.list_block -> markdown_it.rules_block.list.skipBulletListMarker": "confirmed",
+  "markdown_it.rules_block.list.list_block -> markdown_it.rules_block.list.skipOrderedListMarker": "confirmed",
+  "markdown_it.rules_block.list.skipBulletListMarker -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.list.skipOrderedListMarker -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.paragraph.paragraph -> markdown_it.common.utils.mdTrim": "confirmed",
+  "markdown_it.rules_block.reference.reference -> markdown_it.common.utils.charCodeAt": "confirmed",
+  "markdown_it.rules_block.reference.reference -> markdown_it.common.utils.isSpace": "confirmed",
+  "markdown_it.rules_block.reference.reference -> markdown_it.common.utils.normalizeReference": "confirmed",
+  "markdown_it.rules_block.reference.reference -> markdown_it.rules_block.reference.getNextLine": "confirmed",
+  "markdown_it.rules_block.state_block.StateBlock.__init__ -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.state_block.StateBlock.getLines -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.state_block.StateBlock.push -> markdown_it.token.Token": "confirmed",
+  "markdown_it.rules_block.state_block.StateBlock.skipSpaces -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.state_block.StateBlock.skipSpacesBack -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.table.escapedSplit -> markdown_it.common.utils.charStrAt": "confirmed",
+  "markdown_it.rules_block.table.table -> markdown_it.common.utils.charStrAt": "confirmed",
+  "markdown_it.rules_block.table.table -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_block.table.table -> markdown_it.common.utils.mdTrim": "confirmed",
+  "markdown_it.rules_block.table.table -> markdown_it.rules_block.table.escapedSplit": "confirmed",
+  "markdown_it.rules_block.table.table -> markdown_it.rules_block.table.getLine": "confirmed",
+  "markdown_it.rules_core.block.block -> markdown_it.token.Token": "confirmed",
+  "markdown_it.rules_core.linkify.linkify -> markdown_it.common.utils.arrayReplaceAt": "confirmed",
+  "markdown_it.rules_core.linkify.linkify -> markdown_it.common.utils.isLinkClose": "confirmed",
+  "markdown_it.rules_core.linkify.linkify -> markdown_it.common.utils.isLinkOpen": "confirmed",
+  "markdown_it.rules_core.linkify.linkify -> markdown_it.token.Token": "confirmed",
+  "markdown_it.rules_core.replacements.replace -> markdown_it.rules_core.replacements.replace_rare": "confirmed",
+  "markdown_it.rules_core.replacements.replace -> markdown_it.rules_core.replacements.replace_scoped": "confirmed",
+  "markdown_it.rules_core.smartquotes.process_inlines -> markdown_it.common.utils.charCodeAt": "confirmed",
+  "markdown_it.rules_core.smartquotes.process_inlines -> markdown_it.common.utils.isMdAsciiPunct": "confirmed",
+  "markdown_it.rules_core.smartquotes.process_inlines -> markdown_it.common.utils.isPunctChar": "confirmed",
+  "markdown_it.rules_core.smartquotes.process_inlines -> markdown_it.common.utils.isWhiteSpace": "confirmed",
+  "markdown_it.rules_core.smartquotes.process_inlines -> markdown_it.rules_core.smartquotes.replaceAt": "confirmed",
+  "markdown_it.rules_core.smartquotes.smartquotes -> markdown_it.rules_core.smartquotes.process_inlines": "confirmed",
+  "markdown_it.rules_core.text_join.text_join -> markdown_it.rules_core.text_join._join_text_tokens": "confirmed",
+  "markdown_it.rules_inline.backticks.backtick -> markdown_it.rules_inline.backticks._build_last_runs": "confirmed",
+  "markdown_it.rules_inline.balance_pairs.link_pairs -> markdown_it.rules_inline.balance_pairs.processDelimiters": "confirmed",
+  "markdown_it.rules_inline.emphasis.postProcess -> markdown_it.rules_inline.emphasis._postProcess": "confirmed",
+  "markdown_it.rules_inline.emphasis.tokenize -> markdown_it.rules_inline.state_inline.Delimiter": "confirmed",
+  "markdown_it.rules_inline.entity.entity -> markdown_it.common.utils.fromCodePoint": "confirmed",
+  "markdown_it.rules_inline.entity.entity -> markdown_it.common.utils.isValidEntityCode": "confirmed",
+  "markdown_it.rules_inline.escape.escape -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_inline.html_inline.html_inline -> markdown_it.common.utils.isLinkClose": "confirmed",
+  "markdown_it.rules_inline.html_inline.html_inline -> markdown_it.common.utils.isLinkOpen": "confirmed",
+  "markdown_it.rules_inline.html_inline.html_inline -> markdown_it.rules_inline.html_inline.isLetter": "confirmed",
+  "markdown_it.rules_inline.image.image -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_inline.image.image -> markdown_it.common.utils.normalizeReference": "confirmed",
+  "markdown_it.rules_inline.link.link -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_inline.link.link -> markdown_it.common.utils.normalizeReference": "confirmed",
+  "markdown_it.rules_inline.newline.newline -> markdown_it.common.utils.charStrAt": "confirmed",
+  "markdown_it.rules_inline.newline.newline -> markdown_it.common.utils.isStrSpace": "confirmed",
+  "markdown_it.rules_inline.state_inline.StateInline.push -> markdown_it.rules_inline.state_inline.StateInline.pushPending": "confirmed",
+  "markdown_it.rules_inline.state_inline.StateInline.push -> markdown_it.token.Token": "confirmed",
+  "markdown_it.rules_inline.state_inline.StateInline.pushPending -> markdown_it.token.Token": "confirmed",
+  "markdown_it.rules_inline.state_inline.StateInline.scanDelims -> markdown_it.common.utils.isMdAsciiPunct": "confirmed",
+  "markdown_it.rules_inline.state_inline.StateInline.scanDelims -> markdown_it.common.utils.isPunctChar": "confirmed",
+  "markdown_it.rules_inline.state_inline.StateInline.scanDelims -> markdown_it.common.utils.isWhiteSpace": "confirmed",
+  "markdown_it.rules_inline.state_inline.StateInline.scanDelims -> markdown_it.rules_inline.state_inline.Scanned": "confirmed",
+  "markdown_it.rules_inline.strikethrough.postProcess -> markdown_it.rules_inline.strikethrough._postProcess": "confirmed",
+  "markdown_it.rules_inline.strikethrough.tokenize -> markdown_it.rules_inline.state_inline.Delimiter": "confirmed",
+  "markdown_it.token.Token.__post_init__ -> markdown_it.token.convert_attrs": "confirmed",
+  "markdown_it.token.Token.attrPush -> markdown_it.token.Token.attrSet": "confirmed",
+  "markdown_it.token.Token.from_dict -> markdown_it.token.Token.from_dict": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.__init__ -> markdown_it.tree.SyntaxTreeNode._set_children_from_tokens": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.__init__ -> markdown_it.tree._NesterTokens": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode._set_children_from_tokens -> markdown_it.tree.SyntaxTreeNode._add_child": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.attrGet -> markdown_it.tree.SyntaxTreeNode._attribute_token": "caller_not_run",
+  "markdown_it.tree.SyntaxTreeNode.attrs -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.block -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.content -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.hidden -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.info -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.level -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.map -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.markup -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.meta -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed",
+  "markdown_it.tree.SyntaxTreeNode.tag -> markdown_it.tree.SyntaxTreeNode._attribute_token": "confirmed"
+ }
+}

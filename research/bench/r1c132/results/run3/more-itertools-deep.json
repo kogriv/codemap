@@ -1,0 +1,317 @@
+{
+ "graph": "deep.json",
+ "tier": "deep",
+ "nodes": 362,
+ "functions": 265,
+ "functions_started": 256,
+ "calls_edges": 97,
+ "runtime_pairs": 121,
+ "unmapped_runtime": {},
+ "categories": {
+  "implicit": 16,
+  "call": 85,
+  "construct": 8,
+  "init": 7,
+  "property": 5
+ },
+ "recall": {
+  "explicit": {
+   "pairs": 93,
+   "found": 83,
+   "recall": 0.8925,
+   "found_calls_or_references": 86,
+   "by_via": {
+    "direct": {
+     "pairs": 84,
+     "found": 77
+    },
+    "nested": {
+     "pairs": 9,
+     "found": 6
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "implicit": {
+   "pairs": 16,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 16,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "property": {
+   "pairs": 5,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 0,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 5,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "decorator": {
+   "pairs": 0,
+   "found": 0,
+   "recall": null,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 0,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  }
+ },
+ "precision": {
+  "outcomes": {
+   "contradicted": 1,
+   "confirmed": 83,
+   "attribute_target": 11,
+   "caller_not_run": 1,
+   "unexercised": 1
+  },
+  "decided": 0.9881,
+  "by_grade": {
+   "exact": {
+    "attribute_target": 6,
+    "decided": null
+   },
+   "inferred": {
+    "contradicted": 1,
+    "confirmed": 83,
+    "attribute_target": 5,
+    "caller_not_run": 1,
+    "unexercised": 1,
+    "decided": 0.9881
+   }
+  },
+  "by_resolution": {
+   "deep": {
+    "contradicted": 1,
+    "confirmed": 83,
+    "attribute_target": 5,
+    "caller_not_run": 1,
+    "unexercised": 1,
+    "decided": 0.9881
+   },
+   "self": {
+    "attribute_target": 6,
+    "decided": null
+   }
+  }
+ },
+ "callers_complete": {
+  "callees": 74,
+  "complete": 69,
+  "share": 0.9324
+ },
+ "misses": [
+  [
+   "more_itertools.more._random_ordered_indices",
+   "more_itertools.recipes._batched",
+   "direct"
+  ],
+  [
+   "more_itertools.more.chunked",
+   "more_itertools.recipes.take",
+   "nested"
+  ],
+  [
+   "more_itertools.more.iequals",
+   "more_itertools.recipes.all_equal",
+   "direct"
+  ],
+  [
+   "more_itertools.more.longest_common_prefix",
+   "more_itertools.recipes.all_equal",
+   "nested"
+  ],
+  [
+   "more_itertools.more.make_decorator",
+   "more_itertools.more.seekable",
+   "nested"
+  ],
+  [
+   "more_itertools.more.outer_product",
+   "more_itertools.recipes._batched",
+   "direct"
+  ],
+  [
+   "more_itertools.more.side_effect",
+   "more_itertools.recipes.take",
+   "direct"
+  ],
+  [
+   "more_itertools.recipes.first_true",
+   "more_itertools.recipes.is_prime",
+   "direct"
+  ],
+  [
+   "more_itertools.recipes.matmul",
+   "more_itertools.recipes._batched",
+   "direct"
+  ],
+  [
+   "more_itertools.recipes.reshape",
+   "more_itertools.recipes._batched",
+   "direct"
+  ]
+ ],
+ "contradicted": [
+  [
+   "more_itertools.more._complex_sumprod",
+   "more_itertools.more._fsumprod",
+   "deep"
+  ]
+ ],
+ "contradicted_same_name": [],
+ "edge_outcomes": {
+  "more_itertools.more._complex_sumprod -> more_itertools.more._fsumprod": "contradicted",
+  "more_itertools.more._random_ordered_indices -> more_itertools.more._full_period_lcg": "confirmed",
+  "more_itertools.more._random_ordered_indices -> more_itertools.recipes.batched": "attribute_target",
+  "more_itertools.more._sample_weighted -> more_itertools.recipes.take": "confirmed",
+  "more_itertools.more.adjacent -> more_itertools.more.windowed": "confirmed",
+  "more_itertools.more.bucket.__contains__ -> more_itertools.more.bucket._validator": "attribute_target",
+  "more_itertools.more.bucket.__getitem__ -> more_itertools.more.bucket._get_values": "confirmed",
+  "more_itertools.more.bucket.__getitem__ -> more_itertools.more.bucket._validator": "attribute_target",
+  "more_itertools.more.bucket.__iter__ -> more_itertools.more.bucket._key": "attribute_target",
+  "more_itertools.more.bucket.__iter__ -> more_itertools.more.bucket._validator": "attribute_target",
+  "more_itertools.more.bucket._get_values -> more_itertools.more.bucket._key": "attribute_target",
+  "more_itertools.more.bucket._get_values -> more_itertools.more.bucket._validator": "attribute_target",
+  "more_itertools.more.callback_iter.__init__ -> more_itertools.more.callback_iter._reader": "confirmed",
+  "more_itertools.more.callback_iter._reader -> more_itertools.more.AbortThread": "confirmed",
+  "more_itertools.more.combination_index -> more_itertools.more.last": "confirmed",
+  "more_itertools.more.concurrent_tee -> more_itertools.more._concurrent_tee": "confirmed",
+  "more_itertools.more.count_cycle -> more_itertools.more.repeat_each": "confirmed",
+  "more_itertools.more.dft -> more_itertools.more._complex_sumprod": "confirmed",
+  "more_itertools.more.distinct_combinations -> more_itertools.recipes.unique_everseen": "confirmed",
+  "more_itertools.more.dl_mul -> more_itertools.more.dl_split": "caller_not_run",
+  "more_itertools.more.duplicates_justseen -> more_itertools.recipes.flatten": "confirmed",
+  "more_itertools.more.extract -> more_itertools.more._extract_buffered": "confirmed",
+  "more_itertools.more.extract -> more_itertools.more._extract_monotonic": "confirmed",
+  "more_itertools.more.ichunked -> more_itertools.recipes.consume": "confirmed",
+  "more_itertools.more.idft -> more_itertools.more._complex_sumprod": "confirmed",
+  "more_itertools.more.intersperse -> more_itertools.more.chunked": "confirmed",
+  "more_itertools.more.intersperse -> more_itertools.more.interleave": "confirmed",
+  "more_itertools.more.intersperse -> more_itertools.recipes.flatten": "confirmed",
+  "more_itertools.more.islice_extended.__getitem__ -> more_itertools.more._islice_helper": "confirmed",
+  "more_itertools.more.islice_extended.__getitem__ -> more_itertools.more.islice_extended": "confirmed",
+  "more_itertools.more.islice_extended.__init__ -> more_itertools.more._islice_helper": "confirmed",
+  "more_itertools.more.locate -> more_itertools.more.windowed": "confirmed",
+  "more_itertools.more.nth_or_last -> more_itertools.more.last": "confirmed",
+  "more_itertools.more.nth_prime -> more_itertools.more._nth_prime_bounds": "confirmed",
+  "more_itertools.more.nth_prime -> more_itertools.recipes.first_true": "confirmed",
+  "more_itertools.more.nth_prime -> more_itertools.recipes.nth": "confirmed",
+  "more_itertools.more.nth_prime -> more_itertools.recipes.sieve": "confirmed",
+  "more_itertools.more.numeric_range.__contains__ -> more_itertools.more.numeric_range.index": "confirmed",
+  "more_itertools.more.numeric_range.__getitem__ -> more_itertools.more.numeric_range": "confirmed",
+  "more_itertools.more.numeric_range.__getitem__ -> more_itertools.more.numeric_range._get_by_index": "confirmed",
+  "more_itertools.more.numeric_range._len -> more_itertools.more.numeric_range._before_stop": "confirmed",
+  "more_itertools.more.numeric_range.index -> more_itertools.more.numeric_range._index_near": "confirmed",
+  "more_itertools.more.outer_product -> more_itertools.recipes.batched": "attribute_target",
+  "more_itertools.more.partitions -> more_itertools.recipes.powerset": "confirmed",
+  "more_itertools.more.peekable.__bool__ -> more_itertools.more.peekable.peek": "confirmed",
+  "more_itertools.more.peekable.__getitem__ -> more_itertools.more.peekable._get_slice": "confirmed",
+  "more_itertools.more.random_ordered_range -> more_itertools.more._random_ordered_indices": "confirmed",
+  "more_itertools.more.replace -> more_itertools.more.windowed": "confirmed",
+  "more_itertools.more.replace -> more_itertools.recipes.consume": "confirmed",
+  "more_itertools.more.rlocate -> more_itertools.more.locate": "confirmed",
+  "more_itertools.more.run_length.encode -> more_itertools.more.ilen": "confirmed",
+  "more_itertools.more.sample -> more_itertools.more._sample_counted": "confirmed",
+  "more_itertools.more.sample -> more_itertools.more._sample_unweighted": "confirmed",
+  "more_itertools.more.sample -> more_itertools.more._sample_weighted": "confirmed",
+  "more_itertools.more.seekable.__bool__ -> more_itertools.more.seekable.peek": "confirmed",
+  "more_itertools.more.seekable.__init__ -> more_itertools.more.peekable": "confirmed",
+  "more_itertools.more.seekable.elements -> more_itertools.more.SequenceView": "confirmed",
+  "more_itertools.more.seekable.peek -> more_itertools.more.peekable.peek": "confirmed",
+  "more_itertools.more.seekable.relative_seek -> more_itertools.more.seekable.seek": "confirmed",
+  "more_itertools.more.seekable.seek -> more_itertools.recipes.consume": "confirmed",
+  "more_itertools.more.side_effect -> more_itertools.more.chunked": "confirmed",
+  "more_itertools.more.spy -> more_itertools.recipes.take": "confirmed",
+  "more_itertools.more.stagger -> more_itertools.more.zip_offset": "confirmed",
+  "more_itertools.more.strictly_n -> more_itertools.more.raise_": "confirmed",
+  "more_itertools.more.strip -> more_itertools.more.lstrip": "confirmed",
+  "more_itertools.more.strip -> more_itertools.more.rstrip": "confirmed",
+  "more_itertools.more.synchronized -> more_itertools.more.serialize": "confirmed",
+  "more_itertools.more.unzip -> more_itertools.more.iter_suppress": "confirmed",
+  "more_itertools.more.unzip -> more_itertools.more.spy": "confirmed",
+  "more_itertools.recipes -> more_itertools.recipes.sieve": "confirmed",
+  "more_itertools.recipes._flatten_tensor -> more_itertools.recipes._is_scalar": "confirmed",
+  "more_itertools.recipes._strong_probable_prime -> more_itertools.recipes._shift_to_odd": "confirmed",
+  "more_itertools.recipes.factor -> more_itertools.recipes._factor_pollard": "confirmed",
+  "more_itertools.recipes.factor -> more_itertools.recipes.is_prime": "confirmed",
+  "more_itertools.recipes.is_prime -> more_itertools.recipes._private_randrange": "attribute_target",
+  "more_itertools.recipes.is_prime -> more_itertools.recipes._strong_probable_prime": "confirmed",
+  "more_itertools.recipes.matmul -> more_itertools.recipes.batched": "attribute_target",
+  "more_itertools.recipes.matmul -> more_itertools.recipes.transpose": "confirmed",
+  "more_itertools.recipes.polynomial_from_roots -> more_itertools.recipes.convolve": "confirmed",
+  "more_itertools.recipes.reshape -> more_itertools.recipes._flatten_tensor": "confirmed",
+  "more_itertools.recipes.reshape -> more_itertools.recipes.batched": "attribute_target",
+  "more_itertools.recipes.running_max -> more_itertools.recipes._windowed_running_max": "confirmed",
+  "more_itertools.recipes.running_mean -> more_itertools.recipes._windowed_running_mean": "confirmed",
+  "more_itertools.recipes.running_median -> more_itertools.recipes._running_median_minheap_and_maxheap": "unexercised",
+  "more_itertools.recipes.running_median -> more_itertools.recipes._running_median_minheap_only": "confirmed",
+  "more_itertools.recipes.running_median -> more_itertools.recipes._running_median_windowed": "confirmed",
+  "more_itertools.recipes.running_min -> more_itertools.recipes._windowed_running_min": "confirmed",
+  "more_itertools.recipes.running_statistics -> more_itertools.recipes.running_max": "confirmed",
+  "more_itertools.recipes.running_statistics -> more_itertools.recipes.running_mean": "confirmed",
+  "more_itertools.recipes.running_statistics -> more_itertools.recipes.running_median": "confirmed",
+  "more_itertools.recipes.running_statistics -> more_itertools.recipes.running_min": "confirmed",
+  "more_itertools.recipes.sieve -> more_itertools.recipes.iter_index": "confirmed",
+  "more_itertools.recipes.sliding_window -> more_itertools.recipes._sliding_window_deque": "confirmed",
+  "more_itertools.recipes.sliding_window -> more_itertools.recipes._sliding_window_islice": "confirmed",
+  "more_itertools.recipes.sliding_window -> more_itertools.recipes.pairwise": "confirmed",
+  "more_itertools.recipes.totient -> more_itertools.recipes.factor": "confirmed",
+  "more_itertools.recipes.unique -> more_itertools.recipes.unique_justseen": "confirmed"
+ }
+}

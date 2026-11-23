@@ -19,7 +19,8 @@ Two things are measured here, both reproducible:
 > of Python's dynamism, not a bug, and it is the same ceiling every sound static tool hits (~99% precision /
 > ~70% recall in the PyCG literature). For impact questions the graph is **~2× cheaper than grep on unique
 > names and tens of × on polymorphic ones**; for "where is X defined" it is **no cheaper** — grep already
-> nails that.
+> nails that. On five outside projects measured against their own tests (R1-C132), deep recall is 60–89% of
+> the calls the tests make, and of 105 contradicted edges read by hand, one is a call that does not exist.
 
 ---
 
@@ -164,6 +165,47 @@ Measured on **bquant** (fast tier): 5 533 `exact`, 49 `heuristic`, 3 021 edges w
 at all (`contains`, `inherits`, … — syntax, nothing to resolve). Those 49 are the whole
 difference the filter makes: across the 25 symbols reached by a registry fan-out, `callers`
 returns 50 and `callers(min_confidence="exact")` returns 1.
+
+
+### An independent benchmark: five projects against their own tests
+
+The suite and the bquant rate are measurements codemap made of itself. R1-C132 measures it on code it was
+never tuned on, against a truth it did not produce. The truth is the calls each project's own test suite makes
+at runtime, recorded with `sys.monitoring`. Predictions and controls were written down before the runs
+([design](../research/bench/r1c132/DESIGN.md), [results](../research/bench/r1c132/RESULTS.md)). The setup:
+codmap 0.0.47, Python 3.12, the package directory only.
+
+| project | deep recall | fast recall | deep precision, decided (raw) | false edges in the contradicted read |
+|---|---|---|---|---|
+| more-itertools | 89.2% | 88.2% | 98.8% | 0 of 1 |
+| click | 73.2% | 53.4% | 97.1% | 0 of 25 |
+| rich | 82.1% | 58.0% | 96.1% | 1 of 54 |
+| markdown-it-py | 72.0% | 39.9% | 98.6% | 0 of 6 |
+| jinja | 60.0% | 46.1% | 98.2% | 0 of 19 |
+
+**How the columns are counted:**
+- **Recall** is over the explicit calls and constructions the tests actually make, so it is an upper bound for
+  all real calls.
+- **Precision** is decided where a call site in the caller ran. A contradicted edge is one whose every naming
+  site ran while the runtime never saw that call.
+
+Every contradicted edge was read by hand. Only one was a call that does not exist. The rest are three kinds:
+- a branch that did not run (`x or f()`);
+- code that runs when a definition executes (decorators, default arguments), which codemap attributes to the
+  function;
+- most often, **a call that entered another function of the same name**: an override in a subclass, a
+  protocol's implementation, a test double.
+
+The same mechanism shows on the recall side. 19–36% of the deep misses on click, rich and jinja are calls
+codemap does have, with the right name, pointed at the declaring class's method instead of the override the
+runtime entered. That is the next lever (R1-C136). The rest of the misses go through values a static graph
+does not hold:
+- markdown-it-py's rules kept in lists;
+- jinja's compiled templates calling back into the runtime;
+- callbacks.
+
+The micro-suite's 100% on decidable edges stays a claim about decidable edges. On real code, read the table
+above.
 
 ---
 

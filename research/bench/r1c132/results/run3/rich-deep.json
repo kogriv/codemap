@@ -1,0 +1,3006 @@
+{
+ "graph": "deep.json",
+ "tier": "deep",
+ "nodes": 2160,
+ "functions": 767,
+ "functions_started": 680,
+ "calls_edges": 1429,
+ "runtime_pairs": 1878,
+ "unmapped_runtime": {
+  "callee": 3
+ },
+ "categories": {
+  "call": 833,
+  "construct": 407,
+  "init": 229,
+  "property": 207,
+  "implicit": 197,
+  "decorator": 5
+ },
+ "recall": {
+  "explicit": {
+   "pairs": 1240,
+   "found": 1018,
+   "recall": 0.821,
+   "found_calls_or_references": 1101,
+   "by_via": {
+    "direct": {
+     "pairs": 1165,
+     "found": 966
+    },
+    "nested": {
+     "pairs": 64,
+     "found": 50
+    },
+    "external": {
+     "pairs": 4,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 7,
+     "found": 2
+    }
+   }
+  },
+  "implicit": {
+   "pairs": 197,
+   "found": 3,
+   "recall": 0.0152,
+   "found_calls_or_references": 3,
+   "by_via": {
+    "direct": {
+     "pairs": 173,
+     "found": 3
+    },
+    "nested": {
+     "pairs": 19,
+     "found": 0
+    },
+    "external": {
+     "pairs": 1,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 4,
+     "found": 0
+    }
+   }
+  },
+  "property": {
+   "pairs": 207,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 200,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 6,
+     "found": 0
+    },
+    "external": {
+     "pairs": 1,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  },
+  "decorator": {
+   "pairs": 5,
+   "found": 0,
+   "recall": 0.0,
+   "found_calls_or_references": 0,
+   "by_via": {
+    "direct": {
+     "pairs": 5,
+     "found": 0
+    },
+    "nested": {
+     "pairs": 0,
+     "found": 0
+    },
+    "external": {
+     "pairs": 0,
+     "found": 0
+    },
+    "wrapper": {
+     "pairs": 0,
+     "found": 0
+    }
+   }
+  }
+ },
+ "precision": {
+  "outcomes": {
+   "no_site": 212,
+   "confirmed": 1023,
+   "caller_not_run": 85,
+   "attribute_target": 39,
+   "unexercised": 28,
+   "contradicted": 42
+  },
+  "decided": 0.9606,
+  "by_grade": {
+   "exact": {
+    "attribute_target": 14,
+    "no_site": 1,
+    "decided": null
+   },
+   "inferred": {
+    "no_site": 211,
+    "confirmed": 1023,
+    "caller_not_run": 85,
+    "attribute_target": 25,
+    "unexercised": 28,
+    "contradicted": 42,
+    "decided": 0.9606
+   }
+  },
+  "by_resolution": {
+   "deep": {
+    "no_site": 211,
+    "confirmed": 1023,
+    "caller_not_run": 85,
+    "attribute_target": 25,
+    "unexercised": 28,
+    "contradicted": 42,
+    "decided": 0.9606
+   },
+   "imported": {
+    "no_site": 1,
+    "decided": null
+   },
+   "self": {
+    "attribute_target": 14,
+    "decided": null
+   }
+  }
+ },
+ "callers_complete": {
+  "callees": 495,
+  "complete": 363,
+  "share": 0.7333
+ },
+ "misses": [
+  [
+   "rich._inspect.Inspect._get_signature",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich._inspect.Inspect._make_title",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich._inspect.Inspect._render",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich._inspect.Inspect._render",
+   "rich.table.Table.add_row",
+   "direct"
+  ],
+  [
+   "rich._wrap.divide_line",
+   "rich.cells.cell_len",
+   "direct"
+  ],
+  [
+   "rich.align.Align.center",
+   "rich.align.Align",
+   "direct"
+  ],
+  [
+   "rich.align.Align.left",
+   "rich.align.Align",
+   "direct"
+  ],
+  [
+   "rich.align.Align.right",
+   "rich.align.Align",
+   "direct"
+  ],
+  [
+   "rich.ansi.AnsiDecoder.decode_line",
+   "rich.color.Color.from_ansi",
+   "direct"
+  ],
+  [
+   "rich.ansi.AnsiDecoder.decode_line",
+   "rich.color.Color.from_rgb",
+   "direct"
+  ],
+  [
+   "rich.ansi.AnsiDecoder.decode_line",
+   "rich.text.Text.append",
+   "direct"
+  ],
+  [
+   "rich.color.Color.default",
+   "rich.color.Color",
+   "direct"
+  ],
+  [
+   "rich.color.Color.from_ansi",
+   "rich.color.Color",
+   "direct"
+  ],
+  [
+   "rich.color.Color.from_triplet",
+   "rich.color.Color",
+   "direct"
+  ],
+  [
+   "rich.color.Color.parse",
+   "rich.color.Color",
+   "direct"
+  ],
+  [
+   "rich.columns.Columns.__rich_console__",
+   "rich.align.Align",
+   "direct"
+  ],
+  [
+   "rich.columns.Columns.__rich_console__",
+   "rich.console.Console.render_str",
+   "direct"
+  ],
+  [
+   "rich.columns.Columns.__rich_console__",
+   "rich.measure.Measurement.get",
+   "direct"
+  ],
+  [
+   "rich.columns.Columns.__rich_console__",
+   "rich.table.Table.add_row",
+   "direct"
+  ],
+  [
+   "rich.console.Console",
+   "rich.highlighter.ReprHighlighter",
+   "direct"
+  ],
+  [
+   "rich.console.Console._collect_renderables",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.console.Console._render_buffer",
+   "rich.style.Style.render",
+   "direct"
+  ],
+  [
+   "rich.console.Console._write_buffer",
+   "rich._null_file.NullFile.flush",
+   "direct"
+  ],
+  [
+   "rich.console.Console._write_buffer",
+   "rich._null_file.NullFile.write",
+   "direct"
+  ],
+  [
+   "rich.console.Console.export_html",
+   "rich.style.Style.get_html_style",
+   "direct"
+  ],
+  [
+   "rich.console.Console.export_text",
+   "rich.style.Style.render",
+   "nested"
+  ],
+  [
+   "rich.console.Console.is_terminal",
+   "rich._null_file.NullFile.isatty",
+   "direct"
+  ],
+  [
+   "rich.console.Console.log",
+   "rich._log_render.LogRender.__call__",
+   "direct"
+  ],
+  [
+   "rich.console.Console.log",
+   "rich.console.Console.render",
+   "direct"
+  ],
+  [
+   "rich.console.Console.log",
+   "rich.live.Live.process_renderables",
+   "direct"
+  ],
+  [
+   "rich.console.Console.print",
+   "rich.console.Console.render",
+   "direct"
+  ],
+  [
+   "rich.console.Console.print",
+   "rich.live.Live.process_renderables",
+   "direct"
+  ],
+  [
+   "rich.console.Console.print",
+   "rich.segment.Segment",
+   "wrapper"
+  ],
+  [
+   "rich.console.Console.render",
+   "rich.panel.Panel",
+   "external"
+  ],
+  [
+   "rich.console.Console.render",
+   "rich.segment.Segment",
+   "wrapper"
+  ],
+  [
+   "rich.console.Console.render_str",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.console.PagerContext.__exit__",
+   "rich.pager.SystemPager.show",
+   "direct"
+  ],
+  [
+   "rich.console.ScreenUpdate.__rich_console__",
+   "rich.control.Control.move_to",
+   "direct"
+  ],
+  [
+   "rich.containers.Lines.__init__",
+   "rich.text.Text",
+   "wrapper"
+  ],
+  [
+   "rich.containers.Lines.justify",
+   "rich.text.Text.get_style_at_offset",
+   "direct"
+  ],
+  [
+   "rich.control.Control.alt_screen",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.control.Control.bell",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.control.Control.clear",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.control.Control.home",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.control.Control.move",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.control.Control.move_to",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.control.Control.move_to_column",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.control.Control.show_cursor",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.control.Control.title",
+   "rich.control.Control",
+   "direct"
+  ],
+  [
+   "rich.highlighter.Highlighter.__call__",
+   "rich.highlighter.JSONHighlighter.highlight",
+   "direct"
+  ],
+  [
+   "rich.highlighter.Highlighter.__call__",
+   "rich.highlighter.RegexHighlighter.highlight",
+   "direct"
+  ],
+  [
+   "rich.highlighter.RegexHighlighter.highlight",
+   "rich.text.Text.highlight_regex",
+   "direct"
+  ],
+  [
+   "rich.json.JSON.__init__",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.json.JSON.from_data",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.layout.ColumnSplitter.divide",
+   "rich.region.Region",
+   "direct"
+  ],
+  [
+   "rich.layout.Layout.__init__",
+   "rich.layout.ColumnSplitter",
+   "direct"
+  ],
+  [
+   "rich.layout.Layout._make_region_map",
+   "rich.layout.ColumnSplitter.divide",
+   "direct"
+  ],
+  [
+   "rich.layout.Layout._make_region_map",
+   "rich.layout.RowSplitter.divide",
+   "direct"
+  ],
+  [
+   "rich.layout.Layout.render",
+   "rich.console.Console.render_lines",
+   "direct"
+  ],
+  [
+   "rich.layout.Layout.render",
+   "rich.console.ConsoleOptions.update_dimensions",
+   "direct"
+  ],
+  [
+   "rich.layout.Layout.split",
+   "rich.layout.ColumnSplitter",
+   "direct"
+  ],
+  [
+   "rich.layout.Layout.split",
+   "rich.layout.RowSplitter",
+   "direct"
+  ],
+  [
+   "rich.layout.Layout.tree",
+   "rich.layout.ColumnSplitter.get_tree_icon",
+   "nested"
+  ],
+  [
+   "rich.layout.Layout.tree",
+   "rich.layout.RowSplitter.get_tree_icon",
+   "nested"
+  ],
+  [
+   "rich.layout.RowSplitter.divide",
+   "rich.region.Region",
+   "direct"
+  ],
+  [
+   "rich.layout._Placeholder.__rich_console__",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.live.Live._disable_redirect_io",
+   "rich.file_proxy.FileProxy.flush",
+   "direct"
+  ],
+  [
+   "rich.live.Live.get_renderable",
+   "rich.progress.Progress.get_renderable",
+   "direct"
+  ],
+  [
+   "rich.logging.RichHandler.__init__",
+   "rich.highlighter.ReprHighlighter",
+   "direct"
+  ],
+  [
+   "rich.logging.RichHandler.render",
+   "rich._log_render.LogRender.__call__",
+   "direct"
+  ],
+  [
+   "rich.logging.RichHandler.render_message",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.markdown.CodeBlock.create",
+   "rich.markdown.CodeBlock",
+   "direct"
+  ],
+  [
+   "rich.markdown.Heading.create",
+   "rich.markdown.Heading",
+   "direct"
+  ],
+  [
+   "rich.markdown.ImageItem.create",
+   "rich.markdown.ImageItem",
+   "direct"
+  ],
+  [
+   "rich.markdown.Link.create",
+   "rich.markdown.Link",
+   "direct"
+  ],
+  [
+   "rich.markdown.ListElement.create",
+   "rich.markdown.ListElement",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.console.Console.render",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.BlockQuote.on_child_close",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.CodeBlock.create",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.Heading.create",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.Heading.on_enter",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.ImageItem.create",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.ImageItem.on_enter",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.ListElement.create",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.ListElement.on_child_close",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.ListItem.on_child_close",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.MarkdownElement.on_child_close",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.MarkdownElement.on_leave",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.MarkdownElement.on_text",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.Paragraph.create",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.TableBodyElement.on_child_close",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.TableDataElement.create",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.TableElement.on_child_close",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.TableHeaderElement.on_child_close",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.TableRowElement.on_child_close",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.TextElement.on_enter",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.TextElement.on_leave",
+   "direct"
+  ],
+  [
+   "rich.markdown.Markdown.__rich_console__",
+   "rich.markdown.TextElement.on_text",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownContext.on_text",
+   "rich.markdown.TableDataElement.on_text",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownContext.on_text",
+   "rich.markdown.TextElement.on_text",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownElement.create",
+   "rich.markdown.BlockQuote",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownElement.create",
+   "rich.markdown.HorizontalRule",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownElement.create",
+   "rich.markdown.ListItem",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownElement.create",
+   "rich.markdown.TableBodyElement",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownElement.create",
+   "rich.markdown.TableElement",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownElement.create",
+   "rich.markdown.TableHeaderElement",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownElement.create",
+   "rich.markdown.TableRowElement",
+   "direct"
+  ],
+  [
+   "rich.markdown.MarkdownElement.create",
+   "rich.markdown.UnknownElement",
+   "direct"
+  ],
+  [
+   "rich.markdown.Paragraph.create",
+   "rich.markdown.Paragraph",
+   "direct"
+  ],
+  [
+   "rich.markdown.TableDataElement.create",
+   "rich.markdown.TableDataElement",
+   "direct"
+  ],
+  [
+   "rich.markup._parse",
+   "rich.markup.Tag",
+   "direct"
+  ],
+  [
+   "rich.markup.render",
+   "rich._emoji_replace._emoji_replace",
+   "direct"
+  ],
+  [
+   "rich.markup.render",
+   "rich.markup.Tag",
+   "direct"
+  ],
+  [
+   "rich.markup.render",
+   "rich.style.Style.normalize",
+   "direct"
+  ],
+  [
+   "rich.markup.render",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.markup.render",
+   "rich.text.Text.append",
+   "direct"
+  ],
+  [
+   "rich.measure.measure_renderables",
+   "rich.measure.Measurement.get",
+   "direct"
+  ],
+  [
+   "rich.padding.Padding.__rich_console__",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.panel.Panel.fit",
+   "rich.panel.Panel",
+   "direct"
+  ],
+  [
+   "rich.pretty.Pretty.__rich_console__",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.pretty.traverse",
+   "rich.pretty._get_braces_for_array",
+   "nested"
+  ],
+  [
+   "rich.pretty.traverse",
+   "rich.pretty._get_braces_for_defaultdict",
+   "nested"
+  ],
+  [
+   "rich.pretty.traverse",
+   "rich.pretty._get_braces_for_deque",
+   "nested"
+  ],
+  [
+   "rich.progress.Progress.make_tasks_table",
+   "rich.progress.ProgressColumn.__call__",
+   "nested"
+  ],
+  [
+   "rich.progress.Progress.open",
+   "rich.progress._Reader.readable",
+   "direct"
+  ],
+  [
+   "rich.progress.Progress.open",
+   "rich.progress._Reader.seekable",
+   "direct"
+  ],
+  [
+   "rich.progress.Progress.open",
+   "rich.progress._Reader.writable",
+   "direct"
+  ],
+  [
+   "rich.progress.Progress.reset",
+   "rich.progress.Task._reset",
+   "direct"
+  ],
+  [
+   "rich.progress.Progress.track",
+   "rich.progress.Progress.advance",
+   "direct"
+  ],
+  [
+   "rich.progress.Progress.track",
+   "rich.progress.Progress.refresh",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.BarColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.DownloadColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.FileSizeColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.MofNCompleteColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.TaskProgressColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.TextColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.TimeElapsedColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.TimeRemainingColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.TotalFileSizeColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.TransferSpeedColumn.render",
+   "direct"
+  ],
+  [
+   "rich.progress.TextColumn.render",
+   "rich.highlighter.NullHighlighter.highlight",
+   "direct"
+  ],
+  [
+   "rich.progress._ReadContext.__exit__",
+   "rich.progress._Reader.close",
+   "direct"
+  ],
+  [
+   "rich.progress_bar.ProgressBar.__rich_console__",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.progress_bar.ProgressBar._get_pulse_segments",
+   "rich.color.Color.from_triplet",
+   "direct"
+  ],
+  [
+   "rich.progress_bar.ProgressBar._get_pulse_segments",
+   "rich.style.Style",
+   "direct"
+  ],
+  [
+   "rich.prompt.PromptBase.__call__",
+   "rich.prompt.Confirm.process_response",
+   "direct"
+  ],
+  [
+   "rich.prompt.PromptBase.ask",
+   "rich.prompt.Confirm",
+   "direct"
+  ],
+  [
+   "rich.prompt.PromptBase.ask",
+   "rich.prompt.IntPrompt",
+   "direct"
+  ],
+  [
+   "rich.prompt.PromptBase.ask",
+   "rich.prompt.Prompt",
+   "direct"
+  ],
+  [
+   "rich.prompt.PromptBase.ask",
+   "rich.prompt.PromptBase.__call__",
+   "direct"
+  ],
+  [
+   "rich.prompt.PromptBase.make_prompt",
+   "rich.prompt.Confirm.render_default",
+   "direct"
+  ],
+  [
+   "rich.protocol.rich_cast",
+   "rich.text.Text",
+   "external"
+  ],
+  [
+   "rich.segment.Segment._split_cells",
+   "rich.cells.get_character_cell_size",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment._split_cells",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.adjust_line_length",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.align_bottom",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.align_middle",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.align_top",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.divide",
+   "rich.cells.cached_cell_len",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.get_line_length",
+   "rich.cells.cell_len",
+   "nested"
+  ],
+  [
+   "rich.segment.Segment.get_shape",
+   "rich.segment.Segment.get_line_length",
+   "nested"
+  ],
+  [
+   "rich.segment.Segment.line",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.remove_color",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.set_shape",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.set_shape",
+   "rich.segment.Segment.adjust_line_length",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.simplify",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.split_and_crop_lines",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.split_and_crop_lines",
+   "rich.segment.Segment.adjust_line_length",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.split_lines",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.split_lines_terminator",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.strip_links",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.strip_links",
+   "rich.style.Style.update_link",
+   "direct"
+  ],
+  [
+   "rich.segment.Segment.strip_styles",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax._get_base_style",
+   "rich.syntax.ANSISyntaxTheme.get_background_style",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax._get_base_style",
+   "rich.syntax.PygmentsSyntaxTheme.get_background_style",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax._get_line_numbers_color",
+   "rich.syntax.PygmentsSyntaxTheme.get_background_style",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax._get_number_styles",
+   "rich.syntax.PygmentsSyntaxTheme.get_style_for_token",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax._get_syntax",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax._get_syntax",
+   "rich.syntax.ANSISyntaxTheme.get_style_for_token",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax._get_syntax",
+   "rich.syntax.PygmentsSyntaxTheme.get_style_for_token",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax._get_token_color",
+   "rich.syntax.PygmentsSyntaxTheme.get_style_for_token",
+   "direct"
+  ],
+  [
+   "rich.syntax.Syntax.from_path",
+   "rich.syntax.Syntax",
+   "direct"
+  ],
+  [
+   "rich.table.Column.copy",
+   "rich.table.Column",
+   "external"
+  ],
+  [
+   "rich.table.Table.__rich_measure__",
+   "rich.table.Table._measure_column",
+   "direct"
+  ],
+  [
+   "rich.table.Table._calculate_column_widths",
+   "rich.table.Table._get_padding_width",
+   "direct"
+  ],
+  [
+   "rich.table.Table._get_cells",
+   "rich.console.Console.get_style",
+   "direct"
+  ],
+  [
+   "rich.table.Table._get_cells",
+   "rich.padding.Padding",
+   "direct"
+  ],
+  [
+   "rich.table.Table._measure_column",
+   "rich.measure.Measurement.get",
+   "direct"
+  ],
+  [
+   "rich.table.Table._render",
+   "rich.segment.Segment",
+   "direct"
+  ],
+  [
+   "rich.table.Table._render",
+   "rich.table.Table.get_row_style",
+   "direct"
+  ],
+  [
+   "rich.table.Table.grid",
+   "rich.table.Table",
+   "direct"
+  ],
+  [
+   "rich.text.Text.__getitem__",
+   "rich.text.Span",
+   "nested"
+  ],
+  [
+   "rich.text.Text._trim_spans",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.append_text",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.append_tokens",
+   "rich.syntax.ANSISyntaxTheme.get_style_for_token",
+   "wrapper"
+  ],
+  [
+   "rich.text.Text.append_tokens",
+   "rich.syntax.PygmentsSyntaxTheme.get_style_for_token",
+   "wrapper"
+  ],
+  [
+   "rich.text.Text.append_tokens",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.assemble",
+   "rich.text.Text",
+   "direct"
+  ],
+  [
+   "rich.text.Text.assemble",
+   "rich.text.Text.append",
+   "direct"
+  ],
+  [
+   "rich.text.Text.divide",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.divide",
+   "rich.text.Text",
+   "nested"
+  ],
+  [
+   "rich.text.Text.fit",
+   "rich.containers.Lines.append",
+   "direct"
+  ],
+  [
+   "rich.text.Text.get_style_at_offset",
+   "rich.console.Console.get_style",
+   "direct"
+  ],
+  [
+   "rich.text.Text.highlight_regex",
+   "rich.style.Style.parse",
+   "external"
+  ],
+  [
+   "rich.text.Text.highlight_regex",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.highlight_words",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.join",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.pad",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.pad_left",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.render",
+   "rich.console.Console.get_style",
+   "direct"
+  ],
+  [
+   "rich.text.Text.render",
+   "rich.style.Style.combine",
+   "nested"
+  ],
+  [
+   "rich.text.Text.right_crop",
+   "rich.text.Span",
+   "direct"
+  ],
+  [
+   "rich.text.Text.styled",
+   "rich.text.Text",
+   "direct"
+  ],
+  [
+   "rich.traceback.Traceback.__rich_console__",
+   "rich.highlighter.Highlighter.__call__",
+   "nested"
+  ],
+  [
+   "rich.traceback.Traceback.__rich_console__",
+   "rich.syntax.ANSISyntaxTheme.get_background_style",
+   "direct"
+  ],
+  [
+   "rich.traceback.Traceback.__rich_console__",
+   "rich.syntax.ANSISyntaxTheme.get_style_for_token",
+   "direct"
+  ],
+  [
+   "rich.traceback.Traceback._render_stack",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.traceback.Traceback._render_syntax_error",
+   "rich.highlighter.Highlighter.__call__",
+   "direct"
+  ],
+  [
+   "rich.traceback.Traceback.from_exception",
+   "rich.traceback.Traceback",
+   "direct"
+  ],
+  [
+   "rich.tree.Tree.__rich_console__",
+   "rich.console.Console.get_style",
+   "direct"
+  ],
+  [
+   "rich.tree.Tree.__rich_console__",
+   "rich.segment.Segment",
+   "nested"
+  ],
+  [
+   "rich.tree.Tree.__rich_measure__",
+   "rich.measure.Measurement.get",
+   "direct"
+  ]
+ ],
+ "contradicted": [
+  [
+   "rich.align.VerticalCenter.__rich_console__",
+   "rich.console.Console.get_style",
+   "deep"
+  ],
+  [
+   "rich.console.Console.__init__",
+   "rich.highlighter.ReprHighlighter",
+   "deep"
+  ],
+  [
+   "rich.console.Console.log",
+   "rich.console.RenderHook.process_renderables",
+   "deep"
+  ],
+  [
+   "rich.console.Console.print",
+   "rich.console.RenderHook.process_renderables",
+   "deep"
+  ],
+  [
+   "rich.console.Console.render",
+   "rich.console.ConsoleRenderable.__rich_console__",
+   "deep"
+  ],
+  [
+   "rich.console.PagerContext.__exit__",
+   "rich.pager.Pager.show",
+   "deep"
+  ],
+  [
+   "rich.console.PagerContext.__init__",
+   "rich.pager.SystemPager",
+   "deep"
+  ],
+  [
+   "rich.console.ScreenContext.update",
+   "rich.console.Group",
+   "deep"
+  ],
+  [
+   "rich.console.detect_legacy_windows",
+   "rich.console.get_windows_console_features",
+   "deep"
+  ],
+  [
+   "rich.highlighter.Highlighter.__call__",
+   "rich.highlighter.Highlighter.highlight",
+   "deep"
+  ],
+  [
+   "rich.json.JSON.__init__",
+   "rich.highlighter.NullHighlighter",
+   "deep"
+  ],
+  [
+   "rich.json.JSON.from_data",
+   "rich.highlighter.NullHighlighter",
+   "deep"
+  ],
+  [
+   "rich.layout.Layout._make_region_map",
+   "rich.layout.Splitter.divide",
+   "deep"
+  ],
+  [
+   "rich.layout.Layout.add_split",
+   "rich.layout.Layout",
+   "deep"
+  ],
+  [
+   "rich.layout.Layout.split",
+   "rich.layout.Layout",
+   "deep"
+  ],
+  [
+   "rich.layout.Layout.tree",
+   "rich.layout.Splitter.get_tree_icon",
+   "deep"
+  ],
+  [
+   "rich.layout.Layout.tree",
+   "rich.styled.Styled",
+   "deep"
+  ],
+  [
+   "rich.logging.RichHandler.__init__",
+   "rich.get_console",
+   "deep"
+  ],
+  [
+   "rich.markdown.ImageItem.__rich_console__",
+   "rich.text.Text",
+   "deep"
+  ],
+  [
+   "rich.markdown.MarkdownContext.on_text",
+   "rich.markdown.MarkdownElement.on_text",
+   "deep"
+  ],
+  [
+   "rich.pager.SystemPager.show",
+   "rich.pager.SystemPager._pager",
+   "deep"
+  ],
+  [
+   "rich.pretty._ipy_display_hook",
+   "rich.get_console",
+   "deep"
+  ],
+  [
+   "rich.pretty.install",
+   "rich.get_console",
+   "deep"
+  ],
+  [
+   "rich.pretty.pprint",
+   "rich.get_console",
+   "deep"
+  ],
+  [
+   "rich.print",
+   "rich.console.Console",
+   "deep"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.ProgressColumn.render",
+   "deep"
+  ],
+  [
+   "rich.progress.TextColumn.render",
+   "rich.highlighter.Highlighter.highlight",
+   "deep"
+  ],
+  [
+   "rich.prompt.PromptBase.__init__",
+   "rich.get_console",
+   "deep"
+  ],
+  [
+   "rich.screen.Screen.__rich_console__",
+   "rich.segment.Segment",
+   "deep"
+  ],
+  [
+   "rich.segment.Segment",
+   "rich.repr.rich_repr",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_base_style",
+   "rich.syntax.SyntaxTheme.get_background_style",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_line_numbers_color",
+   "rich.syntax.SyntaxTheme.get_background_style",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_number_styles",
+   "rich.syntax.SyntaxTheme.get_style_for_token",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_syntax",
+   "rich.syntax.SyntaxTheme.get_style_for_token",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_token_color",
+   "rich.syntax.SyntaxTheme.get_style_for_token",
+   "deep"
+  ],
+  [
+   "rich.text.Text.append",
+   "rich.text.Span.extend",
+   "deep"
+  ],
+  [
+   "rich.text.Text.append_text",
+   "rich.text.Span.extend",
+   "deep"
+  ],
+  [
+   "rich.text.Text.copy_styles",
+   "rich.text.Span.extend",
+   "deep"
+  ],
+  [
+   "rich.traceback.Traceback.__rich_console__",
+   "rich.syntax.SyntaxTheme.get_background_style",
+   "deep"
+  ],
+  [
+   "rich.traceback.Traceback._render_stack",
+   "rich.console.group",
+   "deep"
+  ],
+  [
+   "rich.traceback.Traceback._render_syntax_error",
+   "rich.console.group",
+   "deep"
+  ],
+  [
+   "rich.traceback.install",
+   "rich.console.Console",
+   "deep"
+  ]
+ ],
+ "contradicted_same_name": [
+  [
+   "rich.console.Console.log",
+   "rich.console.RenderHook.process_renderables",
+   "deep"
+  ],
+  [
+   "rich.console.Console.print",
+   "rich.console.RenderHook.process_renderables",
+   "deep"
+  ],
+  [
+   "rich.console.Console.render",
+   "rich.console.ConsoleRenderable.__rich_console__",
+   "deep"
+  ],
+  [
+   "rich.console.PagerContext.__exit__",
+   "rich.pager.Pager.show",
+   "deep"
+  ],
+  [
+   "rich.highlighter.Highlighter.__call__",
+   "rich.highlighter.Highlighter.highlight",
+   "deep"
+  ],
+  [
+   "rich.layout.Layout._make_region_map",
+   "rich.layout.Splitter.divide",
+   "deep"
+  ],
+  [
+   "rich.layout.Layout.tree",
+   "rich.layout.Splitter.get_tree_icon",
+   "deep"
+  ],
+  [
+   "rich.markdown.MarkdownContext.on_text",
+   "rich.markdown.MarkdownElement.on_text",
+   "deep"
+  ],
+  [
+   "rich.progress.ProgressColumn.__call__",
+   "rich.progress.ProgressColumn.render",
+   "deep"
+  ],
+  [
+   "rich.progress.TextColumn.render",
+   "rich.highlighter.Highlighter.highlight",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_base_style",
+   "rich.syntax.SyntaxTheme.get_background_style",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_line_numbers_color",
+   "rich.syntax.SyntaxTheme.get_background_style",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_number_styles",
+   "rich.syntax.SyntaxTheme.get_style_for_token",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_syntax",
+   "rich.syntax.SyntaxTheme.get_style_for_token",
+   "deep"
+  ],
+  [
+   "rich.syntax.Syntax._get_token_color",
+   "rich.syntax.SyntaxTheme.get_style_for_token",
+   "deep"
+  ],
+  [
+   "rich.traceback.Traceback.__rich_console__",
+   "rich.syntax.SyntaxTheme.get_background_style",
+   "deep"
+  ]
+ ],
+ "edge_outcomes": {
+  "rich -> rich.print": "no_site",
+  "rich.__main__ -> rich.__main__.make_test_card": "no_site",
+  "rich.__main__ -> rich.console.Console": "no_site",
+  "rich.__main__ -> rich.console.Console.print": "no_site",
+  "rich.__main__ -> rich.panel.Panel": "no_site",
+  "rich.__main__.ColorBox.__rich_console__ -> rich.color.Color.from_rgb": "confirmed",
+  "rich.__main__.ColorBox.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.__main__.ColorBox.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.__main__.ColorBox.__rich_console__ -> rich.style.Style": "confirmed",
+  "rich.__main__.ColorBox.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.__main__.make_test_card -> rich.__main__.ColorBox": "confirmed",
+  "rich.__main__.make_test_card -> rich.console.Group": "confirmed",
+  "rich.__main__.make_test_card -> rich.markdown.Markdown": "confirmed",
+  "rich.__main__.make_test_card -> rich.pretty.Pretty": "confirmed",
+  "rich.__main__.make_test_card -> rich.syntax.Syntax": "confirmed",
+  "rich.__main__.make_test_card -> rich.table.Table": "confirmed",
+  "rich.__main__.make_test_card -> rich.table.Table.add_column": "confirmed",
+  "rich.__main__.make_test_card -> rich.table.Table.add_row": "confirmed",
+  "rich.__main__.make_test_card -> rich.table.Table.grid": "confirmed",
+  "rich.__main__.make_test_card -> rich.text.Text": "confirmed",
+  "rich.__main__.make_test_card -> rich.text.Text.from_markup": "confirmed",
+  "rich._extension.load_ipython_extension -> rich.pretty.install": "caller_not_run",
+  "rich._extension.load_ipython_extension -> rich.traceback.install": "caller_not_run",
+  "rich._inspect.Inspect.__init__ -> rich._inspect.Inspect._make_title": "confirmed",
+  "rich._inspect.Inspect.__init__ -> rich.highlighter.ReprHighlighter": "confirmed",
+  "rich._inspect.Inspect.__rich__ -> rich._inspect.Inspect._render": "confirmed",
+  "rich._inspect.Inspect.__rich__ -> rich.console.Group": "confirmed",
+  "rich._inspect.Inspect.__rich__ -> rich.panel.Panel.fit": "confirmed",
+  "rich._inspect.Inspect._get_formatted_doc -> rich._inspect._first_paragraph": "confirmed",
+  "rich._inspect.Inspect._get_formatted_doc -> rich.control.escape_control_codes": "confirmed",
+  "rich._inspect.Inspect._get_signature -> rich._inspect.Inspect.highlighter": "attribute_target",
+  "rich._inspect.Inspect._get_signature -> rich.text.Text": "confirmed",
+  "rich._inspect.Inspect._get_signature -> rich.text.Text.assemble": "confirmed",
+  "rich._inspect.Inspect._get_signature -> rich.text.Text.stylize": "confirmed",
+  "rich._inspect.Inspect._make_title -> rich._inspect.Inspect.highlighter": "attribute_target",
+  "rich._inspect.Inspect._render -> rich._inspect.Inspect._get_formatted_doc": "confirmed",
+  "rich._inspect.Inspect._render -> rich._inspect.Inspect._get_signature": "confirmed",
+  "rich._inspect.Inspect._render -> rich.panel.Panel": "confirmed",
+  "rich._inspect.Inspect._render -> rich.pretty.Pretty": "confirmed",
+  "rich._inspect.Inspect._render -> rich.table.Table.add_column": "confirmed",
+  "rich._inspect.Inspect._render -> rich.table.Table.grid": "confirmed",
+  "rich._inspect.Inspect._render -> rich.text.Text": "confirmed",
+  "rich._inspect.Inspect._render -> rich.text.Text.append": "confirmed",
+  "rich._inspect.Inspect._render -> rich.text.Text.assemble": "confirmed",
+  "rich._inspect.Inspect._render -> rich.text.Text.copy": "confirmed",
+  "rich._inspect.Inspect._render -> rich.text.Text.from_markup": "confirmed",
+  "rich._inspect.Inspect._render -> rich.text.Text.stylize": "confirmed",
+  "rich._inspect.get_object_types_mro_as_strings -> rich._inspect.get_object_types_mro": "confirmed",
+  "rich._inspect.is_object_one_of_types -> rich._inspect.get_object_types_mro_as_strings": "confirmed",
+  "rich._log_render -> rich.console.Console": "no_site",
+  "rich._log_render -> rich.console.Console.log": "no_site",
+  "rich._log_render -> rich.console.Console.print": "no_site",
+  "rich._log_render.LogRender.__call__ -> rich.containers.Renderables": "confirmed",
+  "rich._log_render.LogRender.__call__ -> rich.table.Table.add_column": "confirmed",
+  "rich._log_render.LogRender.__call__ -> rich.table.Table.add_row": "confirmed",
+  "rich._log_render.LogRender.__call__ -> rich.table.Table.grid": "confirmed",
+  "rich._log_render.LogRender.__call__ -> rich.text.Text": "confirmed",
+  "rich._log_render.LogRender.__call__ -> rich.text.Text.append": "confirmed",
+  "rich._null_file -> rich._null_file.NullFile": "confirmed",
+  "rich._palettes -> rich.palette.Palette": "confirmed",
+  "rich._ratio -> rich._ratio.E": "no_site",
+  "rich._ratio -> rich._ratio.ratio_resolve": "no_site",
+  "rich._unicode_data.load -> rich._unicode_data._parse_version": "confirmed",
+  "rich._unicode_data.unicode10-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode11-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode12-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode12-1-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode13-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode14-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode15-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode15-1-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode16-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode17-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode4-1-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode5-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode5-1-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode5-2-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode6-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode6-1-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode6-2-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode6-3-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode7-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode8-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._unicode_data.unicode9-0-0 -> rich.cells.CellTable": "confirmed",
+  "rich._win32_console -> rich._win32_console.GetStdHandle": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.erase_end_of_line": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.erase_line": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.erase_start_of_line": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.hide_cursor": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.move_cursor_backward": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.move_cursor_down": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.move_cursor_to_column": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.move_cursor_up": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.set_title": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.show_cursor": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.write_styled": "no_site",
+  "rich._win32_console -> rich._win32_console.LegacyWindowsTerm.write_text": "no_site",
+  "rich._win32_console -> rich.console.Console": "no_site",
+  "rich._win32_console -> rich.console.Console.print": "no_site",
+  "rich._win32_console -> rich.console.Console.rule": "no_site",
+  "rich._win32_console -> rich.style.Style": "no_site",
+  "rich._win32_console -> rich.style.Style.parse": "no_site",
+  "rich._win32_console.FillConsoleOutputAttribute -> rich._win32_console._FillConsoleOutputAttribute": "attribute_target",
+  "rich._win32_console.FillConsoleOutputCharacter -> rich._win32_console._FillConsoleOutputCharacterW": "attribute_target",
+  "rich._win32_console.GetConsoleCursorInfo -> rich._win32_console._GetConsoleCursorInfo": "attribute_target",
+  "rich._win32_console.GetConsoleMode -> rich._win32_console.LegacyWindowsError": "caller_not_run",
+  "rich._win32_console.GetConsoleMode -> rich._win32_console._GetConsoleMode": "attribute_target",
+  "rich._win32_console.GetConsoleScreenBufferInfo -> rich._win32_console.CONSOLE_SCREEN_BUFFER_INFO": "caller_not_run",
+  "rich._win32_console.GetConsoleScreenBufferInfo -> rich._win32_console._GetConsoleScreenBufferInfo": "attribute_target",
+  "rich._win32_console.GetStdHandle -> rich._win32_console._GetStdHandle": "attribute_target",
+  "rich._win32_console.LegacyWindowsTerm.__init__ -> rich._win32_console.GetConsoleScreenBufferInfo": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.__init__ -> rich._win32_console.GetStdHandle": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm._get_cursor_size -> rich._win32_console.CONSOLE_CURSOR_INFO": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm._get_cursor_size -> rich._win32_console.GetConsoleCursorInfo": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.cursor_position -> rich._win32_console.GetConsoleScreenBufferInfo": "unexercised",
+  "rich._win32_console.LegacyWindowsTerm.cursor_position -> rich._win32_console.WindowsCoordinates": "unexercised",
+  "rich._win32_console.LegacyWindowsTerm.erase_end_of_line -> rich._win32_console.FillConsoleOutputAttribute": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.erase_end_of_line -> rich._win32_console.FillConsoleOutputCharacter": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.erase_line -> rich._win32_console.FillConsoleOutputAttribute": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.erase_line -> rich._win32_console.FillConsoleOutputCharacter": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.erase_line -> rich._win32_console.WindowsCoordinates": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.erase_start_of_line -> rich._win32_console.FillConsoleOutputAttribute": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.erase_start_of_line -> rich._win32_console.FillConsoleOutputCharacter": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.erase_start_of_line -> rich._win32_console.WindowsCoordinates": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.hide_cursor -> rich._win32_console.CONSOLE_CURSOR_INFO": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.hide_cursor -> rich._win32_console.LegacyWindowsTerm._get_cursor_size": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.hide_cursor -> rich._win32_console.SetConsoleCursorInfo": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_backward -> rich._win32_console.SetConsoleCursorPosition": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_backward -> rich._win32_console.WindowsCoordinates": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_down -> rich._win32_console.SetConsoleCursorPosition": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_down -> rich._win32_console.WindowsCoordinates": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_forward -> rich._win32_console.SetConsoleCursorPosition": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_forward -> rich._win32_console.WindowsCoordinates": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_to -> rich._win32_console.SetConsoleCursorPosition": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_to_column -> rich._win32_console.SetConsoleCursorPosition": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_to_column -> rich._win32_console.WindowsCoordinates": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_up -> rich._win32_console.SetConsoleCursorPosition": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.move_cursor_up -> rich._win32_console.WindowsCoordinates": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.screen_size -> rich._win32_console.GetConsoleScreenBufferInfo": "unexercised",
+  "rich._win32_console.LegacyWindowsTerm.screen_size -> rich._win32_console.WindowsCoordinates": "unexercised",
+  "rich._win32_console.LegacyWindowsTerm.set_title -> rich._win32_console.SetConsoleTitle": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.show_cursor -> rich._win32_console.CONSOLE_CURSOR_INFO": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.show_cursor -> rich._win32_console.LegacyWindowsTerm._get_cursor_size": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.show_cursor -> rich._win32_console.SetConsoleCursorInfo": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.write_styled -> rich._win32_console.LegacyWindowsTerm.write_text": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.write_styled -> rich._win32_console.SetConsoleTextAttribute": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.write_styled -> rich.color.Color.downgrade": "caller_not_run",
+  "rich._win32_console.LegacyWindowsTerm.write_text -> rich._win32_console.LegacyWindowsTerm.flush": "attribute_target",
+  "rich._win32_console.LegacyWindowsTerm.write_text -> rich._win32_console.LegacyWindowsTerm.write": "attribute_target",
+  "rich._win32_console.SetConsoleCursorInfo -> rich._win32_console._SetConsoleCursorInfo": "attribute_target",
+  "rich._win32_console.SetConsoleCursorPosition -> rich._win32_console._SetConsoleCursorPosition": "attribute_target",
+  "rich._win32_console.SetConsoleTextAttribute -> rich._win32_console._SetConsoleTextAttribute": "attribute_target",
+  "rich._win32_console.SetConsoleTitle -> rich._win32_console._SetConsoleTitle": "attribute_target",
+  "rich._win32_console.WindowsCoordinates.from_param -> rich._win32_console.COORD": "attribute_target",
+  "rich._windows -> rich._windows.get_windows_console_features": "no_site",
+  "rich._windows -> rich.print": "no_site",
+  "rich._windows.get_windows_console_features -> rich._win32_console.GetConsoleMode": "caller_not_run",
+  "rich._windows.get_windows_console_features -> rich._win32_console.GetStdHandle": "caller_not_run",
+  "rich._windows.get_windows_console_features -> rich._windows.WindowsConsoleFeatures": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.erase_end_of_line": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.erase_line": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.erase_start_of_line": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.hide_cursor": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.move_cursor_backward": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.move_cursor_down": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.move_cursor_forward": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.move_cursor_to": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.move_cursor_to_column": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.move_cursor_up": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.set_title": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.show_cursor": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.write_styled": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.LegacyWindowsTerm.write_text": "caller_not_run",
+  "rich._windows_renderer.legacy_windows_render -> rich._win32_console.WindowsCoordinates": "caller_not_run",
+  "rich._wrap -> rich.cells.chop_cells": "no_site",
+  "rich._wrap -> rich.console.Console": "no_site",
+  "rich._wrap -> rich.console.Console.print": "no_site",
+  "rich._wrap -> rich.console.Console.rule": "no_site",
+  "rich._wrap.divide_line -> rich._loop.loop_last": "confirmed",
+  "rich._wrap.divide_line -> rich._wrap.words": "confirmed",
+  "rich._wrap.divide_line -> rich.cells.chop_cells": "confirmed",
+  "rich.abc -> rich.abc.Foo": "no_site",
+  "rich.abc -> rich.text.Text": "no_site",
+  "rich.align -> rich.align.Align.center": "no_site",
+  "rich.align -> rich.align.Align.left": "no_site",
+  "rich.align -> rich.align.Align.right": "no_site",
+  "rich.align -> rich.align.highlighter": "attribute_target",
+  "rich.align -> rich.console.Console": "no_site",
+  "rich.align -> rich.console.Console.print": "no_site",
+  "rich.align -> rich.console.Group": "no_site",
+  "rich.align -> rich.highlighter.ReprHighlighter": "no_site",
+  "rich.align -> rich.panel.Panel": "no_site",
+  "rich.align.Align.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.console.Console.measure": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.console.Console.render": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.constrain.Constrain": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.segment.Segment.apply_style": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.segment.Segment.get_shape": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.segment.Segment.set_shape": "confirmed",
+  "rich.align.Align.__rich_console__ -> rich.segment.Segment.split_lines": "confirmed",
+  "rich.align.Align.__rich_measure__ -> rich.measure.Measurement.get": "confirmed",
+  "rich.align.VerticalCenter.__rich_console__ -> rich.console.Console.get_style": "contradicted",
+  "rich.align.VerticalCenter.__rich_console__ -> rich.console.Console.render_lines": "confirmed",
+  "rich.align.VerticalCenter.__rich_console__ -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.align.VerticalCenter.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.align.VerticalCenter.__rich_console__ -> rich.segment.Segment.get_shape": "confirmed",
+  "rich.align.VerticalCenter.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.align.VerticalCenter.__rich_measure__ -> rich.measure.Measurement.get": "confirmed",
+  "rich.ansi -> rich.ansi.AnsiDecoder": "no_site",
+  "rich.ansi -> rich.ansi.AnsiDecoder.decode": "no_site",
+  "rich.ansi -> rich.console.Console": "no_site",
+  "rich.ansi -> rich.console.Console.print": "no_site",
+  "rich.ansi -> rich.console.Console.save_html": "no_site",
+  "rich.ansi.AnsiDecoder.__init__ -> rich.style.Style.null": "confirmed",
+  "rich.ansi.AnsiDecoder.decode -> rich.ansi.AnsiDecoder.decode_line": "confirmed",
+  "rich.ansi.AnsiDecoder.decode_line -> rich.ansi._ansi_tokenize": "confirmed",
+  "rich.ansi.AnsiDecoder.decode_line -> rich.style.Style.from_color": "confirmed",
+  "rich.ansi.AnsiDecoder.decode_line -> rich.style.Style.null": "confirmed",
+  "rich.ansi.AnsiDecoder.decode_line -> rich.style.Style.parse": "confirmed",
+  "rich.ansi.AnsiDecoder.decode_line -> rich.style.Style.update_link": "confirmed",
+  "rich.ansi.AnsiDecoder.decode_line -> rich.text.Text": "confirmed",
+  "rich.ansi._ansi_tokenize -> rich.ansi._AnsiToken": "confirmed",
+  "rich.bar.Bar.__init__ -> rich.style.Style": "confirmed",
+  "rich.bar.Bar.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.bar.Bar.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.bar.Bar.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.box -> rich.box.Box": "confirmed",
+  "rich.box -> rich.columns.Columns": "no_site",
+  "rich.box -> rich.columns.Columns.add_renderable": "no_site",
+  "rich.box -> rich.console.Console": "no_site",
+  "rich.box -> rich.console.Console.print": "no_site",
+  "rich.box -> rich.panel.Panel": "no_site",
+  "rich.box -> rich.table.Table": "no_site",
+  "rich.box -> rich.table.Table.add_column": "no_site",
+  "rich.box -> rich.table.Table.add_row": "no_site",
+  "rich.box -> rich.text.Text": "no_site",
+  "rich.box.Box.get_bottom -> rich._loop.loop_last": "confirmed",
+  "rich.box.Box.get_row -> rich._loop.loop_last": "confirmed",
+  "rich.box.Box.get_top -> rich._loop.loop_last": "confirmed",
+  "rich.cells._cell_len -> rich._unicode_data.load": "no_site",
+  "rich.cells._cell_len -> rich.cells._is_single_cell_widths": "attribute_target",
+  "rich.cells._cell_len -> rich.cells.get_character_cell_size": "confirmed",
+  "rich.cells._split_text -> rich.cells.split_graphemes": "confirmed",
+  "rich.cells.cached_cell_len -> rich.cells._cell_len": "confirmed",
+  "rich.cells.cell_len -> rich.cells._cell_len": "confirmed",
+  "rich.cells.cell_len -> rich.cells.cached_cell_len": "confirmed",
+  "rich.cells.chop_cells -> rich.cells._is_single_cell_widths": "attribute_target",
+  "rich.cells.chop_cells -> rich.cells.split_graphemes": "confirmed",
+  "rich.cells.get_character_cell_size -> rich._unicode_data.load": "confirmed",
+  "rich.cells.set_cell_size -> rich.cells._is_single_cell_widths": "attribute_target",
+  "rich.cells.set_cell_size -> rich.cells._split_text": "confirmed",
+  "rich.cells.set_cell_size -> rich.cells.cell_len": "confirmed",
+  "rich.cells.split_graphemes -> rich._unicode_data.load": "no_site",
+  "rich.cells.split_graphemes -> rich.cells.get_character_cell_size": "confirmed",
+  "rich.cells.split_text -> rich.cells._is_single_cell_widths": "attribute_target",
+  "rich.cells.split_text -> rich.cells._split_text": "confirmed",
+  "rich.color -> rich.console.Console": "no_site",
+  "rich.color -> rich.table.Table": "no_site",
+  "rich.color -> rich.text.Text": "no_site",
+  "rich.color.Color.__rich__ -> rich.style.Style": "confirmed",
+  "rich.color.Color.__rich__ -> rich.text.Text.assemble": "confirmed",
+  "rich.color.Color.downgrade -> rich.color.Color": "confirmed",
+  "rich.color.Color.downgrade -> rich.color_triplet.ColorTriplet": "confirmed",
+  "rich.color.Color.downgrade -> rich.palette.Palette.match": "confirmed",
+  "rich.color.Color.from_rgb -> rich.color.Color.from_triplet": "confirmed",
+  "rich.color.Color.from_rgb -> rich.color_triplet.ColorTriplet": "confirmed",
+  "rich.color.Color.parse -> rich.color.ColorParseError": "confirmed",
+  "rich.color.Color.parse -> rich.color_triplet.ColorTriplet": "confirmed",
+  "rich.color.Color.system -> rich.color.ColorSystem": "confirmed",
+  "rich.color.blend_rgb -> rich.color_triplet.ColorTriplet": "confirmed",
+  "rich.color.parse_rgb_hex -> rich.color_triplet.ColorTriplet": "confirmed",
+  "rich.columns -> rich.columns.Columns": "no_site",
+  "rich.columns -> rich.console.Console": "no_site",
+  "rich.columns -> rich.console.Console.print": "no_site",
+  "rich.columns -> rich.console.Console.rule": "no_site",
+  "rich.columns.Columns.__rich_console__ -> rich.constrain.Constrain": "confirmed",
+  "rich.columns.Columns.__rich_console__ -> rich.padding.Padding.unpack": "confirmed",
+  "rich.columns.Columns.__rich_console__ -> rich.table.Table.add_column": "confirmed",
+  "rich.columns.Columns.__rich_console__ -> rich.table.Table.grid": "confirmed",
+  "rich.console -> rich.console.Console": "no_site",
+  "rich.console -> rich.console.Console.log": "no_site",
+  "rich.console -> rich.console.Console.print": "no_site",
+  "rich.console -> rich.console.NoChange": "confirmed",
+  "rich.console -> rich.highlighter.NullHighlighter": "confirmed",
+  "rich.console.Capture.__enter__ -> rich.console.Console.begin_capture": "confirmed",
+  "rich.console.Capture.__exit__ -> rich.console.Console.end_capture": "confirmed",
+  "rich.console.Capture.get -> rich.console.CaptureError": "confirmed",
+  "rich.console.Console.__enter__ -> rich.console.Console._enter_buffer": "confirmed",
+  "rich.console.Console.__exit__ -> rich.console.Console._exit_buffer": "confirmed",
+  "rich.console.Console.__init__ -> rich._log_render.LogRender": "confirmed",
+  "rich.console.Console.__init__ -> rich.console.Console._detect_color_system": "confirmed",
+  "rich.console.Console.__init__ -> rich.console.ConsoleThreadLocals": "confirmed",
+  "rich.console.Console.__init__ -> rich.console._is_jupyter": "confirmed",
+  "rich.console.Console.__init__ -> rich.console.detect_legacy_windows": "confirmed",
+  "rich.console.Console.__init__ -> rich.highlighter.ReprHighlighter": "contradicted",
+  "rich.console.Console.__init__ -> rich.theme.ThemeStack": "confirmed",
+  "rich.console.Console._check_buffer -> rich.console.Console._write_buffer": "confirmed",
+  "rich.console.Console._check_buffer -> rich.console.Console.on_broken_pipe": "unexercised",
+  "rich.console.Console._collect_renderables -> rich.align.Align": "confirmed",
+  "rich.console.Console._collect_renderables -> rich.console.Console.get_style": "confirmed",
+  "rich.console.Console._collect_renderables -> rich.console.Console.render_str": "confirmed",
+  "rich.console.Console._collect_renderables -> rich.pretty.Pretty": "confirmed",
+  "rich.console.Console._collect_renderables -> rich.pretty.is_expandable": "confirmed",
+  "rich.console.Console._collect_renderables -> rich.protocol.rich_cast": "confirmed",
+  "rich.console.Console._collect_renderables -> rich.styled.Styled": "confirmed",
+  "rich.console.Console._collect_renderables -> rich.text.Text": "confirmed",
+  "rich.console.Console._collect_renderables -> rich.text.Text.join": "confirmed",
+  "rich.console.Console._detect_color_system -> rich.console.get_windows_console_features": "unexercised",
+  "rich.console.Console._exit_buffer -> rich.console.Console._check_buffer": "confirmed",
+  "rich.console.Console._render_buffer -> rich.segment.Segment.remove_color": "confirmed",
+  "rich.console.Console._write_buffer -> rich._fileno.get_fileno": "unexercised",
+  "rich.console.Console._write_buffer -> rich._win32_console.LegacyWindowsTerm": "unexercised",
+  "rich.console.Console._write_buffer -> rich._windows_renderer.legacy_windows_render": "unexercised",
+  "rich.console.Console._write_buffer -> rich.console.Console._render_buffer": "confirmed",
+  "rich.console.Console._write_buffer -> rich.jupyter.display": "confirmed",
+  "rich.console.Console._write_buffer -> rich.segment.Segment.remove_color": "unexercised",
+  "rich.console.Console.begin_capture -> rich.console.Console._enter_buffer": "confirmed",
+  "rich.console.Console.bell -> rich.console.Console.control": "confirmed",
+  "rich.console.Console.bell -> rich.control.Control.bell": "confirmed",
+  "rich.console.Console.capture -> rich.console.Capture": "confirmed",
+  "rich.console.Console.clear -> rich.console.Console.control": "confirmed",
+  "rich.console.Console.clear -> rich.control.Control.clear": "confirmed",
+  "rich.console.Console.clear -> rich.control.Control.home": "confirmed",
+  "rich.console.Console.end_capture -> rich.console.Console._exit_buffer": "confirmed",
+  "rich.console.Console.end_capture -> rich.console.Console._render_buffer": "confirmed",
+  "rich.console.Console.export_html -> rich.segment.Segment.filter_control": "confirmed",
+  "rich.console.Console.export_html -> rich.segment.Segment.simplify": "confirmed",
+  "rich.console.Console.export_svg -> rich.cells.cell_len": "confirmed",
+  "rich.console.Console.export_svg -> rich.color.Color.get_truecolor": "confirmed",
+  "rich.console.Console.export_svg -> rich.color.blend_rgb": "unexercised",
+  "rich.console.Console.export_svg -> rich.segment.Segment.filter_control": "confirmed",
+  "rich.console.Console.export_svg -> rich.segment.Segment.split_and_crop_lines": "confirmed",
+  "rich.console.Console.export_svg -> rich.style.Style": "confirmed",
+  "rich.console.Console.get_style -> rich.console.Console.get_style": "confirmed",
+  "rich.console.Console.get_style -> rich.errors.MissingStyle": "confirmed",
+  "rich.console.Console.get_style -> rich.style.Style.copy": "confirmed",
+  "rich.console.Console.get_style -> rich.style.Style.parse": "confirmed",
+  "rich.console.Console.input -> rich.console.Console.print": "confirmed",
+  "rich.console.Console.line -> rich.console.Console.print": "confirmed",
+  "rich.console.Console.line -> rich.console.NewLine": "confirmed",
+  "rich.console.Console.log -> rich.console.Console._caller_frame_info": "confirmed",
+  "rich.console.Console.log -> rich.console.Console._collect_renderables": "confirmed",
+  "rich.console.Console.log -> rich.console.Console._log_render": "attribute_target",
+  "rich.console.Console.log -> rich.console.Console.get_datetime": "attribute_target",
+  "rich.console.Console.log -> rich.console.NewLine": "confirmed",
+  "rich.console.Console.log -> rich.console.RenderHook.process_renderables": "contradicted",
+  "rich.console.Console.log -> rich.scope.render_scope": "confirmed",
+  "rich.console.Console.log -> rich.segment.Segment.split_and_crop_lines": "confirmed",
+  "rich.console.Console.log -> rich.styled.Styled": "confirmed",
+  "rich.console.Console.measure -> rich.measure.Measurement.get": "confirmed",
+  "rich.console.Console.options -> rich.console.ConsoleOptions": "confirmed",
+  "rich.console.Console.out -> rich.console.Console.print": "confirmed",
+  "rich.console.Console.pager -> rich.console.PagerContext": "confirmed",
+  "rich.console.Console.pop_theme -> rich.theme.ThemeStack.pop_theme": "confirmed",
+  "rich.console.Console.print -> rich.console.Console._collect_renderables": "confirmed",
+  "rich.console.Console.print -> rich.console.Console.get_style": "confirmed",
+  "rich.console.Console.print -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.console.Console.print -> rich.console.NewLine": "confirmed",
+  "rich.console.Console.print -> rich.console.RenderHook.process_renderables": "contradicted",
+  "rich.console.Console.print -> rich.segment.Segment.apply_style": "confirmed",
+  "rich.console.Console.print -> rich.segment.Segment.line": "confirmed",
+  "rich.console.Console.print -> rich.segment.Segment.split_and_crop_lines": "confirmed",
+  "rich.console.Console.print -> rich.segment.Segment.split_lines_terminator": "confirmed",
+  "rich.console.Console.print_exception -> rich.console.Console.print": "confirmed",
+  "rich.console.Console.print_exception -> rich.traceback.Traceback": "confirmed",
+  "rich.console.Console.print_json -> rich.console.Console.print": "confirmed",
+  "rich.console.Console.print_json -> rich.json.JSON": "confirmed",
+  "rich.console.Console.print_json -> rich.json.JSON.from_data": "confirmed",
+  "rich.console.Console.push_theme -> rich.theme.ThemeStack.push_theme": "confirmed",
+  "rich.console.Console.render -> rich.console.Console.render": "confirmed",
+  "rich.console.Console.render -> rich.console.Console.render_str": "confirmed",
+  "rich.console.Console.render -> rich.console.ConsoleOptions.reset_height": "confirmed",
+  "rich.console.Console.render -> rich.console.ConsoleRenderable.__rich_console__": "contradicted",
+  "rich.console.Console.render -> rich.errors.NotRenderableError": "confirmed",
+  "rich.console.Console.render -> rich.protocol.rich_cast": "confirmed",
+  "rich.console.Console.render -> rich.text.Text.__rich_console__": "confirmed",
+  "rich.console.Console.render_lines -> rich.console.Console.render": "confirmed",
+  "rich.console.Console.render_lines -> rich.segment.Segment": "confirmed",
+  "rich.console.Console.render_lines -> rich.segment.Segment.apply_style": "confirmed",
+  "rich.console.Console.render_lines -> rich.segment.Segment.split_and_crop_lines": "confirmed",
+  "rich.console.Console.render_str -> rich._emoji_replace._emoji_replace": "confirmed",
+  "rich.console.Console.render_str -> rich.markup.render": "confirmed",
+  "rich.console.Console.render_str -> rich.text.Text": "confirmed",
+  "rich.console.Console.render_str -> rich.text.Text.copy_styles": "confirmed",
+  "rich.console.Console.rule -> rich.console.Console.print": "confirmed",
+  "rich.console.Console.rule -> rich.rule.Rule": "confirmed",
+  "rich.console.Console.save_html -> rich.console.Console.export_html": "confirmed",
+  "rich.console.Console.save_svg -> rich.console.Console.export_svg": "confirmed",
+  "rich.console.Console.save_text -> rich.console.Console.export_text": "confirmed",
+  "rich.console.Console.screen -> rich.console.ScreenContext": "confirmed",
+  "rich.console.Console.set_alt_screen -> rich.console.Console.control": "confirmed",
+  "rich.console.Console.set_alt_screen -> rich.control.Control.alt_screen": "confirmed",
+  "rich.console.Console.set_window_title -> rich.console.Console.control": "confirmed",
+  "rich.console.Console.set_window_title -> rich.control.Control.title": "confirmed",
+  "rich.console.Console.show_cursor -> rich.console.Console.control": "confirmed",
+  "rich.console.Console.show_cursor -> rich.control.Control.show_cursor": "confirmed",
+  "rich.console.Console.size -> rich.console.ConsoleDimensions": "confirmed",
+  "rich.console.Console.status -> rich.status.Status": "confirmed",
+  "rich.console.Console.update_screen -> rich.console.Console.render_lines": "confirmed",
+  "rich.console.Console.update_screen -> rich.console.Console.update_screen_lines": "confirmed",
+  "rich.console.Console.update_screen -> rich.console.ConsoleOptions.update_dimensions": "confirmed",
+  "rich.console.Console.update_screen -> rich.errors.NoAltScreen": "confirmed",
+  "rich.console.Console.update_screen_lines -> rich.console.Console._check_buffer": "confirmed",
+  "rich.console.Console.update_screen_lines -> rich.console.Console.render": "confirmed",
+  "rich.console.Console.update_screen_lines -> rich.console.ScreenUpdate": "confirmed",
+  "rich.console.Console.update_screen_lines -> rich.errors.NoAltScreen": "confirmed",
+  "rich.console.Console.use_theme -> rich.console.ThemeContext": "confirmed",
+  "rich.console.ConsoleOptions.reset_height -> rich.console.ConsoleOptions.copy": "confirmed",
+  "rich.console.ConsoleOptions.update -> rich.console.ConsoleOptions.copy": "confirmed",
+  "rich.console.ConsoleOptions.update_dimensions -> rich.console.ConsoleOptions.copy": "confirmed",
+  "rich.console.ConsoleOptions.update_height -> rich.console.ConsoleOptions.copy": "confirmed",
+  "rich.console.ConsoleOptions.update_width -> rich.console.ConsoleOptions.copy": "confirmed",
+  "rich.console.Group.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.console.Group.__rich_measure__ -> rich.measure.measure_renderables": "confirmed",
+  "rich.console.NewLine.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.console.PagerContext.__enter__ -> rich.console.Console._enter_buffer": "confirmed",
+  "rich.console.PagerContext.__exit__ -> rich.console.Console._exit_buffer": "confirmed",
+  "rich.console.PagerContext.__exit__ -> rich.console.Console._render_buffer": "confirmed",
+  "rich.console.PagerContext.__exit__ -> rich.pager.Pager.show": "contradicted",
+  "rich.console.PagerContext.__exit__ -> rich.segment.Segment.strip_links": "confirmed",
+  "rich.console.PagerContext.__exit__ -> rich.segment.Segment.strip_styles": "confirmed",
+  "rich.console.PagerContext.__init__ -> rich.pager.SystemPager": "contradicted",
+  "rich.console.ScreenContext.__enter__ -> rich.console.Console.set_alt_screen": "confirmed",
+  "rich.console.ScreenContext.__enter__ -> rich.console.Console.show_cursor": "confirmed",
+  "rich.console.ScreenContext.__exit__ -> rich.console.Console.set_alt_screen": "confirmed",
+  "rich.console.ScreenContext.__exit__ -> rich.console.Console.show_cursor": "confirmed",
+  "rich.console.ScreenContext.__init__ -> rich.screen.Screen": "confirmed",
+  "rich.console.ScreenContext.update -> rich.console.Console.print": "confirmed",
+  "rich.console.ScreenContext.update -> rich.console.Group": "contradicted",
+  "rich.console.ThemeContext.__enter__ -> rich.console.Console.push_theme": "confirmed",
+  "rich.console.ThemeContext.__exit__ -> rich.console.Console.pop_theme": "confirmed",
+  "rich.console.detect_legacy_windows -> rich.console.get_windows_console_features": "contradicted",
+  "rich.console.get_windows_console_features -> rich._windows.get_windows_console_features": "caller_not_run",
+  "rich.console.group -> rich.console.Group": "confirmed",
+  "rich.constrain.Constrain.__rich_console__ -> rich.console.Console.render": "confirmed",
+  "rich.constrain.Constrain.__rich_console__ -> rich.console.ConsoleOptions.update_width": "confirmed",
+  "rich.constrain.Constrain.__rich_measure__ -> rich.console.ConsoleOptions.update_width": "confirmed",
+  "rich.constrain.Constrain.__rich_measure__ -> rich.measure.Measurement.get": "confirmed",
+  "rich.containers.Lines.justify -> rich.cells.cell_len": "confirmed",
+  "rich.containers.Lines.justify -> rich.text.Text": "confirmed",
+  "rich.containers.Lines.justify -> rich.text.Text.join": "confirmed",
+  "rich.containers.Lines.justify -> rich.text.Text.pad_left": "confirmed",
+  "rich.containers.Lines.justify -> rich.text.Text.pad_right": "confirmed",
+  "rich.containers.Lines.justify -> rich.text.Text.rstrip": "confirmed",
+  "rich.containers.Lines.justify -> rich.text.Text.split": "confirmed",
+  "rich.containers.Lines.justify -> rich.text.Text.truncate": "confirmed",
+  "rich.containers.Renderables.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.containers.Renderables.__rich_measure__ -> rich.measure.Measurement.get": "confirmed",
+  "rich.control -> rich.console.Console": "no_site",
+  "rich.control -> rich.console.Console.print": "no_site",
+  "rich.control -> rich.console.Console.set_window_title": "no_site",
+  "rich.control.Control.__init__ -> rich.segment.Segment": "confirmed",
+  "rich.default_styles -> rich.console.Console": "no_site",
+  "rich.default_styles -> rich.console.Console.export_html": "no_site",
+  "rich.default_styles -> rich.console.Console.print": "no_site",
+  "rich.default_styles -> rich.style.Style": "confirmed",
+  "rich.default_styles -> rich.style.Style.null": "confirmed",
+  "rich.default_styles -> rich.table.Table": "no_site",
+  "rich.default_styles -> rich.table.Table.add_row": "no_site",
+  "rich.default_styles -> rich.text.Text": "no_site",
+  "rich.diagnose -> rich.diagnose.report": "no_site",
+  "rich.diagnose.report -> rich.console.Console": "caller_not_run",
+  "rich.diagnose.report -> rich.console.Console.print": "caller_not_run",
+  "rich.diagnose.report -> rich.console.get_windows_console_features": "caller_not_run",
+  "rich.diagnose.report -> rich.inspect": "caller_not_run",
+  "rich.diagnose.report -> rich.panel.Panel.fit": "caller_not_run",
+  "rich.diagnose.report -> rich.pretty.Pretty": "caller_not_run",
+  "rich.emoji -> rich.columns.Columns": "no_site",
+  "rich.emoji -> rich.console.Console": "no_site",
+  "rich.emoji -> rich.console.Console.print": "no_site",
+  "rich.emoji -> rich.console.Console.save_html": "no_site",
+  "rich.emoji.Emoji.__init__ -> rich.emoji.NoEmoji": "confirmed",
+  "rich.emoji.Emoji.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.emoji.Emoji.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.emoji.Emoji.replace -> rich._emoji_replace._emoji_replace": "confirmed",
+  "rich.file_proxy.FileProxy.__init__ -> rich.ansi.AnsiDecoder": "confirmed",
+  "rich.file_proxy.FileProxy.flush -> rich.console.Console.print": "confirmed",
+  "rich.file_proxy.FileProxy.write -> rich.ansi.AnsiDecoder.decode_line": "confirmed",
+  "rich.file_proxy.FileProxy.write -> rich.console.Console.print": "confirmed",
+  "rich.file_proxy.FileProxy.write -> rich.text.Text": "confirmed",
+  "rich.file_proxy.FileProxy.write -> rich.text.Text.join": "confirmed",
+  "rich.filesize.decimal -> rich.filesize._to_str": "confirmed",
+  "rich.get_console -> rich.console.Console": "confirmed",
+  "rich.highlighter -> rich.console.Console": "no_site",
+  "rich.highlighter -> rich.console.Console.print": "no_site",
+  "rich.highlighter -> rich.console.Console.print_json": "no_site",
+  "rich.highlighter.Highlighter.__call__ -> rich.highlighter.Highlighter.highlight": "contradicted",
+  "rich.highlighter.Highlighter.__call__ -> rich.text.Text": "confirmed",
+  "rich.highlighter.Highlighter.__call__ -> rich.text.Text.copy": "confirmed",
+  "rich.highlighter.JSONHighlighter -> rich.highlighter._combine_regex": "confirmed",
+  "rich.highlighter.JSONHighlighter.highlight -> rich.highlighter.RegexHighlighter.highlight": "confirmed",
+  "rich.highlighter.JSONHighlighter.highlight -> rich.text.Span": "confirmed",
+  "rich.highlighter.ReprHighlighter -> rich.highlighter._combine_regex": "confirmed",
+  "rich.inspect -> rich._inspect.Inspect": "confirmed",
+  "rich.inspect -> rich.console.Console.print": "confirmed",
+  "rich.inspect -> rich.get_console": "confirmed",
+  "rich.json -> rich.console.Console": "no_site",
+  "rich.json -> rich.console.Console.print": "no_site",
+  "rich.json -> rich.json.JSON": "no_site",
+  "rich.json.JSON.__init__ -> rich.highlighter.JSONHighlighter": "confirmed",
+  "rich.json.JSON.__init__ -> rich.highlighter.NullHighlighter": "contradicted",
+  "rich.json.JSON.from_data -> rich.highlighter.JSONHighlighter": "confirmed",
+  "rich.json.JSON.from_data -> rich.highlighter.NullHighlighter": "contradicted",
+  "rich.jupyter.JupyterMixin._repr_mimebundle_ -> rich.console.Console._render_buffer": "caller_not_run",
+  "rich.jupyter.JupyterMixin._repr_mimebundle_ -> rich.console.Console.render": "caller_not_run",
+  "rich.jupyter.JupyterMixin._repr_mimebundle_ -> rich.get_console": "caller_not_run",
+  "rich.jupyter.JupyterMixin._repr_mimebundle_ -> rich.jupyter._render_segments": "caller_not_run",
+  "rich.jupyter._render_segments -> rich.segment.Segment.simplify": "confirmed",
+  "rich.jupyter.display -> rich.jupyter.JupyterRenderable": "confirmed",
+  "rich.jupyter.display -> rich.jupyter._render_segments": "confirmed",
+  "rich.jupyter.print -> rich.console.Console.print": "caller_not_run",
+  "rich.jupyter.print -> rich.get_console": "caller_not_run",
+  "rich.layout -> rich.console.Console": "no_site",
+  "rich.layout -> rich.console.Console.print": "no_site",
+  "rich.layout -> rich.layout.Layout": "no_site",
+  "rich.layout -> rich.layout.Layout.split_column": "no_site",
+  "rich.layout -> rich.layout.Layout.split_row": "no_site",
+  "rich.layout -> rich.layout.Layout.update": "no_site",
+  "rich.layout.ColumnSplitter.divide -> rich._ratio.ratio_resolve": "confirmed",
+  "rich.layout.Layout.__getitem__ -> rich.layout.Layout.get": "confirmed",
+  "rich.layout.Layout.__init__ -> rich.layout._Placeholder": "confirmed",
+  "rich.layout.Layout.__rich_console__ -> rich.console.ConsoleOptions.update_dimensions": "confirmed",
+  "rich.layout.Layout.__rich_console__ -> rich.layout.Layout.render": "confirmed",
+  "rich.layout.Layout.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.layout.Layout._make_region_map -> rich.layout.Splitter.divide": "contradicted",
+  "rich.layout.Layout._make_region_map -> rich.region.Region": "confirmed",
+  "rich.layout.Layout.add_split -> rich.layout.Layout": "contradicted",
+  "rich.layout.Layout.get -> rich.layout.Layout.get": "confirmed",
+  "rich.layout.Layout.refresh_screen -> rich.console.Console.render_lines": "confirmed",
+  "rich.layout.Layout.refresh_screen -> rich.console.Console.update_screen_lines": "confirmed",
+  "rich.layout.Layout.refresh_screen -> rich.console.ConsoleOptions.update_dimensions": "confirmed",
+  "rich.layout.Layout.refresh_screen -> rich.layout.LayoutRender": "confirmed",
+  "rich.layout.Layout.render -> rich.layout.Layout._make_region_map": "confirmed",
+  "rich.layout.Layout.render -> rich.layout.LayoutRender": "confirmed",
+  "rich.layout.Layout.split -> rich.layout.Layout": "contradicted",
+  "rich.layout.Layout.split -> rich.layout.NoSplitter": "confirmed",
+  "rich.layout.Layout.split_column -> rich.layout.Layout.split": "confirmed",
+  "rich.layout.Layout.split_row -> rich.layout.Layout.split": "confirmed",
+  "rich.layout.Layout.tree -> rich.layout.Splitter.get_tree_icon": "contradicted",
+  "rich.layout.Layout.tree -> rich.pretty.Pretty": "confirmed",
+  "rich.layout.Layout.tree -> rich.styled.Styled": "contradicted",
+  "rich.layout.Layout.tree -> rich.table.Table.add_row": "confirmed",
+  "rich.layout.Layout.tree -> rich.table.Table.grid": "confirmed",
+  "rich.layout.Layout.tree -> rich.tree.Tree": "confirmed",
+  "rich.layout.Layout.tree -> rich.tree.Tree.add": "confirmed",
+  "rich.layout.RowSplitter.divide -> rich._ratio.ratio_resolve": "confirmed",
+  "rich.layout._Placeholder -> rich.highlighter.ReprHighlighter": "confirmed",
+  "rich.layout._Placeholder.__rich_console__ -> rich.align.Align.center": "confirmed",
+  "rich.layout._Placeholder.__rich_console__ -> rich.layout._Placeholder.highlighter": "attribute_target",
+  "rich.layout._Placeholder.__rich_console__ -> rich.panel.Panel": "confirmed",
+  "rich.layout._Placeholder.__rich_console__ -> rich.pretty.Pretty": "confirmed",
+  "rich.live -> rich.align.Align.center": "no_site",
+  "rich.live -> rich.console.Console": "no_site",
+  "rich.live -> rich.console.Console.log": "no_site",
+  "rich.live -> rich.live.Live": "no_site",
+  "rich.live -> rich.panel.Panel": "no_site",
+  "rich.live -> rich.rule.Rule": "no_site",
+  "rich.live -> rich.syntax.Syntax": "no_site",
+  "rich.live -> rich.table.Table": "no_site",
+  "rich.live -> rich.table.Table.add_column": "no_site",
+  "rich.live -> rich.table.Table.add_row": "no_site",
+  "rich.live -> rich.text.Text": "no_site",
+  "rich.live.Live.__enter__ -> rich.live.Live.start": "confirmed",
+  "rich.live.Live.__exit__ -> rich.live.Live.stop": "confirmed",
+  "rich.live.Live.__init__ -> rich.get_console": "confirmed",
+  "rich.live.Live.__init__ -> rich.live.Live.get_renderable": "confirmed",
+  "rich.live.Live.__init__ -> rich.live_render.LiveRender": "confirmed",
+  "rich.live.Live._enable_redirect_io -> rich.file_proxy.FileProxy": "confirmed",
+  "rich.live.Live.get_renderable -> rich.live.Live._get_renderable": "attribute_target",
+  "rich.live.Live.process_renderables -> rich.control.Control.home": "confirmed",
+  "rich.live.Live.process_renderables -> rich.live_render.LiveRender.position_cursor": "confirmed",
+  "rich.live.Live.refresh -> rich.console.Console.print": "confirmed",
+  "rich.live.Live.refresh -> rich.control.Control": "confirmed",
+  "rich.live.Live.refresh -> rich.live.Live.refresh": "unexercised",
+  "rich.live.Live.refresh -> rich.live_render.LiveRender.set_renderable": "confirmed",
+  "rich.live.Live.renderable -> rich.console.Group": "confirmed",
+  "rich.live.Live.renderable -> rich.live.Live.get_renderable": "confirmed",
+  "rich.live.Live.renderable -> rich.screen.Screen": "confirmed",
+  "rich.live.Live.start -> rich.console.Console.push_render_hook": "confirmed",
+  "rich.live.Live.start -> rich.console.Console.set_alt_screen": "confirmed",
+  "rich.live.Live.start -> rich.console.Console.set_live": "confirmed",
+  "rich.live.Live.start -> rich.console.Console.show_cursor": "confirmed",
+  "rich.live.Live.start -> rich.live.Live._enable_redirect_io": "confirmed",
+  "rich.live.Live.start -> rich.live.Live.refresh": "confirmed",
+  "rich.live.Live.start -> rich.live.Live.stop": "unexercised",
+  "rich.live.Live.start -> rich.live._RefreshThread": "confirmed",
+  "rich.live.Live.stop -> rich.console.Console.clear_live": "confirmed",
+  "rich.live.Live.stop -> rich.console.Console.control": "confirmed",
+  "rich.live.Live.stop -> rich.console.Console.line": "confirmed",
+  "rich.live.Live.stop -> rich.console.Console.pop_render_hook": "confirmed",
+  "rich.live.Live.stop -> rich.console.Console.print": "unexercised",
+  "rich.live.Live.stop -> rich.console.Console.set_alt_screen": "confirmed",
+  "rich.live.Live.stop -> rich.console.Console.show_cursor": "confirmed",
+  "rich.live.Live.stop -> rich.live.Live._disable_redirect_io": "confirmed",
+  "rich.live.Live.stop -> rich.live.Live.refresh": "confirmed",
+  "rich.live.Live.stop -> rich.live._RefreshThread.stop": "confirmed",
+  "rich.live.Live.stop -> rich.live_render.LiveRender.restore_cursor": "confirmed",
+  "rich.live.Live.update -> rich.console.Console.render_str": "confirmed",
+  "rich.live.Live.update -> rich.live.Live.refresh": "confirmed",
+  "rich.live._RefreshThread.run -> rich.live.Live.refresh": "confirmed",
+  "rich.live_render.LiveRender.__rich_console__ -> rich._loop.loop_last": "confirmed",
+  "rich.live_render.LiveRender.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.live_render.LiveRender.__rich_console__ -> rich.console.Console.render": "confirmed",
+  "rich.live_render.LiveRender.__rich_console__ -> rich.console.Console.render_lines": "confirmed",
+  "rich.live_render.LiveRender.__rich_console__ -> rich.segment.Segment.get_shape": "confirmed",
+  "rich.live_render.LiveRender.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.live_render.LiveRender.__rich_console__ -> rich.text.Text": "confirmed",
+  "rich.live_render.LiveRender.position_cursor -> rich.control.Control": "confirmed",
+  "rich.live_render.LiveRender.restore_cursor -> rich.control.Control": "confirmed",
+  "rich.logging -> rich.logging.RichHandler": "no_site",
+  "rich.logging -> rich.logging.divide": "no_site",
+  "rich.logging.RichHandler.__init__ -> rich._log_render.LogRender": "confirmed",
+  "rich.logging.RichHandler.__init__ -> rich.get_console": "contradicted",
+  "rich.logging.RichHandler.__init__ -> rich.logging.RichHandler.HIGHLIGHTER_CLASS": "attribute_target",
+  "rich.logging.RichHandler.emit -> rich.console.Console.print": "confirmed",
+  "rich.logging.RichHandler.emit -> rich.logging.RichHandler.render": "confirmed",
+  "rich.logging.RichHandler.emit -> rich.logging.RichHandler.render_message": "confirmed",
+  "rich.logging.RichHandler.emit -> rich.traceback.Traceback.from_exception": "confirmed",
+  "rich.logging.RichHandler.get_level_text -> rich.text.Text.styled": "confirmed",
+  "rich.logging.RichHandler.render -> rich.logging.RichHandler._log_render": "attribute_target",
+  "rich.logging.RichHandler.render -> rich.logging.RichHandler.get_level_text": "confirmed",
+  "rich.logging.RichHandler.render_message -> rich.text.Text": "confirmed",
+  "rich.logging.RichHandler.render_message -> rich.text.Text.from_markup": "confirmed",
+  "rich.logging.RichHandler.render_message -> rich.text.Text.highlight_words": "confirmed",
+  "rich.markdown -> rich.console.Console": "no_site",
+  "rich.markdown -> rich.console.Console.print": "no_site",
+  "rich.markdown -> rich.markdown.Markdown": "no_site",
+  "rich.markdown.BlockQuote.__init__ -> rich.containers.Renderables": "confirmed",
+  "rich.markdown.BlockQuote.__rich_console__ -> rich.console.Console.render_lines": "confirmed",
+  "rich.markdown.BlockQuote.__rich_console__ -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.markdown.BlockQuote.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.markdown.BlockQuote.on_child_close -> rich.containers.Renderables.append": "confirmed",
+  "rich.markdown.CodeBlock.__rich_console__ -> rich.syntax.Syntax": "confirmed",
+  "rich.markdown.Heading.__rich_console__ -> rich.text.Text.copy": "confirmed",
+  "rich.markdown.Heading.on_enter -> rich.markdown.MarkdownContext.enter_style": "confirmed",
+  "rich.markdown.Heading.on_enter -> rich.text.Text": "confirmed",
+  "rich.markdown.HorizontalRule.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.markdown.HorizontalRule.__rich_console__ -> rich.rule.Rule": "confirmed",
+  "rich.markdown.HorizontalRule.__rich_console__ -> rich.text.Text": "confirmed",
+  "rich.markdown.ImageItem.__rich_console__ -> rich.style.Style": "confirmed",
+  "rich.markdown.ImageItem.__rich_console__ -> rich.text.Text": "contradicted",
+  "rich.markdown.ImageItem.__rich_console__ -> rich.text.Text.assemble": "confirmed",
+  "rich.markdown.ImageItem.__rich_console__ -> rich.text.Text.stylize": "confirmed",
+  "rich.markdown.ImageItem.on_enter -> rich.markdown.TextElement.on_enter": "confirmed",
+  "rich.markdown.ImageItem.on_enter -> rich.text.Text": "confirmed",
+  "rich.markdown.Link.__init__ -> rich.text.Text": "confirmed",
+  "rich.markdown.ListElement.__rich_console__ -> rich.markdown.ListItem.render_bullet": "confirmed",
+  "rich.markdown.ListElement.__rich_console__ -> rich.markdown.ListItem.render_number": "confirmed",
+  "rich.markdown.ListItem.__init__ -> rich.containers.Renderables": "confirmed",
+  "rich.markdown.ListItem.on_child_close -> rich.containers.Renderables.append": "confirmed",
+  "rich.markdown.ListItem.render_bullet -> rich._loop.loop_first": "confirmed",
+  "rich.markdown.ListItem.render_bullet -> rich.console.Console.get_style": "confirmed",
+  "rich.markdown.ListItem.render_bullet -> rich.console.Console.render_lines": "confirmed",
+  "rich.markdown.ListItem.render_bullet -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.markdown.ListItem.render_bullet -> rich.segment.Segment": "confirmed",
+  "rich.markdown.ListItem.render_number -> rich._loop.loop_first": "confirmed",
+  "rich.markdown.ListItem.render_number -> rich.console.Console.get_style": "confirmed",
+  "rich.markdown.ListItem.render_number -> rich.console.Console.render_lines": "confirmed",
+  "rich.markdown.ListItem.render_number -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.markdown.ListItem.render_number -> rich.segment.Segment": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich._stack.Stack.push": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.markdown.Link.create": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.markdown.Markdown._flatten_tokens": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.markdown.MarkdownContext": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.markdown.MarkdownContext.enter_style": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.markdown.MarkdownContext.leave_style": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.markdown.MarkdownContext.on_text": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.markdown.MarkdownElement.create": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.markdown.MarkdownElement.on_enter": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.markdown.Markdown.__rich_console__ -> rich.style.Style": "confirmed",
+  "rich.markdown.Markdown._flatten_tokens -> rich.markdown.Markdown._flatten_tokens": "confirmed",
+  "rich.markdown.MarkdownContext.__init__ -> rich._stack.Stack": "confirmed",
+  "rich.markdown.MarkdownContext.__init__ -> rich.style.StyleStack": "confirmed",
+  "rich.markdown.MarkdownContext.__init__ -> rich.syntax.Syntax": "confirmed",
+  "rich.markdown.MarkdownContext.enter_style -> rich.console.Console.get_style": "confirmed",
+  "rich.markdown.MarkdownContext.enter_style -> rich.style.StyleStack.push": "confirmed",
+  "rich.markdown.MarkdownContext.leave_style -> rich.style.StyleStack.pop": "confirmed",
+  "rich.markdown.MarkdownContext.on_text -> rich.markdown.MarkdownElement.on_text": "contradicted",
+  "rich.markdown.MarkdownContext.on_text -> rich.syntax.Syntax.highlight": "confirmed",
+  "rich.markdown.MarkdownContext.on_text -> rich.text.Text.assemble": "confirmed",
+  "rich.markdown.MarkdownContext.on_text -> rich.text.Text.rstrip": "confirmed",
+  "rich.markdown.TableDataElement.__init__ -> rich.text.Text": "confirmed",
+  "rich.markdown.TableDataElement.on_text -> rich.text.Text.append": "confirmed",
+  "rich.markdown.TableDataElement.on_text -> rich.text.Text.append_text": "confirmed",
+  "rich.markdown.TableElement.__rich_console__ -> rich.table.Table": "confirmed",
+  "rich.markdown.TableElement.__rich_console__ -> rich.table.Table.add_column": "confirmed",
+  "rich.markdown.TableElement.__rich_console__ -> rich.table.Table.add_row": "confirmed",
+  "rich.markdown.TableElement.__rich_console__ -> rich.text.Text.copy": "confirmed",
+  "rich.markdown.TableElement.__rich_console__ -> rich.text.Text.stylize": "confirmed",
+  "rich.markdown.TextElement.on_enter -> rich.markdown.MarkdownContext.enter_style": "confirmed",
+  "rich.markdown.TextElement.on_enter -> rich.text.Text": "confirmed",
+  "rich.markdown.TextElement.on_leave -> rich.markdown.MarkdownContext.leave_style": "confirmed",
+  "rich.markdown.TextElement.on_text -> rich.text.Text.append": "confirmed",
+  "rich.markup -> rich.print": "no_site",
+  "rich.markup -> rich.table.Table": "no_site",
+  "rich.markup -> rich.table.Table.add_row": "no_site",
+  "rich.markup -> rich.text.Text": "no_site",
+  "rich.markup.render -> rich.errors.MarkupError": "confirmed",
+  "rich.markup.render -> rich.markup._parse": "confirmed",
+  "rich.markup.render -> rich.style.Style": "confirmed",
+  "rich.markup.render -> rich.text.Text": "confirmed",
+  "rich.measure.Measurement.clamp -> rich.measure.Measurement.with_maximum": "confirmed",
+  "rich.measure.Measurement.clamp -> rich.measure.Measurement.with_minimum": "confirmed",
+  "rich.measure.Measurement.get -> rich.console.Console.render_str": "confirmed",
+  "rich.measure.Measurement.get -> rich.errors.NotRenderableError": "confirmed",
+  "rich.measure.Measurement.get -> rich.measure.Measurement": "confirmed",
+  "rich.measure.Measurement.get -> rich.measure.Measurement.normalize": "confirmed",
+  "rich.measure.Measurement.get -> rich.measure.Measurement.with_maximum": "confirmed",
+  "rich.measure.Measurement.get -> rich.protocol.is_renderable": "confirmed",
+  "rich.measure.Measurement.get -> rich.protocol.rich_cast": "confirmed",
+  "rich.measure.Measurement.normalize -> rich.measure.Measurement": "confirmed",
+  "rich.measure.Measurement.with_maximum -> rich.measure.Measurement": "confirmed",
+  "rich.measure.Measurement.with_minimum -> rich.measure.Measurement": "confirmed",
+  "rich.measure.measure_renderables -> rich.measure.Measurement": "confirmed",
+  "rich.padding -> rich.padding.Padding": "no_site",
+  "rich.padding -> rich.print": "no_site",
+  "rich.padding.Padding.__init__ -> rich.padding.Padding.unpack": "confirmed",
+  "rich.padding.Padding.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.padding.Padding.__rich_console__ -> rich.console.Console.render_lines": "confirmed",
+  "rich.padding.Padding.__rich_console__ -> rich.console.ConsoleOptions.update_height": "confirmed",
+  "rich.padding.Padding.__rich_console__ -> rich.console.ConsoleOptions.update_width": "confirmed",
+  "rich.padding.Padding.__rich_console__ -> rich.measure.Measurement.get": "confirmed",
+  "rich.padding.Padding.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.padding.Padding.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.padding.Padding.__rich_measure__ -> rich.measure.Measurement.get": "confirmed",
+  "rich.padding.Padding.__rich_measure__ -> rich.measure.Measurement.with_maximum": "confirmed",
+  "rich.padding.Padding.indent -> rich.padding.Padding": "confirmed",
+  "rich.pager -> rich.__main__.make_test_card": "no_site",
+  "rich.pager -> rich.console.Console": "no_site",
+  "rich.pager -> rich.console.Console.pager": "no_site",
+  "rich.pager -> rich.console.Console.print": "no_site",
+  "rich.pager.SystemPager.show -> rich.pager.SystemPager._pager": "contradicted",
+  "rich.palette -> rich.console.Console": "no_site",
+  "rich.palette -> rich.console.Console.print": "no_site",
+  "rich.palette -> rich.palette.ColorBox": "no_site",
+  "rich.palette.ColorBox.__rich_console__ -> rich.color.Color.from_rgb": "caller_not_run",
+  "rich.palette.ColorBox.__rich_console__ -> rich.segment.Segment": "caller_not_run",
+  "rich.palette.ColorBox.__rich_console__ -> rich.segment.Segment.line": "caller_not_run",
+  "rich.palette.ColorBox.__rich_console__ -> rich.style.Style": "caller_not_run",
+  "rich.palette.Palette.__getitem__ -> rich.color_triplet.ColorTriplet": "confirmed",
+  "rich.palette.Palette.__rich__ -> rich.color.Color.from_rgb": "confirmed",
+  "rich.palette.Palette.__rich__ -> rich.style.Style": "confirmed",
+  "rich.palette.Palette.__rich__ -> rich.table.Table": "confirmed",
+  "rich.palette.Palette.__rich__ -> rich.table.Table.add_row": "confirmed",
+  "rich.palette.Palette.__rich__ -> rich.text.Text": "confirmed",
+  "rich.panel -> rich.console.Console": "no_site",
+  "rich.panel -> rich.console.Console.print": "no_site",
+  "rich.panel -> rich.panel.Panel": "no_site",
+  "rich.panel.Panel.__rich_console__ -> rich.box.Box.get_bottom": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.box.Box.get_top": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.box.Box.substitute": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.cells.cell_len": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.console.Console.measure": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.console.Console.render": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.console.Console.render_lines": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.console.ConsoleOptions.update_width": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.padding.Padding": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.padding.Padding.unpack": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.text.Text.assemble": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.text.Text.copy": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.text.Text.stylize": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.text.Text.stylize_before": "confirmed",
+  "rich.panel.Panel.__rich_console__ -> rich.text.Text.truncate": "confirmed",
+  "rich.panel.Panel.__rich_measure__ -> rich.console.ConsoleOptions.update_width": "confirmed",
+  "rich.panel.Panel.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.panel.Panel.__rich_measure__ -> rich.measure.measure_renderables": "confirmed",
+  "rich.panel.Panel.__rich_measure__ -> rich.padding.Padding.unpack": "confirmed",
+  "rich.panel.Panel._subtitle -> rich.text.Text.copy": "confirmed",
+  "rich.panel.Panel._subtitle -> rich.text.Text.expand_tabs": "confirmed",
+  "rich.panel.Panel._subtitle -> rich.text.Text.from_markup": "confirmed",
+  "rich.panel.Panel._subtitle -> rich.text.Text.pad": "confirmed",
+  "rich.panel.Panel._title -> rich.text.Text.copy": "confirmed",
+  "rich.panel.Panel._title -> rich.text.Text.expand_tabs": "confirmed",
+  "rich.panel.Panel._title -> rich.text.Text.from_markup": "confirmed",
+  "rich.panel.Panel._title -> rich.text.Text.pad": "confirmed",
+  "rich.pretty -> rich.pretty.BrokenRepr": "no_site",
+  "rich.pretty -> rich.pretty.Pretty": "no_site",
+  "rich.pretty -> rich.pretty.StockKeepingUnit": "no_site",
+  "rich.pretty -> rich.pretty.Thing": "no_site",
+  "rich.pretty -> rich.print": "no_site",
+  "rich.pretty.Node.__str__ -> rich.pretty.Node.iter_tokens": "confirmed",
+  "rich.pretty.Node.check_length -> rich.cells.cell_len": "confirmed",
+  "rich.pretty.Node.check_length -> rich.pretty.Node.iter_tokens": "confirmed",
+  "rich.pretty.Node.iter_tokens -> rich.pretty.Node.iter_tokens": "confirmed",
+  "rich.pretty.Node.render -> rich.pretty._Line": "confirmed",
+  "rich.pretty.Node.render -> rich.pretty._Line.check_length": "confirmed",
+  "rich.pretty.Node.render -> rich.pretty._Line.expand": "confirmed",
+  "rich.pretty.Pretty.__init__ -> rich.highlighter.ReprHighlighter": "confirmed",
+  "rich.pretty.Pretty.__rich_console__ -> rich._pick.pick_bool": "confirmed",
+  "rich.pretty.Pretty.__rich_console__ -> rich.pretty.Pretty.highlighter": "attribute_target",
+  "rich.pretty.Pretty.__rich_console__ -> rich.pretty.pretty_repr": "confirmed",
+  "rich.pretty.Pretty.__rich_console__ -> rich.text.Text": "unexercised",
+  "rich.pretty.Pretty.__rich_console__ -> rich.text.Text.from_ansi": "confirmed",
+  "rich.pretty.Pretty.__rich_console__ -> rich.text.Text.with_indent_guides": "confirmed",
+  "rich.pretty.Pretty.__rich_measure__ -> rich.cells.cell_len": "confirmed",
+  "rich.pretty.Pretty.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.pretty.Pretty.__rich_measure__ -> rich.pretty.pretty_repr": "confirmed",
+  "rich.pretty._Line.check_length -> rich.cells.cell_len": "confirmed",
+  "rich.pretty._Line.check_length -> rich.pretty.Node.check_length": "confirmed",
+  "rich.pretty._Line.expand -> rich._loop.loop_last": "confirmed",
+  "rich.pretty._Line.expand -> rich.pretty._Line": "confirmed",
+  "rich.pretty._ipy_display_hook -> rich.console.Capture.get": "confirmed",
+  "rich.pretty._ipy_display_hook -> rich.console.Console.capture": "confirmed",
+  "rich.pretty._ipy_display_hook -> rich.console.Console.line": "confirmed",
+  "rich.pretty._ipy_display_hook -> rich.console.Console.print": "confirmed",
+  "rich.pretty._ipy_display_hook -> rich.get_console": "contradicted",
+  "rich.pretty._ipy_display_hook -> rich.pretty.Pretty": "confirmed",
+  "rich.pretty._ipy_display_hook -> rich.pretty._safe_isinstance": "confirmed",
+  "rich.pretty.install -> rich.console.Console.print": "confirmed",
+  "rich.pretty.install -> rich.get_console": "contradicted",
+  "rich.pretty.install -> rich.pretty.Pretty": "confirmed",
+  "rich.pretty.install -> rich.pretty._ipy_display_hook": "unexercised",
+  "rich.pretty.install -> rich.pretty._safe_isinstance": "confirmed",
+  "rich.pretty.is_expandable -> rich.pretty._is_attr_object": "confirmed",
+  "rich.pretty.is_expandable -> rich.pretty._safe_isinstance": "confirmed",
+  "rich.pretty.pprint -> rich.console.Console.print": "confirmed",
+  "rich.pretty.pprint -> rich.get_console": "contradicted",
+  "rich.pretty.pprint -> rich.pretty.Pretty": "confirmed",
+  "rich.pretty.pretty_repr -> rich.pretty.Node.render": "confirmed",
+  "rich.pretty.pretty_repr -> rich.pretty._safe_isinstance": "confirmed",
+  "rich.pretty.pretty_repr -> rich.pretty.traverse": "confirmed",
+  "rich.pretty.traverse -> rich._loop.loop_last": "confirmed",
+  "rich.pretty.traverse -> rich.pretty.Node": "confirmed",
+  "rich.pretty.traverse -> rich.pretty._get_attr_fields": "confirmed",
+  "rich.pretty.traverse -> rich.pretty._has_default_namedtuple_repr": "confirmed",
+  "rich.pretty.traverse -> rich.pretty._is_attr_object": "confirmed",
+  "rich.pretty.traverse -> rich.pretty._is_dataclass_repr": "confirmed",
+  "rich.pretty.traverse -> rich.pretty._is_namedtuple": "confirmed",
+  "rich.pretty.traverse -> rich.pretty._safe_isinstance": "confirmed",
+  "rich.print -> rich.console.Console": "contradicted",
+  "rich.print -> rich.console.Console.print": "confirmed",
+  "rich.print -> rich.get_console": "confirmed",
+  "rich.print_json -> rich.console.Console.print_json": "confirmed",
+  "rich.print_json -> rich.get_console": "confirmed",
+  "rich.progress -> rich.console.Console": "no_site",
+  "rich.progress -> rich.panel.Panel": "no_site",
+  "rich.progress -> rich.progress.Progress": "no_site",
+  "rich.progress -> rich.progress.Progress.add_task": "no_site",
+  "rich.progress -> rich.progress.Progress.get_default_columns": "no_site",
+  "rich.progress -> rich.progress.Progress.update": "no_site",
+  "rich.progress -> rich.progress.SpinnerColumn": "no_site",
+  "rich.progress -> rich.progress.TimeElapsedColumn": "no_site",
+  "rich.progress -> rich.rule.Rule": "no_site",
+  "rich.progress -> rich.syntax.Syntax": "no_site",
+  "rich.progress -> rich.table.Table": "no_site",
+  "rich.progress -> rich.table.Table.add_row": "no_site",
+  "rich.progress.BarColumn.__init__ -> rich.progress.ProgressColumn.__init__": "confirmed",
+  "rich.progress.BarColumn.render -> rich.progress.Task.get_time": "confirmed",
+  "rich.progress.BarColumn.render -> rich.progress_bar.ProgressBar": "confirmed",
+  "rich.progress.DownloadColumn.__init__ -> rich.progress.ProgressColumn.__init__": "confirmed",
+  "rich.progress.DownloadColumn.render -> rich.filesize.pick_unit_and_suffix": "confirmed",
+  "rich.progress.DownloadColumn.render -> rich.text.Text": "confirmed",
+  "rich.progress.FileSizeColumn.render -> rich.filesize.decimal": "confirmed",
+  "rich.progress.FileSizeColumn.render -> rich.text.Text": "confirmed",
+  "rich.progress.MofNCompleteColumn.__init__ -> rich.progress.ProgressColumn.__init__": "confirmed",
+  "rich.progress.MofNCompleteColumn.render -> rich.text.Text": "confirmed",
+  "rich.progress.Progress.__enter__ -> rich.progress.Progress.start": "confirmed",
+  "rich.progress.Progress.__exit__ -> rich.progress.Progress.stop": "confirmed",
+  "rich.progress.Progress.__init__ -> rich.get_console": "confirmed",
+  "rich.progress.Progress.__init__ -> rich.live.Live": "confirmed",
+  "rich.progress.Progress.__init__ -> rich.progress.Progress.get_default_columns": "confirmed",
+  "rich.progress.Progress.__init__ -> rich.progress.TaskID": "attribute_target",
+  "rich.progress.Progress.__rich__ -> rich.progress.Progress.get_renderable": "caller_not_run",
+  "rich.progress.Progress.add_task -> rich.progress.Progress.refresh": "confirmed",
+  "rich.progress.Progress.add_task -> rich.progress.Progress.start_task": "confirmed",
+  "rich.progress.Progress.add_task -> rich.progress.Task": "confirmed",
+  "rich.progress.Progress.add_task -> rich.progress.TaskID": "attribute_target",
+  "rich.progress.Progress.advance -> rich.progress.Progress.get_time": "attribute_target",
+  "rich.progress.Progress.advance -> rich.progress.ProgressSample": "confirmed",
+  "rich.progress.Progress.get_default_columns -> rich.progress.BarColumn": "confirmed",
+  "rich.progress.Progress.get_default_columns -> rich.progress.TaskProgressColumn": "confirmed",
+  "rich.progress.Progress.get_default_columns -> rich.progress.TextColumn": "confirmed",
+  "rich.progress.Progress.get_default_columns -> rich.progress.TimeRemainingColumn": "confirmed",
+  "rich.progress.Progress.get_renderable -> rich.console.Group": "confirmed",
+  "rich.progress.Progress.get_renderable -> rich.progress.Progress.get_renderables": "confirmed",
+  "rich.progress.Progress.get_renderables -> rich.progress.Progress.make_tasks_table": "confirmed",
+  "rich.progress.Progress.make_tasks_table -> rich.progress.ProgressColumn.get_table_column": "confirmed",
+  "rich.progress.Progress.make_tasks_table -> rich.table.Column": "confirmed",
+  "rich.progress.Progress.make_tasks_table -> rich.table.Column.copy": "confirmed",
+  "rich.progress.Progress.make_tasks_table -> rich.table.Table.add_row": "confirmed",
+  "rich.progress.Progress.make_tasks_table -> rich.table.Table.grid": "confirmed",
+  "rich.progress.Progress.open -> rich.progress.Progress.add_task": "confirmed",
+  "rich.progress.Progress.open -> rich.progress.Progress.update": "unexercised",
+  "rich.progress.Progress.open -> rich.progress._Reader": "confirmed",
+  "rich.progress.Progress.refresh -> rich.live.Live.refresh": "confirmed",
+  "rich.progress.Progress.reset -> rich.progress.Progress.get_time": "attribute_target",
+  "rich.progress.Progress.reset -> rich.progress.Progress.refresh": "confirmed",
+  "rich.progress.Progress.start -> rich.live.Live.start": "confirmed",
+  "rich.progress.Progress.start_task -> rich.progress.Progress.get_time": "attribute_target",
+  "rich.progress.Progress.stop -> rich.console.Console.print": "confirmed",
+  "rich.progress.Progress.stop -> rich.live.Live.stop": "confirmed",
+  "rich.progress.Progress.stop_task -> rich.progress.Progress.get_time": "attribute_target",
+  "rich.progress.Progress.track -> rich.progress.Progress.add_task": "confirmed",
+  "rich.progress.Progress.track -> rich.progress.Progress.update": "unexercised",
+  "rich.progress.Progress.track -> rich.progress._TrackThread": "confirmed",
+  "rich.progress.Progress.update -> rich.progress.Progress.get_time": "attribute_target",
+  "rich.progress.Progress.update -> rich.progress.Progress.refresh": "confirmed",
+  "rich.progress.Progress.update -> rich.progress.ProgressSample": "confirmed",
+  "rich.progress.Progress.update -> rich.progress.Task._reset": "confirmed",
+  "rich.progress.Progress.wrap_file -> rich.progress.Progress.add_task": "confirmed",
+  "rich.progress.Progress.wrap_file -> rich.progress.Progress.update": "confirmed",
+  "rich.progress.Progress.wrap_file -> rich.progress._Reader": "confirmed",
+  "rich.progress.ProgressColumn.__call__ -> rich.progress.ProgressColumn.render": "contradicted",
+  "rich.progress.ProgressColumn.__call__ -> rich.progress.Task.get_time": "confirmed",
+  "rich.progress.ProgressColumn.get_table_column -> rich.table.Column": "confirmed",
+  "rich.progress.RenderableColumn.__init__ -> rich.progress.ProgressColumn.__init__": "confirmed",
+  "rich.progress.SpinnerColumn.__init__ -> rich.progress.ProgressColumn.__init__": "confirmed",
+  "rich.progress.SpinnerColumn.__init__ -> rich.spinner.Spinner": "confirmed",
+  "rich.progress.SpinnerColumn.__init__ -> rich.text.Text.from_markup": "confirmed",
+  "rich.progress.SpinnerColumn.render -> rich.progress.Task.get_time": "confirmed",
+  "rich.progress.SpinnerColumn.render -> rich.spinner.Spinner.render": "confirmed",
+  "rich.progress.SpinnerColumn.set_spinner -> rich.spinner.Spinner": "confirmed",
+  "rich.progress.Task.elapsed -> rich.progress.Task.get_time": "confirmed",
+  "rich.progress.Task.get_time -> rich.progress.Task._get_time": "attribute_target",
+  "rich.progress.TaskProgressColumn.__init__ -> rich.progress.TextColumn.__init__": "confirmed",
+  "rich.progress.TaskProgressColumn.render -> rich.highlighter.Highlighter.highlight": "unexercised",
+  "rich.progress.TaskProgressColumn.render -> rich.progress.TaskProgressColumn.render_speed": "unexercised",
+  "rich.progress.TaskProgressColumn.render -> rich.text.Text": "unexercised",
+  "rich.progress.TaskProgressColumn.render -> rich.text.Text.from_markup": "confirmed",
+  "rich.progress.TaskProgressColumn.render_speed -> rich.filesize.pick_unit_and_suffix": "confirmed",
+  "rich.progress.TaskProgressColumn.render_speed -> rich.text.Text": "confirmed",
+  "rich.progress.TextColumn.__init__ -> rich.progress.ProgressColumn.__init__": "confirmed",
+  "rich.progress.TextColumn.__init__ -> rich.table.Column": "confirmed",
+  "rich.progress.TextColumn.render -> rich.highlighter.Highlighter.highlight": "contradicted",
+  "rich.progress.TextColumn.render -> rich.text.Text": "confirmed",
+  "rich.progress.TextColumn.render -> rich.text.Text.from_markup": "confirmed",
+  "rich.progress.TimeElapsedColumn.render -> rich.text.Text": "confirmed",
+  "rich.progress.TimeRemainingColumn.__init__ -> rich.progress.ProgressColumn.__init__": "confirmed",
+  "rich.progress.TimeRemainingColumn.render -> rich.text.Text": "confirmed",
+  "rich.progress.TotalFileSizeColumn.render -> rich.filesize.decimal": "confirmed",
+  "rich.progress.TotalFileSizeColumn.render -> rich.text.Text": "confirmed",
+  "rich.progress.TransferSpeedColumn.render -> rich.filesize.decimal": "confirmed",
+  "rich.progress.TransferSpeedColumn.render -> rich.text.Text": "confirmed",
+  "rich.progress._ReadContext.__enter__ -> rich.progress.Progress.start": "confirmed",
+  "rich.progress._ReadContext.__exit__ -> rich.progress.Progress.stop": "confirmed",
+  "rich.progress._Reader.__exit__ -> rich.progress._Reader.close": "confirmed",
+  "rich.progress._Reader.__next__ -> rich.progress.Progress.advance": "caller_not_run",
+  "rich.progress._Reader.read -> rich.progress.Progress.advance": "confirmed",
+  "rich.progress._Reader.readinto -> rich.progress.Progress.advance": "caller_not_run",
+  "rich.progress._Reader.readline -> rich.progress.Progress.advance": "caller_not_run",
+  "rich.progress._Reader.readlines -> rich.progress.Progress.advance": "caller_not_run",
+  "rich.progress._Reader.seek -> rich.progress.Progress.update": "caller_not_run",
+  "rich.progress._TrackThread.run -> rich.progress.Progress.update": "confirmed",
+  "rich.progress.open -> rich.progress.BarColumn": "confirmed",
+  "rich.progress.open -> rich.progress.DownloadColumn": "confirmed",
+  "rich.progress.open -> rich.progress.Progress": "confirmed",
+  "rich.progress.open -> rich.progress.Progress.open": "confirmed",
+  "rich.progress.open -> rich.progress.TextColumn": "confirmed",
+  "rich.progress.open -> rich.progress.TimeRemainingColumn": "confirmed",
+  "rich.progress.open -> rich.progress._ReadContext": "confirmed",
+  "rich.progress.track -> rich.progress.BarColumn": "confirmed",
+  "rich.progress.track -> rich.progress.Progress": "confirmed",
+  "rich.progress.track -> rich.progress.Progress.track": "confirmed",
+  "rich.progress.track -> rich.progress.TaskProgressColumn": "confirmed",
+  "rich.progress.track -> rich.progress.TextColumn": "confirmed",
+  "rich.progress.track -> rich.progress.TimeRemainingColumn": "confirmed",
+  "rich.progress.wrap_file -> rich.progress.BarColumn": "confirmed",
+  "rich.progress.wrap_file -> rich.progress.DownloadColumn": "confirmed",
+  "rich.progress.wrap_file -> rich.progress.Progress": "confirmed",
+  "rich.progress.wrap_file -> rich.progress.Progress.wrap_file": "confirmed",
+  "rich.progress.wrap_file -> rich.progress.TextColumn": "confirmed",
+  "rich.progress.wrap_file -> rich.progress.TimeRemainingColumn": "confirmed",
+  "rich.progress.wrap_file -> rich.progress._ReadContext": "confirmed",
+  "rich.progress_bar -> rich.console.Console": "no_site",
+  "rich.progress_bar -> rich.console.Console.print": "no_site",
+  "rich.progress_bar -> rich.console.Console.show_cursor": "no_site",
+  "rich.progress_bar -> rich.progress_bar.ProgressBar": "no_site",
+  "rich.progress_bar -> rich.progress_bar.ProgressBar.update": "no_site",
+  "rich.progress_bar.ProgressBar.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.progress_bar.ProgressBar.__rich_console__ -> rich.progress_bar.ProgressBar._render_pulse": "confirmed",
+  "rich.progress_bar.ProgressBar.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.progress_bar.ProgressBar._get_pulse_segments -> rich.color.Color.get_truecolor": "confirmed",
+  "rich.progress_bar.ProgressBar._get_pulse_segments -> rich.color.blend_rgb": "confirmed",
+  "rich.progress_bar.ProgressBar._get_pulse_segments -> rich.color_triplet.ColorTriplet": "unexercised",
+  "rich.progress_bar.ProgressBar._get_pulse_segments -> rich.segment.Segment": "confirmed",
+  "rich.progress_bar.ProgressBar._render_pulse -> rich.console.Console.get_style": "confirmed",
+  "rich.progress_bar.ProgressBar._render_pulse -> rich.progress_bar.ProgressBar._get_pulse_segments": "confirmed",
+  "rich.prompt -> rich.print": "no_site",
+  "rich.prompt -> rich.prompt.PromptBase.ask": "no_site",
+  "rich.prompt.Confirm.process_response -> rich.prompt.InvalidResponse": "confirmed",
+  "rich.prompt.Confirm.render_default -> rich.text.Text": "confirmed",
+  "rich.prompt.PromptBase.__call__ -> rich.prompt.PromptBase.get_input": "confirmed",
+  "rich.prompt.PromptBase.__call__ -> rich.prompt.PromptBase.make_prompt": "confirmed",
+  "rich.prompt.PromptBase.__call__ -> rich.prompt.PromptBase.on_validate_error": "confirmed",
+  "rich.prompt.PromptBase.__call__ -> rich.prompt.PromptBase.pre_prompt": "confirmed",
+  "rich.prompt.PromptBase.__call__ -> rich.prompt.PromptBase.process_response": "confirmed",
+  "rich.prompt.PromptBase.__init__ -> rich.get_console": "contradicted",
+  "rich.prompt.PromptBase.__init__ -> rich.text.Text.from_markup": "confirmed",
+  "rich.prompt.PromptBase.get_input -> rich.console.Console.input": "confirmed",
+  "rich.prompt.PromptBase.make_prompt -> rich.prompt.PromptBase.render_default": "confirmed",
+  "rich.prompt.PromptBase.make_prompt -> rich.text.Text.append": "confirmed",
+  "rich.prompt.PromptBase.make_prompt -> rich.text.Text.copy": "confirmed",
+  "rich.prompt.PromptBase.on_validate_error -> rich.console.Console.print": "confirmed",
+  "rich.prompt.PromptBase.process_response -> rich.prompt.InvalidResponse": "confirmed",
+  "rich.prompt.PromptBase.process_response -> rich.prompt.PromptBase.check_choice": "confirmed",
+  "rich.prompt.PromptBase.process_response -> rich.prompt.PromptBase.response_type": "attribute_target",
+  "rich.prompt.PromptBase.render_default -> rich.text.Text": "confirmed",
+  "rich.reconfigure -> rich.console.Console": "confirmed",
+  "rich.reconfigure -> rich.get_console": "confirmed",
+  "rich.repr -> rich.console.Console": "no_site",
+  "rich.repr -> rich.console.Console.print": "no_site",
+  "rich.repr -> rich.console.Console.rule": "no_site",
+  "rich.repr -> rich.repr.Foo": "no_site",
+  "rich.repr.auto -> rich.repr.ReprError": "confirmed",
+  "rich.repr.rich_repr -> rich.repr.auto": "confirmed",
+  "rich.rule -> rich.console.Console": "no_site",
+  "rich.rule -> rich.console.Console.print": "no_site",
+  "rich.rule -> rich.rule.Rule": "no_site",
+  "rich.rule.Rule.__init__ -> rich.cells.cell_len": "confirmed",
+  "rich.rule.Rule.__rich_console__ -> rich.cells.cell_len": "confirmed",
+  "rich.rule.Rule.__rich_console__ -> rich.cells.set_cell_size": "confirmed",
+  "rich.rule.Rule.__rich_console__ -> rich.console.Console.render_str": "confirmed",
+  "rich.rule.Rule.__rich_console__ -> rich.rule.Rule._rule_line": "confirmed",
+  "rich.rule.Rule.__rich_console__ -> rich.text.Text": "confirmed",
+  "rich.rule.Rule.__rich_console__ -> rich.text.Text.append": "confirmed",
+  "rich.rule.Rule.__rich_console__ -> rich.text.Text.expand_tabs": "confirmed",
+  "rich.rule.Rule.__rich_console__ -> rich.text.Text.truncate": "confirmed",
+  "rich.rule.Rule.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.rule.Rule._rule_line -> rich.cells.set_cell_size": "confirmed",
+  "rich.rule.Rule._rule_line -> rich.text.Text": "confirmed",
+  "rich.rule.Rule._rule_line -> rich.text.Text.truncate": "confirmed",
+  "rich.scope -> rich.print": "no_site",
+  "rich.scope -> rich.scope.test": "no_site",
+  "rich.scope.render_scope -> rich.highlighter.ReprHighlighter": "confirmed",
+  "rich.scope.render_scope -> rich.panel.Panel.fit": "confirmed",
+  "rich.scope.render_scope -> rich.pretty.Pretty": "confirmed",
+  "rich.scope.render_scope -> rich.table.Table.add_column": "confirmed",
+  "rich.scope.render_scope -> rich.table.Table.add_row": "confirmed",
+  "rich.scope.render_scope -> rich.table.Table.grid": "confirmed",
+  "rich.scope.render_scope -> rich.text.Text.assemble": "confirmed",
+  "rich.scope.test -> rich.print": "caller_not_run",
+  "rich.scope.test -> rich.scope.render_scope": "caller_not_run",
+  "rich.screen.Screen.__init__ -> rich.console.Group": "confirmed",
+  "rich.screen.Screen.__rich_console__ -> rich._loop.loop_last": "confirmed",
+  "rich.screen.Screen.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.screen.Screen.__rich_console__ -> rich.console.Console.render_lines": "confirmed",
+  "rich.screen.Screen.__rich_console__ -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.screen.Screen.__rich_console__ -> rich.segment.Segment": "contradicted",
+  "rich.screen.Screen.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.screen.Screen.__rich_console__ -> rich.segment.Segment.set_shape": "confirmed",
+  "rich.segment -> rich.console.Console": "no_site",
+  "rich.segment -> rich.console.Console.print": "no_site",
+  "rich.segment -> rich.console.Console.render": "no_site",
+  "rich.segment -> rich.console.Console.rule": "no_site",
+  "rich.segment -> rich.syntax.Syntax": "no_site",
+  "rich.segment -> rich.text.Text.from_markup": "no_site",
+  "rich.segment.Segment -> rich.repr.rich_repr": "contradicted",
+  "rich.segment.Segment._split_cells -> rich.cells.cell_len": "confirmed",
+  "rich.segment.Segment.adjust_line_length -> rich.cells.set_cell_size": "confirmed",
+  "rich.segment.Segment.cell_length -> rich.cells.cell_len": "confirmed",
+  "rich.segment.Segment.divide -> rich.segment.Segment.split_cells": "confirmed",
+  "rich.segment.Segment.split_cells -> rich.cells._is_single_cell_widths": "attribute_target",
+  "rich.segment.Segment.split_cells -> rich.segment.Segment": "confirmed",
+  "rich.segment.Segment.split_cells -> rich.segment.Segment._split_cells": "confirmed",
+  "rich.segment.SegmentLines.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.segment.Segments.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.spinner -> rich.console.Group": "no_site",
+  "rich.spinner -> rich.live.Live": "no_site",
+  "rich.spinner -> rich.spinner.Spinner": "no_site",
+  "rich.spinner -> rich.text.Text": "no_site",
+  "rich.spinner.Spinner.__init__ -> rich.text.Text.from_markup": "confirmed",
+  "rich.spinner.Spinner.__rich_console__ -> rich.spinner.Spinner.render": "confirmed",
+  "rich.spinner.Spinner.__rich_measure__ -> rich.measure.Measurement.get": "confirmed",
+  "rich.spinner.Spinner.__rich_measure__ -> rich.spinner.Spinner.render": "confirmed",
+  "rich.spinner.Spinner.render -> rich.table.Table.add_row": "confirmed",
+  "rich.spinner.Spinner.render -> rich.table.Table.grid": "confirmed",
+  "rich.spinner.Spinner.render -> rich.text.Text": "confirmed",
+  "rich.spinner.Spinner.render -> rich.text.Text.assemble": "confirmed",
+  "rich.spinner.Spinner.update -> rich.text.Text.from_markup": "confirmed",
+  "rich.status -> rich.console.Console": "no_site",
+  "rich.status -> rich.console.Console.log": "no_site",
+  "rich.status -> rich.console.Console.print": "no_site",
+  "rich.status -> rich.console.Console.status": "no_site",
+  "rich.status -> rich.status.Status.update": "no_site",
+  "rich.status.Status.__enter__ -> rich.status.Status.start": "confirmed",
+  "rich.status.Status.__exit__ -> rich.status.Status.stop": "confirmed",
+  "rich.status.Status.__init__ -> rich.live.Live": "confirmed",
+  "rich.status.Status.__init__ -> rich.spinner.Spinner": "confirmed",
+  "rich.status.Status.start -> rich.live.Live.start": "confirmed",
+  "rich.status.Status.stop -> rich.live.Live.stop": "confirmed",
+  "rich.status.Status.update -> rich.live.Live.update": "confirmed",
+  "rich.status.Status.update -> rich.spinner.Spinner": "confirmed",
+  "rich.status.Status.update -> rich.spinner.Spinner.update": "confirmed",
+  "rich.style -> rich.style.Style": "confirmed",
+  "rich.style.Style -> rich.style._Bit": "confirmed",
+  "rich.style.Style.__add__ -> rich.style.Style._add": "confirmed",
+  "rich.style.Style.__add__ -> rich.style.Style.copy": "confirmed",
+  "rich.style.Style.__eq__ -> rich.style.Style.__hash__": "confirmed",
+  "rich.style.Style.__hash__ -> rich.style._hash_getter": "attribute_target",
+  "rich.style.Style.__init__ -> rich.color.Color.parse": "confirmed",
+  "rich.style.Style.__ne__ -> rich.style.Style.__hash__": "confirmed",
+  "rich.style.Style._make_ansi_codes -> rich.color.Color.downgrade": "confirmed",
+  "rich.style.Style._make_ansi_codes -> rich.color.Color.get_ansi_codes": "confirmed",
+  "rich.style.Style.background_style -> rich.style.Style": "confirmed",
+  "rich.style.Style.get_html_style -> rich.color.Color.from_triplet": "confirmed",
+  "rich.style.Style.get_html_style -> rich.color.Color.get_truecolor": "confirmed",
+  "rich.style.Style.get_html_style -> rich.color.blend_rgb": "confirmed",
+  "rich.style.Style.normalize -> rich.style.Style.parse": "confirmed",
+  "rich.style.Style.on -> rich.style.Style.from_meta": "confirmed",
+  "rich.style.Style.parse -> rich.color.Color.parse": "confirmed",
+  "rich.style.Style.parse -> rich.errors.StyleSyntaxError": "confirmed",
+  "rich.style.Style.parse -> rich.style.Style": "confirmed",
+  "rich.style.Style.parse -> rich.style.Style.null": "confirmed",
+  "rich.style.Style.render -> rich.style.Style._make_ansi_codes": "confirmed",
+  "rich.style.Style.test -> rich.style.Style.render": "confirmed",
+  "rich.styled -> rich.panel.Panel": "no_site",
+  "rich.styled -> rich.print": "no_site",
+  "rich.styled -> rich.styled.Styled": "no_site",
+  "rich.styled.Styled.__rich_console__ -> rich.console.Console.get_style": "confirmed",
+  "rich.styled.Styled.__rich_console__ -> rich.console.Console.render": "confirmed",
+  "rich.styled.Styled.__rich_console__ -> rich.segment.Segment.apply_style": "confirmed",
+  "rich.styled.Styled.__rich_measure__ -> rich.measure.Measurement.get": "confirmed",
+  "rich.syntax -> rich.console.Console": "no_site",
+  "rich.syntax -> rich.console.Console.print": "no_site",
+  "rich.syntax -> rich.style.Style": "confirmed",
+  "rich.syntax -> rich.syntax.Syntax": "no_site",
+  "rich.syntax -> rich.syntax.Syntax.from_path": "no_site",
+  "rich.syntax.ANSISyntaxTheme.__init__ -> rich.style.Style.null": "confirmed",
+  "rich.syntax.PaddingProperty.__set__ -> rich.padding.Padding.unpack": "caller_not_run",
+  "rich.syntax.PygmentsSyntaxTheme.__init__ -> rich.style.Style": "confirmed",
+  "rich.syntax.PygmentsSyntaxTheme.get_style_for_token -> rich.style.Style": "confirmed",
+  "rich.syntax.PygmentsSyntaxTheme.get_style_for_token -> rich.style.Style.null": "confirmed",
+  "rich.syntax.Syntax -> rich.syntax.PaddingProperty": "confirmed",
+  "rich.syntax.Syntax.__init__ -> rich.padding.Padding.unpack": "confirmed",
+  "rich.syntax.Syntax.__init__ -> rich.style.Style": "confirmed",
+  "rich.syntax.Syntax.__init__ -> rich.syntax.Syntax.get_theme": "confirmed",
+  "rich.syntax.Syntax.__rich_console__ -> rich.padding.Padding": "confirmed",
+  "rich.syntax.Syntax.__rich_console__ -> rich.segment.Segments": "confirmed",
+  "rich.syntax.Syntax.__rich_console__ -> rich.syntax.Syntax._get_base_style": "confirmed",
+  "rich.syntax.Syntax.__rich_console__ -> rich.syntax.Syntax._get_syntax": "confirmed",
+  "rich.syntax.Syntax.__rich_measure__ -> rich.cells.cell_len": "confirmed",
+  "rich.syntax.Syntax.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.syntax.Syntax._apply_stylized_ranges -> rich.syntax._get_code_index_for_syntax_position": "confirmed",
+  "rich.syntax.Syntax._apply_stylized_ranges -> rich.text.Text.stylize": "confirmed",
+  "rich.syntax.Syntax._apply_stylized_ranges -> rich.text.Text.stylize_before": "unexercised",
+  "rich.syntax.Syntax._get_base_style -> rich.syntax.SyntaxTheme.get_background_style": "contradicted",
+  "rich.syntax.Syntax._get_line_numbers_color -> rich.color.Color.default": "confirmed",
+  "rich.syntax.Syntax._get_line_numbers_color -> rich.color.Color.from_triplet": "confirmed",
+  "rich.syntax.Syntax._get_line_numbers_color -> rich.color.Color.get_truecolor": "confirmed",
+  "rich.syntax.Syntax._get_line_numbers_color -> rich.color.blend_rgb": "confirmed",
+  "rich.syntax.Syntax._get_line_numbers_color -> rich.syntax.Syntax._get_token_color": "confirmed",
+  "rich.syntax.Syntax._get_line_numbers_color -> rich.syntax.SyntaxTheme.get_background_style": "contradicted",
+  "rich.syntax.Syntax._get_number_styles -> rich.style.Style": "confirmed",
+  "rich.syntax.Syntax._get_number_styles -> rich.style.Style.chain": "confirmed",
+  "rich.syntax.Syntax._get_number_styles -> rich.style.Style.null": "confirmed",
+  "rich.syntax.Syntax._get_number_styles -> rich.syntax.Syntax._get_base_style": "confirmed",
+  "rich.syntax.Syntax._get_number_styles -> rich.syntax.Syntax._get_line_numbers_color": "confirmed",
+  "rich.syntax.Syntax._get_number_styles -> rich.syntax.SyntaxTheme.get_style_for_token": "contradicted",
+  "rich.syntax.Syntax._get_syntax -> rich._loop.loop_first": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.console.Console.render": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.console.Console.render_lines": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.segment.Segment.adjust_line_length": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.style.Style": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.syntax.Syntax._get_base_style": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.syntax.Syntax._get_number_styles": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.syntax.Syntax._process_code": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.syntax.Syntax.highlight": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.syntax.SyntaxTheme.get_style_for_token": "contradicted",
+  "rich.syntax.Syntax._get_syntax -> rich.text.Text": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.text.Text.join": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.text.Text.remove_suffix": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.text.Text.render": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.text.Text.split": "confirmed",
+  "rich.syntax.Syntax._get_syntax -> rich.text.Text.with_indent_guides": "confirmed",
+  "rich.syntax.Syntax._get_token_color -> rich.syntax.SyntaxTheme.get_style_for_token": "contradicted",
+  "rich.syntax.Syntax.from_path -> rich.syntax.Syntax.guess_lexer": "confirmed",
+  "rich.syntax.Syntax.get_theme -> rich.syntax.ANSISyntaxTheme": "confirmed",
+  "rich.syntax.Syntax.get_theme -> rich.syntax.PygmentsSyntaxTheme": "confirmed",
+  "rich.syntax.Syntax.highlight -> rich.syntax.Syntax._apply_stylized_ranges": "confirmed",
+  "rich.syntax.Syntax.highlight -> rich.syntax.Syntax._get_base_style": "confirmed",
+  "rich.syntax.Syntax.highlight -> rich.text.Text": "confirmed",
+  "rich.syntax.Syntax.highlight -> rich.text.Text.append": "unexercised",
+  "rich.syntax.Syntax.highlight -> rich.text.Text.append_tokens": "confirmed",
+  "rich.syntax.Syntax.highlight -> rich.text.Text.stylize": "confirmed",
+  "rich.syntax.Syntax.stylize_range -> rich.syntax._SyntaxHighlightRange": "confirmed",
+  "rich.table -> rich._timer.timer": "no_site",
+  "rich.table -> rich.console.Console": "no_site",
+  "rich.table -> rich.console.Console.print": "no_site",
+  "rich.table -> rich.highlighter.ReprHighlighter": "no_site",
+  "rich.table -> rich.table.Table": "no_site",
+  "rich.table -> rich.table.Table.add_column": "no_site",
+  "rich.table -> rich.table.Table.add_row": "no_site",
+  "rich.table -> rich.table.header": "no_site",
+  "rich.table.Table.__init__ -> rich.padding.Padding.unpack": "confirmed",
+  "rich.table.Table.__init__ -> rich.table.Table.add_column": "confirmed",
+  "rich.table.Table.__rich_console__ -> rich.console.Console.render": "confirmed",
+  "rich.table.Table.__rich_console__ -> rich.console.Console.render_str": "confirmed",
+  "rich.table.Table.__rich_console__ -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.table.Table.__rich_console__ -> rich.console.ConsoleOptions.update_width": "confirmed",
+  "rich.table.Table.__rich_console__ -> rich.segment.Segment": "confirmed",
+  "rich.table.Table.__rich_console__ -> rich.style.Style.pick_first": "confirmed",
+  "rich.table.Table.__rich_console__ -> rich.table.Table._calculate_column_widths": "confirmed",
+  "rich.table.Table.__rich_console__ -> rich.table.Table._render": "confirmed",
+  "rich.table.Table.__rich_measure__ -> rich.console.ConsoleOptions.update_width": "confirmed",
+  "rich.table.Table.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.table.Table.__rich_measure__ -> rich.measure.Measurement.clamp": "confirmed",
+  "rich.table.Table.__rich_measure__ -> rich.table.Table._calculate_column_widths": "confirmed",
+  "rich.table.Table._calculate_column_widths -> rich._ratio.ratio_distribute": "confirmed",
+  "rich.table.Table._calculate_column_widths -> rich._ratio.ratio_reduce": "confirmed",
+  "rich.table.Table._calculate_column_widths -> rich.console.ConsoleOptions.update_width": "confirmed",
+  "rich.table.Table._calculate_column_widths -> rich.table.Table._collapse_widths": "confirmed",
+  "rich.table.Table._calculate_column_widths -> rich.table.Table._measure_column": "confirmed",
+  "rich.table.Table._collapse_widths -> rich._ratio.ratio_reduce": "confirmed",
+  "rich.table.Table._get_cells -> rich._loop.loop_first_last": "confirmed",
+  "rich.table.Table._get_cells -> rich.table._Cell": "confirmed",
+  "rich.table.Table._measure_column -> rich.measure.Measurement": "confirmed",
+  "rich.table.Table._measure_column -> rich.measure.Measurement.clamp": "confirmed",
+  "rich.table.Table._measure_column -> rich.measure.Measurement.with_maximum": "confirmed",
+  "rich.table.Table._measure_column -> rich.table.Table._get_cells": "confirmed",
+  "rich.table.Table._measure_column -> rich.table.Table._get_padding_width": "confirmed",
+  "rich.table.Table._render -> rich._loop.loop_first_last": "confirmed",
+  "rich.table.Table._render -> rich._loop.loop_last": "confirmed",
+  "rich.table.Table._render -> rich._pick.pick_bool": "confirmed",
+  "rich.table.Table._render -> rich.box.Box.get_bottom": "confirmed",
+  "rich.table.Table._render -> rich.box.Box.get_plain_headed_box": "confirmed",
+  "rich.table.Table._render -> rich.box.Box.get_row": "confirmed",
+  "rich.table.Table._render -> rich.box.Box.get_top": "confirmed",
+  "rich.table.Table._render -> rich.box.Box.substitute": "confirmed",
+  "rich.table.Table._render -> rich.console.Console.get_style": "confirmed",
+  "rich.table.Table._render -> rich.console.Console.render_lines": "confirmed",
+  "rich.table.Table._render -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.table.Table._render -> rich.segment.Segment.align_bottom": "confirmed",
+  "rich.table.Table._render -> rich.segment.Segment.align_middle": "confirmed",
+  "rich.table.Table._render -> rich.segment.Segment.align_top": "confirmed",
+  "rich.table.Table._render -> rich.segment.Segment.line": "confirmed",
+  "rich.table.Table._render -> rich.segment.Segment.set_shape": "confirmed",
+  "rich.table.Table._render -> rich.style.Style.null": "confirmed",
+  "rich.table.Table._render -> rich.table.Table._get_cells": "confirmed",
+  "rich.table.Table.add_column -> rich.table.Column": "confirmed",
+  "rich.table.Table.add_row -> rich.errors.NotRenderableError": "confirmed",
+  "rich.table.Table.add_row -> rich.protocol.is_renderable": "confirmed",
+  "rich.table.Table.add_row -> rich.table.Column": "confirmed",
+  "rich.table.Table.add_row -> rich.table.Row": "confirmed",
+  "rich.table.Table.add_row -> rich.text.Text": "confirmed",
+  "rich.table.Table.get_row_style -> rich.console.Console.get_style": "confirmed",
+  "rich.table.Table.get_row_style -> rich.style.Style.null": "confirmed",
+  "rich.table.Table.padding -> rich.padding.Padding.unpack": "confirmed",
+  "rich.table.header -> rich.console.Console.print": "caller_not_run",
+  "rich.table.header -> rich.console.Console.rule": "caller_not_run",
+  "rich.table.header -> rich.table.highlight": "attribute_target",
+  "rich.terminal_theme -> rich.terminal_theme.TerminalTheme": "confirmed",
+  "rich.terminal_theme.TerminalTheme.__init__ -> rich.color_triplet.ColorTriplet": "confirmed",
+  "rich.terminal_theme.TerminalTheme.__init__ -> rich.palette.Palette": "confirmed",
+  "rich.text -> rich.console.Console": "no_site",
+  "rich.text -> rich.console.Console.print": "no_site",
+  "rich.text -> rich.console.Console.rule": "no_site",
+  "rich.text -> rich.text.Text": "no_site",
+  "rich.text -> rich.text.Text.highlight_words": "no_site",
+  "rich.text.Span.extend -> rich.text.Span": "confirmed",
+  "rich.text.Span.move -> rich.text.Span": "confirmed",
+  "rich.text.Span.right_crop -> rich.text.Span": "confirmed",
+  "rich.text.Span.split -> rich.text.Span": "confirmed",
+  "rich.text.Text.__add__ -> rich.text.Text.append": "confirmed",
+  "rich.text.Text.__add__ -> rich.text.Text.copy": "confirmed",
+  "rich.text.Text.__getitem__ -> rich.text.Text": "confirmed",
+  "rich.text.Text.__getitem__ -> rich.text.Text.divide": "confirmed",
+  "rich.text.Text.__init__ -> rich.control.strip_control_codes": "confirmed",
+  "rich.text.Text.__rich_console__ -> rich._pick.pick_bool": "confirmed",
+  "rich.text.Text.__rich_console__ -> rich.text.Text": "confirmed",
+  "rich.text.Text.__rich_console__ -> rich.text.Text.join": "confirmed",
+  "rich.text.Text.__rich_console__ -> rich.text.Text.render": "confirmed",
+  "rich.text.Text.__rich_console__ -> rich.text.Text.wrap": "confirmed",
+  "rich.text.Text.__rich_measure__ -> rich.cells.cell_len": "confirmed",
+  "rich.text.Text.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.text.Text.align -> rich.cells.cell_len": "confirmed",
+  "rich.text.Text.align -> rich.text.Text.pad_left": "confirmed",
+  "rich.text.Text.align -> rich.text.Text.pad_right": "confirmed",
+  "rich.text.Text.align -> rich.text.Text.truncate": "confirmed",
+  "rich.text.Text.append -> rich.control.strip_control_codes": "confirmed",
+  "rich.text.Text.append -> rich.text.Span": "confirmed",
+  "rich.text.Text.append -> rich.text.Span.extend": "contradicted",
+  "rich.text.Text.append_text -> rich.text.Span.extend": "contradicted",
+  "rich.text.Text.append_tokens -> rich.control.strip_control_codes": "confirmed",
+  "rich.text.Text.apply_meta -> rich.style.Style.from_meta": "confirmed",
+  "rich.text.Text.apply_meta -> rich.text.Text.stylize": "confirmed",
+  "rich.text.Text.assemble -> rich.text.Text.apply_meta": "confirmed",
+  "rich.text.Text.blank_copy -> rich.text.Text": "confirmed",
+  "rich.text.Text.cell_len -> rich.cells.cell_len": "confirmed",
+  "rich.text.Text.copy -> rich.text.Text": "confirmed",
+  "rich.text.Text.copy_styles -> rich.text.Span.extend": "contradicted",
+  "rich.text.Text.divide -> rich.containers.Lines": "confirmed",
+  "rich.text.Text.divide -> rich.text.Text.copy": "confirmed",
+  "rich.text.Text.expand_tabs -> rich.text.Text": "confirmed",
+  "rich.text.Text.expand_tabs -> rich.text.Text.extend_style": "confirmed",
+  "rich.text.Text.expand_tabs -> rich.text.Text.join": "confirmed",
+  "rich.text.Text.expand_tabs -> rich.text.Text.split": "confirmed",
+  "rich.text.Text.extend_style -> rich.text.Span.extend": "confirmed",
+  "rich.text.Text.fit -> rich.containers.Lines": "confirmed",
+  "rich.text.Text.fit -> rich.text.Text.set_length": "confirmed",
+  "rich.text.Text.fit -> rich.text.Text.split": "confirmed",
+  "rich.text.Text.from_ansi -> rich.ansi.AnsiDecoder": "confirmed",
+  "rich.text.Text.from_ansi -> rich.ansi.AnsiDecoder.decode": "confirmed",
+  "rich.text.Text.from_ansi -> rich.text.Text": "confirmed",
+  "rich.text.Text.from_ansi -> rich.text.Text.join": "confirmed",
+  "rich.text.Text.from_markup -> rich.markup.render": "confirmed",
+  "rich.text.Text.get_style_at_offset -> rich.style.Style.copy": "confirmed",
+  "rich.text.Text.join -> rich._loop.loop_last": "confirmed",
+  "rich.text.Text.join -> rich.text.Text.blank_copy": "confirmed",
+  "rich.text.Text.markup -> rich.markup.escape": "confirmed",
+  "rich.text.Text.on -> rich.style.Style.from_meta": "confirmed",
+  "rich.text.Text.on -> rich.text.Text.stylize": "confirmed",
+  "rich.text.Text.plain -> rich.control.strip_control_codes": "confirmed",
+  "rich.text.Text.plain -> rich.text.Text._trim_spans": "confirmed",
+  "rich.text.Text.remove_suffix -> rich.text.Text.right_crop": "confirmed",
+  "rich.text.Text.render -> rich.segment.Segment": "confirmed",
+  "rich.text.Text.render -> rich.style.Style.null": "confirmed",
+  "rich.text.Text.rstrip_end -> rich.text.Text.right_crop": "confirmed",
+  "rich.text.Text.set_length -> rich.text.Text.pad_right": "confirmed",
+  "rich.text.Text.set_length -> rich.text.Text.right_crop": "confirmed",
+  "rich.text.Text.split -> rich.containers.Lines": "confirmed",
+  "rich.text.Text.split -> rich.containers.Lines.pop": "confirmed",
+  "rich.text.Text.split -> rich.text.Text.copy": "confirmed",
+  "rich.text.Text.split -> rich.text.Text.divide": "confirmed",
+  "rich.text.Text.styled -> rich.text.Text.stylize": "confirmed",
+  "rich.text.Text.stylize -> rich.text.Span": "confirmed",
+  "rich.text.Text.stylize_before -> rich.text.Span": "confirmed",
+  "rich.text.Text.truncate -> rich.cells.cell_len": "confirmed",
+  "rich.text.Text.truncate -> rich.cells.set_cell_size": "confirmed",
+  "rich.text.Text.with_indent_guides -> rich.text.Text": "confirmed",
+  "rich.text.Text.with_indent_guides -> rich.text.Text.blank_copy": "confirmed",
+  "rich.text.Text.with_indent_guides -> rich.text.Text.copy": "confirmed",
+  "rich.text.Text.with_indent_guides -> rich.text.Text.detect_indentation": "confirmed",
+  "rich.text.Text.with_indent_guides -> rich.text.Text.expand_tabs": "confirmed",
+  "rich.text.Text.with_indent_guides -> rich.text.Text.join": "confirmed",
+  "rich.text.Text.with_indent_guides -> rich.text.Text.split": "confirmed",
+  "rich.text.Text.with_indent_guides -> rich.text.Text.stylize": "confirmed",
+  "rich.text.Text.wrap -> rich._pick.pick_bool": "confirmed",
+  "rich.text.Text.wrap -> rich._wrap.divide_line": "confirmed",
+  "rich.text.Text.wrap -> rich.containers.Lines": "confirmed",
+  "rich.text.Text.wrap -> rich.containers.Lines.append": "confirmed",
+  "rich.text.Text.wrap -> rich.containers.Lines.extend": "confirmed",
+  "rich.text.Text.wrap -> rich.containers.Lines.justify": "confirmed",
+  "rich.text.Text.wrap -> rich.text.Text.divide": "confirmed",
+  "rich.text.Text.wrap -> rich.text.Text.expand_tabs": "confirmed",
+  "rich.text.Text.wrap -> rich.text.Text.rstrip_end": "confirmed",
+  "rich.text.Text.wrap -> rich.text.Text.split": "confirmed",
+  "rich.text.Text.wrap -> rich.text.Text.truncate": "confirmed",
+  "rich.theme -> rich.theme.Theme": "no_site",
+  "rich.theme.Theme.__init__ -> rich.style.Style.parse": "confirmed",
+  "rich.theme.Theme.from_file -> rich.style.Style.parse": "confirmed",
+  "rich.theme.Theme.from_file -> rich.theme.Theme": "confirmed",
+  "rich.theme.Theme.read -> rich.theme.Theme.from_file": "confirmed",
+  "rich.theme.ThemeStack.pop_theme -> rich.theme.ThemeStackError": "confirmed",
+  "rich.themes -> rich.theme.Theme": "confirmed",
+  "rich.traceback -> rich.traceback.error": "no_site",
+  "rich.traceback -> rich.traceback.install": "no_site",
+  "rich.traceback.Traceback.__init__ -> rich.syntax.Syntax.get_theme": "confirmed",
+  "rich.traceback.Traceback.__init__ -> rich.traceback.Traceback.extract": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich._loop.loop_last": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.console.Console.use_theme": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.console.Group": "unexercised",
+  "rich.traceback.Traceback.__rich_console__ -> rich.console.group": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.constrain.Constrain": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.highlighter.ReprHighlighter": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.panel.Panel": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.style.Style": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.syntax.SyntaxTheme.get_background_style": "contradicted",
+  "rich.traceback.Traceback.__rich_console__ -> rich.text.Text.assemble": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.text.Text.from_markup": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.theme.Theme": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.traceback.Traceback._render_stack": "confirmed",
+  "rich.traceback.Traceback.__rich_console__ -> rich.traceback.Traceback._render_syntax_error": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.columns.Columns": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.console.group": "contradicted",
+  "rich.traceback.Traceback._render_stack -> rich.scope.render_scope": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.syntax.Syntax": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.syntax.Syntax.stylize_range": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.text.Text": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.text.Text.assemble": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.traceback.PathHighlighter": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.traceback.Traceback._guess_lexer": "confirmed",
+  "rich.traceback.Traceback._render_stack -> rich.traceback._iter_syntax_lines": "confirmed",
+  "rich.traceback.Traceback._render_syntax_error -> rich.console.group": "contradicted",
+  "rich.traceback.Traceback._render_syntax_error -> rich.highlighter.ReprHighlighter": "confirmed",
+  "rich.traceback.Traceback._render_syntax_error -> rich.text.Text.assemble": "unexercised",
+  "rich.traceback.Traceback._render_syntax_error -> rich.text.Text.from_markup": "confirmed",
+  "rich.traceback.Traceback._render_syntax_error -> rich.text.Text.stylize": "confirmed",
+  "rich.traceback.Traceback._render_syntax_error -> rich.traceback.PathHighlighter": "confirmed",
+  "rich.traceback.Traceback.extract -> rich.pretty.traverse": "confirmed",
+  "rich.traceback.Traceback.extract -> rich.traceback.Frame": "confirmed",
+  "rich.traceback.Traceback.extract -> rich.traceback.Stack": "confirmed",
+  "rich.traceback.Traceback.extract -> rich.traceback.Trace": "confirmed",
+  "rich.traceback.Traceback.extract -> rich.traceback.Traceback.extract": "unexercised",
+  "rich.traceback.Traceback.extract -> rich.traceback._SyntaxError": "confirmed",
+  "rich.traceback.Traceback.from_exception -> rich.traceback.Traceback.extract": "confirmed",
+  "rich.traceback._iter_syntax_lines -> rich._loop.loop_first_last": "unexercised",
+  "rich.traceback.error -> rich.traceback.foo": "caller_not_run",
+  "rich.traceback.foo -> rich.traceback.bar": "caller_not_run",
+  "rich.traceback.install -> rich.console.Console": "contradicted",
+  "rich.traceback.install -> rich.console.Console.print": "confirmed",
+  "rich.traceback.install -> rich.traceback.Traceback.from_exception": "confirmed",
+  "rich.tree -> rich.console.Console": "no_site",
+  "rich.tree -> rich.console.Console.print": "no_site",
+  "rich.tree -> rich.console.Group": "no_site",
+  "rich.tree -> rich.markdown.Markdown": "no_site",
+  "rich.tree -> rich.panel.Panel": "no_site",
+  "rich.tree -> rich.panel.Panel.fit": "no_site",
+  "rich.tree -> rich.syntax.Syntax": "no_site",
+  "rich.tree -> rich.table.Table": "no_site",
+  "rich.tree -> rich.table.Table.add_column": "no_site",
+  "rich.tree -> rich.table.Table.add_row": "no_site",
+  "rich.tree -> rich.tree.Tree": "no_site",
+  "rich.tree -> rich.tree.Tree.add": "no_site",
+  "rich.tree.Tree.__rich_console__ -> rich._loop.loop_first": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich._loop.loop_last": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.console.Console.render_lines": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.console.ConsoleOptions.update": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.segment.Segment.apply_style": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.segment.Segment.line": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.style.Style": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.style.Style.null": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.style.StyleStack": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.style.StyleStack.pop": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.style.StyleStack.push": "confirmed",
+  "rich.tree.Tree.__rich_console__ -> rich.styled.Styled": "confirmed",
+  "rich.tree.Tree.__rich_measure__ -> rich.measure.Measurement": "confirmed",
+  "rich.tree.Tree.add -> rich.tree.Tree": "confirmed"
+ }
+}

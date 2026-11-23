@@ -2,7 +2,9 @@
 
 Design and pre-registered expectations: research/bench/r1c132/DESIGN.md. C1 — the tracer attributes every call
 shape of the control package the way codemap does (nested functions and lambdas to the enclosing function, a
-decorator's wrapper as `wrapper`, a construction to the class, `super().__init__()` as a call). C2 — the
+decorator's wrapper as `wrapper`, a construction to the class, `super().__init__()` as a call; a closure or a
+generator expression run after its function returned, lexically; a call site that first met a foreign class or
+context manager). C2 — the
 comparison can say "contradicted": a planted false edge whose every site ran is caught, and an edge whose site
 did not run is not judged.
 """
@@ -44,6 +46,12 @@ EXPECTED = {
     ("ctl.only_a", "ctl.A.run", "direct", False),
     ("ctl.use_gen", "ctl.gen", "direct", False),             # a generator: taken where it is called, not where
     ("ctl.gen", "ctl.h", "direct", False),                   # it first runs (the test, which iterates it)
+    ("ctl.make_rule", "ctl.h", "nested", False),             # a closure run later from run_rules: lexical
+    ("ctl.make_rule_with", "ctl.h", "nested", False),        # the same, holding an object whose __getattr__ raises
+    ("ctl.lazy_h", "ctl.h", "nested", False),                # a generator expression consumed by the test
+    ("ctl.use_cm", "ctl.cm", "external", False),             # through contextlib, after a foreign context manager
+    ("ctl.cm", "ctl.h", "direct", False),
+    ("ctl.raise_err", "ctl.Err", "direct", True),            # its call site first met a patched-in class
 }
 
 
@@ -84,6 +92,8 @@ def test_c2_a_planted_false_edge_is_contradicted_and_an_unrun_site_is_not_judged
     assert ["ctl.only_a", "ctl.B.run", "module"] in r["contradicted"]
     assert ["ctl.never_called", "ctl.g", "module"] not in r["contradicted"]   # its site never ran: not judged
     assert r["precision"]["outcomes"]["contradicted"] == 1
+    # only_a was seen entering A.run: the planted B.run is a same-name miss, the kind an override produces
+    assert r["contradicted_same_name"] == [["ctl.only_a", "ctl.B.run", "module"]]
 
 
 def test_c2b_on_the_control_package_codemap_is_judged_without_a_contradiction(trace, tmp_path):
@@ -91,5 +101,5 @@ def test_c2b_on_the_control_package_codemap_is_judged_without_a_contradiction(tr
     for deep in (False, True):
         r = compare(str(_graph(tmp_path, deep)), str(trace), str(CONTROL))
         assert r["contradicted"] == [], (deep, r["contradicted"])
-        assert r["recall"]["explicit"]["pairs"] == 16    # 20 observed: minus the decorator, a pair seen two
+        assert r["recall"]["explicit"]["pairs"] == 22    # 26 observed: minus the decorator, a pair seen two
                                                          # ways, two __init__ standing behind a construction

@@ -223,6 +223,7 @@ def compare(graph: str, trace_path, src: str) -> dict:
     judged = Counter()
     by_res: dict = defaultdict(Counter)
     contradicted = []
+    outcome_of = {}
     rt_keys = set(rt)
     for (f, t), res in calls.items():
         if (f, t) in rt_keys or (nodes[t]["kind"] == "class" and (f, t + ".__init__") in rt_keys):
@@ -232,9 +233,17 @@ def compare(graph: str, trace_path, src: str) -> dict:
         else:
             out = sites.judge(f, t, started)
         judged[out] += 1
+        outcome_of[f"{f} -> {t}"] = out
         by_res[res or "unknown"][out] += 1
         if out == "contradicted":
             contradicted.append([f, t, res])
+
+    # a contradicted edge whose caller was seen entering another function of the same name: an override, an
+    # implementation of a protocol, a definition for another platform (C5 reads them; this counts them)
+    rt_names = defaultdict(set)
+    for (f, t) in rt_keys:
+        rt_names[f].add(t.rsplit(".", 1)[-1])
+    same_name = sorted([f, t, r] for f, t, r in contradicted if t.rsplit(".", 1)[-1] in rt_names[f])
 
     def prec(c: Counter):
         d = c["confirmed"] + c["contradicted"]
@@ -270,6 +279,8 @@ def compare(graph: str, trace_path, src: str) -> dict:
                              "share": round(complete / len(rt_callers), 4) if rt_callers else None},
         "misses": misses,
         "contradicted": sorted(contradicted),
+        "contradicted_same_name": same_name,
+        "edge_outcomes": outcome_of,
     }
 
 
