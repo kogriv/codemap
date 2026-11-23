@@ -72,7 +72,9 @@ exclude = ["tests*"]
 # Packages under tests/fixtures are *inputs* to the extractor, not tests. One of them
 # (tmworld, R1-C24) deliberately contains a file pytest would otherwise collect, because
 # the test-mapping rule keys on that same collection convention.
-norecursedirs = ["tests/fixtures"]
+# The R1-C132 control package is the same kind of input: its tests run under the tracer, in a subprocess,
+# from tests/test_r1c132_harness.py.
+norecursedirs = ["tests/fixtures", "research/bench/r1c132/control"]
 # Four test modules do `from tests.frozen import frozen`, which needs the repo root on
 # sys.path. `python -m pytest` puts it there and plain `pytest` does not — so the suite
 # passed the way CONTRIBUTING documents it and failed the way most people type it. CI

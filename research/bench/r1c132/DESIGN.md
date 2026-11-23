@@ -1,0 +1,124 @@
+# R1-C132 — an independent benchmark of call-graph accuracy
+
+**Status:** pre-registered 2026-11-23, before any run on the projects below. Results go in
+[`RESULTS.md`](RESULTS.md) and a section of [`docs/accuracy.md`](../../../docs/accuracy.md), reconciled against
+this page; anything not listed here is reported as a surprise.
+
+## Why
+
+codemap's accuracy numbers so far come from a hand-labelled micro-suite it owns
+([`research/bench/callgraph_truth/`](../callgraph_truth/)) and from the intrinsic resolution rate on bquant. Both
+are self-measurements. The external audit (2026-11-23, §6.1 and §10.2 item 7) asked for a measurement on code
+codemap was never tuned on, against a truth codemap did not produce. The follow-up audit named this the most
+useful next step.
+
+## The projects
+
+Five public, pure-Python projects with their own test suites, chosen for different shapes of code. codemap was
+never built on, tuned on, or fixed for any of them. attrs was considered and left out, because R1-C57 fixed a
+build crash on its layout.
+
+| project | tag | commit | package dir | shape |
+|---|---|---|---|---|
+| more-itertools | v11.2.1 | `4aeb4338ae14` | `more_itertools` | plain functions, generators |
+| click | 8.5.1 | `cf19179e8e2f` | `src/click` | decorators, classes, context objects |
+| rich | v15.0.0 | `6ac483cbea39` | `rich` | large OOP, render protocol, dataclasses |
+| markdown-it-py | v4.3.0 | `d504583a458e` | `markdown_it` | rule chains held in lists (registry dispatch) |
+| jinja | 3.1.6 | `15206881c006` | `src/jinja2` | compiler, visitor dispatch by `getattr` |
+
+Static graphs come from **codmap 0.0.47 from PyPI**: `codemap build <package dir> -o fast.json` and
+`codemap build <package dir> --deep --repeat 3 -o deep.json`. The package only, no consumer roots. Python 3.12.
+
+## The truth: runtime calls under the project's own tests
+
+[`r1c132_tracer.py`](r1c132_tracer.py) is a pytest plugin built on `sys.monitoring`. It records `F → G`
+whenever a named package function G starts and F is the nearest package frame above it. It attributes calls
+the way codemap does. The control package [`control/`](control/) shows the shapes, and
+`tests/test_r1c132_harness.py` checks every one of them:
+
+- **nested functions and lambdas.** A call from a nested function or lambda is attributed to the enclosing
+  function, recorded as `nested`.
+- **wrappers.** A call through another function's nested function, such as a decorator's wrapper, is
+  recorded as `wrapper`.
+- **foreign code.** A call through up to three frames of code outside the package is recorded as `external`.
+  A call from a test, or from deeper outside, is not a package edge.
+- **construction.** `X(...)` of a package class is recorded as `F → X`, seen at the call instruction. This
+  catches dataclasses and classes without a Python `__init__`.
+- **`super().__init__()`.** It is recorded as a call, not a construction.
+
+Lines that ran in package files are recorded too; the precision side needs them.
+
+## The measures ([`compare.py`](compare.py))
+
+**Recall.** A runtime pair falls into one of the following categories:
+
+| category | what it is | in the headline? |
+|---|---|---|
+| `call` | an ordinary call between package functions | yes |
+| `construct` | `F → class` | yes |
+| `init` | `F → C.__init__` when F also constructs; the construction stands for it | no |
+| `implicit` | a dunder reached by an operator or protocol | no, reported apart |
+| `property` | the target is not a function or class node | no, reported apart |
+| `decorator` | applied at import (codemap's `decorated_by`) | no, reported apart |
+
+- **Headline recall** = explicit pairs (`call` + `construct`) that are `calls` edges, over all explicit pairs.
+- Recall is also reported by how the pair was reached: `direct`, `nested`, `external`, `wrapper`.
+- A second figure counts a pair as found if it is a `references` edge too. A function passed as a value is a
+  reference in codemap.
+
+**Precision.** Each `calls` edge `F → G` gets one outcome:
+
+| outcome | what it means | judged? |
+|---|---|---|
+| `confirmed` | the pair was observed | yes |
+| `contradicted` | **every** call site in F naming G's last segment ran, and G was never entered from F | yes |
+| `unexercised` | the sites did not run | no |
+| `partly_run` | some sites ran and some did not | no |
+| `caller_not_run` | F never ran | no |
+| `no_site` | no site in F names G | no |
+
+- Precision is decided = confirmed / (confirmed + contradicted), by tier, by grade (`exact` / `inferred` /
+  `heuristic`) and by route.
+- The undecided shares are reported next to it, since a precision over a small decided set says little.
+
+**`callers()` completeness.** This is the share of called functions whose every runtime caller is a static
+caller. It answers "can I trust the list `callers` gives me".
+
+## Controls (each can fail)
+
+- **C1, C2.** The harness tests are green: the tracer attributes every control shape as codemap does, and a
+  planted false edge is `contradicted` while an unrun site is not judged. Five mutations of the harness each
+  turn a control red: no `CALL` constructions, no `super()` check, any-site instead of all-sites, wrapper read
+  as nested, never contradicted.
+- **C3 (determinism).** The traced suite runs twice. Explicit pairs differ by at most 1%; above that, the
+  difference is reported and the union is used.
+- **C4 (exercise).** At least 50% of package functions start under the suite. A project below that is reported,
+  not dropped.
+- **C5 (adjudication).** Every `contradicted` edge is read by hand and labelled `false edge` or `method artifact`
+  — the line ran but the call on it could not, as with short-circuit, a conditional expression or an exception.
+  Above 30 per project and tier, a random 30 (seed 132) are read. Precision is reported raw and adjudicated.
+- **C6 (no interference).** Pass, fail and skip counts with the tracer equal those without it.
+
+## Predictions (written before the runs)
+
+- **H1.** `exact`-grade decided precision is ≥ 97% on every project and both tiers.
+- **H2.** `inferred` (deep) decided precision is ≥ 93% on every project.
+- **H3.** Where a project has ≥ 10 decided `heuristic` edges, their precision is below `exact`, and below 85%.
+- **H4.** Explicit recall:
+  - deep median across projects in [50%, 75%];
+  - fast median in [35%, 60%];
+  - deep > fast on every project.
+- **H5.** `external` recall is the lowest of the four reaching ways on every project where it has ≥ 10 pairs.
+  These are higher-order calls through foreign code.
+- **H6.** Deep `callers()` completeness has a median ≥ 50%.
+- **H7.** The lowest deep recall is jinja or rich; the highest is more-itertools or click.
+- **H8.** Deep explicit recall is < 90% on every project. The micro-suite's 100% on decidable edges is not a
+  claim about real code.
+- **H9.** Contradicted edges, after adjudication, are < 3% of all `calls` edges on every project and tier.
+
+## What it does not measure
+
+- Calls the tests never make. Recall is over exercised pairs, so it is an upper bound on recall over all real
+  pairs.
+- Edges into third-party code.
+- Calls from tests into the package. The `tests` and `covers` answers deserve a separate benchmark.
