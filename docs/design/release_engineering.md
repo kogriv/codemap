@@ -1343,6 +1343,22 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 | Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
 | version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
 
+**0.0.44 published 2026-11-23:** [`codmap` 0.0.44](https://pypi.org/project/codmap/0.0.44/), schema 0.13,
+`ANSWER_FORMAT` 12, devkit v5. Release commit `39c86a0` failed CI on the R1-C13 self-measurement (per-symbol
+def precision, a fixture-defined `load` drawn into the sample) — checked on the sample in `cd1e416`, the commit
+that was uploaded; suite 1419 passed / 2 skipped, CI green, `twine check` PASSED. Reconciled from PyPI, clean venvs:
+
+```
+                                       0.0.43                                   0.0.44
+runner import_module(f"pkg.tools.{x}")  b.run [high], a.helper [high]            a.helper [high] only
+runner import_module(x)                 b.run [high], a.helper [high]            b.run [high], a.helper [high] (no claim)
+known pair absorbed into a triple       "no longer hold a tangle … --tighten"    "absorbed into a larger new tangle", no --tighten
+--agents-lang ru, a .js file             "this repository also has javascript"    "в этом репозитории есть ещё javascript"
+--version                               answer format 12 · schema 0.13           codemap 0.0.44 · answer format 12 · schema 0.13
+```
+
+Every expectation holds. Tag `v0.0.44` on both mirrors.
+
 **0.0.43 — the release check, pre-registered before the upload (2026-11-23).** Consumer findings: R1-C114…C119.
 `ANSWER_FORMAT` **12** (`report dead-code` JSON gains `called_only_from_outside`, `uncalled_public`; `check` JSON
 gains `known_stale` under a known-cycles list; new route `references:self`), schema 0.13 unchanged, devkit **v5**.
