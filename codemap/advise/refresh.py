@@ -13,7 +13,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from codemap.advise import DEFAULT_BASE, cache_dir, load, schema_problems
+from codemap.advise import CURRENT, DEFAULT_BASE, cache_dir, load, schema_problems
 
 TIMEOUT = 10
 
@@ -51,9 +51,34 @@ def refresh(base: str | None = None, cache: Path | None = None) -> dict:
         out["reason"] = (f"downloaded catalog is not newer (matrix {m['meta']['as_of']}, feed {f['as_of']}; "
                          f"served {before.meta.get('as_of')}, {before.feed.get('as_of')})")
         return out
-    cdir.mkdir(parents=True, exist_ok=True)
-    (cdir / "matrix.toml").write_bytes(mraw)
-    (cdir / "feed.json").write_bytes(fraw)
+    publish_pair(cdir, mraw, fraw)
     after = load(cache=cdir)
     out.update(updated=True, after=after.header())
     return out
+
+
+def publish_pair(cdir: Path, mraw: bytes, fraw: bytes) -> None:
+    """Publish matrix + feed as one generation (R1-C124): both files go to a new directory, then the pointer
+    file ``current`` is replaced atomically. A failure before that leaves the previous pair served whole; a reader
+    never sees one file of one generation beside the other file of another."""
+    import shutil
+    import tempfile
+
+    from codemap import atomic
+    cdir.mkdir(parents=True, exist_ok=True)
+    gen = Path(tempfile.mkdtemp(prefix="gen-", dir=cdir))
+    try:
+        atomic.write_bytes(gen / "matrix.toml", mraw)
+        atomic.write_bytes(gen / "feed.json", fraw)
+        atomic.write_text(cdir / CURRENT, gen.name + "\n")
+    except BaseException:
+        shutil.rmtree(gen, ignore_errors=True)
+        raise
+    for old in cdir.glob("gen-*"):                       # previous generations, and any torn leftovers
+        if old.is_dir() and old.name != gen.name:
+            shutil.rmtree(old, ignore_errors=True)
+    for legacy in ("matrix.toml", "feed.json"):          # a pre-0.0.46 pair at the top level
+        try:
+            (cdir / legacy).unlink()
+        except FileNotFoundError:
+            pass

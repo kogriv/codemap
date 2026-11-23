@@ -26,6 +26,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   took any overlap of two modules: `{a,b,c}` known and `{a,b,d}` now kept `{a,b,c}` listed and called it
   absorbed, so a later `a↔c` would have passed unseen. It is now stale and `ratchet --tighten` removes it; the
   ratchet adds `{a,b,d}`, so the `a↔b` part stays covered.
+- **Graphs, their sidecars, the devkit state and the advise cache are published atomically** (R1-C124, audit F-10,
+  F-11). `build -o` wrote the graph in place, so an interrupted write left a torn file and the `--watch` reload
+  could read half of one. Writes now go to a temporary file in the same directory, fsync, `os.replace`. The advise
+  cache publishes matrix + feed as one generation directory behind an atomically replaced `current` pointer, so a
+  failure between the two files keeps the previous pair; a pre-0.0.46 top-level pair is still read and replaced.
 
 ## [0.0.45] - 2026-11-23
 

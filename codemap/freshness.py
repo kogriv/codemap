@@ -45,8 +45,8 @@ def write_meta(graph_path: str, *, argv: list[str], cwd: str, target: str,
     if scope is not None:
         meta["scope"] = scope
     try:
-        Path(meta_path(graph_path)).write_text(
-            json.dumps(meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        from codemap import atomic
+        atomic.write_text(meta_path(graph_path), json.dumps(meta, indent=2, sort_keys=True) + "\n")
     except OSError:
         pass  # freshness metadata is a convenience, never fatal
 

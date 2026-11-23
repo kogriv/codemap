@@ -100,6 +100,20 @@ class Catalog:
                 "age_days": (today - a).days if a else None, "notes": list(self.notes)}
 
 
+#: R1-C124: the file in the cache that names the served generation directory (``gen-…``).
+CURRENT = "current"
+
+
+def _served_dir(cdir: Path) -> Path:
+    """The generation ``current`` names, or the cache itself for a pair written before generations existed."""
+    try:
+        name = (cdir / CURRENT).read_text(encoding="utf-8").strip()
+    except OSError:
+        return cdir
+    gen = cdir / name
+    return gen if name.startswith("gen-") and "/" not in name and gen.is_dir() else cdir
+
+
 def cache_dir() -> Path:
     base = os.environ.get("XDG_CACHE_HOME") or str(Path.home() / ".cache")
     return Path(base) / "codemap" / "advise"
@@ -132,7 +146,7 @@ def load(cache: Path | None = None, packaged: Path | None = None) -> Catalog:
     cdir = cache if cache is not None else cache_dir()
     if not cdir.is_dir():
         return cat
-    cm, cf, cerrs = _read_pair(cdir)
+    cm, cf, cerrs = _read_pair(_served_dir(cdir))
     cat.notes.extend(f"cache ignored: {e}" for e in cerrs)
     m, f, src = pm, pf, {"matrix": "packaged", "feed": "packaged"}
     if cm is not None and cm.get("meta", {}).get("as_of", "") > pm.get("meta", {}).get("as_of", ""):

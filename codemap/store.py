@@ -13,10 +13,11 @@ from codemap.model import Graph
 
 
 def save(graph: Graph, path: str | Path) -> None:
-    Path(path).write_text(
-        json.dumps(graph.to_dict(), ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    """Serialise first, then publish atomically (R1-C124): a failed or interrupted save leaves the previous graph
+    intact, and a concurrent reader (the `--watch` reload) never reads half a file."""
+    from codemap import atomic
+    text = json.dumps(graph.to_dict(), ensure_ascii=False, indent=2) + "\n"
+    atomic.write_text(path, text)
 
 
 def dumps(graph: Graph) -> str:

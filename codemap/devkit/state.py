@@ -77,4 +77,5 @@ def load_state(root: Path) -> dict | None:
 
 def save_state(root: Path, state: dict) -> None:
     p = Path(root) / STATE
-    p.write_text(json.dumps(state, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+    from codemap import atomic
+    atomic.write_text(p, json.dumps(state, indent=2, sort_keys=True, ensure_ascii=False) + "\n")
