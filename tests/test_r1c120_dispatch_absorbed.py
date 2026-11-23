@@ -24,6 +24,12 @@ RUNNER = {
     "noprefix": 'import importlib\n\n\ndef load(name):\n    m = importlib.import_module(name)\n'
                 '    return getattr(m, "run")()\n',
     "nogetattr": 'import importlib\n\n\ndef load(short):\n    return importlib.import_module(f"pkg.tools.{short}")\n',
+    # R1-C120/f1: the consumer's shape — a factory, and the getattr calls in other functions of the module
+    "factory": 'import importlib\nfrom types import ModuleType\n\n\ndef module_for(short) -> ModuleType:\n'
+               '    return importlib.import_module(f"pkg.tools.{short}")\n\n\n'
+               'def emptiness(module: ModuleType):\n    return getattr(module, "empty", None)\n\n\n'
+               'class Session:\n    def go(self, short):\n        module = module_for(short)\n'
+               '        probe = getattr(module, "run", None)\n        return probe()\n',
 }
 
 
@@ -39,7 +45,7 @@ def _q(tmp_path: Path, runner: str) -> Query:
 
 
 def test_a1_a_runner_reaches_every_run_under_its_prefix(tmp_path):
-    for i, shape in enumerate(("f", "plus")):
+    for i, shape in enumerate(("f", "plus", "factory")):
         q = _q(tmp_path / str(i), RUNNER[shape])
         out = build_dead_code(q, public=True)
         public = {c["id"] for c in out["uncalled_public"]["candidates"]}

@@ -1343,6 +1343,16 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 | Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
 | version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
 
+**0.0.45 — the release check, pre-registered before the upload (2026-11-23).** R1-C120/f1 only; format 12, schema
+0.13, devkit v5 unchanged. From PyPI, clean venvs, an invented runner: a factory `module_for(x)` returning
+`import_module(f"pkg.tools.{x}")`, and `getattr(module, "run")` / `"empty"` in two other functions.
+
+| | question | 0.0.44 (expected) | 0.0.45 (expected) |
+|---|---|---|---|
+| factory runner | `report dead-code --public` | `pkg.tools.b.run` [high] | absent; `pkg.tools.a.helper` still [high] |
+| one-function runner (0.0.44 shape) | same | absent | absent |
+| version | `codemap --version` | `codemap 0.0.44 · answer format 12 · schema 0.13` | `codemap 0.0.45 · answer format 12 · schema 0.13` |
+
 **0.0.44 published 2026-11-23:** [`codmap` 0.0.44](https://pypi.org/project/codmap/0.0.44/), schema 0.13,
 `ANSWER_FORMAT` 12, devkit v5. Release commit `39c86a0` failed CI on the R1-C13 self-measurement (per-symbol
 def precision, a fixture-defined `load` drawn into the sample) — checked on the sample in `cd1e416`, the commit

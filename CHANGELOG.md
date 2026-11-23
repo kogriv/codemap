@@ -5,6 +5,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.45] - 2026-11-23
+
+Schema 0.13, **`ANSWER_FORMAT` 12** and devkit v5 unchanged.
+
+### Fixed
+- **Dispatch by name across functions** (R1-C120/f1): the `import_module("pkg.sub." + x)` and the
+  `getattr(module, "run")` that make a dispatch are now paired within a module, not a function. The common runner
+  — a factory returning the module, readers elsewhere — claimed nothing in 0.0.44. On the consumer's code the
+  **high** rows of "Uncalled public" went from 21 to the 5 that are really dead.
+
 ## [0.0.44] - 2026-11-23
 
 Schema 0.13 and **`ANSWER_FORMAT` 12 unchanged**; one new route value (`references:dispatch`). devkit v5 unchanged.

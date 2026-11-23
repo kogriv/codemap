@@ -121,13 +121,15 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                                   decorators_of=fnode, reexports=reexports)
             if members:
                 _emit_self_references(graph, node_id, fnode, members)
-            _emit_dispatch_references(graph, node_id, list(_own_nodes(fnode)))
         # R1-C22 D2: module-level statements are a scope of their own, never walked
         # above — import-time calls and dispatch tables live here.
         def mod_fast(call, _im=imports, _mm=modmembers):
             return _resolve(call, modpath, "", _im, _mm, {}, reexports, nodes)
         mod_resolve = (_deep_then_fast(graph, script, target_pkg, mod_fast, modpath, known_modules)
                        if script else mod_fast)
+        # R1-C120/f1: the module is the scope — a factory returning `import_module(...)` and the functions that
+        # `getattr` the module it returns are usually different functions of one runner module.
+        _emit_dispatch_references(graph, modpath, list(ast.walk(tree)))
         _process_module_level(graph, modpath, tree, mod_resolve, imports, modmembers,
                               reexports, shadow_skip=shadow_skip)
         # R1-C74: class bodies run at import time and were walked by nobody.
@@ -1031,8 +1033,12 @@ def _import_prefix(call) -> str | None:
 
 
 def _emit_dispatch_references(graph, src_id, nodes) -> None:
-    """`references` edges for dispatch by name (R1-C120): a scope that imports ``pkg.sub.<name>`` from a
+    """`references` edges for dispatch by name (R1-C120): a module that imports ``pkg.sub.<name>`` from a
     string with a literal prefix and reads ``getattr(<x>, "run")`` reaches every ``pkg.sub.<mod>.run``.
+
+    The scope is the whole module, sourced from the module node (R1-C120/f1): in the consumer's runner the
+    factory (`module_for` → `import_module(...)`) and the readers (`getattr(module, "run")`, `"empty"`) are three
+    different functions, and pairing within one function claimed nothing there.
 
     The commonest plugin shape — a runner that loads a module by name and calls its ``run`` — made no edge, so
     each plugin's ``run`` read as uncalled public code, graded high. Claimed only with both halves in one scope:
