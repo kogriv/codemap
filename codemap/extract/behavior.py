@@ -119,6 +119,8 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
             # `default=` callbacks) — a use the call layer cannot see.
             _emit_name_references(graph, node_id, fnode, modpath, fn_imports, modmembers,
                                   decorators_of=fnode, reexports=reexports)
+            if members:
+                _emit_self_references(graph, node_id, fnode, members)
         # R1-C22 D2: module-level statements are a scope of their own, never walked
         # above — import-time calls and dispatch tables live here.
         def mod_fast(call, _im=imports, _mm=modmembers):
@@ -983,6 +985,31 @@ def _emit_name_references(graph, src_id, scope, modpath, imports, modmembers,
     for target, kind in sorted(counts):
         graph.add_edge(Edge("references", src_id, target,
                             extras={"resolution": kind, "sites": counts[(target, kind)]}))
+
+
+def _emit_self_references(graph, src_id, fnode, members) -> None:
+    """`references` edges for a bound method named as a value: ``bus.on("x", self._handler)``,
+    ``run(prepare=self._migrate)`` (R1-C118).
+
+    The call position is a `calls` edge already; here only a load of ``self.m``/``cls.m`` that is
+    not called — a callback handed on. It was no edge at all, so the method read as "no inbound
+    calls, references, or decorators", the strongest dead grade, on the commonest way to register
+    a handler. Resolved like a self-call: to the class that defines the member, own or base.
+    """
+    skip = {id(n.func) for n in _own_nodes(fnode) if isinstance(n, ast.Call)}
+    counts: dict[str, int] = {}
+    for n in _own_nodes(fnode):
+        if (isinstance(n, ast.Attribute) and isinstance(n.ctx, ast.Load) and id(n) not in skip
+                and isinstance(n.value, ast.Name) and n.value.id in ("self", "cls")
+                and n.attr in members):
+            target = f"{members[n.attr]}.{n.attr}"
+            tgt = graph.nodes.get(target)
+            if tgt is None or tgt.kind != "function" or target == src_id:
+                continue
+            counts[target] = counts.get(target, 0) + 1
+    for target in sorted(counts):
+        graph.add_edge(Edge("references", src_id, target,
+                            extras={"resolution": "self", "sites": counts[target]}))
 
 
 def _process_module_level(graph, modpath, tree, resolve, imports, modmembers,

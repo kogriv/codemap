@@ -93,6 +93,16 @@ def _protocol_probe(tmp: Path):
     return extract_repo(core, consumers=(use,), mode="full")
 
 
+def _self_reference_probe(tmp: Path):
+    """R1-C118: a bound method handed on as a value — `references` with resolution `self`."""
+    core = tmp / "score"
+    core.mkdir()
+    (core / "__init__.py").write_text("")
+    (core / "w.py").write_text("class W:\n    def start(self, bus):\n        bus.on('x', self._h)\n\n"
+                               "    def _h(self, ev):\n        return ev\n")
+    return extract(core)
+
+
 @pytest.fixture(scope="module")
 def builds():
     """Every build the table is measured against — fixtures only, so CI needs no target."""
@@ -107,6 +117,7 @@ def builds():
     out["consumer-ref"] = _consumer_reference_probe(tmp)
     out["protocol"] = _protocol_probe(tmp)
     out["consumer-local"] = _consumer_local_probe(tmp)
+    out["self-reference"] = _self_reference_probe(tmp)
     return out
 
 

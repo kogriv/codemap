@@ -121,6 +121,25 @@ Three idioms rebind a name on purpose and are exempt by decorator, never by gues
 `try` — `if TYPE_CHECKING:`, an `except ImportError` fallback — neither shadows nor is
 shadowed; both bodies keep being walked.
 
+## Called only from outside the package (R1-C118)
+
+A function a test calls is not a candidate — but if every call and reference to it comes from a consumer root
+(`tests`, `scripts`…), the package itself never reaches it. The report lists those apart, with the roots and the
+count: a test helper that lives in the package, or code that outlived its production caller. Private functions
+are listed by default; public ones are counted (in a library, API that only tests call is normal) and listed with
+`--public`.
+
+## Public functions (R1-C118)
+
+A public function with no caller may be API for code outside the graph, so it is not a candidate. In an
+application nothing outside imports the package, and these are the main class of dead code. The report always
+says how many module-level public functions have no inbound edge; `codemap report dead-code --public` lists them,
+graded like the private ones. Public **methods** are not judged: they are mostly called on an instance the static
+resolver cannot type, and listing them would be noise.
+
+A bound method handed on as a value — `bus.on("event", self._handler)`, `run(prepare=self._migrate)` — is a
+`references` edge (resolution `self`), so such a method is **low**, not **high**.
+
 ## Whitelist
 
 Some functions are wired by machinery codemap's static edges can't see — argparse

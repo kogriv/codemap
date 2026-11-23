@@ -46,7 +46,7 @@ from codemap.serve.session import Session
 # Re-pinned with a bump to 4 (2026-11-03, R1-C74): `report behavior` names its scopes.
 # Re-pinned without a bump (2026-11-21, R1-C108): wording only — the refusal of an invalid contract
 # lists its known keys, and `allowed` is one of them now.
-RENDERED_SHA = "866e4409733e5c3e144f07453b68128e0fdfb615799bdd41d79bb423f194b88e"
+RENDERED_SHA = "85702e4e8a7a58aacee9b7363c62dd3527ee3a21b59379ca1a9a534af095561e"
 
 FILES = {
     "__init__.py": "",

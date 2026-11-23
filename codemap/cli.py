@@ -96,6 +96,10 @@ def _graph_from(args):
     if getattr(args, "build", None):
         return extract(args.build, deep=getattr(args, "deep", False))
     if getattr(args, "graph", None):
+        if not os.path.exists(args.graph):
+            # R1-C119: said before any work, with the command that makes one.
+            raise SystemExit(f"error: no graph at {args.graph} — build it first: "
+                             f"`codemap build <package> -o {args.graph}`")
         graph = store.load(args.graph)
         if getattr(args, "func", None) not in (_cmd_check, _cmd_serve):
             _warn_if_behind(args.graph, graph, args)
@@ -163,6 +167,14 @@ def _cmd_build(args) -> int:
         return 2
     if _refuse_bad_roots(args):
         return 2
+    if args.out:
+        # R1-C119: the parent directory exists before the parse, not after it — a fresh clone has no
+        # `.codemap/`, and the whole extraction used to run and then fail on writing.
+        try:
+            Path(args.out).resolve().parent.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            print(f"error: cannot create the directory for {args.out}: {exc.strerror}", file=sys.stderr)
+            return 2
     if args.consumer or args.docs:
         core_graph = None
         if getattr(args, "incremental", False) and args.out:
@@ -751,7 +763,7 @@ def _cmd_report(args) -> int:
         _emit_answer(render_dead_code(Query(graph),
                                whitelist=whitelist,
                                min_confidence=args.min_confidence,
-                               whitelist_error=wl_error))
+                               whitelist_error=wl_error, public=args.public))
         return 0
     renderer = _REPORTS[args.kind]
     payload = renderer(graph) if args.kind == "api-surface" else renderer(Query(graph))
@@ -796,7 +808,7 @@ def _report_json(graph, args) -> dict:
         whitelist, wl_error = load_dead_code_whitelist(root)
         return build_dead_code(Query(graph), whitelist=whitelist,
                                min_confidence=args.min_confidence,
-                               whitelist_error=wl_error)
+                               whitelist_error=wl_error, public=args.public)
     if args.kind == "api-surface":
         from codemap.serve.api_surface import build_api_surface
         return build_api_surface(graph)
@@ -881,9 +893,10 @@ def _cmd_refresh(args) -> int:
     from codemap.freshness import read_meta
     meta = read_meta(args.graph)
     if not meta or not meta.get("argv"):
+        what = "no graph" if not os.path.exists(args.graph) else "no rebuild recipe"
         raise SystemExit(
-            f"error: no rebuild recipe for {args.graph!r} "
-            "(build it with `codemap build … -o {graph}` first)")
+            f"error: {what} at {args.graph} — `refresh` repeats a recorded build; make the first one with "
+            f"`codemap build <package> -o {args.graph}`")
     cwd = meta.get("cwd")
     if cwd and os.path.isdir(cwd):
         os.chdir(cwd)  # recorded argv may use paths relative to the build cwd
@@ -1412,6 +1425,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "the symbol (default 5, same as `report flows`).")
     r.add_argument("--min-confidence", choices=["low", "medium", "high"], default=None,
                    help="report dead-code: only show candidates at/above this confidence.")
+    r.add_argument("--public", action="store_true",
+                   help="report dead-code: also list public module-level functions with no inbound edge "
+                        "(dead in an application; in a library they may be external API).")
     r.add_argument("--format", choices=["markdown", "json"], default="markdown")
     r.add_argument("--source-root", metavar="DIR",
                    help="Where codemap.toml is read for `dead-code` (default: current dir).")

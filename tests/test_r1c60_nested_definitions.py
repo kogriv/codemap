@@ -111,7 +111,8 @@ def test_the_nested_private_helper_is_not_a_candidate_it_is_unjudged(tree):
 
 
 def test_the_structured_answer_does_not_change_shape(tree):
-    """Declaration-only: no field was added (that would be an ANSWER_FORMAT bump)."""
+    """Declaration-only: no field was added by R1-C60. R1-C118 added two, with ANSWER_FORMAT 12."""
     dead = build_dead_code(Query(extract(str(tree / "pkg"))))
     assert set(dead) == {"kind", "target", "orphan_modules", "candidates", "totals",
-                         "shadowed", "whitelist", "min_confidence", "diagnostics"}
+                         "shadowed", "whitelist", "min_confidence", "diagnostics",
+                         "called_only_from_outside", "uncalled_public"}

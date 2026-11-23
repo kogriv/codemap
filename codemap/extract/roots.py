@@ -185,6 +185,7 @@ class _CoreIndex:
             key=len,
             reverse=True,
         )
+        self.module_set = frozenset(self.module_ids)
         # R1-C21-f1 (issue #6): whether the *core* is itself a flat layout, which decides
         # if a consumer's bare-name import can reach it at all. Structural, not statistical:
         # a properly packaged core is never on sys.path, so `from alpha import f` in a
@@ -547,6 +548,10 @@ def _consumer_imports(tree, index: _CoreIndex):
                     continue
                 target = f"{module}.{alias.name}"
                 symbol_map[alias.asname or alias.name] = target
+                if target in index.module_set:
+                    # `from pkg import w` binds a module: `w._f()` is a use of `pkg.w._f`, exactly as after
+                    # `import pkg.w as w`. Without this a test's call through it made no edge (R1-C118).
+                    module_aliases[alias.asname or alias.name] = target
                 if flat:
                     flat_targets.add(target)
         elif isinstance(node, ast.Import):

@@ -14,6 +14,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   whose contract recorded two lazy cycles in a comment while the tree had four.
 
 ### Fixed
+- **dead-code saw a callback as dead and a test call as nothing** (R1-C118). A bound method handed on as a value
+  (`bus.on("x", self._handler)`, `prepare=self._migrate`) had no edge and was graded **high**; it is now a
+  `references` edge (resolution `self`, a new route) and grades **low**. In a consumer root, a module bound by
+  `from pkg import w` was not an alias, so `w._f()` in a test made no edge. New in the report: **Called only from
+  outside the package** (every use from tests/scripts), and a line counting the public module-level functions with
+  no inbound edge — `report dead-code --public` lists them (`uncalled_public`, `called_only_from_outside` in JSON).
+  On the dogfood graph the private candidate list is unchanged.
+- **The first build in a fresh clone** (R1-C119): `build -o` creates the output directory before the parse instead
+  of failing after it; `--graph` naming a missing file is refused before any work with the command that makes one;
+  `refresh` no longer prints a literal `{graph}`; `devkit status` with no graph gives the exact first build.
 - **devkit writes the contract only from a graph this codemap built over the current tree** (R1-C114). `init` used
   any `.codemap/graph.json` it found, with or without `--no-build`, and `devkit ratchet` did the same: a graph from
   another codemap version, or one behind its tree, gave an `allowed` list the gate would not agree with on its

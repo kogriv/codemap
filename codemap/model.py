@@ -138,7 +138,10 @@ SCHEMA_VERSION = "0.13"
 #  11 — a not-found resolution whose input names a source file codemap does not read (`.ts`,
 #       `.go`, …) carries `outside_graph: {language, advise}`; new op `advise` (R1-C110,
 #       docs/design/advise.md).
-ANSWER_FORMAT = 11
+#  12 — `report dead-code` (JSON) carries `called_only_from_outside` and `uncalled_public`; a bound method
+#       handed on as a value is a `references` edge with resolution `self` (R1-C118). `check` (JSON) carries
+#       `known_stale` when a known-cycles list is declared (R1-C116).
+ANSWER_FORMAT = 12
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship
@@ -218,6 +221,9 @@ RESOLUTIONS: dict[tuple[str, str], dict[str, str]] = {
                                    "how": "the symbol appears in a type annotation"},
     ("references", "name"): {"means": "site", "confidence": "exact",
                              "how": "the symbol is named as a value (dict entry, default=…)"},
+    ("references", "self"): {"means": "site", "confidence": "exact",
+                             "how": "a bound method `self.m` / `cls.m` handed on as a value, not called "
+                                    "(a callback, `prepare=self.m`) (R1-C118)"},
     ("references", "doc"): {"means": "site", "confidence": "exact",
                             "how": "a documentation file names the symbol"},
     ("references", "local"): {"means": "route", "confidence": "exact",

@@ -695,6 +695,60 @@ class Query:
             out = [c for c in out if _CONFIDENCE_RANK[c["confidence"]] >= floor]
         return out
 
+    def _dead_eligible(self, n: Node) -> bool:
+        name = n.id.rsplit(".", 1)[-1]
+        return (n.kind == "function" and not (name.startswith("__") and name.endswith("__"))
+                and not n.extras.get("stub"))
+
+    def called_only_from_outside(self) -> list[dict]:
+        """Package functions every inbound call and reference of which comes from a consumer root (R1-C118).
+
+        A function a test calls is not a dead-code candidate — but if *only* tests (or scripts) reach it,
+        the package itself never does: it lives for its test. Private and public alike; each row names the
+        roots and the call count, so a reader can tell a test helper from code that outlived its caller.
+        """
+        out = []
+        for n in self.graph.nodes.values():
+            if self.root_of(n.id) != "core" or not self._dead_eligible(n):
+                continue
+            refs = self.references_to(n.id, include_members=False)
+            uses = [r for r in refs if r["type"] in ("calls", "references")]
+            if not uses or any(r["root"] == "core" for r in uses):
+                continue
+            if self._overridden_base(n):
+                continue  # reached by dispatch through its base — not by name
+            if not any(r["type"] == "calls" for r in uses):
+                continue
+            roots: dict[str, int] = {}
+            for r in uses:
+                roots[r["root"]] = roots.get(r["root"], 0) + 1
+            out.append({"id": n.id, "visibility": n.visibility, "roots": dict(sorted(roots.items()))})
+        return sorted(out, key=lambda c: c["id"])
+
+    def uncalled_public(self, *, whitelist: tuple[str, ...] = ()) -> list[dict]:
+        """Module-level **public** functions with no inbound edge in the graph (R1-C118).
+
+        Not candidates by default — a public function may be API for code outside the graph. For an
+        application (nothing outside imports the package) these are the main class of dead code, so they
+        are counted always and listed on request. Module level only: a public *method* is mostly called on
+        an instance the static resolver cannot type, and listing those would be noise, not evidence.
+        Graded as private candidates are (decorator/registry → medium).
+        """
+        out = []
+        for n in self.graph.nodes.values():
+            if (n.visibility == "private" or self.root_of(n.id) != "core" or not self._dead_eligible(n)):
+                continue
+            parent = n.id.rsplit(".", 1)[0]
+            if self.graph.nodes.get(parent) is None or self.graph.nodes[parent].kind != "module":
+                continue
+            if self.references_to(n.id):
+                continue
+            if any(fnmatch.fnmatch(n.id, pat) for pat in whitelist):
+                continue
+            out.append(self._grade_dead(n))
+        out.sort(key=lambda c: (-_CONFIDENCE_RANK[c["confidence"]], c["id"]))
+        return out
+
     def _overridden_base(self, n: Node) -> tuple[str, int] | None:
         """The ancestor method ``n`` overrides, and that ancestor's inbound calls (R1-C55).
 

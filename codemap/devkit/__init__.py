@@ -55,3 +55,16 @@ def render(text: str, ctx: dict[str, object]) -> str:
 
 def sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def build_args(st: dict) -> str:
+    """The roots part of the devkit's build command (`--consumer`, `--docs`, `--mode full`)."""
+    import shlex
+    parts: list[str] = []
+    for c in st.get("consumers", []):
+        parts += ["--consumer", c]
+    for d in st.get("docs", []):
+        parts += ["--docs", d]
+    if st.get("consumers"):
+        parts += ["--mode", "full"]
+    return shlex.join(parts)

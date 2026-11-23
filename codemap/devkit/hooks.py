@@ -48,7 +48,11 @@ def currency_line(root: Path, st: dict) -> str:
     gp = _graph_path(root, st)
     rel = os.path.relpath(gp, root)
     if not gp.is_file():
-        return f"absent ({rel} does not exist — `codemap devkit init` builds it, the post-commit hook keeps it)"
+        # R1-C119: a fresh clone has no graph and `refresh` has no recipe to repeat — give the first build.
+        from codemap.devkit import build_args
+        cmd = " ".join(x for x in ("codemap build", st.get("package", "<package>"), build_args(st), "-o", rel) if x)
+        return (f"absent ({rel} does not exist; build it once: `{cmd}` — after that the post-commit hook "
+                "keeps it)")
     meta = read_meta(str(gp)) or {}
     built = meta.get("built_at")
     when = f", built {_ago(built)}" if isinstance(built, (int, float)) else ""

@@ -20,7 +20,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from codemap.devkit import DEVKIT_VERSION, render, sha, template
+from codemap.devkit import DEVKIT_VERSION, build_args, render, sha, template
 from codemap.devkit.artifacts import (CI_MARK, HOOK_MARK, Artifact, ClaudeHooks, JsonKey,
                                       MarkdownRegion, TomlRegion, WholeFile, canon_json)
 from codemap.devkit.state import STATE, load_state, save_state
@@ -96,15 +96,7 @@ def pin_has_mcp(pin: list[str]) -> bool | None:
 
 # --------------------------------------------------------------------------- rendering
 
-def build_args(st: dict) -> str:
-    parts: list[str] = []
-    for c in st.get("consumers", []):
-        parts += ["--consumer", c]
-    for d in st.get("docs", []):
-        parts += ["--docs", d]
-    if st.get("consumers"):
-        parts += ["--mode", "full"]
-    return shlex.join(parts)
+
 
 
 def context(st: dict, pin: list[str], codemap_version: str, root: Path | None = None) -> dict:

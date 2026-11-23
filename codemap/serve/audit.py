@@ -78,7 +78,7 @@ def build_dependencies(query: Query) -> dict:
 
 def build_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
                     min_confidence: str | None = None,
-                    whitelist_error: str | None = None) -> dict:
+                    whitelist_error: str | None = None, public: bool = False) -> dict:
     """:func:`render_dead_code`, structured (R1-C32).
 
     ``whitelist_error`` travels as data for the same reason it is printed above the
@@ -99,8 +99,17 @@ def build_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
         "shadowed": query.shadowed_definitions(),
         "whitelist": {"patterns": list(whitelist), "error": whitelist_error},
         "min_confidence": min_confidence,
+        # R1-C118: reached only from tests/scripts; and public module-level functions with no edge —
+        # always counted, listed with `public`, because silence read as "the list is complete".
+        "called_only_from_outside": query.called_only_from_outside(),
+        "uncalled_public": _public_payload(query, whitelist, public),
         "diagnostics": diagnostics(query.graph),
     }
+
+
+def _public_payload(query: Query, whitelist, public: bool) -> dict:
+    rows = query.uncalled_public(whitelist=whitelist)
+    return {"count": len(rows), "listed": public, **({"candidates": rows} if public else {})}
 
 
 def call_sites_by_scope(graph) -> dict:
@@ -177,7 +186,7 @@ def load_dead_code_whitelist(root: str | None) -> tuple[tuple[str, ...], str | N
 
 def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
                      min_confidence: str | None = None,
-                     whitelist_error: str | None = None) -> str:
+                     whitelist_error: str | None = None, public: bool = False) -> str:
     by_root = query.orphan_modules_by_root()
     core_orphans = by_root.get("core", [])
     consumer = {r: v for r, v in by_root.items() if r != "core"}
@@ -254,7 +263,44 @@ def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
             reason = "; ".join(c["reasons"])
             lines.append(f"- `{c['id']}` — {reason}")
         lines.append("")
+    while lines and lines[-1] == "":
+        lines.pop()
+    lines.extend(_outside_and_public_lines(query, whitelist, public))
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _outside_and_public_lines(query: Query, whitelist, public: bool) -> list[str]:
+    """R1-C118: the two classes the private list does not hold, said rather than left out."""
+    lines: list[str] = []
+    every = query.called_only_from_outside()
+    # Public API that only tests call is the normal state of a library; listed with `--public` only.
+    outside = every if public else [c for c in every if c["visibility"] == "private"]
+    hidden = len(every) - len(outside)
+    if outside or hidden:
+        kind = "" if public else "private "
+        lines += ["", f"## Called only from outside the package: {len(outside)} {kind}function(s)", "",
+                  "_Every call and reference comes from a consumer root (tests, scripts…): the package itself "
+                  "never reaches these. A test helper, or code that outlived its caller — reading tells._", ""]
+        for c in outside:
+            by = ", ".join(f"{r}×{k}" for r, k in c["roots"].items())
+            lines.append(f"- `{c['id']}` ({c['visibility']}) — {by}")
+        if not outside:
+            lines.append("_none private._")
+        if hidden:
+            lines += ["", f"_And {hidden} public function(s) reached only from outside — the usual state of a "
+                          "library's API; `--public` lists them._"]
+    rows = query.uncalled_public(whitelist=whitelist)
+    if public:
+        lines += ["", f"## Uncalled public functions (module level): {len(rows)}", "",
+                  "_No inbound edge of any kind in the graph. Dead in an application; in a library, check "
+                  "whether code outside the graph uses them. Public methods are not judged (instance calls "
+                  "resolve too rarely)._", ""]
+        lines += [f"- `{c['id']}` [{c['confidence']}] — {'; '.join(c['reasons'])}" for c in rows] or ["_none._"]
+    elif rows:
+        lines += ["", f"_Not judged: {len(rows)} public module-level function(s) have no inbound edge — they may "
+                      "be API for code outside the graph. For an application, `codemap report dead-code --public` "
+                      "lists them._"]
+    return lines
 
 
 def render_behavior(query: Query) -> str:
