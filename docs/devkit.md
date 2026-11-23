@@ -24,11 +24,14 @@ codemap devkit update                                       # bring it to the in
 | `.codemap-devkit.json` | the devkit version and the hash of everything it wrote — **commit it** | always |
 | `.gitignore` | `.codemap/` (graphs and the digest are local) | on |
 
-`init` builds a fast graph if there is none, so the contract can be written; `--no-build` skips the build.
-An existing graph is used either way, and the contract is written from it only when **this** codemap built it and
-it is not behind its source tree. Otherwise the contract is not written and the note says why (another version,
-or how many files changed); rebuild with the pinned codemap and run `codemap devkit ratchet`, which applies the
-same check and exits 2 on such a graph.
+`init` writes its files first and builds a fast graph after them, so a rules file inside a `--docs` root is already
+in the graph. An existing graph is kept when **this** codemap built it and it is not behind its source tree, and
+rebuilt otherwise. With `--no-build` nothing is built: the contract is written only from such a fit graph, and
+otherwise the note says why (another version, or how many files changed); rebuild with the pinned codemap and run
+`codemap devkit ratchet`, which applies the same check and exits 2 on an unfit graph.
+
+`init` and `update` say when the pinned interpreter cannot import `mcp` (install `codmap[mcp]`), and when
+`.codex/config.toml` was written from a linked git worktree, whose path is usually temporary.
 
 The pin (the codemap executable in `.mcp.json` and in the post-commit hook) is the project's: `update` keeps it,
 `update --repin`, run by the new codemap, moves both.

@@ -12,6 +12,15 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   first run. Both now refuse such a graph and say why (`init` with a note, `ratchet` with exit 2). The `--no-build`
   help no longer claims the contract is then not written. Reported by a consumer project after `init --ratchet
   --no-build`.
+- **devkit init leaves a graph that `check` accepts right away** (R1-C117). The graph was built before the rules
+  file was written; with the rules file inside a `--docs` root the first `check` exited 2, "behind — 1 added". Now
+  the artifacts are written first and the graph after them; a graph that is behind or from another codemap is
+  rebuilt when building is allowed (`--no-build` still refuses it, R1-C114).
+- **devkit init and update say when the pin cannot serve MCP** (R1-C117): written MCP entries for an interpreter
+  without the `mcp` extra were reported only by `status`; now `init`/`update` name it and exit 1.
+- **`--codex` from a linked git worktree is named** (R1-C117): `.codex/config.toml` records `cwd`, and from a
+  `git worktree add` checkout that path is usually temporary; the note says to run `devkit update` in the main
+  checkout after the merge.
 
 ## [0.0.42] - 2026-11-21
 

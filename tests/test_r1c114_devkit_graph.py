@@ -41,7 +41,7 @@ def test_e3_a_current_graph_of_this_codemap_gives_the_contract(tmp_path, monkeyp
 
 def test_e1_a_graph_behind_its_tree_gives_no_contract(tmp_path, monkeypatch, capsys):
     _pin(monkeypatch)
-    for build in (False, True):  # with a graph present, `init` does not rebuild either way
+    for build in (False,):  # with building allowed, R1-C117 rebuilds instead (test_c117_e2)
         root = _repo(tmp_path / str(build))
         _build(root)
         (root / "pkg/c/o.py").write_text("def h():\n    return 2\n")
@@ -98,3 +98,63 @@ def test_e6_repin_moves_the_hook_too(tmp_path, monkeypatch, capsys):
     assert "C=/first/codemap" in hook.read_text()  # update keeps the project's pin (D2)
     install.update(root, force=False, repin=True, dry_run=False)
     assert "C=/second/codemap" in hook.read_text()
+
+
+# --------------------------------------------------------------------------- R1-C117
+
+
+def _init_with(root: Path, capsys, **kw) -> tuple[int, str]:
+    args = dict(package="pkg", consumers=["tests"], docs=[], agents_file=None, claude_hooks=False, codex=False,
+                ci=None, hook=False, build=True, ratchet=False, dry_run=False, force=False)
+    args.update(kw)
+    rc = install.init(root, **args)
+    return rc, capsys.readouterr().out
+
+
+def test_c117_e1_e5_a_rules_file_inside_docs_leaves_the_graph_current(tmp_path, monkeypatch, capsys):
+    _pin(monkeypatch)
+    for where in ("docs/rules.md", "RULES.md"):  # E1 inside a --docs root; E5 outside, the control
+        root = _repo(tmp_path / where.replace("/", "_"))
+        (root / "docs").mkdir()
+        (root / "docs/a.md").write_text("# a\n")
+        _init_with(root, capsys, docs=["docs"], agents_file=where)
+        assert (root / where).is_file()
+        rc = main(["check", "--graph", str(root / GRAPH), "--root", str(root), "--require-contract"])
+        assert rc == 0, (where, capsys.readouterr().out)
+        capsys.readouterr()
+
+
+def test_c117_e2_a_stale_graph_is_rebuilt_when_building_is_allowed(tmp_path, monkeypatch, capsys):
+    _pin(monkeypatch)
+    root = _repo(tmp_path)
+    _build(root)
+    (root / "pkg/c/o.py").write_text("def h():\n    return 2\n")
+    rc, out = _init_with(root, capsys)
+    assert "graph rebuilt (the graph is behind its source tree" in out, out
+    assert "starter contract written" in out
+    assert install.graph_unfit(root, root / GRAPH) is None
+
+
+def test_c117_e3_init_says_when_the_pin_cannot_serve_mcp(tmp_path, monkeypatch, capsys):
+    _pin(monkeypatch)
+    root = _repo(tmp_path)
+    monkeypatch.setattr(install, "pin_has_mcp", lambda pin: False)
+    rc, out = _init_with(root, capsys, build=False)
+    assert rc == 1 and "cannot import `mcp`" in out and "codmap[mcp]" in out, out
+    root2 = _repo(tmp_path / "control")
+    monkeypatch.setattr(install, "pin_has_mcp", lambda pin: True)
+    rc, out = _init_with(root2, capsys, build=False)
+    assert rc == 0 and "cannot import `mcp`" not in out
+
+
+def test_c117_e4_codex_from_a_linked_worktree_is_named(tmp_path, monkeypatch, capsys):
+    _pin(monkeypatch)
+    monkeypatch.setattr(install, "pin_has_mcp", lambda pin: True)
+    main_co = _repo(tmp_path)
+    for cmd in (["add", "-A"], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"],
+                ["worktree", "add", "-q", str(tmp_path / "wt")]):
+        subprocess.run(["git", *cmd], cwd=main_co, check=True, capture_output=True)
+    _, out = _init_with(tmp_path / "wt", capsys, build=False, codex=True)
+    assert "linked worktree" in out and "`codemap devkit update` in the main checkout" in out, out
+    _, out = _init_with(main_co, capsys, build=False, codex=True)
+    assert "linked worktree" not in out

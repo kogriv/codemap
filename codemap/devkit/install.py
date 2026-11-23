@@ -417,19 +417,28 @@ def init(root: Path, *, package: str, consumers: list[str], docs: list[str], age
           "artifacts": {}}
     notes: list[str] = []
     graph = root / GRAPH
-    if build and not graph.is_file() and not dry_run:
-        ok, err = _build_graph(root, st, pin)
-        notes.append("graph built (fast tier; the post-commit hook builds --deep)" if ok else
-                     f"graph build FAILED — {err.splitlines()[-1] if err else 'no message'}")
-    _contract(root, st, ratchet=ratchet, dry_run=dry_run, notes=notes)
+    # Artifacts first, graph second (R1-C117): the rules file may sit inside a `--docs` root, and a graph
+    # built before it is written is behind its tree on the first `check`.
     if _ensure_gitignore(root, write=not dry_run):
         notes.append(".gitignore: `.codemap/` added (graphs and the hooks' digest are local)")
     its, skip = items(root, st, pin, version)
     notes += skip
     outcomes = [process(root, st, it, write=not dry_run, force=force) for it in its]
+    if build and not dry_run:
+        unfit = graph_unfit(root, graph) if graph.is_file() else "there is no graph"
+        if unfit:
+            ok, err = _build_graph(root, st, pin)
+            if not ok:
+                notes.append(f"graph build FAILED — {err.splitlines()[-1] if err else 'no message'}")
+            elif graph.is_file() and unfit != "there is no graph":
+                notes.append(f"graph rebuilt ({unfit}; fast tier — the post-commit hook builds --deep)")
+            else:
+                notes.append("graph built (fast tier; the post-commit hook builds --deep)")
+    _contract(root, st, ratchet=ratchet, dry_run=dry_run, notes=notes)
     if any(o.key == "mcp" and o.status == "created" for o in outcomes):
         notes.append(".mcp.json names the codemap executable by its absolute path on this machine "
                      f"({pin[0]}); whether to commit it is this project's decision")
+    mcp_missing = _mcp_notes(root, st, pin, outcomes, notes)
     if graph.is_file() and not dry_run:
         from codemap.devkit.hooks import index
         import contextlib, io
@@ -439,7 +448,32 @@ def init(root: Path, *, package: str, consumers: list[str], docs: list[str], age
         save_state(root, st)
         notes.append(f"{STATE} written — commit it: it records the devkit version and what the devkit wrote")
     _report(f"codemap devkit v{DEVKIT_VERSION} — init{' (dry run)' if dry_run else ''}", outcomes, notes)
-    return 1 if any(o.attention for o in outcomes) else 0
+    return 1 if mcp_missing or any(o.attention for o in outcomes) else 0
+
+
+def _linked_worktree(root: Path) -> bool:
+    """True in a `git worktree add` checkout: its path is usually temporary, the main checkout's is not."""
+    def rev(arg):
+        r = subprocess.run(["git", "rev-parse", arg], cwd=root, capture_output=True, text=True)
+        return (root / r.stdout.strip()).resolve() if r.returncode == 0 and r.stdout.strip() else None
+    common, own = rev("--git-common-dir"), rev("--git-dir")
+    return common is not None and own is not None and common != own
+
+
+def _mcp_notes(root: Path, st: dict, pin: list[str], outcomes, notes: list[str]) -> bool:
+    """What `status` says about the MCP entry, said when it is written (R1-C117). True: needs attention."""
+    keys = {o.key for o in outcomes if o.status in ("created", "updated", "overwritten", "current")}
+    missing = False
+    if "mcp" in keys or "codex" in keys:
+        if pin_has_mcp(pin) is False:
+            missing = True
+            notes.append("MCP: the pinned interpreter cannot import `mcp` — `serve --mcp` will not start, the MCP "
+                         "entries written here are dead until the extra is installed: `pip install 'codmap[mcp]'` "
+                         "(or `uv tool install --force 'codmap[mcp]'`)")
+    if "codex" in keys and _linked_worktree(root):
+        notes.append(f".codex/config.toml: `cwd` is this linked worktree ({root}); once it is merged and removed, "
+                     "run `codemap devkit update` in the main checkout to point it there")
+    return missing
 
 
 def update(root: Path, *, force: bool, repin: bool, dry_run: bool, _state: dict | None = None) -> int:
@@ -460,8 +494,10 @@ def update(root: Path, *, force: bool, repin: bool, dry_run: bool, _state: dict 
         save_state(root, st)
     if repin:
         notes.append(f"re-pinned to {shlex.join(pin)} (codemap {version})")
+    written = [o for o in outcomes if o.status in ("created", "updated", "overwritten")]
+    mcp_missing = _mcp_notes(root, st, pin, written, notes)
     _report(f"codemap devkit v{DEVKIT_VERSION} — update{' (dry run)' if dry_run else ''}", outcomes, notes)
-    return 1 if any(o.attention for o in outcomes) else 0
+    return 1 if mcp_missing or any(o.attention for o in outcomes) else 0
 
 
 def _pin_and_version(root: Path, st: dict, repin: bool) -> tuple[list[str], str]:
