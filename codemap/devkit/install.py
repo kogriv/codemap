@@ -487,10 +487,13 @@ def init(root: Path, *, package: str, consumers: list[str], docs: list[str], age
             ok, err = _build_graph(root, st, pin)
             if not ok:
                 notes.append(f"graph build FAILED — {err.splitlines()[-1] if err else 'no message'}")
-            elif graph.is_file() and unfit != "there is no graph":
-                notes.append(f"graph rebuilt ({unfit}; fast tier — the post-commit hook builds --deep)")
             else:
-                notes.append("graph built (fast tier; the post-commit hook builds --deep)")
+                # The hook's --deep rebuild is promised only where there is a hook (tgsh-26, 23.11).
+                deep = ("the post-commit hook builds --deep" if hook
+                        else "no hook: `codemap build … --deep` or `codemap refresh` by hand")
+                notes.append(f"graph rebuilt ({unfit}; fast tier — {deep})"
+                             if graph.is_file() and unfit != "there is no graph"
+                             else f"graph built (fast tier; {deep})")
     _contract(root, st, ratchet=ratchet, dry_run=dry_run, notes=notes)
     if any(o.key == "mcp" and o.status == "created" for o in outcomes):
         notes.append(".mcp.json names the codemap executable by its absolute path on this machine "

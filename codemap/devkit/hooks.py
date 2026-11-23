@@ -56,8 +56,9 @@ def currency_line(root: Path, st: dict) -> str:
         # R1-C119: a fresh clone has no graph and `refresh` has no recipe to repeat — give the first build.
         from codemap.devkit import build_args
         cmd = " ".join(x for x in ("codemap build", st.get("package", "<package>"), build_args(st), "-o", rel) if x)
-        return (f"absent ({rel} does not exist; build it once: `{cmd}` — after that the post-commit hook "
-                "keeps it)")
+        keeps = ("after that the post-commit hook keeps it" if (st.get("options") or {}).get("hook", True)
+                 else f"there is no post-commit hook here, so refresh it after changes: `codemap refresh {rel}`")
+        return f"absent ({rel} does not exist; build it once: `{cmd}` — {keeps})"
     meta = read_meta(str(gp)) or {}
     built = meta.get("built_at")
     when = f", built {_ago(built)}" if isinstance(built, (int, float)) else ""

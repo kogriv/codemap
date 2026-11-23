@@ -45,3 +45,13 @@ def test_e4_status_gives_the_first_build_command(tmp_path):
     st = {"package": "src/pkg", "consumers": ["tests"], "docs": ["docs"], "graph": ".codemap/graph.json"}
     line = currency_line(tmp_path, st)
     assert ("`codemap build src/pkg --consumer tests --docs docs --mode full -o .codemap/graph.json`" in line), line
+
+
+
+def test_status_does_not_promise_a_hook_that_is_off(tmp_path):
+    """tgsh-26, 23.11: with `hook: false` the absent-graph line must not say the hook keeps the graph."""
+    st = {"package": "pkg", "consumers": [], "docs": [], "graph": ".codemap/graph.json", "options": {"hook": False}}
+    line = currency_line(tmp_path, st)
+    assert "post-commit hook keeps it" not in line and "`codemap refresh .codemap/graph.json`" in line
+    st["options"]["hook"] = True
+    assert "post-commit hook keeps it" in currency_line(tmp_path, st)

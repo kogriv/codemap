@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+- **devkit no longer promises a hook that is off**: with `hook: false`, `devkit status` (graph absent) and the
+  `init` note said the post-commit hook would keep or deepen the graph; they now say to refresh it by hand.
+  Reported by a consumer.
+
 ## [0.0.46] - 2026-11-23
 
 **A security release, and the external audit's other findings** (R1-C121…C129). Schema 0.13; **`ANSWER_FORMAT`
