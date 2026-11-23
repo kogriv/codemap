@@ -36,8 +36,10 @@ codemap pack --graph graph.json --budget 500 --format json    # structured
 
 Symbols are added highest-rank-first until the budget is spent; an item that would
 overflow is skipped so smaller relevant items still fit. Output **never exceeds the
-budget** and **top hubs land before leaves** (the acceptance). Token count is a
-deterministic heuristic (~4 chars/token) — no tokenizer to install.
+budget as codemap counts it**, and **top hubs land before leaves** (the acceptance). The count is an
+**estimate**, a deterministic ~4 characters per token (`estimate_tokens`), not a model tokenizer's: code with
+long identifiers, non-ASCII text or dense punctuation can run over it in real tokens, and the MCP envelope
+around the pack is not counted. Leave headroom — ask for less than the context you have (R1-C129).
 
 Each line is a compact context digest: `id (kind) signature — docstring-first-line`.
 The JSON form returns `{budget, used_tokens, total_ranked, included, truncated,

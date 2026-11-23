@@ -140,6 +140,14 @@ resolver cannot type, and listing them would be noise.
 A bound method handed on as a value — `bus.on("event", self._handler)`, `run(prepare=self._migrate)` — is a
 `references` edge (resolution `self`), so such a method is **low**, not **high**.
 
+**Dispatch by name is an over-approximation (R1-C120).** A module that calls `import_module("pkg.sub." + x)`
+(or an f-string with that literal prefix) and reads `getattr(<anything>, "run")` anywhere in the same module is
+taken to reach every `pkg.sub.<mod>.run`. No data flow is traced from the imported module to the `getattr`
+argument: the two halves are paired within the module, because the usual runner keeps the factory and the
+readers in different functions. So an unrelated `getattr(obj, "run")` in a module that also loads plugins makes
+every plugin's `run` look reached. The edges carry the route `references:dispatch`, graded **heuristic**; a
+function kept alive only by them is **low**, never certain.
+
 ## Whitelist
 
 Some functions are wired by machinery codemap's static edges can't see — argparse

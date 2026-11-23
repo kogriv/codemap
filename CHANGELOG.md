@@ -25,6 +25,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   sha256 (equal to the digest GitHub publishes) before it is unpacked; a new `audit` job runs `pip-audit` over
   what `codmap[mcp,scip]` installs. No upper bounds on the package's dependencies — a library's choice.
 
+### Documentation
+- **The `pack` budget is an estimate, and the docs say so** (R1-C129, audit F-16): ~4 characters per token, not a
+  model tokenizer; "never exceeds the budget" holds for codemap's count only; leave headroom (docs/pack.md, the MCP
+  `pack` docstring). The answer shape is unchanged.
+- **Dispatch by name is an over-approximation** (docs/dead-code.md): the module-wide pairing of `import_module`
+  and `getattr` traces no data flow.
+
 ### Fixed
 - **`serve` survives any JSON value, and a reload no longer interleaves with a request** (R1-C122, audit F-04,
   F-05). A line `null` (or `[]`, `42`, a string, `{"op": []}`) raised out of `Session.handle` and ended the

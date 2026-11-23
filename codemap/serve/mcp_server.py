@@ -326,7 +326,8 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
     def pack(budget: int = 2000, seeds: list[str] | None = None,
              direction: str | None = None) -> dict:
         """Token-budgeted context pack: the highest-ranked modules, classes and functions
-        under `budget` tokens, by PageRank importance — or by relevance to `seeds` (symbol
+        under `budget` estimated tokens (~4 characters each, not a model tokenizer — leave
+        headroom), by PageRank importance — or by relevance to `seeds` (symbol
         / file ids you're working on). Returns {budget, used_tokens, included, truncated,
         items:[{id, kind, rank, tokens, text}], seeds, unreachable_from_seeds, coverage},
         top hubs first. With seeds the walk runs both ways by default — what the seeds use
