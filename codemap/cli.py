@@ -897,11 +897,33 @@ def _cmd_refresh(args) -> int:
         raise SystemExit(
             f"error: {what} at {args.graph} — `refresh` repeats a recorded build; make the first one with "
             f"`codemap build <package> -o {args.graph}`")
+    problem = _recipe_problem(meta, args.graph)
+    if problem:
+        raise SystemExit(f"error: the recorded recipe beside {args.graph} is not repeated — {problem}; "
+                         f"rebuild by hand with `codemap build <package> -o {args.graph}`")
     cwd = meta.get("cwd")
     if cwd and os.path.isdir(cwd):
         os.chdir(cwd)  # recorded argv may use paths relative to the build cwd
     print(f"rebuilding {args.graph} …", file=sys.stderr)
     return main(meta["argv"])
+
+
+def _recipe_problem(meta: dict, graph: str) -> str | None:
+    """Why a sidecar's ``argv`` is not a rebuild of ``graph`` (R1-C125): `refresh` repeats it as a command, and
+    the sidecar is a file anyone can edit. Only `build`, writing back to this same graph, is repeated."""
+    argv = meta.get("argv")
+    if not isinstance(argv, list) or not argv or not all(isinstance(a, str) for a in argv):
+        return "it is not a list of arguments"
+    if argv[0] != "build":
+        return f"it runs `{argv[0]}`, not `build`"
+    out = next((argv[i + 1] for i, a in enumerate(argv[:-1]) if a in ("-o", "--out")), None)
+    out = out or next((a.split("=", 1)[1] for a in argv if a.startswith("--out=")), None)
+    if out is None:
+        return "it writes no graph file"
+    cwd = meta.get("cwd") if isinstance(meta.get("cwd"), str) else os.getcwd()
+    if (Path(cwd) / out).resolve() != Path(graph).resolve():
+        return f"it writes {out!r}, not this graph"
+    return None
 
 
 def _cmd_route(args) -> int:
@@ -1285,7 +1307,11 @@ def _emit(text: str, out: str | None) -> None:
 
 
 def _write_vault(files: dict[str, str], out_dir: str) -> None:
-    base = Path(out_dir)
+    """R1-C125: note names come from node ids; none may land outside the vault directory."""
+    base = Path(out_dir).resolve()
+    for rel in files:
+        if not (base / rel).resolve().is_relative_to(base):
+            raise SystemExit(f"error: vault note {rel!r} would be written outside {base}; nothing written")
     for rel, content in files.items():
         path = base / rel
         path.parent.mkdir(parents=True, exist_ok=True)

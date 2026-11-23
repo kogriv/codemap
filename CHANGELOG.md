@@ -31,6 +31,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   could read half of one. Writes now go to a temporary file in the same directory, fsync, `os.replace`. The advise
   cache publishes matrix + feed as one generation directory behind an atomically replaced `current` pointer, so a
   failure between the two files keeps the previous pair; a pre-0.0.46 top-level pair is still read and replaced.
+- **A graph file and its sidecar are checked before codemap acts on them** (R1-C125, audit F-03, F-06, F-14).
+  `Graph.from_dict` refuses a document whose structure is not a graph's (field types, unknown fields, a `file`
+  that is absolute or climbs with `..`), naming the field; edge types and node kinds outside this build's
+  vocabulary still load (a newer graph degrades, R1-C37). `source` reads only below the source root, symbolic
+  links followed; `export vault` writes nothing if a note would land outside its directory; `refresh` repeats a
+  recorded recipe only if it is a `build` writing back to the same graph.
 
 ## [0.0.45] - 2026-11-23
 

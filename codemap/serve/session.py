@@ -848,8 +848,12 @@ class Session:
         loc = {"id": cid, "file": node.file, "lines": [node.lineno, node.endlineno]}
         if not node.file or node.lineno is None:
             return {**loc, "code": None, "note": "no location (overlay node)"}
-        base = Path(self.source_root) if self.source_root else Path(".")
+        base = (Path(self.source_root) if self.source_root else Path(".")).resolve()
         path = base / node.file
+        # R1-C125: the graph says where to read; the read stays below the source root, links followed.
+        if not path.resolve().is_relative_to(base):
+            return {**loc, "code": None,
+                    "note": f"not read: {node.file!r} resolves outside the source root {base}"}
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
             loc["code"] = "\n".join(lines[node.lineno - 1:(node.endlineno or node.lineno)])

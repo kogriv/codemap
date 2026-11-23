@@ -17,6 +17,7 @@ layers = [
   "scope",         # input scope manifest
   "freshness",     # graph age / rebuild recipe
   "integrations",  # opt-in external-tool gate
+  "atomic",        # atomic file publication (R1-C124): a leaf utility, no codemap imports
   "model",         # neutral graph data model — the leaf
 ]
 no_cycles = true

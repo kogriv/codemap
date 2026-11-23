@@ -45,7 +45,7 @@ from codemap.query import Query
 # if it goes stale, the failure says so rather than passing quietly.
 REAL_LAYERS = ["__main__", "cli", "devkit", "incremental", "extract", "serve", "advise", "apidiff", "arch", "diagnostics",
                "freshness", "integrations", "provenance", "query", "store", "model",
-               "tomlio", "watch", "scope"]
+               "tomlio", "watch", "scope", "atomic"]
 
 SRC = __import__("pathlib").Path(__file__).resolve().parent.parent / "codemap"
 

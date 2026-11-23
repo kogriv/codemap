@@ -394,6 +394,14 @@ class Graph:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Graph":
+        """Build a graph from its JSON form, refusing one whose structure is not a graph's (R1-C125).
+
+        A graph file is an artifact anyone can hand over, and some of its fields reach the filesystem (`source`
+        reads ``node.file``, the vault writes per node). Checked here: the field types, and that every ``file`` is
+        a relative path that stays below its root. Edge types and node kinds outside this build's vocabulary are
+        **not** refused — a graph from a newer codemap degrades instead (R1-C37).
+        """
+        validate_graph_dict(data)
         g = cls(target=data["target"])
         g.provenance = data.get("provenance") or {}
         # Read the schema the file declares (R1-C25/D3). It used to be written and never
@@ -406,3 +414,68 @@ class Graph:
         for e in data["edges"]:
             g.add_edge(Edge(**e))
         return g
+
+
+class GraphFormatError(ValueError):
+    """A graph file whose structure is not a codemap graph's (R1-C125); the message names the field."""
+
+
+_NODE_FIELDS = {"id", "kind", "file", "lineno", "endlineno", "signature", "docstring", "visibility",
+                "decorators", "is_deprecated", "extras"}
+_EDGE_FIELDS = {"type", "source", "target", "extras"}
+
+
+def safe_relative_file(value: str) -> bool:
+    """A node's ``file``: relative, POSIX, no `..` — what every extractor writes (provenance D5)."""
+    import re as _re
+    return bool(value) and not value.startswith(("/", "\\")) and not _re.match(r"^[A-Za-z]:", value) \
+        and ".." not in value.replace("\\", "/").split("/")
+
+
+def validate_graph_dict(data) -> None:
+    def bad(where: str, why: str):
+        raise GraphFormatError(f"not a codemap graph: {where} {why}")
+    if not isinstance(data, dict):
+        bad("the document", f"is a {type(data).__name__}, not an object")
+    if not isinstance(data.get("target"), str):
+        bad("`target`", "must be a string")
+    for key in ("nodes", "edges"):
+        if not isinstance(data.get(key), list):
+            bad(f"`{key}`", "must be a list")
+    for i, n in enumerate(data["nodes"]):
+        w = f"nodes[{i}]"
+        if not isinstance(n, dict):
+            bad(w, "must be an object")
+        extra = set(n) - _NODE_FIELDS
+        if extra:
+            bad(w, f"has unknown field(s) {sorted(extra)}")
+        for f in ("id", "kind"):
+            if not isinstance(n.get(f), str) or not n.get(f):
+                bad(f"{w}.{f}", "must be a non-empty string")
+        f = n.get("file")
+        if f is not None and (not isinstance(f, str) or not safe_relative_file(f)):
+            bad(f"{w}.file", f"= {f!r} must be a relative path without `..`")
+        for f in ("lineno", "endlineno"):
+            v = n.get(f)
+            if v is not None and (isinstance(v, bool) or not isinstance(v, int) or v < 0):
+                bad(f"{w}.{f}", f"= {v!r} must be a non-negative integer")
+        for f in ("signature", "docstring", "visibility"):
+            if n.get(f) is not None and not isinstance(n[f], str):
+                bad(f"{w}.{f}", "must be a string")
+        if "decorators" in n and not (isinstance(n["decorators"], list)
+                                      and all(isinstance(x, str) for x in n["decorators"])):
+            bad(f"{w}.decorators", "must be a list of strings")
+        if "extras" in n and not isinstance(n["extras"], dict):
+            bad(f"{w}.extras", "must be an object")
+    for i, e in enumerate(data["edges"]):
+        w = f"edges[{i}]"
+        if not isinstance(e, dict):
+            bad(w, "must be an object")
+        extra = set(e) - _EDGE_FIELDS
+        if extra:
+            bad(w, f"has unknown field(s) {sorted(extra)}")
+        for f in ("type", "source", "target"):
+            if not isinstance(e.get(f), str) or not e.get(f):
+                bad(f"{w}.{f}", "must be a non-empty string")
+        if "extras" in e and not isinstance(e["extras"], dict):
+            bad(f"{w}.extras", "must be an object")
