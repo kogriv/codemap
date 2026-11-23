@@ -8,7 +8,8 @@ mechanical.
 
 from __future__ import annotations
 
-from codemap.arch import ArchitectureContract, Violation, allowed_unused, applicability, known_stale
+from codemap.arch import (ArchitectureContract, Violation, allowed_unused, applicability, known_absorbed,
+                          known_stale)
 
 _EDGE_CAP = 25   # offending edges listed per rule before "+N more"
 
@@ -252,14 +253,21 @@ def _known_count(known) -> str:
 
 
 def _stale_note(query, contract: ArchitectureContract) -> str:
-    """Known-cycle groups that hold no tangle any more (R1-C116), or nothing — silent when none."""
+    """Known-cycle groups that hold no tangle any more (R1-C116), or nothing — silent when none.
+    A group swallowed by a larger new tangle is said apart, with no advice to tighten (R1-C120)."""
+    absorbed = known_absorbed(query, contract)
+    text = ""
+    for k, rows in absorbed.items():
+        for group, bigger in rows:
+            text += (f"\n_`{k}`: the known group ({', '.join(sorted(group))}) is absorbed into a larger new tangle "
+                     f"({', '.join(bigger)}) — its cycle is still there; keep the group._\n")
     stale = known_stale(query, contract)
     if not stale:
-        return ""
+        return text
     parts = [f"`{k}`: " + "; ".join("(" + ", ".join(sorted(g)) + ")" for g in v) for k, v in stale.items()]
     n = sum(len(v) for v in stale.values())
-    return (f"\n_{n} known cycle group(s) no longer hold a tangle — {' · '.join(parts)}. The ratchet can "
-            "tighten: `codemap devkit ratchet --tighten` removes them._\n")
+    return text + (f"\n_{n} known cycle group(s) no longer hold a tangle — {' · '.join(parts)}. The ratchet can "
+                   "tighten: `codemap devkit ratchet --tighten` removes them._\n")
 
 
 def _unused_note(query, contract: ArchitectureContract) -> str:

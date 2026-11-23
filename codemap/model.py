@@ -221,6 +221,9 @@ RESOLUTIONS: dict[tuple[str, str], dict[str, str]] = {
                                    "how": "the symbol appears in a type annotation"},
     ("references", "name"): {"means": "site", "confidence": "exact",
                              "how": "the symbol is named as a value (dict entry, default=…)"},
+    ("references", "dispatch"): {"means": "site", "confidence": "heuristic",
+                                 "how": "loaded by name: `import_module(\"pkg.sub.\" + x)` and `getattr(m, \"run\")` "
+                                        "in one scope reach every `pkg.sub.<mod>.run` (R1-C120)"},
     ("references", "self"): {"means": "site", "confidence": "exact",
                              "how": "a bound method `self.m` / `cls.m` handed on as a value, not called "
                                     "(a callback, `prepare=self.m`) (R1-C118)"},

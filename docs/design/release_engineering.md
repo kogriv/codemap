@@ -1331,6 +1331,18 @@ advise "semantic search"                      jevgrep measured               jev
 
 Every expectation holds. Tag `v0.0.41` on both mirrors.
 
+**0.0.44 — the release check, pre-registered before the upload (2026-11-23).** The second round of the same
+consumer's findings (R1-C120). `ANSWER_FORMAT` stays **12** (a new route value, `references:dispatch`, not a new
+field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, invented fixtures:
+
+| | question | 0.0.43 (expected) | 0.0.44 (expected) |
+|---|---|---|---|
+| plugin runner | `report dead-code --public` on `pkg.tools.{a,b}.run` loaded by `import_module(f"pkg.tools.{x}")` + `getattr(m, "run")` | `pkg.tools.b.run` **[high]** in Uncalled public | absent; `pkg.tools.a.helper` still listed |
+| no literal prefix | same with `import_module(name)` | listed | still listed |
+| absorbed known cycle | `check` with known pair grown into a triple | "no longer hold a tangle … `--tighten`" | "absorbed into a larger new tangle", no `--tighten` |
+| Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
+| version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
+
 **0.0.43 — the release check, pre-registered before the upload (2026-11-23).** Consumer findings: R1-C114…C119.
 `ANSWER_FORMAT` **12** (`report dead-code` JSON gains `called_only_from_outside`, `uncalled_public`; `check` JSON
 gains `known_stale` under a known-cycles list; new route `references:self`), schema 0.13 unchanged, devkit **v5**.

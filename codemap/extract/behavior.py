@@ -121,6 +121,7 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                                   decorators_of=fnode, reexports=reexports)
             if members:
                 _emit_self_references(graph, node_id, fnode, members)
+            _emit_dispatch_references(graph, node_id, list(_own_nodes(fnode)))
         # R1-C22 D2: module-level statements are a scope of their own, never walked
         # above — import-time calls and dispatch tables live here.
         def mod_fast(call, _im=imports, _mm=modmembers):
@@ -1010,6 +1011,49 @@ def _emit_self_references(graph, src_id, fnode, members) -> None:
     for target in sorted(counts):
         graph.add_edge(Edge("references", src_id, target,
                             extras={"resolution": "self", "sites": counts[target]}))
+
+
+def _import_prefix(call) -> str | None:
+    """``"pkg.sub."`` from ``import_module(f"pkg.sub.{x}")`` / ``import_module("pkg.sub." + x)``, else None."""
+    f = call.func
+    name = f.attr if isinstance(f, ast.Attribute) else f.id if isinstance(f, ast.Name) else None
+    if name != "import_module" or not call.args:
+        return None
+    arg = call.args[0]
+    head = None
+    if isinstance(arg, ast.JoinedStr) and arg.values and isinstance(arg.values[0], ast.Constant):
+        head = arg.values[0].value
+    elif (isinstance(arg, ast.BinOp) and isinstance(arg.op, ast.Add) and isinstance(arg.left, ast.Constant)):
+        head = arg.left.value
+    if not isinstance(head, str) or not head.endswith("."):
+        return None   # not a package prefix: nothing to claim about
+    return head
+
+
+def _emit_dispatch_references(graph, src_id, nodes) -> None:
+    """`references` edges for dispatch by name (R1-C120): a scope that imports ``pkg.sub.<name>`` from a
+    string with a literal prefix and reads ``getattr(<x>, "run")`` reaches every ``pkg.sub.<mod>.run``.
+
+    The commonest plugin shape — a runner that loads a module by name and calls its ``run`` — made no edge, so
+    each plugin's ``run`` read as uncalled public code, graded high. Claimed only with both halves in one scope:
+    a literal package prefix (ending in a dot) and a literal attribute name. Every module directly under the
+    prefix is taken as reachable; that is what the runner can load.
+    """
+    prefixes = {pre for n in nodes if isinstance(n, ast.Call) for pre in [_import_prefix(n)] if pre}
+    if not prefixes:
+        return
+    attrs = {n.args[1].value for n in nodes
+             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in ("getattr", "hasattr")
+             and len(n.args) >= 2 and isinstance(n.args[1], ast.Constant) and isinstance(n.args[1].value, str)}
+    if not attrs:
+        return
+    for pre in sorted(prefixes):
+        for nid, node in graph.nodes.items():
+            if node.kind != "function" or not nid.startswith(pre) or nid == src_id:
+                continue
+            mod, _, attr = nid[len(pre):].rpartition(".")
+            if attr in attrs and mod and "." not in mod:
+                graph.add_edge(Edge("references", src_id, nid, extras={"resolution": "dispatch"}))
 
 
 def _process_module_level(graph, modpath, tree, resolve, imports, modmembers,

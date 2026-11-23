@@ -434,9 +434,30 @@ def known_stale(query, contract: ArchitectureContract) -> dict[str, list[frozens
                                  query.type_only_import_tangles)):
         if known:
             now = [set(t["modules"]) for t in tangles()]
-            stale = [k for k in known if not any(m <= k for m in now)]
+            stale = [k for k in known if not any(m <= k for m in now) and not _absorbing(k, now)]
             if stale:
                 out[key] = stale
+    return out
+
+
+def _absorbing(group: frozenset[str], now: list[set[str]]) -> set[str] | None:
+    """A current tangle that holds ≥2 of ``group``'s modules without fitting inside it (R1-C120): the known
+    cycle is alive, inside a larger new one — not gone."""
+    return next((m for m in now if len(m & group) >= 2 and not m <= group), None)
+
+
+def known_absorbed(query, contract: ArchitectureContract) -> dict[str, list[tuple[frozenset[str], list[str]]]]:
+    """Listed groups now inside a larger tangle, with that tangle (R1-C120). Never a tighten candidate."""
+    out: dict[str, list[tuple[frozenset[str], list[str]]]] = {}
+    for key, known, tangles in (("known_lazy_cycles", contract.known_lazy_cycles, query.lazy_import_tangles),
+                                ("known_type_only_cycles", contract.known_type_only_cycles,
+                                 query.type_only_import_tangles)):
+        if known:
+            now = [set(t["modules"]) for t in tangles()]
+            rows = [(k, sorted(m)) for k in known
+                    if not any(n <= k for n in now) for m in [_absorbing(k, now)] if m]
+            if rows:
+                out[key] = rows
     return out
 
 

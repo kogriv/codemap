@@ -103,6 +103,18 @@ def _self_reference_probe(tmp: Path):
     return extract(core)
 
 
+def _dispatch_probe(tmp: Path):
+    """R1-C120: `import_module("dpkg.tools." + x)` and `getattr(m, "run")` — `references` with `dispatch`."""
+    core = tmp / "dpkg"
+    (core / "tools").mkdir(parents=True)
+    (core / "__init__.py").write_text("")
+    (core / "tools" / "__init__.py").write_text("")
+    (core / "tools" / "a.py").write_text("def run():\n    return 1\n")
+    (core / "runner.py").write_text("import importlib\n\n\ndef load(x):\n"
+                                    "    return getattr(importlib.import_module('dpkg.tools.' + x), 'run')()\n")
+    return extract(core)
+
+
 @pytest.fixture(scope="module")
 def builds():
     """Every build the table is measured against — fixtures only, so CI needs no target."""
@@ -118,6 +130,7 @@ def builds():
     out["protocol"] = _protocol_probe(tmp)
     out["consumer-local"] = _consumer_local_probe(tmp)
     out["self-reference"] = _self_reference_probe(tmp)
+    out["dispatch"] = _dispatch_probe(tmp)
     return out
 
 
@@ -184,9 +197,10 @@ def test_no_grade_is_a_number():
 def test_the_over_approximation_is_the_only_heuristic(builds):
     """A factory fanned out across a registry family, and a Protocol call fanned out to
     its implementers (R1-C81), are the routes that did not find a target — everything
-    else was a binding or an inference."""
+    else was a binding or an inference. R1-C120 adds the third fan-out: a module loaded by name, its attribute
+    read by a literal, reaching that attribute in every module under the prefix."""
     heuristic = {k for k, v in RESOLUTIONS.items() if v["confidence"] == "heuristic"}
-    assert heuristic == {("calls", "registry-candidate"), ("calls", "protocol")}
+    assert heuristic == {("calls", "registry-candidate"), ("calls", "protocol"), ("references", "dispatch")}
     inferred = {k for k, v in RESOLUTIONS.items() if v["confidence"] == "inferred"}
     assert inferred == {("calls", "deep"), ("accesses", "deep")}
 

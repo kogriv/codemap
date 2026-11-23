@@ -5,6 +5,20 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.44] - 2026-11-23
+
+Schema 0.13 and **`ANSWER_FORMAT` 12 unchanged**; one new route value (`references:dispatch`). devkit v5 unchanged.
+
+### Fixed
+- **Plugins loaded by name are reached** (R1-C120): a scope with `import_module(f"pkg.sub.{name}")` (or
+  `"pkg.sub." + name`) and `getattr(module, "run")` now references every `pkg.sub.<mod>.run` (new route
+  `references:dispatch`, heuristic). Such functions left the "Uncalled public" list, where a consumer had 17 of
+  21 **high** rows of this shape, and "Called only from outside the package".
+- **A known cycle absorbed into a larger one is not stale** (R1-C120): `check` says it is absorbed and keeps it;
+  `ratchet --tighten` no longer removes it. Before, following the advice and reverting the change would have made
+  the old cycle "new".
+- **The Russian rules block names other languages in Russian** (R1-C120).
+
 ## [0.0.43] - 2026-11-23
 
 **Consumer findings, fixed.** Schema **0.13** unchanged; **`ANSWER_FORMAT` 12**: `report dead-code` (JSON) gains

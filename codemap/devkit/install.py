@@ -116,11 +116,11 @@ def context(st: dict, pin: list[str], codemap_version: str, root: Path | None = 
         "pin_args_toml": "".join(json.dumps(a) + ", " for a in pin[1:]),
         # Codex resolves a relative `cwd` against `.codex/`; an absolute root leaves nothing to assume.
         "root_toml": json.dumps(str(root) if root is not None else "."),
-        "outside_languages": outside_languages(root),
+        "outside_languages": outside_languages(root, st.get("agents_lang", "en")),
     }
 
 
-def outside_languages(root: Path | None) -> str:
+def outside_languages(root: Path | None, lang: str = "en") -> str:
     """R1-C110 D4: the languages under the root that codemap does not read, named in the rules block.
     Names only, never counts: a count would turn the block "outdated" on every new file."""
     if root is None:
@@ -128,7 +128,11 @@ def outside_languages(root: Path | None) -> str:
     from codemap.advise import detect_languages
     # Shell scripts are glue, not a code graph anyone asks codemap about: naming them is noise.
     langs = sorted(k for k in detect_languages(root) if k not in ("python", "shell"))
-    return f"; this repository also has {', '.join(langs)}, which it does not read" if langs else ""
+    if not langs:
+        return ""
+    if lang == "ru":   # R1-C120: the Russian block named them in English
+        return f"; в этом репозитории есть ещё {', '.join(langs)}, их codemap не читает"
+    return f"; this repository also has {', '.join(langs)}, which it does not read"
 
 
 def mcp_entry(ctx: dict, pin: list[str]) -> str:
