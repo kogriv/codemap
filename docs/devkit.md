@@ -49,6 +49,14 @@ from `AGENTS.md` in your words); `--agents-lang ru` writes it in Russian, with t
 `init` and, later, on `update`: a moved block leaves its old file when it is untouched, and stays there with a
 note when you edited it. A translated block replaces an untouched one; an edited one is kept and reported.
 
+**What the devkit trusts (R1-C121).** `.codemap-devkit.json` and `.mcp.json` come with the repository, so the
+devkit treats them as input. It runs or writes into the hook only a pin of the shape it writes itself — the
+absolute path of a `codemap` console script, or an absolute python as `-I -m codemap` — that exists and is not a
+file of the repository; any other command in `.mcp.json` is not run and is replaced, with a note. Every path it
+stores is relative, stays inside the repository after symbolic links are followed, and uses only
+`[A-Za-z0-9._/@+-]`; a state naming anything else is refused (exit 2) before anything is written. Values rendered
+into the hook and the CI file are shell-quoted as well.
+
 **The pin is yours.** `.mcp.json`, the hook and CI name one codemap. `init` pins the codemap it runs from; `update`
 keeps your pin; `update --repin` moves it. `status` tells you when the pinned version is behind the installed one,
 and when the pinned interpreter cannot import `mcp` (install `codmap[mcp]`), which is why `serve --mcp` would not

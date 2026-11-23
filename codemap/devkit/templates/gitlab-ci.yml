@@ -5,5 +5,5 @@ codemap-architecture:
   image: python:3.12-slim
   script:
     - pip install "codmap=={{codemap_version}}"
-    - codemap build {{package}} -o {{graph}}
-    - codemap check --graph {{graph}} --root . --require-contract
+    - codemap build {{package_sh}} -o {{graph_sh}}
+    - codemap check --graph {{graph_sh}} --root . --require-contract

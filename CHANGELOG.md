@@ -5,6 +5,17 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Security
+- **devkit no longer runs or writes what project files say** (R1-C121, external audit F-01/F-02/F-09;
+  [gap note](gaps/devkit_trusts_project_files_2026-11-23.md)). `devkit status` and `update` ran the codemap command
+  found in `.mcp.json` (`--version`, and an interpreter from its shebang), and `update` wrote it into the
+  post-commit hook, where it ran on every commit. Paths in `.codemap-devkit.json` (`agents_file`, `graph`,
+  `package`, roots) were not checked, so `../x` wrote outside the repository, and `package`/`graph` reached the
+  hook and CI unquoted. Now: only a pin of the shape the devkit writes, existing and not a file of the repository,
+  is run or kept; paths must be relative, inside the repository after symbolic links, from `[A-Za-z0-9._/@+-]`,
+  or the state is refused with exit 2 before any write; shell/YAML values are quoted; the python fallback pin is
+  `python -I -m codemap`. **devkit v6** — run `codemap devkit update`.
+
 ## [0.0.45] - 2026-11-23
 
 Schema 0.13, **`ANSWER_FORMAT` 12** and devkit v5 unchanged.

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import difflib
 import json
+import re
 import os
 import shlex
 import subprocess
@@ -23,7 +24,7 @@ from pathlib import Path
 from codemap.devkit import DEVKIT_VERSION, build_args, render, sha, template
 from codemap.devkit.artifacts import (CI_MARK, HOOK_MARK, Artifact, ClaudeHooks, JsonKey,
                                       MarkdownRegion, TomlRegion, WholeFile, canon_json)
-from codemap.devkit.state import STATE, load_state, save_state
+from codemap.devkit.state import STATE, StateError, load_state, path_problem, save_state
 
 GRAPH = ".codemap/graph.json"
 GRAPH_NEXT = ".codemap/graph.next.json"
@@ -47,12 +48,57 @@ def _version() -> str:
 # --------------------------------------------------------------------------- the pin
 
 def running_pin() -> list[str]:
-    """How to run *this* codemap: its console script, else ``python -m codemap``."""
+    """How to run *this* codemap: its console script, else ``python -I -m codemap``.
+
+    ``-I`` (R1-C121): plain ``-m`` puts the working directory first on ``sys.path``, and the hook runs in the
+    repository — a `codemap/` package committed there would be what runs.
+    """
     argv0 = Path(sys.argv[0]) if sys.argv and sys.argv[0] else None
     if argv0 is not None and argv0.name == "codemap" and argv0.exists():
         # abspath, not resolve: `..` is folded, a venv's symlinked bin is kept as the user named it
         return [os.path.abspath(argv0)]
-    return [sys.executable, "-m", "codemap"]
+    return [sys.executable, "-I", "-m", "codemap"]
+
+
+_PYTHON = re.compile(r"python(\d+(\.\d+)*)?(\.exe)?")
+
+
+def _tracked(root: Path, path: Path) -> bool:
+    """Is ``path`` a file the repository carries (so whoever pushed chose its content)?"""
+    try:
+        rel = path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    r = subprocess.run(["git", "-C", str(root), "ls-files", "--error-unmatch", "--", str(rel)],
+                       capture_output=True)
+    return r.returncode == 0
+
+
+def pin_problem(root: Path, pin: list[str] | None) -> str | None:
+    """Why ``pin`` is not a codemap the devkit may run or write into the hook, or None (R1-C121).
+
+    `.mcp.json` is a project file: the command in it is whatever the last push said. Accepted are only the
+    shapes the devkit itself writes — the absolute path of a `codemap` console script, or an absolute python
+    run as `-I -m codemap` — and never a file the repository carries.
+    """
+    if not pin or not all(isinstance(a, str) and a for a in pin):
+        return "no command"
+    exe = Path(pin[0])
+    if not exe.is_absolute():
+        return f"{pin[0]!r} is not an absolute path"
+    if len(pin) == 1:
+        if exe.name not in ("codemap", "codemap.exe"):
+            return f"{exe.name!r} is not a codemap console script"
+    elif pin[1:] == ["-I", "-m", "codemap"]:
+        if not _PYTHON.fullmatch(exe.name):
+            return f"{exe.name!r} is not a python interpreter"
+    else:
+        return f"{shlex.join(pin)!r} is not `<codemap>` or `<python> -I -m codemap`"
+    if not exe.is_file():
+        return f"{pin[0]} does not exist"
+    if _tracked(root, exe):
+        return f"{pin[0]} is a file of this repository, not an installed codemap"
+    return None
 
 
 def pin_from_mcp(entry: dict | None) -> list[str] | None:
@@ -74,9 +120,12 @@ def pin_version(pin: list[str]) -> str | None:
 
 
 def pin_has_mcp(pin: list[str]) -> bool | None:
-    """Can the pinned interpreter import `mcp`? (`serve --mcp` needs the `codmap[mcp]` extra.)"""
+    """Can the pinned interpreter import `mcp`? (`serve --mcp` needs the `codmap[mcp]` extra.)
+
+    Callers pass only a pin :func:`pin_problem` accepted (R1-C121): this runs an interpreter.
+    """
     py = None
-    if len(pin) >= 3 and pin[1] == "-m":
+    if len(pin) >= 3 and pin[-2] == "-m":
         py = pin[0]
     else:
         try:
@@ -88,7 +137,7 @@ def pin_has_mcp(pin: list[str]) -> bool | None:
     if not py:
         return None
     try:
-        r = subprocess.run([py, "-c", "import mcp"], capture_output=True, timeout=30)
+        r = subprocess.run([py, "-I", "-c", "import mcp"], capture_output=True, timeout=30)
     except (OSError, subprocess.SubprocessError):
         return None
     return r.returncode == 0
@@ -108,6 +157,11 @@ def context(st: dict, pin: list[str], codemap_version: str, root: Path | None = 
         "package_name": Path(pkg).name,
         "graph": st.get("graph", GRAPH),
         "graph_next": GRAPH_NEXT,
+        # R1-C121: what goes into shell (the hook) and into a YAML `run:` line is quoted as one argument —
+        # the state is checked against a plain alphabet too, this is the second wall, not the only one.
+        "package_sh": shlex.quote(pkg),
+        "graph_sh": shlex.quote(st.get("graph", GRAPH)),
+        "graph_next_sh": shlex.quote(GRAPH_NEXT),
         "build_args": build_args(st),
         "agents_file": st.get("agents_file", "AGENTS.md"),
         "pin_shell": shlex.join(pin),
@@ -387,6 +441,9 @@ def init(root: Path, *, package: str, consumers: list[str], docs: list[str], age
          claude_hooks: bool, codex: bool, ci: str | None, hook: bool, build: bool, ratchet: bool,
          dry_run: bool, force: bool, agents_lang: str | None = None) -> int:
     root = root.resolve()
+    _refuse_paths(root, [("--package", package), *(("--consumer", c) for c in consumers),
+                         *(("--docs", d) for d in docs),
+                         *((("--agents-file", agents_file),) if agents_file else ())])
     st = load_state(root)
     if st is not None:
         print(f"The devkit is already installed here (v{st.get('devkit_version')}); running `update` with the "
@@ -479,13 +536,15 @@ def _mcp_notes(root: Path, st: dict, pin: list[str], outcomes, notes: list[str])
 def update(root: Path, *, force: bool, repin: bool, dry_run: bool, _state: dict | None = None,
            agents_file: str | None = None, agents_lang: str | None = None) -> int:
     root = root.resolve()
+    if agents_file:
+        _refuse_paths(root, [("--agents-file", agents_file)])
     st = _state if _state is not None else load_state(root)
     if st is None:
         print(f"error: no devkit here ({STATE} not found) — run `codemap devkit init --package <path>`",
               file=sys.stderr)
         return 2
-    pin, version = _pin_and_version(root, st, repin)
     notes: list[str] = []
+    pin, version = _pin_and_version(root, st, repin, notes)
     if agents_lang:
         if agents_lang == "en":
             st.pop("agents_lang", None)
@@ -528,23 +587,40 @@ def _move_agents_block(root: Path, st: dict, new_file: str, *, write: bool, note
     st.get("artifacts", {}).pop("agents", None)
 
 
-def _pin_and_version(root: Path, st: dict, repin: bool) -> tuple[list[str], str]:
-    """Keep the project's pin unless asked to move it (D2): from `.mcp.json`, else this codemap."""
+def _refuse_paths(root: Path, given: list[tuple[str, str]]) -> None:
+    """R1-C121: a path given on the command line meets the same rule as one read from the state."""
+    problems = [path_problem(root, v.rstrip("/"), flag) for flag, v in given]
+    problems = [p for p in problems if p]
+    if problems:
+        raise StateError("; ".join(problems))
+
+
+def _pin_and_version(root: Path, st: dict, repin: bool,
+                     notes: list[str] | None = None) -> tuple[list[str], str]:
+    """Keep the project's pin unless asked to move it (D2): from `.mcp.json`, else this codemap.
+
+    R1-C121: a pin is kept only when :func:`pin_problem` accepts it — `.mcp.json` is a project file, and the
+    kept pin is run here (`--version`) and written into the post-commit hook. A refused one is named in
+    ``notes`` and replaced by this codemap.
+    """
     if not repin:
         entry = JsonKey("mcp", root / ".mcp.json").entry()
         recorded = (st.get("artifacts", {}).get("mcp") or {}).get("sha256")
         pin = pin_from_mcp(entry) if entry is not None and recorded is not None else None
-        if pin:
+        problem = pin_problem(root, pin) if pin else None
+        if pin and problem is None:
             ci = root / ".github" / "workflows" / "codemap.yml"
             gl = root / ".gitlab" / "codemap-ci.yml"
             ver = None
             for f in (ci, gl):
                 if f.is_file():
-                    import re
                     m = re.search(r"codmap==([\w.\-+]+)", f.read_text(encoding="utf-8"))
                     if m:
                         ver = m.group(1)
             return pin, ver or pin_version(pin) or _version()
+        if pin and notes is not None:
+            notes.append(f"the codemap command in .mcp.json was not run and is not kept — {problem}. The devkit "
+                         f"runs only an installed codemap; it uses this one ({shlex.join(running_pin())})")
     return running_pin(), _version()
 
 
@@ -558,8 +634,10 @@ def status(root: Path, fmt: str = "text") -> int:
         else:
             print(f"No devkit here ({STATE} not found) — `codemap devkit init --package <path>` installs it.")
         return 1
-    pin, version = _pin_and_version(root, st, repin=False)
+    pin_notes: list[str] = []
+    pin, version = _pin_and_version(root, st, repin=False, notes=pin_notes)
     its, notes = items(root, st, pin, version)
+    notes = pin_notes + notes
     outcomes = [process(root, st, it, write=False, force=False) for it in its]
     installed = st.get("devkit_version")
     behind = installed != DEVKIT_VERSION

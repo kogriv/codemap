@@ -1081,7 +1081,19 @@ def _cmd_advise(args) -> int:
 
 
 def _cmd_devkit(args) -> int:
-    """R1-C108: `codemap devkit …` — design ``docs/design/devkit.md``."""
+    """R1-C108: `codemap devkit …` — design ``docs/design/devkit.md``.
+
+    R1-C121: a refused state or path argument is exit 2 with the reason, before anything is written or run.
+    """
+    from codemap.devkit.state import StateError
+    try:
+        return _devkit_dispatch(args)
+    except StateError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _devkit_dispatch(args) -> int:
     from pathlib import Path as _P
     root = _P(args.root)
     cmd = args.devkit_cmd

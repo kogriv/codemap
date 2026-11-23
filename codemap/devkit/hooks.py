@@ -23,8 +23,13 @@ INDEX = ".codemap/devkit/index.json"
 
 
 def _state(root: Path) -> dict:
-    from codemap.devkit.state import load_state
-    return load_state(root) or {}
+    """The state, or the defaults when there is none — or when it was refused (R1-C121): a hook must not
+    follow a committed path out of the repository, and must not break the session either."""
+    from codemap.devkit.state import StateError, load_state
+    try:
+        return load_state(root) or {}
+    except StateError:
+        return {}
 
 
 def _graph_path(root: Path, st: dict) -> Path:

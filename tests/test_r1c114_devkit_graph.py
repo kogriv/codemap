@@ -17,6 +17,15 @@ from tests.test_r1c108_devkit import _pin, _repo
 GRAPH = ".codemap/graph.json"
 
 
+
+def _fake_codemap(where: Path) -> str:
+    """An installed-looking `codemap` outside the repository (R1-C121 keeps only such a pin)."""
+    where.mkdir(parents=True, exist_ok=True)
+    exe = where / "codemap"
+    exe.write_text("#!/bin/sh\necho codemap 0.0.0\n")
+    exe.chmod(0o755)
+    return str(exe)
+
 def _build(root: Path) -> None:
     (root / ".codemap").mkdir(exist_ok=True)
     subprocess.run([sys.executable, "-m", "codemap", "build", "pkg", "--consumer", "tests", "-o", GRAPH],
@@ -87,17 +96,17 @@ def test_e5_the_help_no_longer_promises_an_unwritten_contract():
 
 
 def test_e6_repin_moves_the_hook_too(tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr(install, "running_pin", lambda: ["/first/codemap"])
+    monkeypatch.setattr(install, "running_pin", lambda: [_fake_codemap(tmp_path / "bin1")])
     root = _repo(tmp_path)
     install.init(root, package="pkg", consumers=[], docs=[], agents_file=None, claude_hooks=False, codex=False,
                  ci=None, hook=True, build=False, ratchet=False, dry_run=False, force=False)
     hook = root / ".git/hooks/post-commit"
-    assert "C=/first/codemap" in hook.read_text()
-    monkeypatch.setattr(install, "running_pin", lambda: ["/second/codemap"])
+    assert f"C={tmp_path}/bin1/codemap" in hook.read_text()
+    monkeypatch.setattr(install, "running_pin", lambda: [_fake_codemap(tmp_path / "bin2")])
     install.update(root, force=False, repin=False, dry_run=False)
-    assert "C=/first/codemap" in hook.read_text()  # update keeps the project's pin (D2)
+    assert f"C={tmp_path}/bin1/codemap" in hook.read_text()  # update keeps the project's pin (D2)
     install.update(root, force=False, repin=True, dry_run=False)
-    assert "C=/second/codemap" in hook.read_text()
+    assert f"C={tmp_path}/bin2/codemap" in hook.read_text()
 
 
 # --------------------------------------------------------------------------- R1-C117

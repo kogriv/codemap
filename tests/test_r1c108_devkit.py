@@ -27,6 +27,15 @@ from codemap.serve.check import build_check, render_check
 from codemap.serve.mcp_server import MCP_TOOLS
 
 
+
+def _fake_codemap(where: Path) -> str:
+    """An installed-looking `codemap` outside the repository (R1-C121 keeps only such a pin)."""
+    where.mkdir(parents=True, exist_ok=True)
+    exe = where / "codemap"
+    exe.write_text("#!/bin/sh\necho codemap 0.0.0\n")
+    exe.chmod(0o755)
+    return str(exe)
+
 def _tree(root: Path, files: dict[str, str]) -> Path:
     for rel, body in files.items():
         p = root / rel
@@ -227,15 +236,15 @@ def test_e8_a_foreign_artifact_is_never_overwritten_and_the_hook_goes_beside_it(
 
 
 def test_e8_update_keeps_the_pin_and_repin_moves_it(tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr(install, "running_pin", lambda: ["/first/codemap"])
+    monkeypatch.setattr(install, "running_pin", lambda: [_fake_codemap(tmp_path / "bin1")])
     root = _repo(tmp_path)
     install.init(root, package="pkg", consumers=[], docs=[], agents_file=None, claude_hooks=False,
                  codex=False, ci=None, hook=False, build=False, ratchet=False, dry_run=False, force=False)
-    monkeypatch.setattr(install, "running_pin", lambda: ["/second/codemap"])
+    monkeypatch.setattr(install, "running_pin", lambda: [_fake_codemap(tmp_path / "bin2")])
     install.update(root, force=False, repin=False, dry_run=False)
-    assert json.loads((root / ".mcp.json").read_text())["mcpServers"]["codemap"]["command"] == "/first/codemap"
+    assert json.loads((root / ".mcp.json").read_text())["mcpServers"]["codemap"]["command"] == str(tmp_path / "bin1" / "codemap")
     install.update(root, force=False, repin=True, dry_run=False)
-    assert json.loads((root / ".mcp.json").read_text())["mcpServers"]["codemap"]["command"] == "/second/codemap"
+    assert json.loads((root / ".mcp.json").read_text())["mcpServers"]["codemap"]["command"] == str(tmp_path / "bin2" / "codemap")
 
 
 # ----------------------------------------------------------------------------- E9 / D7 currency guards
@@ -246,7 +255,8 @@ SAMPLE = {"devkit_version": 1, "codemap_version": "0.0.0", "package": "src/pkg",
           "pin_assign": "codemap", "pin_command_toml": '"codemap"', "pin_args_toml": "", "pairs": "",
           "flags": "no_cycles = true", "currency": "current", "devkit_note": "", "root_toml": '"/repo"',
           "outside_languages": "; this repository also has typescript, which it does not read",
-          "lazy": "", "type_only": ""}
+          "lazy": "", "type_only": "", "package_sh": "src/pkg", "graph_sh": ".codemap/graph.json",
+          "graph_next_sh": ".codemap/graph.next.json"}
 
 _OPS = ("|", "||", "&&", ";", "&")
 

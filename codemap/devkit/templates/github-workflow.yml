@@ -10,5 +10,5 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install "codmap=={{codemap_version}}"
-      - run: codemap build {{package}} -o {{graph}}
-      - run: codemap check --graph {{graph}} --root . --require-contract
+      - run: codemap build {{package_sh}} -o {{graph_sh}}
+      - run: codemap check --graph {{graph_sh}} --root . --require-contract
