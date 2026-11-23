@@ -1,16 +1,16 @@
 {
   "schema": 1,
-  "as_of": "2026-11-21T09:45:21Z",
+  "as_of": "2026-11-23T02:10:01Z",
   "latest": {
     "aider-repo-map": {
       "version": "0.86.2",
       "date": "2026-02-12",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "archunitpython": {
       "version": "1.8.1",
       "date": "2026-10-06",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "ast-grep": {
       "version": "0.51.3",
@@ -20,22 +20,22 @@
     "bandit": {
       "version": "1.9.4",
       "date": "2026-02-25",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "cocoindex-code": {
       "version": "0.2.43",
       "date": "2026-11-05",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "code2flow": {
       "version": "2.5.1",
       "date": "2023-01-08",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "codegraph": {
       "version": "1.6.4",
       "date": "2026-11-20",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "codeql": {
       "version": "2.27.5",
@@ -55,7 +55,7 @@
     "coverage-py": {
       "version": "7.17.4",
       "date": "2026-11-20",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "doxygen": {
       "version": "1.18.0",
@@ -65,7 +65,7 @@
     "gitnexus": {
       "version": "1.6.12",
       "date": "2026-09-12",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "glean": {
       "version": "commit-5ad54f4",
@@ -80,52 +80,52 @@
     "grafema": {
       "version": "0.4.1",
       "date": "2026-06-14",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "graphify": {
-      "version": "0.9.114",
-      "date": "2026-11-20",
-      "seen": "2026-11-21"
+      "version": "0.9.115",
+      "date": "2026-11-21",
+      "seen": "2026-11-23"
     },
     "graphlens-mcp": {
       "version": "0.4.0",
       "date": "2026-07-03",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "griffe": {
       "version": "2.4.1",
       "date": "2026-10-22",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "grimp": {
       "version": "3.20",
       "date": "2026-11-13",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "import-linter": {
       "version": "2.17",
       "date": "2026-11-18",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "jedi": {
       "version": "0.20.1",
       "date": "2026-10-12",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "jevgrep": {
       "version": "0.8.5",
       "date": "2026-10-18",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "jscpd": {
       "version": "5.4.3",
       "date": "2026-11-08",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "knip": {
-      "version": "6.47.0",
-      "date": "2026-11-20",
-      "seen": "2026-11-21"
+      "version": "6.48.0",
+      "date": "2026-11-22",
+      "seen": "2026-11-23"
     },
     "kythe": {
       "version": "0.0.76",
@@ -135,12 +135,12 @@
     "lizard": {
       "version": "1.26.1",
       "date": "2026-11-16",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "mypy": {
       "version": "2.4.1",
       "date": "2026-10-28",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "ontoindex": {
       "version": "3.2.3",
@@ -155,47 +155,47 @@
     "pyan3": {
       "version": "2.9.0",
       "date": "2026-10-06",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "pycg": {
       "version": "0.0.8",
       "date": "2023-11-26",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "pydeps": {
       "version": "3.0.9",
       "date": "2026-10-01",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "pyright": {
       "version": "1.1.414",
       "date": "2026-09-09",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "pytest-django": {
       "version": "4.14.0",
       "date": "2026-08-10",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "radon": {
       "version": "6.0.1",
       "date": "2023-03-26",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "rag-for-git": {
-      "version": "0.7.0",
-      "date": "2026-08-26",
-      "seen": "2026-11-21"
+      "version": "0.8.0",
+      "date": "2026-11-21",
+      "seen": "2026-11-23"
     },
     "repomix": {
       "version": "1.19.0",
       "date": "2026-11-08",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "rope": {
       "version": "1.15.2",
       "date": "2026-11-05",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "scip": {
       "version": "0.10.0",
@@ -205,12 +205,12 @@
     "scip-python": {
       "version": "0.6.8",
       "date": "2026-10-22",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "semgrep": {
       "version": "1.186.0",
       "date": "2026-11-18",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "tree-sitter": {
       "version": "0.27.2",
@@ -235,15 +235,55 @@
     "vulture": {
       "version": "2.16",
       "date": "2026-03-25",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     },
     "wily": {
       "version": "1.25.0",
       "date": "2023-10-11",
-      "seen": "2026-11-21"
+      "seen": "2026-11-23"
     }
   },
   "news": [
+    {
+      "date": "2026-11-21",
+      "kind": "new-tool",
+      "tool": null,
+      "text": "Fallow is an MIT-licensed Rust analyzer for TypeScript/JavaScript (unused code, duplication, circular dependencies, complexity, architecture boundaries) with CLI, MCP and LSP interfaces; npm 3.46.0 was published 2026-11-21.",
+      "source": "https://github.com/fallow-rs/fallow",
+      "verified": false
+    },
+    {
+      "date": "2026-11-19",
+      "kind": "new-tool",
+      "tool": null,
+      "text": "Skylos is an Apache-2.0 local-first static checker (dead code, security, quality) for Python, TypeScript/JavaScript, Java and partly other languages, with a CLI and MCP server; PyPI 5.7.0 was uploaded 2026-11-19.",
+      "source": "https://github.com/duriantaco/skylos",
+      "verified": false
+    },
+    {
+      "date": "2026-11-22",
+      "kind": "release",
+      "tool": "knip",
+      "text": "Knip 6.48.0 released (previous seen: 6.47.0).",
+      "source": "https://www.npmjs.com/package/knip/v/6.48.0",
+      "verified": true
+    },
+    {
+      "date": "2026-11-21",
+      "kind": "release",
+      "tool": "rag-for-git",
+      "text": "rag_for_git (rag-reviewer) 0.8.0 released (previous seen: 0.7.0).",
+      "source": "https://pypi.org/project/rag-reviewer/0.8.0/",
+      "verified": true
+    },
+    {
+      "date": "2026-11-21",
+      "kind": "release",
+      "tool": "graphify",
+      "text": "Graphify 0.9.115 released (previous seen: 0.9.114).",
+      "source": "https://pypi.org/project/graphifyy/0.9.115/",
+      "verified": true
+    },
     {
       "date": "2026-11-21",
       "kind": "card",

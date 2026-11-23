@@ -1,6 +1,6 @@
 [meta]
 schema = 1
-as_of = "2026-11-21"
+as_of = "2026-11-23T02:10:01Z"
 stale_after_days = 180
 repo = "https://github.com/kogriv/codemap"
 
@@ -1631,3 +1631,64 @@ tool = "pyright"
 need = "type-errors"
 status = "read"
 summary = "Static type checker and language server for Python; scip-python is built on it (research/02, passing mention)."
+
+[[tool]]
+id = "fallow"
+name = "Fallow"
+url = "https://github.com/fallow-rs/fallow"
+license = "MIT"
+languages = ["typescript", "javascript"]
+interface = ["cli", "mcp", "lsp"]
+watch = { kind = "npm", name = "fallow" }
+
+[[tool]]
+id = "skylos"
+name = "Skylos"
+url = "https://github.com/duriantaco/skylos"
+license = "Apache-2.0"
+languages = ["python", "typescript", "javascript", "java"]
+languages_note = "other languages partial per its README matrix (Go, PHP, C#, Ruby, Dart, Kotlin, Rust, C++, Swift, Shell)"
+interface = ["cli", "mcp", "plugin"]
+watch = { kind = "pypi", name = "skylos" }
+
+[[claim]]
+tool = "fallow"
+need = "frontend-dead-exports"
+status = "read"
+url = "https://github.com/fallow-rs/fallow"
+summary = "Reports unused code and dependencies in TS/JS projects, per its README."
+
+[[claim]]
+tool = "fallow"
+need = "duplicates"
+status = "read"
+url = "https://github.com/fallow-rs/fallow"
+summary = "Reports code duplication in TS/JS projects (`fallow dupes`), per its README."
+
+[[claim]]
+tool = "fallow"
+need = "complexity"
+status = "read"
+url = "https://github.com/fallow-rs/fallow"
+summary = "Reports complexity hotspots in TS/JS projects (`fallow health`), per its README."
+
+[[claim]]
+tool = "fallow"
+need = "import-gate"
+status = "read"
+url = "https://github.com/fallow-rs/fallow"
+summary = "Reports circular dependencies and architecture boundary violations; `fallow audit` fails a PR only on findings the change introduces, per its README."
+
+[[claim]]
+tool = "skylos"
+need = "dead-code"
+status = "read"
+url = "https://github.com/duriantaco/skylos"
+summary = "Finds dead code in Python, TS/JS and Java (partial for other languages), per its README."
+
+[[claim]]
+tool = "skylos"
+need = "security-patterns"
+status = "read"
+url = "https://github.com/duriantaco/skylos"
+summary = "Flags security flaws such as SQL and command injection, secrets and vulnerable dependencies, per its README."

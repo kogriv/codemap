@@ -2,11 +2,11 @@
 
 <!-- Generated from codemap/advise/data/ by `codemap advise --matrix`. Do not edit by hand: tests/test_r1c110_advise.py compares this file with the render. -->
 
-Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise` or `codemap advise`; `codemap advise --refresh` fetches the current catalog without a release.
+Catalog as of 2026-11-23. Agents get the same data through the MCP tool `advise` or `codemap advise`; `codemap advise --refresh` fetches the current catalog without a release.
 
 **Statuses.** `measured` — scored against the lab's truth, numbers in the card. `probed` — run on a real tree, not scored. `read only` — known from its docs or a survey; nobody here has run it. `rejected` — tried and unusable for that need.
 
-21 need(s), 51 tool(s); claims: 23 measured, 18 probed, 58 read, 9 rejected.
+21 need(s), 53 tool(s); claims: 23 measured, 18 probed, 64 read, 9 rejected.
 
 | need | codemap | best other tool | tools |
 |---|---|---|---|
@@ -14,20 +14,20 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 | `py-callers` Who calls a Python function, and what it calls | ✅ covered | graphify (measured) | 13 |
 | `py-impact` What a change to a Python symbol touches (blast radius) | ✅ covered | jevgrep (measured) | 6 |
 | `py-imports` Python import graph and import cycles | ✅ covered | graphify (measured) | 7 |
-| `import-gate` An architecture contract on imports, enforced in CI | ✅ covered | import-linter (measured) | 2 |
+| `import-gate` An architecture contract on imports, enforced in CI | ✅ covered | import-linter (measured) | 3 |
 | `py-tests-for` Which tests exercise a Python symbol | ◐ partial | coverage-py (read only) | 1 |
 | `api-diff` Breaking changes in a Python package's public API between two versions | ✅ covered | griffe (read only) | 1 |
 | `diff-review` What a diff or pull request touches, and what of it is untested | ✅ covered | gitnexus (probed) | 4 |
 | `semantic-search` Find code by concept or natural-language description | ◐ partial | jevgrep (measured) | 7 |
 | `context-pack` Token-budgeted repository context for an LLM | ✅ covered | jevgrep (measured) | 5 |
 | `repo-overview` Architecture map: subsystems, layers, communities | ✅ covered | graphify (probed) | 6 |
-| `dead-code` Unused Python code | ◐ partial | codegraph (probed) | 3 |
-| `duplicates` Copy-paste and duplicated code | — not covered | jscpd (read only) | 1 |
-| `complexity` Complexity metrics (cyclomatic, size) and a threshold in CI | — not covered | radon (read only) | 3 |
-| `security-patterns` Security patterns and leaked secrets | — not covered | codeql (read only) | 4 |
+| `dead-code` Unused Python code | ◐ partial | codegraph (probed) | 4 |
+| `duplicates` Copy-paste and duplicated code | — not covered | fallow (read only) | 2 |
+| `complexity` Complexity metrics (cyclomatic, size) and a threshold in CI | — not covered | radon (read only) | 4 |
+| `security-patterns` Security patterns and leaked secrets | — not covered | codeql (read only) | 5 |
 | `dataflow-taint` Data flow and taint: where an input value can reach | — not covered | codeql (read only) | 3 |
 | `multi-lang-graph` Symbol and call graph for languages other than Python | — not covered | graphify (read only) | 13 |
-| `frontend-dead-exports` Unused exports, files and dependencies in a JS/TS project | — not covered | knip (read only) | 1 |
+| `frontend-dead-exports` Unused exports, files and dependencies in a JS/TS project | — not covered | fallow (read only) | 2 |
 | `structural-search` Structural (AST) pattern search and rewrite | — not covered | cocoindex-code (probed) | 5 |
 | `type-errors` Static type checking | — not covered | mypy (read only) | 2 |
 | `db-query-count` How many database queries a code path makes | — not covered | pytest-django (read only) | 1 |
@@ -37,7 +37,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** ✅ covered — MCP `search`, `query`, `resolve`, `source`; CLI `codemap query <symbol>`
 
 **Other tools** (measured first; `read only` means the lab has not run it):
-- **Graphify** — measured · v0.9.102 · checked 2026-11-04 · Apache-2.0 · ⚠ measured 0.9.102, latest 0.9.114
+- **Graphify** — measured · v0.9.102 · checked 2026-11-04 · Apache-2.0 · ⚠ measured 0.9.102, latest 0.9.115
   `explain analyze_zones` refuses with exit 3 and both candidates; `explain MACDZoneAnalyzer` exit 0 at indicators/macd.py L48.
   vs codemap: Equal; exit codes for ambiguity are something codemap's CLI lacks.
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/graphify.md#1-hands-on--the-r2-tree
@@ -91,7 +91,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   Calls through a string (a registry keyed by name, `run("name")`) are not resolved (R1-C107); dynamic dispatch is reported as partial, never as complete.
 
 **Other tools** (measured first; `read only` means the lab has not run it):
-- **Graphify** — measured · v0.9.102 · checked 2026-11-04 · Apache-2.0 · ⚠ measured 0.9.102, latest 0.9.114
+- **Graphify** — measured · v0.9.102 · checked 2026-11-04 · Apache-2.0 · ⚠ measured 0.9.102, latest 0.9.115
   Files with calls/uses links to MACDZoneAnalyzer are exactly codemap's 23 caller files. Cross-file call pairs: 89.1 % agree with codemap, covering 59.8 % of codemap's pairs; builtin NotImplementedError bound to a same-named package class (fixed upstream in 0.9.103).
   vs codemap: Found calls through a re-exported class name that codemap's fast tier misses (R1-C75).
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/graphify.md#1-hands-on--the-r2-tree
@@ -99,7 +99,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   T2 'Which files call MACDZoneAnalyzer?': 26-27 files returned, recall 21/22 in all six runs, precision 0.78-0.81 (file level; no call edges).
   vs codemap: File-level only; codemap gives symbol-level edges.
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/jevgrep.md#hands-on-measurements-target-bquant
-- **rag_for_git (rag-reviewer)** — measured · v0.7.0 · checked 2026-09-12 · MIT
+- **rag_for_git (rag-reviewer)** — measured · v0.7.0 · checked 2026-09-12 · MIT · ⚠ measured 0.7.0, latest 0.8.0
   Graph-level callers of MACDZoneAnalyzer: SCIP backend 60 (strict superset of codemap's 58, +2 intra-class calls); default tree-sitter backend 58 by count but 57 shared. On the whole scope the default backend has 9 779 CALLS vs 4 914 for SCIP; only 27.3 % of default edges are confirmed by SCIP, and the backend chosen (scip-python on PATH or not) never reaches the answer.
   vs codemap: Equal with SCIP; the silent tree-sitter fallback inflates edges on ambiguous names (.get, .info).
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/rag_for_git.md#hands-on-measurements-target-bquant
@@ -217,7 +217,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** ✅ covered — CLI `codemap report dependencies`; MCP `report kind=dependencies`, `architecture`
 
 **Other tools** (measured first; `read only` means the lab has not run it):
-- **Graphify** — measured · v0.9.102 · checked 2026-11-04 · Apache-2.0 · ⚠ measured 0.9.102, latest 0.9.114
+- **Graphify** — measured · v0.9.102 · checked 2026-11-04 · Apache-2.0 · ⚠ measured 0.9.102, latest 0.9.115
   241 module dependencies, 240 true (precision 99.6 %), recall 240/266 = 90.2 % (function-scope 0/25); its own GRAPH_REPORT lists 2 of 45 cycles because function-local imports make no module dependency; graph.json byte-identical over 3 runs, 14 s each.
   vs codemap: Close on module-level edges; cannot serve as a cycle gate where lazy imports break cycles (codemap: 45/45).
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/graphify.md#1-hands-on--the-r2-tree
@@ -268,6 +268,10 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   Architecture rules as pytest: have_no_cycles(), layer direction, naming, file size.
   check it first: not scored by the lab: check it on a question whose answer you know first
   evidence: https://github.com/kogriv/codemap/blob/main/research/05_curated_sources.md#4-architecture-as-tests-reinforces-r1-c3
+- **Fallow** — read only · MIT
+  Reports circular dependencies and architecture boundary violations; `fallow audit` fails a PR only on findings the change introduces, per its README.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/fallow-rs/fallow
 
 **Tried and rejected:**
 - **grafema** — rejected · v0.4.1 · checked 2026-11-03 · FSL-1.1-Apache-2.0
@@ -391,7 +395,7 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** ✅ covered — CLI `codemap report architecture`; MCP `architecture`, `communities`, `flows`
 
 **Other tools** (measured first; `read only` means the lab has not run it):
-- **Graphify** — probed · v0.9.102 · checked 2026-11-04 · Apache-2.0 · ⚠ measured 0.9.102, latest 0.9.114
+- **Graphify** — probed · v0.9.102 · checked 2026-11-04 · Apache-2.0 · ⚠ measured 0.9.102, latest 0.9.115
   Writes GRAPH_REPORT.md with god nodes and communities; community naming calls the `claude` CLI on the user's subscription when no API key is set (announced, disabled with GRAPHIFY_BACKEND=none). Quality not scored.
   check it first: not scored by the lab: check it on a question whose answer you know first
   evidence: https://github.com/kogriv/codemap/blob/main/research/tools/graphify.md#1-hands-on--the-r2-tree
@@ -438,12 +442,20 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   vs codemap: codemap's provenance-aware dead-code adds cross-root context; not measured head to head.
   check it first: not scored by the lab: check it on a question whose answer you know first
   evidence: https://github.com/kogriv/codemap/blob/main/research/04_python_graph_arch_peers.md#vulture--dead-code-detection
+- **Skylos** — read only · Apache-2.0
+  Finds dead code in Python, TS/JS and Java (partial for other languages), per its README.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/duriantaco/skylos
 
 ### Copy-paste and duplicated code (`duplicates`)
 
 **codemap:** — not covered
 
 **Other tools** (measured first; `read only` means the lab has not run it):
+- **Fallow** — read only · MIT
+  Reports code duplication in TS/JS projects (`fallow dupes`), per its README.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/fallow-rs/fallow
 - **jscpd** — read only · MIT
   Copy/paste (clone) detector over token streams for many languages.
   check it first: not scored by the lab: check it on a question whose answer you know first
@@ -463,6 +475,10 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   Tracks radon-style metrics across git history.
   check it first: not scored by the lab: check it on a question whose answer you know first
   evidence: https://github.com/kogriv/codemap/blob/main/research/04_python_graph_arch_peers.md#radon--wily--complexity-metrics
+- **Fallow** — read only · MIT
+  Reports complexity hotspots in TS/JS projects (`fallow health`), per its README.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/fallow-rs/fallow
 - **lizard** — read only · MIT
   Cyclomatic complexity and function-length analyzer across many languages.
   check it first: not scored by the lab: check it on a question whose answer you know first
@@ -489,6 +505,10 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
   AST-based security linter for common Python issues (e.g. eval, hardcoded passwords, unsafe subprocess).
   check it first: not scored by the lab: check it on a question whose answer you know first
   https://github.com/PyCQA/bandit
+- **Skylos** — read only · Apache-2.0
+  Flags security flaws such as SQL and command injection, secrets and vulnerable dependencies, per its README.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/duriantaco/skylos
 
 ### Data flow and taint: where an input value can reach (`dataflow-taint`)
 
@@ -583,6 +603,10 @@ Catalog as of 2026-11-21. Agents get the same data through the MCP tool `advise`
 **codemap:** — not covered
 
 **Other tools** (measured first; `read only` means the lab has not run it):
+- **Fallow** — read only · MIT
+  Reports unused code and dependencies in TS/JS projects, per its README.
+  check it first: not scored by the lab: check it on a question whose answer you know first
+  https://github.com/fallow-rs/fallow
 - **Knip** — read only · ISC
   Finds unused files, exports and dependencies in JS/TS projects.
   check it first: not scored by the lab: check it on a question whose answer you know first
@@ -659,6 +683,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [Continue (@codebase)](https://github.com/continuedev/continue) | Apache-2.0 | multi | semantic-search (read only) | — |
 | [coverage.py](https://github.com/nedbat/coveragepy) | Apache-2.0 | python | py-tests-for (read only) | — |
 | [Doxygen](https://www.doxygen.nl) | GPL-2.0 | multi | py-callers (read only) | — |
+| [Fallow](https://github.com/fallow-rs/fallow) | MIT | typescript, javascript | complexity (read only), duplicates (read only), frontend-dead-exports (read only), import-gate (read only) | — |
 | [GitNexus](https://github.com/abhigyanpatwari/GitNexus) | PolyForm-Noncommercial-1.0.0 | python, typescript, javascript, java, kotlin, csharp, go, rust, php, ruby, swift, c, cpp, dart | py-symbols (measured), diff-review (probed), py-callers (probed), py-impact (probed), py-imports (probed), repo-overview (probed), semantic-search (probed), multi-lang-graph (read only) | [card](../research/tools/gitnexus.md) |
 | [Glean (Meta)](https://glean.software) | BSD-style | multi | multi-lang-graph (read only) | — |
 | [gpt-repository-loader](https://github.com/mpoon/gpt-repository-loader) | MIT | any (text) | context-pack (read only) | — |
@@ -689,6 +714,7 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 | [SCIP (format)](https://github.com/sourcegraph/scip) | Apache-2.0 | python, typescript, go, java, ... (per indexer) | multi-lang-graph (read only) | — |
 | [scip-python](https://github.com/sourcegraph/scip-python) | MIT | python | py-callers (measured) | [card](../research/tools/rag_for_git.md) |
 | [Semgrep](https://github.com/semgrep/semgrep) | LGPL-2.1 (engine) | multi | dataflow-taint (read only), security-patterns (read only), structural-search (read only) | — |
+| [Skylos](https://github.com/duriantaco/skylos) | Apache-2.0 | python, typescript, javascript, java | dead-code (read only), security-patterns (read only) | — |
 | [Sourcegraph (incl. Cody)](https://sourcegraph.com) | proprietary (open components) | multi | multi-lang-graph (read only) | — |
 | [Stack Graphs](https://github.com/github/stack-graphs) | MIT/Apache-2.0 | multi (tree-sitter + .tsg) | multi-lang-graph (read only) | — |
 | [tree-sitter](https://github.com/tree-sitter/tree-sitter) | MIT | multi (grammars) | structural-search (read only) | — |
@@ -700,7 +726,12 @@ No static tool sees this: the number of queries depends on the data and the ORM 
 
 ## Latest news
 
+- 2026-11-22 · release · `knip` Knip 6.48.0 released (previous seen: 6.47.0). — https://www.npmjs.com/package/knip/v/6.48.0
+- 2026-11-21 · new-tool · Fallow is an MIT-licensed Rust analyzer for TypeScript/JavaScript (unused code, duplication, circular dependencies, complexity, architecture boundaries) with CLI, MCP and LSP interfaces; npm 3.46.0 was published 2026-11-21. _(unverified)_ — https://github.com/fallow-rs/fallow
+- 2026-11-21 · release · `rag-for-git` rag_for_git (rag-reviewer) 0.8.0 released (previous seen: 0.7.0). — https://pypi.org/project/rag-reviewer/0.8.0/
+- 2026-11-21 · release · `graphify` Graphify 0.9.115 released (previous seen: 0.9.114). — https://pypi.org/project/graphifyy/0.9.115/
 - 2026-11-21 · card · The codemap lab's tool catalog is served to agents: MCP `advise`, `codemap advise`, generated inventory research/matrix.md. — https://github.com/kogriv/codemap/blob/main/research/matrix.md
+- 2026-11-19 · new-tool · Skylos is an Apache-2.0 local-first static checker (dead code, security, quality) for Python, TypeScript/JavaScript, Java and partly other languages, with a CLI and MCP server; PyPI 5.7.0 was uploaded 2026-11-19. _(unverified)_ — https://github.com/duriantaco/skylos
 - 2026-11-06 · finding · `import-linter` import-linter 2.16 closes two silent passes the lab filed: an unknown contract option and zero contracts now fail (verified by the lab on 2.16). — https://github.com/seddonym/import-linter/issues/393
 - 2026-11-05 · finding · `graphify` Graphify 0.9.103 fixes the builtin homonym the lab filed (a builtin exception bound to a same-named package class); verified by the lab 2026-11-06. — https://github.com/Graphify-Labs/graphify/issues/4989
 - 2026-10-15 · finding · `codegraph` CodeGraph 1.6.1 fixes the silent truncation of callers the lab filed; 1.6.2 returns total and truncated. Figures re-measured on 1.6.2. — https://github.com/colbymchenry/codegraph/issues/1639
