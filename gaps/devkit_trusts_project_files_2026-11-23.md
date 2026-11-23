@@ -4,7 +4,8 @@
 **Статус:** ✅ закрыто 2026-11-23 (0.0.46), бэклог R1-C121. Advisory
 [GHSA-c3hp-596c-2p77](https://github.com/kogriv/codemap/security/advisories/GHSA-c3hp-596c-2p77) (high, затронуты
 0.0.39–0.0.45), опубликован 2026-11-23. **Обход исправления** найден повторным аудитом (FU-01), закрыт R1-C133 —
-раздел 4.
+раздел 4; advisory [GHSA-mjvh-v399-r45r](https://github.com/kogriv/codemap/security/advisories/GHSA-mjvh-v399-r45r) (high, 0.0.46,
+исправлено в 0.0.47).
 
 ## 1. Что показали
 

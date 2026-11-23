@@ -1359,6 +1359,27 @@ the 0.0.46 F-09 probe on 0.0.45 ran with the tampered pin still in place, so her
 | version | `codemap --version` | `codemap 0.0.46 · answer format 12 · schema 0.13` | `codemap 0.0.47 · answer format 12 · schema 0.13` |
 | F-09 alone, **0.0.45** | genuine pin (the venv's own codemap), state `package: "pkg;touch M;:"`, `devkit update`, run the hook | `M` created by the hook | (0.0.47) exit 2 "only letters, digits", nothing written |
 
+**0.0.47 published 2026-11-23:** [`codmap` 0.0.47](https://pypi.org/project/codmap/0.0.47/), from `a0ba45f`:
+CI green on every job (tests on 3.11–3.14, 1499 collected — 1496 passed / 3 skipped on 3.12; `audit`, interop, wheel,
+determinism), `twine check` PASSED. Advisory [GHSA-mjvh-v399-r45r](https://github.com/kogriv/codemap/security/advisories/GHSA-mjvh-v399-r45r) (high, 0.0.46, patched 0.0.47). Reconciled from PyPI, clean venvs,
+harmless markers:
+
+```
+                                   0.0.46                                   0.0.47
+FU-01 committed link as the pin    hook C=<root>/tools/codemap; M created   hook C=<venv>/bin/codemap; note "was not run and is not kept"; M absent
+FU-02 -o graph.json -o other.json  exit 0, other.json written               exit 1, "it writes 'other.json', not this graph"; nothing written
+FU-02 -o graph.json --ou other     exit 0, other.json written               exit 1, same refusal; nothing written
+FU-02 recorded cwd not there       exit 0, graph written in another dir     exit 1, "its working directory … is not a directory here"
+FU-03 two publishers, barrier      current dangling; load serves packaged   current whole; load serves refreshed
+--version                          codemap 0.0.46 · answer format 12 · …    codemap 0.0.47 · answer format 12 · schema 0.13
+
+F-09 alone (genuine pin, package "pkg;touch M;:"), devkit update + hook:
+                                   0.0.45: exit 0, M created by the hook    0.0.47: exit 2, "only letters, digits …", M absent
+```
+
+Every expectation holds; the F-09 row now shows the defect apart from F-01, as the follow-up audit asked (§8.5).
+Tag `v0.0.47` on both mirrors.
+
 **0.0.46 — the release check, pre-registered before the upload (2026-11-23).** The external audit's findings
 (R1-C121…C129); a **security** release for the devkit (R1-C121). `ANSWER_FORMAT` stays **12** (no answer field
 added; refusals and error texts change), schema 0.13 (the `scope_id` *value* formula changes, not the artifact's

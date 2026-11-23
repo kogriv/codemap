@@ -13,7 +13,7 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ### Security
 - **devkit: a pin reached through a link the repository carries is refused** (R1-C133, follow-up audit FU-01; a
-  bypass of the 0.0.46 fix for GHSA-c3hp-596c-2p77). 0.0.46 asked git whether the pin was a file of the
+  bypass of the 0.0.46 fix for GHSA-c3hp-596c-2p77; advisory [GHSA-mjvh-v399-r45r](https://github.com/kogriv/codemap/security/advisories/GHSA-mjvh-v399-r45r)). 0.0.46 asked git whether the pin was a file of the
   repository only after following links, so a committed link `tools/codemap → /bin/sh` named in `.mcp.json`
   passed, and `devkit update` wrote it into the post-commit hook (reproduced: a commit ran a committed script).
   Now git is asked about the path as written and every directory on it, a console script is accepted by its
