@@ -51,7 +51,7 @@ def test_fs_resolves_and_excludes(tree):
     assert paths == {"pkg/__init__.py", "pkg/core.py", "tests/test_core.py", "docs/guide.md"}
     assert not any("venv_x" in p or ".pyc" in p for p in paths)   # excludes work
     assert s["git"] == {"mode": "fs"}
-    assert s["scope_id"].startswith("sha256:")
+    assert s["scope_id"].startswith("sha256r:")   # R1-C126: role-aware id
 
 
 def test_fs_deterministic(tree):

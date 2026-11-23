@@ -112,7 +112,14 @@ They are cheap: counts + `bytes` from `stat`, `loc` from a line count — no par
 walk that hashes files.
 
 ### 1.4 `scope_id` (the input fingerprint)
-`scope_id = "sha256:" + sha256( "\n".join(f"{path}\t{sha256}" for file in sorted(files)) )`.
+`scope_id = "sha256r:" + sha256( "\n".join(f"{path}\t{role}\t{sha256}" for file in sorted(files)) )`.
+
+**R1-C126 (0.0.46):** the role (`core`, a consumer root, `docs`) is part of the identity — the same bytes read as
+the package or as a test are two inputs (external audit F-07). Before 0.0.46 the formula was role-blind and
+prefixed `sha256:`; that id is still computed (`scope_id_legacy`) and `scope.matches` compares a recorded id by
+the formula it was made with, so an older graph is not reported behind for a change of formula. Comparisons
+of a recorded id against a fresh one that do not go through `matches` (incremental reuse, watch start) see the
+old id as different and rebuild once — the safe direction.
 
 - Order-independent of FS-walk (inputs are sorted first), content-addressed, timestamp-free.
 - **Same `scope_id` ⇒ provably identical input** (same files, same bytes). Different ⇒ `scope --diff` shows

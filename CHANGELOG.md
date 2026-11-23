@@ -37,6 +37,10 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   vocabulary still load (a newer graph degrades, R1-C37). `source` reads only below the source root, symbolic
   links followed; `export vault` writes nothing if a note would land outside its directory; `refresh` repeats a
   recorded recipe only if it is a `build` writing back to the same graph.
+- **The input identity includes each file's role** (R1-C126, audit F-07): `scope_id` is now `sha256r:` over
+  path, role and content — the same files read as the package or as a consumer are different inputs. A graph
+  recorded with the old role-blind `sha256:` id is compared by that formula and is not called behind for the
+  change; an incremental build or a `watch` start from such a graph rebuilds fully once.
 
 ## [0.0.45] - 2026-11-23
 

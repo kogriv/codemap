@@ -58,13 +58,13 @@ def _via_roots(graph_scope_id: str, roots: dict | None, target: str | None,
                           "(run from the directory the graph's paths are relative to, or "
                           "pass --source-root)"}
     try:
-        from codemap.scope import resolve_scope
+        from codemap.scope import matches, resolve_scope
         now = resolve_scope(str(core), consumers=tuple(map(str, consumers)),
                             docs=tuple(map(str, docs)))
     except (Exception, SystemExit) as exc:
         return {"status": "unknown", "reason": f"{why}; resolving the roots failed ({exc})"}
     via = f"provenance roots under {b}"
-    if now["scope_id"] == graph_scope_id:
+    if matches(graph_scope_id, now):  # R1-C126: by the formula the record was made with
         return {"status": "current", "scope_id": graph_scope_id, "via": via}
     return {"status": "behind", "recorded": graph_scope_id, "current": now["scope_id"],
             "via": via}
@@ -99,14 +99,14 @@ def graph_currency(graph_path: str, graph_scope_id: str | None, *, roots: dict |
         return _via_roots(graph_scope_id, roots, target, base,
                           f"the recorded build directory is gone ({cwd})")
     try:
-        from codemap.scope import diff_scopes, resolve_scope
+        from codemap.scope import diff_scopes, matches, resolve_scope
         path, consumers, docs = recipe_scope_args(meta["argv"])
         rel = lambda p: p if os.path.isabs(p) else os.path.join(cwd, p)
         now = resolve_scope(rel(path), consumers=tuple(rel(c) for c in consumers),
                             docs=tuple(rel(d) for d in docs))
     except (Exception, SystemExit) as exc:      # argparse exits on a recipe it cannot read
         return {"status": "unknown", "reason": f"the recorded scope could not be resolved ({exc})"}
-    if now["scope_id"] == graph_scope_id:
+    if matches(graph_scope_id, now):  # R1-C126: by the formula the record was made with
         return {"status": "current", "scope_id": graph_scope_id, "via": "recipe"}
     d = diff_scopes(meta.get("scope") or {}, now)
     return {"status": "behind", "recorded": graph_scope_id, "current": now["scope_id"],

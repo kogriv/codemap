@@ -148,7 +148,7 @@ def test_scope_probe_is_the_builds_own_notion_of_change(tmp_path):
     (pkg / "m.py").write_text("def a():\n    return 1\n")
     probe = scope_probe(str(pkg))
     first = probe()
-    assert first.startswith("sha256:") and probe() == first
+    assert first.startswith("sha256r:") and probe() == first   # R1-C126: role-aware id
 
     (pkg / "m.py").write_text("def a():\n    return 2\n")
     changed = probe()

@@ -135,6 +135,22 @@ def _enumerate_fs(root: Path, roots, include, exclude_dirs) -> list[str]:
     return paths
 
 
+ROLE_PREFIX = "sha256r:"
+LEGACY_PREFIX = "sha256:"
+
+
+def matches(recorded: str | None, now: dict) -> bool:
+    """Is a recorded ``scope_id`` the input ``now`` resolves to? Compared by the formula the record was made with
+    (R1-C126): a role-aware id against the role-aware one, a pre-0.0.46 id against the role-blind one."""
+    if not recorded:
+        return False
+    if recorded.startswith(ROLE_PREFIX):
+        return recorded == now.get("scope_id")
+    if recorded.startswith(LEGACY_PREFIX):
+        return recorded == now.get("scope_id_legacy")
+    return False
+
+
 def resolve_scope(
     core: str | Path,
     *,
@@ -176,12 +192,20 @@ def resolve_scope(
             rec["tracked"] = rel not in untracked
         files.append(rec)
 
-    scope_id = "sha256:" + hashlib.sha256(
+    # R1-C126: the role is part of the identity — the same bytes read as core or as a consumer are two different
+    # inputs (audit F-07). `sha256r:` names the formula; the role-blind `sha256:` id is still computed so a
+    # graph recorded before 0.0.46 is compared by the formula it was built with (see `matches`), not called
+    # "behind" for a change of formula.
+    scope_id = ROLE_PREFIX + hashlib.sha256(
+        "\n".join(f"{f['path']}\t{f['role']}\t{f['sha256']}" for f in files).encode("utf-8")
+    ).hexdigest()
+    legacy_id = LEGACY_PREFIX + hashlib.sha256(
         "\n".join(f"{f['path']}\t{f['sha256']}" for f in files).encode("utf-8")
     ).hexdigest()
 
     return {
         "scope_id": scope_id,
+        "scope_id_legacy": legacy_id,
         "root": str(root),
         "profile": _profile(files),
         "git": _git_block(root, roots, mode) if mode == "git" else {"mode": "fs"},

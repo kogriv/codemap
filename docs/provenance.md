@@ -9,7 +9,7 @@ tree, and a claim without its qualifiers cannot be checked.
   "codemap_schema": "0.13",
   "target": "bquant",
   "provenance": {
-    "scope_id": "sha256:a14c14e0…",
+    "scope_id": "sha256r:a14c14e0…",
     "source": {"vcs": "git", "commit": "6bbb142deadb", "ref": "main", "dirty": false},
     "tier": "fast",
     "tool": {"name": "codemap", "version": "0.0.2", "commit": "16fe7de", "dirty": false},
