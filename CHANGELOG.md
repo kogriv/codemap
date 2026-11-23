@@ -16,6 +16,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   or the state is refused with exit 2 before any write; shell/YAML values are quoted; the python fallback pin is
   `python -I -m codemap`. **devkit v6** — run `codemap devkit update`.
 
+### Fixed
+- **`serve` survives any JSON value, and a reload no longer interleaves with a request** (R1-C122, audit F-04,
+  F-05). A line `null` (or `[]`, `42`, a string, `{"op": []}`) raised out of `Session.handle` and ended the
+  process; now each gets a structured error and the next request is answered. `handle` holds a session lock for
+  the whole request: the `--watch` thread's reload and a threaded MCP transport used to share the per-request
+  fields (`resolved`, `limit`, `filter`, `scope`) and could swap `graph`/`query` mid-request.
+
 ## [0.0.45] - 2026-11-23
 
 Schema 0.13, **`ANSWER_FORMAT` 12** and devkit v5 unchanged.

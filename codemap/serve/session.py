@@ -341,6 +341,12 @@ class Session:
 
     def __init__(self, graph: Graph, source_root: str | None = None,
                  graph_path: str | None = None, currency_ttl: float = 10.0) -> None:
+        # R1-C122: one request at a time. `handle` sets per-request fields (`_resolution`, `_limit`, `_filter`,
+        # `_scope`) and reads them back into the envelope, and `reload` swaps `graph`/`query`; the `--watch`
+        # thread and a threaded MCP transport both call `handle`, so without this a request could read another
+        # request's fields or a half-swapped graph. Queries are milliseconds; serialising them costs nothing.
+        import threading
+        self._lock = threading.RLock()
         self.graph = graph
         # R1-C85: is the served graph the tree it answers about? Checked like `check
         # --graph` (R1-C70), cached for `currency_ttl` seconds — the check walks the tree
@@ -399,12 +405,29 @@ class Session:
         **whether or not anything was cut** — see ``serve/limits.py`` for why the
         only-on-truncation variant is not honest enough.
         """
+        # R1-C122: any JSON value reaches here from `serve`; only an object is a request.
+        if not isinstance(request, dict):
+            return {"ok": False, "error": f"a request is a JSON object {{\"op\": …, \"args\": {{…}}}}, "
+                                          f"got {type(request).__name__}"}
         op = request.get("op")
-        args = request.get("args") or {}
+        args = request.get("args")
+        args = {} if args is None else args
+        if not isinstance(op, str):
+            return {"ok": False, "error": f"`op` must be a string, got {type(op).__name__}",
+                    "ops": sorted(_OPS)}
+        if not isinstance(args, dict):
+            return {"ok": False, "error": f"`args` must be an object, got {type(args).__name__}"}
         fn = _OPS.get(op)
         if fn is None:
             return {"ok": False, "error": f"unknown op: {op!r}",
                     "ops": sorted(_OPS)}
+        with self._lock:
+            try:
+                return self._handle(op, fn, args)
+            except Exception as exc:  # the envelope itself must not kill the resident process either
+                return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+    def _handle(self, op, fn, args) -> dict:
         self._resolution = None
         self._limit = None
         self._filter = None
