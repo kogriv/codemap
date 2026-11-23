@@ -44,6 +44,11 @@ in the devkit's place that it did not write — your own `post-commit`, a `codem
 **never** touched without `--force`. The devkit's hook then goes to `.codemap/devkit/post-commit`, for your hook
 to call. Exit codes: 0 done; 1 done, with items needing attention; 2 refused.
 
+**The rules block's place and language are yours.** `--agents-file F` puts the block in its own file (link to it
+from `AGENTS.md` in your words); `--agents-lang ru` writes it in Russian, with the same commands. Both work on
+`init` and, later, on `update`: a moved block leaves its old file when it is untouched, and stays there with a
+note when you edited it. A translated block replaces an untouched one; an edited one is kept and reported.
+
 **The pin is yours.** `.mcp.json`, the hook and CI name one codemap. `init` pins the codemap it runs from; `update`
 keeps your pin; `update --repin` moves it. `status` tells you when the pinned version is behind the installed one,
 and when the pinned interpreter cannot import `mcp` (install `codmap[mcp]`), which is why `serve --mcp` would not

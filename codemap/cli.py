@@ -1090,10 +1090,11 @@ def _cmd_devkit(args) -> int:
         return init(root, package=args.package, consumers=args.consumer, docs=args.docs,
                     agents_file=args.agents_file, claude_hooks=args.claude_hooks, codex=args.codex,
                     ci=args.ci, hook=args.hook, build=args.build, ratchet=args.ratchet,
-                    dry_run=args.dry_run, force=args.force)
+                    dry_run=args.dry_run, force=args.force, agents_lang=args.agents_lang)
     if cmd == "update":
         from codemap.devkit.install import update
-        return update(root, force=args.force, repin=args.repin, dry_run=args.dry_run)
+        return update(root, force=args.force, repin=args.repin, dry_run=args.dry_run,
+                      agents_file=args.agents_file, agents_lang=args.agents_lang)
     if cmd == "status":
         from codemap.devkit.install import status
         return status(root, args.format)
@@ -1574,6 +1575,8 @@ def build_parser() -> argparse.ArgumentParser:
     di.add_argument("--docs", action="append", default=[], help="Docs root (*.md). Repeatable.")
     di.add_argument("--agents-file", default=None,
                     help="File for the agent rules block (default: AGENTS.md, or CLAUDE.md when only it exists).")
+    di.add_argument("--agents-lang", choices=["en", "ru"], default=None,
+                    help="Language of the agent rules block (default: en).")
     di.add_argument("--claude-hooks", action="store_true",
                     help="Also install Claude Code hooks (SessionStart brief, PostToolUse touched).")
     di.add_argument("--codex", action="store_true", help="Also write the MCP entry in .codex/config.toml.")
@@ -1591,6 +1594,10 @@ def build_parser() -> argparse.ArgumentParser:
     du.add_argument("--root", default=".")
     du.add_argument("--force", action="store_true")
     du.add_argument("--repin", action="store_true", help="Move the pin to the codemap running this command.")
+    du.add_argument("--agents-file", default=None,
+                    help="Move the agent rules block to this file (an untouched old block is removed).")
+    du.add_argument("--agents-lang", choices=["en", "ru"], default=None,
+                    help="Language of the agent rules block.")
     du.add_argument("--dry-run", action="store_true")
     dst = dks.add_parser("status", help="What is current, outdated, edited by hand or missing (exit 1 if any).")
     dst.add_argument("--root", default=".")

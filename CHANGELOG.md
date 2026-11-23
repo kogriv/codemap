@@ -10,8 +10,13 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
   list today's cycles by their modules. A declared list turns its gate on; a cycle inside a listed group passes,
   a new one or a known one that grew fails `check` (and says which group it grew from), a group with no cycle left
   is a note. `codemap devkit ratchet --cycles` writes the region; later `ratchet` runs keep it current and
-  `--tighten` removes groups that hold no cycle. **devkit v4**: run `codemap devkit update`. Asked for by a consumer
+  `--tighten` removes groups that hold no cycle. **devkit v5**: run `codemap devkit update`. Asked for by a consumer
   whose contract recorded two lazy cycles in a comment while the tree had four.
+
+- **The agent rules block in Russian, and in a file of your choice later** (R1-C115): `devkit init|update
+  --agents-lang ru` writes the block in Russian with the same commands (the template guard counts both);
+  `devkit update --agents-file F` moves the block, removing an untouched old one and keeping an edited one with a
+  note. A repeated `init` used to ignore `--agents-file` silently; it now does what `update` does with it.
 
 ### Fixed
 - **dead-code saw a callback as dead and a test call as nothing** (R1-C118). A bound method handed on as a value

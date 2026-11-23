@@ -166,8 +166,9 @@ def items(root: Path, st: dict, pin: list[str], codemap_version: str) -> tuple[l
     opts = st.get("options", {})
     out: list[Item] = []
     notes: list[str] = []
+    block = "agents_block.ru.md" if st.get("agents_lang") == "ru" else "agents_block.md"
     out.append(Item("agents", MarkdownRegion("agents", root / ctx["agents_file"]),
-                    render(template("agents_block.md"), ctx)))
+                    render(template(block), ctx)))
     mcp = JsonKey("mcp", root / ".mcp.json")
     mcp.recorded = (st.get("artifacts", {}).get("mcp") or {}).get("sha256")
     out.append(Item("mcp", mcp, mcp_entry(ctx, pin), canonical=True))
@@ -380,7 +381,7 @@ def _choose_agents_file(root: Path, given: str | None) -> str:
 
 def init(root: Path, *, package: str, consumers: list[str], docs: list[str], agents_file: str | None,
          claude_hooks: bool, codex: bool, ci: str | None, hook: bool, build: bool, ratchet: bool,
-         dry_run: bool, force: bool) -> int:
+         dry_run: bool, force: bool, agents_lang: str | None = None) -> int:
     root = root.resolve()
     st = load_state(root)
     if st is not None:
@@ -390,7 +391,9 @@ def init(root: Path, *, package: str, consumers: list[str], docs: list[str], age
         opts["claude_hooks"] = opts.get("claude_hooks") or claude_hooks
         opts["codex"] = opts.get("codex") or codex
         opts["ci"] = ci or opts.get("ci")
-        return update(root, force=force, repin=False, dry_run=dry_run, _state=st)
+        # R1-C115: the rules file and its language move too, as `update` with them would.
+        return update(root, force=force, repin=False, dry_run=dry_run, _state=st,
+                      agents_file=agents_file, agents_lang=agents_lang)
     for p, what in [(package, "--package"), *((c, "--consumer") for c in consumers),
                     *((d, "--docs") for d in docs)]:
         if not (root / p).is_dir():
@@ -405,6 +408,7 @@ def init(root: Path, *, package: str, consumers: list[str], docs: list[str], age
     st = {"devkit_version": DEVKIT_VERSION, "written_by": version, "package": package.rstrip("/"),
           "consumers": consumers, "docs": docs, "graph": GRAPH,
           "agents_file": _choose_agents_file(root, agents_file),
+          **({"agents_lang": agents_lang} if agents_lang and agents_lang != "en" else {}),
           "options": {"hook": hook, "claude_hooks": claude_hooks, "codex": codex, "ci": ci},
           "artifacts": {}}
     notes: list[str] = []
@@ -468,7 +472,8 @@ def _mcp_notes(root: Path, st: dict, pin: list[str], outcomes, notes: list[str])
     return missing
 
 
-def update(root: Path, *, force: bool, repin: bool, dry_run: bool, _state: dict | None = None) -> int:
+def update(root: Path, *, force: bool, repin: bool, dry_run: bool, _state: dict | None = None,
+           agents_file: str | None = None, agents_lang: str | None = None) -> int:
     root = root.resolve()
     st = _state if _state is not None else load_state(root)
     if st is None:
@@ -477,6 +482,13 @@ def update(root: Path, *, force: bool, repin: bool, dry_run: bool, _state: dict 
         return 2
     pin, version = _pin_and_version(root, st, repin)
     notes: list[str] = []
+    if agents_lang:
+        if agents_lang == "en":
+            st.pop("agents_lang", None)
+        else:
+            st["agents_lang"] = agents_lang
+    if agents_file and agents_file != st.get("agents_file"):
+        _move_agents_block(root, st, agents_file, write=not dry_run, notes=notes)
     its, skip = items(root, st, pin, version)
     notes += skip
     outcomes = [process(root, st, it, write=not dry_run, force=force) for it in its]
@@ -490,6 +502,26 @@ def update(root: Path, *, force: bool, repin: bool, dry_run: bool, _state: dict 
     mcp_missing = _mcp_notes(root, st, pin, written, notes)
     _report(f"codemap devkit v{DEVKIT_VERSION} — update{' (dry run)' if dry_run else ''}", outcomes, notes)
     return 1 if mcp_missing or any(o.attention for o in outcomes) else 0
+
+
+def _move_agents_block(root: Path, st: dict, new_file: str, *, write: bool, notes: list[str]) -> None:
+    """R1-C115: the rules block goes to ``new_file``; the old one leaves its file only if it is untouched."""
+    from codemap.devkit.artifacts import remove_region
+    old_file = st.get("agents_file", "AGENTS.md")
+    old = MarkdownRegion("agents", root / old_file)
+    cur = old.current()
+    recorded = (st.get("artifacts", {}).get("agents") or {}).get("sha256")
+    if cur is None:
+        notes.append(f"rules block: none in {old_file}; writing it to {new_file}")
+    elif recorded is not None and sha(cur) == recorded:
+        if write:
+            remove_region(old)
+        notes.append(f"rules block moved: {old_file} → {new_file} (link to it from {old_file} in your own words)")
+    else:
+        notes.append(f"rules block: the one in {old_file} was edited by hand — kept there; the devkit now "
+                     f"manages the copy in {new_file}. Remove the old one yourself once you have looked")
+    st["agents_file"] = new_file
+    st.get("artifacts", {}).pop("agents", None)
 
 
 def _pin_and_version(root: Path, st: dict, repin: bool) -> tuple[list[str], str]:

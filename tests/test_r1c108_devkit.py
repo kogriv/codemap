@@ -297,7 +297,7 @@ def _all_templates():
 COMMANDS_PER_TEMPLATE = {"agents_block.md": 9, "brief.txt": 1, "claude_hooks.json": 2, "codex_region.toml": 1,
                          "contract_head.toml": 1, "github-workflow.yml": 2, "gitlab-ci.yml": 2,
                          "mcp_claude.args": 1, "post-commit.sh": 3, "ratchet_region.toml": 2,
-                         "cycles_region.toml": 1}
+                         "cycles_region.toml": 1, "agents_block.ru.md": 9}
 
 
 def test_d7_every_command_in_every_template_parses_with_the_cli_parser():

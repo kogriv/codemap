@@ -101,6 +101,16 @@ class MarkdownRegion(Artifact):
             _write(self.path, text + sep + block + "\n")
 
 
+def remove_region(art: "MarkdownRegion") -> None:
+    """Take the block out of its file (R1-C115), folding the blank lines it leaves; the file stays."""
+    text = _read(art.path)
+    span = art._span(text) if text is not None else None
+    if not span:
+        return
+    head, tail = text[:span[0]].rstrip("\n"), text[span[1]:].lstrip("\n")
+    _write(art.path, (head + "\n\n" + tail if head and tail else head + "\n" if head else tail))
+
+
 class TomlRegion(Artifact):
     """The Codex MCP entry in .codex/config.toml: between `# >>> codemap-devkit` and `# <<<`."""
 
