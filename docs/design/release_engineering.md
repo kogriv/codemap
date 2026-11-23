@@ -1360,6 +1360,27 @@ structure), devkit **v7**. From PyPI, clean venvs, both versions, invented fixtu
 | F-13 strict | graph without provenance, `check --require-current` | argparse error | exit 2 "not known to match its source tree" |
 | version | `codemap --version` | `codemap 0.0.45 · answer format 12 · schema 0.13` | `codemap 0.0.46 · answer format 12 · schema 0.13` |
 
+**0.0.46 published 2026-11-23:** [`codmap` 0.0.46](https://pypi.org/project/codmap/0.0.46/), from `32a7a64`:
+suite 1473 passed / 3 skipped in CI (1476 collected), all jobs green including the new `audit` (`pip-audit`: no
+known vulnerabilities) and the SCIP archive check (`scip.tgz: OK`), `twine check` PASSED. The run before it, on
+`1cf4815`, failed only the README test-count guard — the count was not moved with each commit of the batch.
+Reconciled from PyPI, clean venvs, harmless markers:
+
+```
+                                   0.0.45                                   0.0.46
+F-01 pin /bin/sh -c "touch M"      M created by `devkit status`             M absent; "was not run and is not kept"
+F-02 agents_file ../outside.md     written outside the repository           exit 2, refused, nothing written
+F-09 package "pkg;touch M"         M created (by the still-tampered pin)    exit 2, "only letters, digits"
+F-04 null, then stats to serve     0 response lines (process died)          2 lines: error, then stats
+F-08 known {c,p,s}, now {d,p,s}    "absorbed into a larger new tangle"      "no longer hold a tangle … --tighten"
+F-14 node file "../x.py"           loads ("currency not checked")           refused: nodes[1].file
+F-07 scope id                      sha256:…                                 sha256r:…; a 0.0.45 graph reads "matches its source tree"
+F-13 --require-current, no prov.   exit 2, unrecognized arguments           exit 2, "not known to match its source tree"
+--version                          answer format 12 · schema 0.13           codemap 0.0.46 · answer format 12 · schema 0.13
+```
+
+Every expectation holds. Tag `v0.0.46` on both mirrors.
+
 **0.0.45 — the release check, pre-registered before the upload (2026-11-23).** R1-C120/f1 only; format 12, schema
 0.13, devkit v5 unchanged. From PyPI, clean venvs, an invented runner: a factory `module_for(x)` returning
 `import_module(f"pkg.tools.{x}")`, and `getattr(module, "run")` / `"empty"` in two other functions.
