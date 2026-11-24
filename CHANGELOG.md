@@ -5,6 +5,12 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Research
+- **Scalability benchmark** (R1-C130). Measured full and incremental builds, MCP STDIO
+  latency and payload size, and idle watchers on three public projects with `codmap 0.0.48`.
+  [Results and raw data](research/bench/r1c130/RESULTS.md). The fast parity control found
+  [R1-C149](https://github.com/kogriv/codemap/issues/26), a loss of `annotated-field` edges during incremental builds.
+
 ## [0.0.48] - 2026-11-24
 
 **MCP answer format 13**, graph schema **0.13**, devkit **v8**.

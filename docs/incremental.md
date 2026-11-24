@@ -49,15 +49,14 @@ The build splits cleanly by cost:
 freshly imports a changed/added one, plus any module whose old behavioral edge pointed
 into a changed/removed one. That covers fast-tier staleness (a renamed symbol an
 importer resolves) and deep-tier staleness (jedi reaching a changed target). When the
-affected set exceeds half the package a full rebuild is cheaper and certainly correct,
+affected set reaches half the package a full rebuild is cheaper and certainly correct,
 so the build falls back to it (reported as `mode: full`).
 
 **Repo-scoped graphs** (`--consumer` / `--docs`, R1-C86). The core is updated as above.
 The consumer and doc scans are deterministic `ast` passes (~6 s on bquant), so they rerun in full on the updated
-core, followed by the Protocol fan-out. The result equals a full repo build on the fast tier: core edit,
-consumer edit, doc edit, module added, module removed. A consumer- or doc-only edit leaves the core `unchanged`
-and costs only the scans. `watch` with consumers takes the same path, so a deep MCP loop no longer pays for a
-full deep build on every save.
+core, followed by the Protocol fan-out. The fast parity tests cover core, consumer and doc edits, and module
+addition and removal. A consumer- or doc-only edit leaves the core `unchanged` and still scans the consumer
+and doc roots. The source watcher with consumers uses the same build path.
 
 **Where the package sits** (R1-C86 D0). In a git tree the scope's paths are relative to the repository root.
 A package below it (`research/shared`, `src/pkg`) is mapped from there. Up to and including 0.0.33, such a package's edits
@@ -65,9 +64,11 @@ were not seen at all: the build said `unchanged` and kept the old graph.
 
 ## Guarantees
 
-- **Fast tier: byte-identical to a full build.** The incremental result serializes
-  byte-for-byte the same as `codemap build`; the test suite pins this across edit / add
-  / remove, and it holds on bquant (7437 edges, zero diff).
+- **Fast tier: parity with a full build.** The edit, add and remove fixtures check parity
+  with `codemap build`. The earlier bquant check found zero differences across 7437 edges.
+  In 0.0.48, incremental build can drop `annotated-field` calls from unaffected modules.
+  Use a full build when assessing calls through annotated fields on this version.
+  [R1-C149](https://github.com/kogriv/codemap/issues/26).
 - **Deep tier: cheaper, and weaker in a way the fast tier is not.** The splice itself is
   exact — proven byte-identical on a controlled fixture — and it is ~12× faster. But
   jedi's bounded type inference is not stable across processes, so *two full `--deep`
@@ -117,8 +118,9 @@ were not seen at all: the build said `unchanged` and kept the old graph.
   cache warmth among them, were tested at ten runs each and refuted — see
   [provenance.md](provenance.md#the-deep-tier-is-not-byte-stable) and the
   [measurement](../gaps/deep_tier_nondeterminism_2026-09-02.md).
-- **No-op is free.** If no package `.py` file changed, the old graph is returned
-  untouched (`mode: unchanged`) — the hot path for a future file watcher (M3.2).
+- **No-op reuses the core extraction.** `mode: unchanged` means zero core modules
+  were recomputed. The CLI can still rescan consumer and doc roots and write the
+  graph and sidecar. The source watcher checks the scope before invoking a build.
 - **…but only when the *builder* is unchanged too** (R1-C25). The source tree is not the
   only input: the same source read by a different extractor is a different graph. Before
   looking at the tree, `update_graph` compares the graph's recorded tool identity and tier
