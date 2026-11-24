@@ -11,7 +11,8 @@ uv venv --python 3.12 "$work/.venv"
 python="$work/.venv/bin/python"
 uv pip install --python "$python" -e "$work/src" \
   -r "$work/src/requirements/tests.txt" 'MarkupSafe==3.0.2'
-uv pip freeze --python "$python" > "$work/trace-deps.txt"
+"$python" -c 'from importlib.metadata import distributions; print(*sorted(f"{d.name.lower()}=={d.version}" for d in distributions()), sep="\n")' \
+  > "$work/trace-deps.txt"
 "$python" --version > "$work/trace-python.txt"
 export PYTHONDONTWRITEBYTECODE=1
 export R1C132_PKG_ROOT="$work/src/src/werkzeug"
