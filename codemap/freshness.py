@@ -26,7 +26,8 @@ def meta_path(graph_path: str) -> str:
 
 
 def write_meta(graph_path: str, *, argv: list[str], cwd: str, target: str,
-               scope: dict | None = None, roots_base: str | None = None) -> None:
+               scope: dict | None = None, roots_base: str | None = None,
+               source_verified: bool | None = None, strict: bool = False) -> None:
     """Record the build recipe beside a freshly-written graph (best-effort).
 
     ``scope`` (M19.A) is the input manifest — ``{scope_id, profile, git, files}`` —
@@ -44,17 +45,21 @@ def write_meta(graph_path: str, *, argv: list[str], cwd: str, target: str,
         meta["roots_base"] = roots_base
     if scope is not None:
         meta["scope"] = scope
+    if source_verified is not None:
+        meta["source_verified"] = source_verified
     try:
         from codemap import atomic
         atomic.write_text(meta_path(graph_path), json.dumps(meta, indent=2, sort_keys=True) + "\n")
     except OSError:
-        pass  # freshness metadata is a convenience, never fatal
+        if strict:
+            raise
 
 
 def read_meta(graph_path: str) -> dict | None:
     """The build recipe sidecar for a graph file, or None if absent/unreadable."""
     try:
-        return json.loads(Path(meta_path(graph_path)).read_text(encoding="utf-8"))
+        meta = json.loads(Path(meta_path(graph_path)).read_text(encoding="utf-8"))
+        return meta if isinstance(meta, dict) else None
     except (OSError, ValueError):
         return None
 

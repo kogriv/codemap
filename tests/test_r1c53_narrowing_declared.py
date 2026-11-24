@@ -139,6 +139,7 @@ _NARROWING_ARG = re.compile(
 #: source, so a new narrowing forces an entry here rather than passing unnoticed.
 _DECLARED = {
     "search": "limit", "semantic": "limit", "tests": "limit", "covers": "limit",
+    "impact": "limit", "call_contract": "limit",
     "callers": "filter", "callees": "filter", "columns": "filter",
     "communities": "scope", "flows": "scope",
 }
@@ -152,7 +153,6 @@ _NOT_A_NARROWING = {
               "`(min-confidence: …)` and impact prints the flow note; there is no "
               "structured answer here for a block to describe",
     "pack": _UNLIMITED_BY_DESIGN["pack"],
-    "impact": _UNLIMITED_BY_DESIGN["impact"],
 }
 
 
@@ -169,13 +169,15 @@ def test_every_op_reading_a_narrowing_arg_is_classified():
             f"why it does not")
     for op, reason in _NOT_A_NARROWING.items():
         assert op in session_mod._OPS and len(reason) > 40, op
-    assert set(_DECLARED) & _LIMITED_OPS == {"search", "semantic", "tests", "covers"}
+    assert _LIMITED_OPS == {op for op, block in _DECLARED.items() if block == "limit"}
 
 
 def test_each_declared_op_actually_emits_its_block(flowgraph, repo):
     calls = {
         "search": (flowgraph, {"term": "hit"}), "tests": (flowgraph, {"symbol": "hit"}),
         "covers": (flowgraph, {"test": "t"}),
+        "impact": (flowgraph, {"symbol": "hit", "limit": 1}),
+        "call_contract": (flowgraph, {"symbol": "hit", "limit": 1}),
         "callers": (flowgraph, {"symbol": "flowpkg.leaf.hit"}),
         "callees": (flowgraph, {"symbol": "flowpkg.entry.main"}),
         "columns": (flowgraph, {}), "communities": (repo, {}), "flows": (repo, {}),

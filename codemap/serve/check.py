@@ -94,7 +94,8 @@ def _rule_count(name: str, a: dict) -> str:
 
 
 def build_check(query, contract: ArchitectureContract, violations: list[Violation], *,
-                currency: dict | None = None, allow_stale: bool = False) -> dict:
+                currency: dict | None = None, allow_stale: bool = False,
+                require_contract: bool = False, require_current: bool = False) -> dict:
     """Structured result: ok flag + violations with their concrete edges.
 
     ``ok`` answers *may the pipeline proceed?*, so an unreadable ``codemap.toml`` makes it
@@ -105,6 +106,11 @@ def build_check(query, contract: ArchitectureContract, violations: list[Violatio
     ``scope`` says what each enforced rule did not judge — always present, so "nothing was
     left out" is a statement rather than an absence (R1-C30-f2).
     """
+    refused = []
+    if require_contract and contract.is_empty():
+        refused.append("contract_required")
+    if require_current and currency is not None and currency["status"] != "current":
+        refused.append("current_graph_required")
     return {
         "target": query.graph.target,
         "contract_empty": contract.is_empty(),
@@ -112,8 +118,9 @@ def build_check(query, contract: ArchitectureContract, violations: list[Violatio
         # R1-C35: where the contract was looked for. A machine reader of `contract_empty`
         # has the same "absent or mislocated?" question a human does.
         "contract_path": contract.path,
-        "ok": (not violations and contract.error is None
+        "ok": (not refused and not violations and contract.error is None
                and not (_is_behind(currency) and not allow_stale)),
+        **({"refused": refused} if refused else {}),
         # R1-C70: is the graph the tree it judges? Always present (R1-C28): `built_now` when
         # the graph came from the tree in this same process.
         "graph_currency": currency if currency is not None else {"status": "built_now"},

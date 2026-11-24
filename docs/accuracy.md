@@ -130,7 +130,7 @@ Each `(edge type, resolution)` pair now has a **grade** — an ordinal, never a 
 | Grade | What produced the edge | Values |
 |---|---|---|
 | `exact` | a binding read from the source | `self`, `module`, `local`, `imported`, `typed`, `class`, `construct`, `registry`, `flat`, `string-key`, `annotation`, `name`, `doc` |
-| `inferred` | a type-inference engine (jedi, deep tier) | `deep` |
+| `inferred` | a receiver type inferred by Jedi or from an annotated constructor parameter stored in a field | `deep`, `annotated-field` |
 | `heuristic` | a name match, not a binding — an honest over-approximation | `registry-candidate`, `protocol` |
 
 The vocabulary is closed (`codemap/model.py: RESOLUTIONS`) and guarded in both directions: every

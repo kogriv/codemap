@@ -82,24 +82,27 @@ def _flow_section(rep: dict) -> list[str]:
 
 
 def render_impact(query: Query, symbol: str, *, depth: int = 2,
-                  flow_depth: int = 5) -> str:
+                  flow_depth: int = 5, impacts: list[dict] | None = None) -> str:
     """Markdown blast-radius for the symbol matching ``symbol`` (short or full)."""
-    ids = query.impact_targets(symbol)  # F23: short name / full id / re-export
+    if impacts is None:
+        impacts = [{**query.impact(sid, depth=depth),
+                    "flows": query.flows_to(sid, max_depth=flow_depth)}
+                   for sid in query.impact_targets(symbol)]
     lines = [f"# Impact — `{symbol}`", ""]
     lines.append(
         "_Best-effort static blast radius: who references the symbol (and its "
-        "members), grouped by repo root. Call resolution is partial (gaps/ CM-09), "
-        "so this is a **lower bound** — pair with grep before deleting._"
+        "members), grouped by repo root. Static resolution can miss links; "
+        "heuristic dispatch can add candidates. Verify before deleting._"
     )
     lines.append("")
-    if not ids:
+    if not impacts:
         lines.append(f"_No definition found for `{symbol}` — nothing is known about it; "
                      "this is not an empty blast radius. Check the name (ids start with "
                      "the package directory's name)._")
         return "\n".join(lines) + "\n"
 
-    for sid in ids:
-        rep = query.impact(sid, depth=depth)
+    for rep in impacts:
+        sid = rep["symbol"]
         refs = rep["refs"]
         by_root = rep["by_root"]
         lines.append(f"## `{sid}`")
@@ -136,7 +139,7 @@ def render_impact(query: Query, symbol: str, *, depth: int = 2,
             lines.append("")
 
         # R1-C40: from "who references" to "what stops working, and where".
-        lines += _flow_section(query.flows_to(sid, max_depth=flow_depth))
+        lines += _flow_section(rep["flows"])
 
         # F7: argument contract of the call-sites — what a signature change touches.
         contract = query.call_contract(sid)

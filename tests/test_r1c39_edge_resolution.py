@@ -120,7 +120,7 @@ def builds():
     """Every build the table is measured against — fixtures only, so CI needs no target."""
     tmp = Path(tempfile.mkdtemp(prefix="r1c39-"))
     out = {name: extract(FIX / name) for name in
-           ("attrpkg", "dispatchpkg", "flatpkg", "flowpkg", "refpkg", "hardpkg", "tmworld")}
+           ("annotated_fields", "attrpkg", "dispatchpkg", "flatpkg", "flowpkg", "refpkg", "hardpkg", "tmworld")}
     out["attrpkg-deep"] = extract(FIX / "attrpkg", deep=True)
     out["deeppkg-deep"] = extract(FIX / "deeppkg", deep=True)
     out["reporoot"] = extract_repo(FIX / "reporoot" / "core",
@@ -202,7 +202,7 @@ def test_the_over_approximation_is_the_only_heuristic(builds):
     heuristic = {k for k, v in RESOLUTIONS.items() if v["confidence"] == "heuristic"}
     assert heuristic == {("calls", "registry-candidate"), ("calls", "protocol"), ("references", "dispatch")}
     inferred = {k for k, v in RESOLUTIONS.items() if v["confidence"] == "inferred"}
-    assert inferred == {("calls", "deep"), ("accesses", "deep")}
+    assert inferred == {("calls", "deep"), ("calls", "annotated-field"), ("accesses", "deep")}
 
 
 # -- D3: nothing is stored, the schema does not move --------------------------------------

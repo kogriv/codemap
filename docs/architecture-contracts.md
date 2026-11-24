@@ -313,14 +313,16 @@ break the architecture?"** after a change:
 
 ```jsonc
 // serve (line-delimited JSON)
-{"op": "check", "args": {"root": "."}}
-// → {"ok": false, "violations": [{"rule": "layered", "summary": "…",
-//                                 "edges": [["pkg.a.m", "pkg.b.m"]]}]}
+{"op": "check", "args": {"root": ".", "require_contract": true, "require_current": true}}
+// → {"ok": true, "outcome": "verdict", "result": {"ok": false, "violations": […]}, …}
 ```
 
-Over MCP it is the `check` tool (`{ok, violations:[{rule, summary, edges}], graph_currency}`).
-`graph_currency.status` is `current`, `behind` or `unknown`, and `built_now` under `--build`. `ok` is
-false when the served graph is behind its source tree. Pair it
+Over MCP pass the same arguments to `check`. The envelope's `ok` describes whether the query
+ran. Read `result.ok` for the gate's verdict. `require_contract` rejects a missing or empty
+contract, and `require_current` performs a fresh content check and rejects `behind` or `unknown`.
+An in-process `serve --build` has no persisted scope, so its resident answers carry `unknown`.
+`result.graph_currency` and envelope `currency` report the same check. The optional `root`
+selects the contract path; the graph's own scope determines what sources its currency covers. Pair it
 with `review` (what a diff touches) for a before/after health check around an agent's
 change.
 

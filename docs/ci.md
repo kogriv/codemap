@@ -130,6 +130,12 @@ machine) is checked from its own provenance roots under the current directory or
 `current` or `behind` where it was `unknown`. A cold CLI read that still cannot check says so in one `[note]`
 ([design](design/currency_without_recipe.md)).
 
+**13** (unreleased) — MCP publishes an output schema and returns structured JSON alongside text.
+The warm envelope records `outcome` and identifies failed operations with `error_kind`.
+Strict `check` reports its verdict in `result.ok`; `source` states whether its code is verified
+against the served snapshot. An uncapped reply reports `limit.applied: null`.
+[Design and migration context](design/mcp_surface_contract.md).
+
 - **`schema`** versions the *artifact* — `graph.json`. It moves when the stored graph's structure
   moves, which is when a rebuild is needed.
 - **`answer_format`** versions the *shape of the answer you are diffing* — sections, counted units,

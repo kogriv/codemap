@@ -115,7 +115,7 @@ def test_render_impact_markdown(thin):
     out = render_impact(Query(thin), "Engine")
     assert "# Impact" in out
     assert "usage" in out and "docs" in out
-    assert "lower bound" in out  # honesty disclaimer present
+    assert "can miss links" in out and "can add candidates" in out
 
 
 def test_impact_targets_accepts_full_id_and_short_name(thin):

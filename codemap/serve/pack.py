@@ -113,6 +113,7 @@ def build_pack(query: Query, *, budget: int, seeds=(), root: str | None = None,
         seed_block = {"requested": res["seeds"], "unresolved": res["unresolved"]}
         if not res["ids"]:
             return {
+                "status": "refused",
                 "error": "no seed resolved to a rankable symbol "
                          f"({', '.join(res['unresolved'])}); refusing rather than "
                          "returning the global pack, which answers a different question",

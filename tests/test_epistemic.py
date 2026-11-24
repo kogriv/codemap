@@ -31,7 +31,7 @@ def _handle(op, args=None):
 def test_callers_partial():
     env = _handle("callers", {"symbol": "F"})
     assert env["ok"] and env["epistemic"]["epistemic"] == "partial"
-    assert "lower bound" in env["epistemic"]["reason"]
+    assert env["epistemic"]["may_miss"] and "may_include_candidates" not in env["epistemic"]
 
 
 def test_callees_impact_flows_call_contract_partial():

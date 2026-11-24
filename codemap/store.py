@@ -7,6 +7,7 @@ JSON is the canonical, portable, diffable source of truth. Query backends
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 from codemap.model import Graph
@@ -25,5 +26,12 @@ def dumps(graph: Graph) -> str:
 
 
 def load(path: str | Path) -> Graph:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    return Graph.from_dict(data)
+    return load_snapshot(path)[0]
+
+
+def load_snapshot(path: str | Path) -> tuple[Graph, float]:
+    """Load the graph and the mtime of the same open artifact."""
+    with Path(path).open(encoding="utf-8") as stream:
+        data = json.load(stream)
+        mtime = os.fstat(stream.fileno()).st_mtime
+    return Graph.from_dict(data), mtime

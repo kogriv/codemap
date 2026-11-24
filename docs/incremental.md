@@ -140,12 +140,22 @@ says so, `[incremental] full: 0 module(s) recomputed (the sidecar describes anot
 `currency` ignores such a sidecar and checks from the graph's own roots. Before that, a graph left beside a
 newer sidecar missed every edit between the two and still reported `incremental`.
 
+The devkit hook records the destination graph as the replay output when building into
+its staging file. Once the pair is published, `codemap refresh` accepts the recorded
+recipe at the final path. Run `codemap devkit update` to install the updated hook.
+
 Every full build inside `--incremental` now prints its reason in the same way, including a different codemap
 version, tier or sample count.
 
 ## Serving a fresh graph without a restart
 
 A long-lived `codemap serve` (or `serve --mcp`) caches the graph it loaded at start.
+For `source`, the server also snapshots the verified file hashes from the matching
+sidecar. It compares the bytes it is about to return against the recorded hash. An
+older artifact without verified hashes still returns coordinates, with
+`result.status: unverified`; rebuild and reload it to get verified code. If the file
+changes before the graph is refreshed, `result.status: behind` withholds the code
+even while the envelope's broader currency check is cached.
 After you rebuild the artifact, tell the server to pick it up:
 
 ```bash

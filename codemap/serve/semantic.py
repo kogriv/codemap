@@ -23,7 +23,7 @@ from codemap.integrations import (
     IntegrationConfig, IntegrationMode, SemanticHit, is_permissive, load_config, resolve,
 )
 from codemap.query import Query
-from codemap.serve.limits import limit_block
+from codemap.serve.limits import limit_block, nonnegative_count
 
 
 def semantic_search(query: Query, text: str, *, root: str = ".",
@@ -42,6 +42,7 @@ def semantic_search(query: Query, text: str, *, root: str = ".",
     ``truncated: null`` — an unobserved total is a fact about the answer, and a caller
     that sees it can widen the limit instead of believing a number nobody counted.
     """
+    limit = nonnegative_count(limit, "limit")
     cfg = config if config is not None else load_config(root)
     adapter = resolve("semantic-search", config=cfg, root=root,
                       mode=IntegrationMode.ADAPTER)
@@ -50,6 +51,9 @@ def semantic_search(query: Query, text: str, *, root: str = ".",
         # and the empty result is explained by `resolver: None`, not by the limit.
         return {"resolver": None, "disclaimer": None, "hits": [],
                 "limit": limit_block(limit, 0, 0)}
+    if limit == 0:
+        return {"resolver": adapter.name, "disclaimer": None, "hits": [],
+                "limit": limit_block(0, 0, None, note="adapter not queried at limit zero")}
 
     raw = adapter.search("semantic-search", text, root=root, limit=limit)
     hits: list[SemanticHit] = []

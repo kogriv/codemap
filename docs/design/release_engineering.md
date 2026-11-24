@@ -1343,6 +1343,17 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 | Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
 | version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
 
+**0.0.48 — the release check, pre-registered before the upload (2026-11-24).** R1-C137–R1-C148.
+Install the published package in a clean environment and run on synthetic inputs.
+
+| Check | 0.0.48 expected |
+|---|---|
+| `codemap --version` | Version 0.0.48, answer format 13, graph schema 0.13. |
+| MCP over STDIO | `stats` advertises an output schema and returns matching structured and text JSON. An unknown symbol produces a distinct `not_found` outcome. |
+| Fast `self._worker._work()` through an annotated constructor field | `callers` includes the wrapper method with route `annotated-field`. The live method is absent from high-confidence dead-code candidates. |
+| Claude Code transcript with one Codemap CLI tool use and one `rg` tool use | MCP 0, CLI 1, grep 1, share 50%. |
+| Installed devkit | The packaged template version is 8. |
+
 **0.0.47 — the release check, pre-registered before the upload (2026-11-23).** The follow-up audit's findings
 FU-01…FU-03 (R1-C133…C135); a **security** release for the devkit (R1-C133 bypasses the 0.0.46 fix of
 GHSA-c3hp-596c-2p77). `ANSWER_FORMAT` stays **12**, schema 0.13, devkit **v7** (templates unchanged). From PyPI,

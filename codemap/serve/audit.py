@@ -354,8 +354,8 @@ def render_behavior(query: Query) -> str:
                if UNKNOWN_CONFIDENCE in grades else ""))
         lines.append("")
         lines.append("_`exact` — a binding read from the source found the target; "
-                     "`inferred` — a type-inference engine did (precise, but one deep "
-                     "build is a sample); `heuristic` — a name match, not a binding._")
+                     "`inferred` — a receiver type from Jedi or an annotated constructor "
+                     "field; `heuristic` — a name match, not a binding._")
     bridged = by_res.get("registry", 0) + by_res.get("registry-candidate", 0)
     if bridged:
         lines.append("")

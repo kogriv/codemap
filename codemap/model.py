@@ -141,7 +141,9 @@ SCHEMA_VERSION = "0.13"
 #  12 — `report dead-code` (JSON) carries `called_only_from_outside` and `uncalled_public`; a bound method
 #       handed on as a value is a `references` edge with resolution `self` (R1-C118). `check` (JSON) carries
 #       `known_stale` when a known-cycles list is declared (R1-C116).
-ANSWER_FORMAT = 12
+#  13 — versioned MCP output, outcome and error fields, strict check, verified source,
+#       full/limited result metadata, and hotspot totals (R1-C137…C146).
+ANSWER_FORMAT = 13
 
 # Closed vocabulary of edge types (R1-C7). Node ``kind`` is deliberately an OPEN set
 # (DESIGN §2 — new entity kinds may appear), but edges are TYPED: every relationship
@@ -176,8 +178,8 @@ EDGE_TYPES = frozenset({
 # One field, two questions — stated rather than papered over (design D4).
 #
 # ``confidence`` is a *grade*, never a probability: `exact` (the target came from a binding
-# read in the source), `inferred` (a type-inference engine produced it — precise but a
-# sample: one deep build misses a live edge ~1 time in 4, R1-C42), `heuristic` (a name
+# read in the source), `inferred` (a receiver type came from Jedi or an annotation),
+# `heuristic` (a name
 # match, not a binding — an honest over-approximation). A computed float would read as a
 # precision that is not there. It is derived, never stored: writing it on the edge would be
 # a second source of truth for a pure function of the first (design D2/D3).
@@ -190,6 +192,8 @@ RESOLUTIONS: dict[tuple[str, str], dict[str, str]] = {
                             "how": "the name is bound by an import statement in this file"},
     ("calls", "deep"): {"means": "route", "confidence": "inferred",
                         "how": "receiver type inferred by jedi (deep tier only)"},
+    ("calls", "annotated-field"): {"means": "route", "confidence": "inferred",
+                                   "how": "receiver field assigned from an annotated constructor parameter"},
     ("calls", "registry"): {"means": "route", "confidence": "exact",
                             "how": "a literal registry key resolved to the registered impl (M7)"},
     ("calls", "registry-candidate"): {
@@ -439,6 +443,8 @@ def validate_graph_dict(data) -> None:
         bad("the document", f"is a {type(data).__name__}, not an object")
     if not isinstance(data.get("target"), str):
         bad("`target`", "must be a string")
+    if data.get("provenance") is not None and not isinstance(data["provenance"], dict):
+        bad("`provenance`", "must be an object")
     for key in ("nodes", "edges"):
         if not isinstance(data.get(key), list):
             bad(f"`{key}`", "must be a list")

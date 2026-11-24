@@ -196,9 +196,7 @@ def resolve_scope(
     # inputs (audit F-07). `sha256r:` names the formula; the role-blind `sha256:` id is still computed so a
     # graph recorded before 0.0.46 is compared by the formula it was built with (see `matches`), not called
     # "behind" for a change of formula.
-    scope_id = ROLE_PREFIX + hashlib.sha256(
-        "\n".join(f"{f['path']}\t{f['role']}\t{f['sha256']}" for f in files).encode("utf-8")
-    ).hexdigest()
+    scope_id = manifest_id(files)
     legacy_id = LEGACY_PREFIX + hashlib.sha256(
         "\n".join(f"{f['path']}\t{f['sha256']}" for f in files).encode("utf-8")
     ).hexdigest()
@@ -212,6 +210,12 @@ def resolve_scope(
         # files carry loc for the profile; drop it from the persisted per-file record
         "files": [{k: v for k, v in f.items() if k != "loc"} for f in files],
     }
+
+
+def manifest_id(files: list[dict]) -> str:
+    """Role-aware input identity, independent of the location of the source tree."""
+    lines = [f"{f['path']}\t{f['role']}\t{f['sha256']}" for f in sorted(files, key=lambda f: f["path"])]
+    return ROLE_PREFIX + hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
 
 
 def _profile(files: list[dict]) -> dict:

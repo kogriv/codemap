@@ -18,7 +18,7 @@ without a release.
 
 [![CI](https://github.com/kogriv/codemap/actions/workflows/ci.yml/badge.svg)](https://github.com/kogriv/codemap/actions/workflows/ci.yml)
 
-**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1502 tests with no failures on
+**Status:** 🟢 M0–M20 implemented + research track (R1/R2) — schema 0.13, **1523 tests with no failures on
 Python 3.11–3.14** ([in CI](docs/ci.md): the full suite including the dogfood pass, a determinism check, a
 wheel smoke test, and ctags/SCIP interop against the real CLIs), warm serve surface with 32 ops (29 exposed
 as MCP tools), and SCIP export. See **[DESIGN.md](DESIGN.md)** (product design &
@@ -199,6 +199,13 @@ codemap serve --graph graph.json --source-root . --mcp
 codemap watch ./pkg -o graph.json &
 codemap serve --graph graph.json --watch
 ```
+
+The local MCP server uses the permissions of the process that starts it. Use it with a
+trusted client and graph. `--source-root` bounds `source` reads. `diff(base)` reads an
+explicit baseline graph, and `check(root)` reads a contract from the selected directory.
+`semantic_search` can invoke an installed adapter only when explicitly enabled in
+`codemap.toml`. `reload` replaces the in-memory snapshot from the configured graph path.
+The MCP server does not sandbox these operations from one another.
 
 ## What it answers
 

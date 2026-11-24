@@ -13,6 +13,34 @@ import os
 from codemap.freshness import read_meta
 
 
+def source_hashes(graph_path: str | None, scope_id: str | None) -> dict[str, str]:
+    """Index the manifest in graph-relative coordinates at snapshot load time."""
+    from pathlib import Path
+    from codemap.scope import manifest_id
+
+    meta = read_meta(graph_path) if graph_path and scope_id else None
+    if not meta or meta.get("source_verified") is not True:
+        return {}
+    scope = meta.get("scope")
+    base = meta.get("roots_base")
+    if not isinstance(scope, dict) or scope.get("scope_id") != scope_id or not base:
+        return {}
+    try:
+        root = Path(scope["root"])
+        origin = Path(base)
+        files = scope["files"]
+        if manifest_id(files) != scope_id:
+            return {}
+        hashes = {}
+        for f in files:
+            path = root / f["path"]
+            if path.is_relative_to(origin):
+                hashes[path.relative_to(origin).as_posix()] = f["sha256"]
+        return hashes
+    except (KeyError, TypeError, ValueError):
+        return {}
+
+
 def recipe_scope_args(argv: list[str]) -> tuple[str, list[str], list[str]]:
     """``(path, consumers, docs)`` from a recorded ``build`` argv (R1-C70).
 
@@ -90,12 +118,16 @@ def graph_currency(graph_path: str, graph_scope_id: str | None, *, roots: dict |
                           "no build recipe beside the graph")
     # R1-C92 D2: a sidecar left beside a replaced graph describes another build — its
     # recipe and its baseline would answer for a tree this graph never saw.
-    meta_id = (meta.get("scope") or {}).get("scope_id")
+    recorded_scope = meta.get("scope") or {}
+    if not isinstance(recorded_scope, dict):
+        return _via_roots(graph_scope_id, roots, target, base,
+                          "the recorded input manifest is not an object")
+    meta_id = recorded_scope.get("scope_id")
     if meta_id and meta_id != graph_scope_id:
         return _via_roots(graph_scope_id, roots, target, base,
                           "the sidecar describes another build than the graph")
     cwd = meta.get("cwd")
-    if not cwd or not os.path.isdir(cwd):
+    if not isinstance(cwd, str) or not cwd or not os.path.isdir(cwd):
         return _via_roots(graph_scope_id, roots, target, base,
                           f"the recorded build directory is gone ({cwd})")
     try:
@@ -108,7 +140,7 @@ def graph_currency(graph_path: str, graph_scope_id: str | None, *, roots: dict |
         return {"status": "unknown", "reason": f"the recorded scope could not be resolved ({exc})"}
     if matches(graph_scope_id, now):  # R1-C126: by the formula the record was made with
         return {"status": "current", "scope_id": graph_scope_id, "via": "recipe"}
-    d = diff_scopes(meta.get("scope") or {}, now)
+    d = diff_scopes(recorded_scope, now)
     return {"status": "behind", "recorded": graph_scope_id, "current": now["scope_id"],
             "added": len(d["added"]), "removed": len(d["removed"]), "changed": len(d["changed"]),
             "via": "recipe"}

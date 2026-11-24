@@ -22,9 +22,12 @@ codemap отвечает на вопросы о структуре `{{package}}`
   о старом дереве.
 - `resolved.ambiguous` — короткое имя совпало с несколькими символами; спросите по полному имени.
 - `limit.truncated: true` — список неполный.
+- В `source` используйте код при `result.status: verified`. При `behind` или
+  `unverified` пересоберите и перечитайте граф, прежде чем опираться на номера строк.
 
 **Контракт архитектуры** — `[architecture]` в `codemap.toml`, запуск
-`codemap check --graph {{graph}} --root . --require-contract` (код 2 = нарушен). `allowed` там — храповик:
+`codemap check --graph {{graph}} --root . --require-contract --require-current`.
+В MCP задайте `require_contract` и `require_current` и проверьте `result.ok`. `allowed` там — храповик:
 каждый импорт между двумя слоями должен быть перечисленной парой. Красный `allowed` — новая зависимость
 между слоями: уберите импорт или допишите пару руками внутри сгенерированного региона **с комментарием о
 причине**, и пусть ревью это оценит. `codemap devkit ratchet --tighten` убирает пары, которыми больше никто

@@ -13,9 +13,10 @@ MCP is an **optional dependency** (`pip install codemap[mcp]`): the import is la
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+import json
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 
-from codemap.serve.limits import limit_block
+from codemap.serve.limits import cap_list as _cap_list, compact_impact as _compact_impact
 
 if TYPE_CHECKING:
     from codemap.serve.session import Session
@@ -32,9 +33,10 @@ _INSTRUCTIONS = (
     "graph. Relational "
     "tools accept a short name or re-export id; when a name is ambiguous the response "
     "carries a `resolved.ambiguous` flag — check it before trusting the answer. "
-    "Any tool that takes a `limit` always returns a `limit` block "
+    "Limited answers carry a `limit` block "
     "`{applied, returned, total, truncated}` — read it before concluding a list is "
-    "complete; `total: null` means the total was not observable, not that it is zero. "
+    "complete; `total: null` means the total was not observable, and "
+    "`applied: null` means the result is uncapped. "
     "Every response carries `currency`: `behind` means the source tree changed since the "
     "graph was built, so the answer describes the older tree — say so, or rebuild and "
     "`reload` before relying on it. codemap reads Python only: for other languages and for "
@@ -44,78 +46,72 @@ _INSTRUCTIONS = (
 )
 
 
-def _compact_impact(env: dict, limit: int) -> dict:
-    """Shrink an impact envelope for MCP (F22): drop the duplicate markdown and cap
-    each entry's flat ref list at ``limit`` — the ``by_root`` counts stay complete.
-
-    R1-C28: the per-entry counts are now emitted on **every** entry, and the envelope
-    carries the summed block. The cut is done here, in the transport, so the serve op
-    itself has nothing to declare — which is precisely why this layer must.
-    """
-    if not env.get("ok"):
-        return env
-    env = dict(env)
-    result = dict(env.get("result") or {})
-    result.pop("markdown", None)  # structured refs already carry everything
-    entries, shown_total, refs_total = [], 0, 0
-    for e in result.get("impact", []):
-        refs = e.get("refs", [])
-        shown = min(limit, len(refs))
-        entry = {**e, "refs": refs[:limit],
-                 "refs_shown": shown, "refs_total": len(refs)}
-        # R1-C40: the flows section is a second computed list, cut here as well — in its
-        # own vocabulary, so a reader never has to guess which list the envelope's summed
-        # block describes (it is the refs one).
-        flows = e.get("flows")
-        if isinstance(flows, dict):
-            listed = flows.get("flows", [])
-            entry["flows"] = {**flows, "flows": listed[:limit],
-                              "flows_shown": min(limit, len(listed)),
-                              "flows_total": len(listed)}
-        entries.append(entry)
-        shown_total += shown
-        refs_total += len(refs)
-    result["impact"] = entries
-    env["result"] = result
-    env["limit"] = limit_block(limit, shown_total, refs_total,
-                               note="counts the refs list, applied per impact entry, not "
-                                    "across the answer; the by_root counts are complete "
-                                    "regardless, and the flows list carries its own "
-                                    "flows_shown / flows_total")
-    return env
-
-
-def _cap_list(env: dict, limit: int) -> dict:
-    """Cap a list-valued result at ``limit`` (F22), declaring the cut either way (R1-C28).
-
-    Was only-on-truncation with its own ``shown``/``total`` vocabulary; both are now the
-    shared ``limit`` block, so a client reads one shape across every limited surface.
-    """
-    if not env.get("ok"):
-        return env
-    res = env.get("result")
-    if not isinstance(res, list):
-        return env
-    return {**env, "result": res[:limit],
-            "limit": limit_block(limit, min(limit, len(res)), len(res))}
 
 
 def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
     """Build an MCP server exposing the session's ops as tools (lazy mcp import)."""
     try:
         from mcp.server import MCPServer
+        from mcp.types import CallToolResult, TextContent, ToolAnnotations
+        from pydantic import Field, ValidationError
+        from typing_extensions import NotRequired, TypedDict
     except ImportError as exc:  # pragma: no cover - exercised via CLI message
         raise RuntimeError(
             "MCP support requires the optional 'mcp' dependency: "
             "pip install 'codemap[mcp]'"
         ) from exc
 
-    server = MCPServer(name, instructions=_INSTRUCTIONS)
+    envelope = TypedDict("CodemapEnvelope", {
+        "answer_format": int,
+        "ok": bool,
+        "outcome": Literal["ok", "error", "not_found", "refused", "verdict"],
+        "currency": dict[str, Any],
+        "result": NotRequired[Any],
+        "error": NotRequired[str],
+        "error_kind": NotRequired[str],
+        "resolved": NotRequired[dict[str, Any]],
+        "limit": NotRequired[dict[str, Any]],
+        "epistemic": NotRequired[dict[str, Any]],
+        "filter": NotRequired[dict[str, Any]],
+        "scope": NotRequired[dict[str, Any]],
+    })
 
-    def op(name: str, args: dict | None = None) -> dict:
-        return session.handle({"op": name, "args": args or {}})
+    def reply(result: dict) -> CallToolResult:
+        return CallToolResult(
+            content=[TextContent(type="text", text=json.dumps(result, ensure_ascii=False, indent=2))],
+            structured_content=result, is_error=not result["ok"],
+        )
 
-    @server.tool()
+    class CodemapServer(MCPServer):
+        async def call_tool(self, name, arguments, context=None):
+            try:
+                return await super().call_tool(name, arguments, context)
+            except Exception as exc:
+                cause = exc.__cause__
+                if isinstance(cause, ValidationError) and cause.title == f"{name}Arguments":
+                    from codemap.serve.session import request_error
+                    return reply(request_error(str(cause)))
+                raise
+
+    server = CodemapServer(name, instructions=_INSTRUCTIONS)
+
+    def tool(fn):
+        fn.__annotations__["return"] = envelope
+        for param in ("limit", "cap", "budget", "depth", "flow_depth"):
+            if param in fn.__annotations__:
+                minimum = 1 if param == "depth" and fn.__name__ in ("impact", "tests", "covers") else 0
+                fn.__annotations__[param] = Annotated[int, Field(ge=minimum, strict=True)]
+        return server.tool(annotations=ToolAnnotations(
+            read_only_hint=fn.__name__ not in ("reload", "semantic_search"),
+            destructive_hint=False if fn.__name__ != "semantic_search" else None,
+            idempotent_hint=True if fn.__name__ == "reload" else None,
+            open_world_hint=fn.__name__ == "semantic_search",
+        ), structured_output=True)(fn)
+
+    def op(name: str, args: dict | None = None) -> CallToolResult:
+        return reply(session.handle({"op": name, "args": args or {}}))
+
+    @tool
     def stats() -> dict:
         """Graph overview: target, schema version, node/edge counts by kind/type, and
         `freshness` for the graph ACTUALLY served — `stale: true` (+reason) if the
@@ -125,14 +121,14 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         tree — rebuild, then `reload`."""
         return op("stats")
 
-    @server.tool()
+    @tool
     def reload() -> dict:
         """Reload the on-disk graph into this server without restarting — pick up an
         external rebuild (e.g. `codemap build --incremental`). Returns before/after
         counts and refreshed freshness. No-op with a reason if started from --build."""
         return op("reload")
 
-    @server.tool()
+    @tool
     def search(term: str, kind: str | None = None, limit: int = 50) -> dict:
         """Find symbols whose id contains `term` (case-insensitive). The discovery
         entry point for a cold agent. Optional `kind`: module|class|function|column.
@@ -140,7 +136,7 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         small fraction of it, so check `truncated` before concluding a name is rare."""
         return op("search", {"term": term, "kind": kind, "limit": limit})
 
-    @server.tool()
+    @tool
     def query(name: str) -> dict:
         """Full dossier for a symbol name: where defined (file:line) with the declared
         `signature` (a class carries its own `constructor` instead), bases/impls for
@@ -153,33 +149,33 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         never that it was not looked up."""
         return op("query", {"name": name})
 
-    @server.tool()
+    @tool
     def resolve(name: str) -> dict:
         """Resolve a short name / re-export id to the canonical node id, with an
         `ambiguous` flag and `alternatives` when the name maps to several defs."""
         return op("resolve", {"name": name})
 
-    @server.tool()
+    @tool
     def callers(symbol: str, min_confidence: str | None = None) -> dict:
         """Functions that statically call `symbol` (resolved calls only).
         `min_confidence` keeps only edges whose route grades at least that strong:
-        `exact` (a binding in the source found the target), `inferred` (a type-inference
-        engine did — precise, but one deep build samples ~3 of 4 live edges), `heuristic`
+        `exact` (a binding in the source found the target), `inferred` (receiver type
+        from Jedi or an annotated constructor field), `heuristic`
         (a name match, e.g. a factory fanned out across a registry family). Omit for
         every resolved edge. `stats` reports the whole graph's grade mix."""
         return op("callers", {"symbol": symbol, "min_confidence": min_confidence})
 
-    @server.tool()
+    @tool
     def callees(symbol: str, min_confidence: str | None = None) -> dict:
         """Internal symbols that `symbol` statically calls. `min_confidence` as in
         `callers`: exact | inferred | heuristic."""
         return op("callees", {"symbol": symbol, "min_confidence": min_confidence})
 
-    @server.tool()
+    @tool
     def tests(symbol: str, depth: int = 3, cap: int = 25, all_bands: bool = False) -> dict:
         """Which tests exercise `symbol` — the NEAREST band of test functions that reach
-        it, as runnable pytest node ids. A helper function inside a test module costs no
-        hop. `next_band` says how many more tests sit at the next distance within `depth`
+        it statically, as runnable pytest node ids. A nested helper's container costs no
+        hop; a module-level helper costs one. `next_band` counts tests within `depth`
         (null if none); `all_bands=true` lists every band, each row with its distance.
         `confidence` is high/medium by distance and `unknown` when nothing is found within
         `depth`: unknown means unknown, never "untested". Needs a repo-scoped graph
@@ -188,13 +184,13 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         return op("tests", {"symbol": symbol, "depth": depth, "cap": cap,
                             "all_bands": all_bands})
 
-    @server.tool()
+    @tool
     def covers(test: str, depth: int = 3, cap: int = 25) -> dict:
         """The inverse of `tests`: which core symbols this test reaches, by distance.
         Use it to check whether a test exercises what its name claims."""
         return op("covers", {"test": test, "depth": depth, "cap": cap})
 
-    @server.tool()
+    @tool
     def impact(symbol: str, depth: int = 2, limit: int = 40, full: bool = False,
                flow_depth: int = 5) -> dict:
         """Blast radius of changing `symbol`: inbound references up to `depth`, counted
@@ -206,45 +202,44 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         references cannot appear there, `beyond_depth` how many entries reach further,
         and `in_call_graph: false` means the call layer never modelled the symbol — not
         that no flow reaches it. Pass full=true for the entire payload with markdown."""
-        env = op("impact", {"symbol": symbol, "depth": depth, "flow_depth": flow_depth})
-        return env if full else _compact_impact(env, limit)
+        return op("impact", {"symbol": symbol, "depth": depth, "flow_depth": flow_depth,
+                             "limit": limit, "full": full})
 
-    @server.tool()
+    @tool
     def call_contract(symbol: str, limit: int = 30, full: bool = False) -> dict:
         """Per-caller argument contract of calls into `symbol` (call-sites, posargs,
         kwargs, splat) — for reasoning about a signature change. Capped at `limit`
         entries by default (F22), with the `limit` block giving the true total; pass
         full=true for all of them."""
-        env = op("call_contract", {"symbol": symbol})
-        return env if full else _cap_list(env, limit)
+        return op("call_contract", {"symbol": symbol, "limit": limit, "full": full})
 
-    @server.tool()
+    @tool
     def implementers(protocol: str) -> dict:
         """Concrete classes that implement `protocol` (registry family)."""
         return op("implementers", {"protocol": protocol})
 
-    @server.tool()
+    @tool
     def family(cls: str) -> dict:
         """The Protocol(s) `cls` satisfies and its sibling implementations."""
         return op("family", {"class": cls})
 
-    @server.tool()
+    @tool
     def families() -> dict:
         """All registry/Protocol families with their registration recipe (decorator +
         key per member) — how to add a new implementation."""
         return op("families")
 
-    @server.tool()
+    @tool
     def column(name: str) -> dict:
         """Producers/consumers of a string-keyed column `name` (dataflow)."""
         return op("column", {"name": name})
 
-    @server.tool()
+    @tool
     def columns_of(symbol: str) -> dict:
         """Which string-key columns a function reads / writes (reverse dataflow)."""
         return op("columns_of", {"symbol": symbol})
 
-    @server.tool()
+    @tool
     def accessors(attribute: str) -> dict:
         """Who reads / writes a class `attribute` (field blast-radius; R1-C20).
 
@@ -253,66 +248,72 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         construction, and obj.field on the deep tier)."""
         return op("accessors", {"attribute": attribute})
 
-    @server.tool()
+    @tool
     def locate(file: str, line: int | None = None,
                start: int | None = None, end: int | None = None) -> dict:
         """Map a diff location to symbol(s): pass `file` + `line`, or `file` + `start`/
         `end` for a hunk range. Returns the innermost enclosing symbol(s)."""
+        args = {"file": file}
         if line is not None:
-            return op("locate", {"file": file, "line": line})
-        return op("locate", {"file": file, "lines": [start, end]})
+            args["line"] = line
+        if start is not None or end is not None:
+            args["lines"] = [start, end]
+        return op("locate", args)
 
-    @server.tool()
+    @tool
     def review(hunks: list[dict] | None = None, symbols: list[str] | None = None) -> dict:
         """Change-set review: pass `hunks` ([{file, ranges:[[start,end]]}]) and/or
         `symbols`. Returns a risk-sorted dossier per changed symbol + a blast summary."""
         return op("review", {"hunks": hunks, "symbols": symbols})
 
-    @server.tool()
+    @tool
     def architecture() -> dict:
         """Whole-system shape: layers + direction/violations, coupling (Ca/Ce/
         instability), god-objects & call-hubs, import cycles."""
         return op("architecture")
 
-    @server.tool()
+    @tool
     def diff(base: str) -> dict:
         """API diff a baseline graph.json (`base`) → this server's graph. Returns
         {ok, added, removed, changes:[{symbol, kind, severity, detail}], summary} —
         public-API breaking-change detection between two snapshots."""
         return op("diff", {"base": base})
 
-    @server.tool()
-    def check(root: str | None = None) -> dict:
+    @tool
+    def check(root: str | None = None, require_contract: bool = False,
+              require_current: bool = False) -> dict:
         """Architecture-contract gate: does the graph still satisfy the [architecture]
         rules in codemap.toml? Returns {ok, violations:[{rule, summary, edges}]} — the
-        'what did I break' check. `root` overrides where codemap.toml is read from."""
-        return op("check", {"root": root})
+        'what did I break' check. `root` overrides where codemap.toml is read from.
+        Set `require_contract` and `require_current` for a strict gate."""
+        return op("check", {"root": root, "require_contract": require_contract,
+                            "require_current": require_current})
 
-    @server.tool()
+    @tool
     def communities() -> list:
         """Data-driven module subsystems: clusters of modules that import each other
         more than the rest (deterministic greedy modularity), labelled by layer."""
         return op("communities")
 
-    @server.tool()
+    @tool
     def flows(symbol: str | None = None, depth: int = 5) -> dict:
         """Forward call-flow: what calling `symbol` sets in motion (edges by distance,
         the mirror of impact). Omit `symbol` to list entry points with their reach."""
         return op("flows", {"symbol": symbol, "depth": depth})
 
-    @server.tool()
+    @tool
     def source(symbol: str) -> dict:
-        """Source span of a symbol: {file, lines, code} (code when readable under the
-        server's source-root)."""
+        """Source span of a symbol. Code is returned when the file under source-root
+        matches the served snapshot; otherwise read the status and recorded coordinates."""
         return op("source", {"symbol": symbol})
 
-    @server.tool()
+    @tool
     def report(kind: str) -> dict:
         """Render a markdown report. kind: api-surface | dependencies | dead-code |
         behavior | architecture."""
         return op("report", {"kind": kind})
 
-    @server.tool()
+    @tool
     def semantic_search(query: str, limit: int = 10) -> dict:
         """Concept search → codemap symbols. Routes the natural-language `query` to an
         opt-in semantic-search adapter (cocoindex), then resolves each fuzzy hit to the
@@ -322,7 +323,7 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
         `limit.total: null` — unknown, not zero."""
         return op("semantic", {"query": query, "limit": limit})
 
-    @server.tool()
+    @tool
     def pack(budget: int = 2000, seeds: list[str] | None = None,
              direction: str | None = None) -> dict:
         """Token-budgeted context pack: the highest-ranked modules, classes and functions
@@ -342,7 +343,7 @@ def build_mcp_server(session: "Session", name: str = "codemap") -> Any:
             args["direction"] = direction
         return op("pack", args)
 
-    @server.tool()
+    @tool
     def advise(need: str | None = None, languages: list[str] | None = None,
                tool: str | None = None, news_days: int | None = None) -> dict:
         """What to use for a need codemap does not cover (other languages, duplicates,

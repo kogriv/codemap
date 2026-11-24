@@ -1,7 +1,7 @@
 """M4 acceptance tests — behavioral layer (call-graph + type-flow) on bquant.
 
-Bounded by design (gaps/ CM-09/10/11): resolves module/self/imported calls,
-flags the rest; type-flow is name-based over signatures. See
+Bounded by design (gaps/ CM-09/10/11): resolves module/self/imported calls
+and direct calls through annotated constructor fields; type-flow is name-based over signatures. See
 codemap/gaps/coverage_gap_analysis_2026-07-24.md.
 """
 
@@ -43,9 +43,9 @@ def q(graph):
 def test_calls_edges_present(graph):
     calls = [e for e in graph.edges if e.type == "calls"]
     assert len(calls) > 500
-    # every calls edge carries a resolution label (fast tier: name-based +
+    # every calls edge carries a resolution label (fast tier: source routes +
     # M7 registry bridges; deep tier would add "deep").
-    valid = {"module", "self", "imported", "registry", "registry-candidate"}
+    valid = {"module", "self", "imported", "annotated-field", "registry", "registry-candidate"}
     assert all(e.extras.get("resolution") in valid for e in calls)
 
 

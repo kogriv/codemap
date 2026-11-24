@@ -318,7 +318,7 @@ def test_session_not_found_carries_outside_graph_only_for_foreign_files():
     s = Session(extract(ROOT / "tests" / "fixtures" / "flatpkg"))
     ts = s.handle({"op": "query", "args": {"name": "web/app.ts"}})
     py = s.handle({"op": "query", "args": {"name": "no_such_python_name"}})
-    assert ts["answer_format"] == ANSWER_FORMAT == 12
+    assert ts["answer_format"] == ANSWER_FORMAT == 13
     assert ts["resolved"]["found"] is False and ts["resolved"]["outside_graph"]["language"] == "typescript"
     assert py["resolved"]["found"] is False and "outside_graph" not in py["resolved"]
     adv = s.handle({"op": "advise", "args": {"need": "duplicates"}})

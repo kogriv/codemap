@@ -20,3 +20,4 @@ assets/
 !.env.example
 *.pem
 *.key
+.codemap/

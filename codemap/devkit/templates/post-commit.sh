@@ -21,16 +21,16 @@ LOG="$ROOT/.codemap/rebuild.log"
       kind=incremental
       cp {{graph_sh}} {{graph_next_sh}}
       cp {{graph_sh}}.meta.json {{graph_next_sh}}.meta.json
-      nice -n 19 $C build {{package_sh}} --deep --repeat 2 {{build_args}} --incremental -o {{graph_next_sh}} >/dev/null 2>"$LOG.err" &
+      nice -n 19 $C build {{package_sh}} --deep --repeat 2 {{build_args}} --incremental -o {{graph_next_sh}} --recipe-output {{graph_sh}} >/dev/null 2>"$LOG.err" &
     else
       kind=full
-      nice -n 19 $C build {{package_sh}} --deep --repeat 2 {{build_args}} -o {{graph_next_sh}} >/dev/null 2>"$LOG.err" &
+      nice -n 19 $C build {{package_sh}} --deep --repeat 2 {{build_args}} -o {{graph_next_sh}} --recipe-output {{graph_sh}} >/dev/null 2>"$LOG.err" &
     fi
     bpid=$!
     wait "$bpid"; brc=$?
-    if [ "$brc" -eq 0 ]; then
-      mv {{graph_next_sh}}.meta.json {{graph_sh}}.meta.json
-      mv {{graph_next_sh}} {{graph_sh}}
+    if [ "$brc" -eq 0 ] &&
+      mv {{graph_next_sh}}.meta.json {{graph_sh}}.meta.json 2>>"$LOG.err" &&
+      mv {{graph_next_sh}} {{graph_sh}} 2>>"$LOG.err"; then
       [ "$kind" = full ] && touch .codemap/last_full
       $C devkit index --root "$ROOT" >/dev/null 2>>"$LOG.err"
       echo "$(date -Is) $(git log --oneline -1 | cut -c1-60) $kind ok $(( $(date +%s)-start ))s" >> "$LOG"

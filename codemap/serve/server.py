@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import sys
 
-from codemap.serve.session import Session
+from codemap.serve.session import Session, request_error
 
 
 def serve_stdio(session: Session, stdin=None, stdout=None) -> int:
@@ -35,7 +35,7 @@ def serve_stdio(session: Session, stdin=None, stdout=None) -> int:
         try:
             request = json.loads(line)
         except json.JSONDecodeError as exc:
-            response = {"ok": False, "error": f"invalid JSON: {exc}"}
+            response = request_error(f"invalid JSON: {exc}")
         else:
             response = session.handle(request)
         stdout.write(json.dumps(response, ensure_ascii=False) + "\n")

@@ -21,8 +21,9 @@ from codemap.query import Query
 from codemap.serve.api_surface import render_api_surface
 from codemap.serve.architecture import build_architecture, render_architecture
 from codemap.serve.audit import render_behavior, render_dead_code, render_dependencies
+from codemap.serve.currency import source_hashes
 from codemap.serve.impact import render_impact
-from codemap.serve.limits import limit_block
+from codemap.serve.limits import cap_list, compact_impact, limit_block, nonnegative_count
 from codemap.serve.mermaid import render_mermaid
 from codemap.serve.rag import build_chunks
 from codemap.serve.review import build_review, render_review
@@ -35,18 +36,22 @@ _REPORTS = {
     "behavior": render_behavior,
     "architecture": render_architecture,
 }
+_SEARCH_KINDS = frozenset({"module", "class", "function", "attribute", "doc", "column"})
 
-# R1-C13: ops whose answer leans on the partial static call graph (Python call
-# resolution is incomplete — gaps/ CM-09) → the answer is a lower bound. We stamp
-# them with a machine-readable epistemic label (the structured twin of the prose
-# disclaimers). Absence of the label = structural/complete (imports, contains,
-# inherits, exports — exact). One label per answer (no per-edge confidence: edges
-# already carry `resolution`). From the GitNexus разбор, built natively.
+
+def request_error(message: str, *, kind: str = "invalid_argument", **fields) -> dict:
+    return {"ok": False, "outcome": "error", "error": message, "error_kind": kind,
+            "answer_format": ANSWER_FORMAT, "currency": {
+                "status": "unknown", "reason": "request failed before graph currency was checked",
+            }, **fields}
+
+# R1-C13, R1-C145: relational ops state how static resolution affects the answer.
+# Calls and accesses can be missing, and heuristic call routes can add candidates.
 # R1-C44 / D4: which edge classes each relational op reads. Two sets are *derived* from
 # this table instead of being listed by hand, so that adding an op — or adding an edge
 # class to the incremental splice — forces a decision here rather than a silent gap:
 #   `_PARTIAL_OPS`  — ops that lean on best-effort static resolution (calls, accesses),
-#                     and so answer a lower bound (R1-C13);
+#                     and so require an epistemic label;
 #   `_SPLICE_OPS`   — ops that read a class the incremental build splices from the old
 #                     graph, and so on a deep+incremental graph read the *earlier* build's
 #                     jedi sample (R1-C43).
@@ -57,10 +62,8 @@ _REPORTS = {
 #
 # `query` was considered here and deliberately left out. Its dossier *does* carry
 # call-derived fields, but most of it — where the symbol is defined, its signature, its
-# file — is exact, and one envelope-wide "this is a lower bound" would say the definition
-# is uncertain too. The rule this file already states is "absence of the label means
-# exact", so a **mixed** answer declares per field (see `_op_query`), not per envelope.
-# Over-claiming partiality is the same defect as hiding it, pointed the other way.
+# file — is from the graph's definition. A mixed answer declares uncertainty by field
+# (see `_op_query`).
 _OP_EDGE_CLASSES = {
     "callers": frozenset({"calls"}),
     "callees": frozenset({"calls"}),
@@ -87,8 +90,8 @@ _SPLICE_OPS = frozenset(op for op, cls in _OP_EDGE_CLASSES.items()
                         if cls & _SPLICED_EDGE_TYPES)
 _EPISTEMIC_PARTIAL = {
     "epistemic": "partial",
-    "reason": "leans on static resolution of calls and attribute accesses (partial "
-              "for Python) — a lower bound; pair with grep/tests before acting.",
+    "reason": "static resolution can miss calls and attribute accesses",
+    "may_miss": True,
 }
 # R1-C53: the over-set is partial in the *other* direction, and saying "a lower bound"
 # about it would be worse than saying nothing. A caller that trims by this set would trim
@@ -135,7 +138,7 @@ def _not_found(name_or_id: str) -> dict:
 # resolved answer survived. An answer can be both, and the two say different things.
 # Each of these sets ``self._limit`` (see `limits.limit_block`); `handle` lifts it into
 # the envelope, always — including when nothing was cut.
-_LIMITED_OPS = frozenset({"search", "semantic", "tests", "covers"})
+_LIMITED_OPS = frozenset({"search", "semantic", "tests", "covers", "impact", "call_contract"})
 
 # Ops bounded by something that is *not* a cut of a computed list. Written down rather
 # than left implicit so the guard test can tell "exempt, deliberately" from "forgotten"
@@ -143,11 +146,6 @@ _LIMITED_OPS = frozenset({"search", "semantic", "tests", "covers"})
 _UNLIMITED_BY_DESIGN = {
     "pack": "budget is a token budget the caller sets on purpose, and the result is "
             "explicitly a *pack* — self-describing by construction",
-    "impact": "depth bounds the walk, it does not slice a computed list; the reach is "
-              "already echoed back as by_distance / max_distance, and flow_depth "
-              "likewise bounds the flow walk while counting what lies past it "
-              "(beyond_depth). Both lists come back whole here; the transport cut "
-              "lives in _compact_impact and declares itself there (R1-C40)",
     "flows": "depth likewise bounds the walk, and the answer carries its own depth",
 }
 
@@ -340,7 +338,8 @@ class Session:
     """A warm, in-memory query surface over one graph."""
 
     def __init__(self, graph: Graph, source_root: str | None = None,
-                 graph_path: str | None = None, currency_ttl: float = 10.0) -> None:
+                 graph_path: str | None = None, currency_ttl: float = 10.0,
+                 served_mtime: float | None = None) -> None:
         # R1-C122: one request at a time. `handle` sets per-request fields (`_resolution`, `_limit`, `_filter`,
         # `_scope`) and reads them back into the envelope, and `reload` swaps `graph`/`query`; the `--watch`
         # thread and a threaded MCP transport both call `handle`, so without this a request could read another
@@ -355,6 +354,7 @@ class Session:
         self._currency_cache: tuple[float, dict] | None = None
         self._currency_checks = 0
         self.query = Query(graph)
+        self._node_kinds = {node.kind for node in graph.nodes.values()}
         # F12: base dir to resolve node.file for the `source` op (node paths are
         # repo-relative, e.g. `bquant/…`). Defaults to cwd; best-effort.
         self.source_root = source_root
@@ -364,7 +364,8 @@ class Session:
         # #3: the mtime of the artifact WHEN WE LOADED IT — so `stats` describes the
         # graph actually being served, not the file on disk (which may have been
         # rebuilt out from under a long-lived server). None for an in-memory graph.
-        self._served_mtime = self._current_mtime()
+        self._served_mtime = served_mtime if served_mtime is not None else self._current_mtime()
+        self._source_hashes = source_hashes(graph_path, graph.provenance.get("scope_id"))
         # R1-C28: the limit block of the op currently being handled (set by the op,
         # lifted into the envelope by `handle`) — same one-shot channel as _resolution.
         self._limit: dict | None = None
@@ -407,51 +408,59 @@ class Session:
         """
         # R1-C122: any JSON value reaches here from `serve`; only an object is a request.
         if not isinstance(request, dict):
-            return {"ok": False, "error": f"a request is a JSON object {{\"op\": …, \"args\": {{…}}}}, "
-                                          f"got {type(request).__name__}"}
+            return request_error(f"a request is a JSON object {{\"op\": …, \"args\": {{…}}}}, "
+                                 f"got {type(request).__name__}")
         op = request.get("op")
         args = request.get("args")
         args = {} if args is None else args
         if not isinstance(op, str):
-            return {"ok": False, "error": f"`op` must be a string, got {type(op).__name__}",
-                    "ops": sorted(_OPS)}
+            return request_error(f"`op` must be a string, got {type(op).__name__}", ops=sorted(_OPS))
         if not isinstance(args, dict):
-            return {"ok": False, "error": f"`args` must be an object, got {type(args).__name__}"}
+            return request_error(f"`args` must be an object, got {type(args).__name__}")
         fn = _OPS.get(op)
         if fn is None:
-            return {"ok": False, "error": f"unknown op: {op!r}",
-                    "ops": sorted(_OPS)}
+            return request_error(f"unknown op: {op!r}", ops=sorted(_OPS))
         with self._lock:
             try:
                 return self._handle(op, fn, args)
             except Exception as exc:  # the envelope itself must not kill the resident process either
-                return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+                return request_error(f"{type(exc).__name__}: {exc}", kind="operation_failed")
 
     def _handle(self, op, fn, args) -> dict:
         self._resolution = None
         self._limit = None
         self._filter = None
         self._scope = None
+        self._answer_currency = None
         try:
-            env = {"ok": True, "result": fn(self, args),
+            env = {"ok": True, "outcome": "ok", "result": fn(self, args),
                    # R1-C63: the shape of this answer, versioned independently of the
                    # graph's schema. Always present — a field that appears only when
                    # something changed cannot be read by a machine (R1-C28).
                    "answer_format": ANSWER_FORMAT}
         except Exception as exc:  # a bad arg must not kill the resident process
-            return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+            kind = "invalid_argument" if isinstance(exc, (KeyError, TypeError, ValueError)) else "operation_failed"
+            return request_error(f"{type(exc).__name__}: {exc}", kind=kind)
         # R1-C85: which tree this answer is about. Always present (R1-C28).
-        env["currency"] = self._currency()
+        env["currency"] = self._answer_currency or self._currency()
+        if op == "check":
+            env["outcome"] = "verdict"
+        elif ((op == "pack" and env["result"].get("status") == "refused")
+              or (op == "reload" and not env["result"]["reloaded"])):
+            env["outcome"] = "refused"
+        elif op == "column" and env["result"] is None:
+            env["outcome"] = "not_found"
         r = self._resolution
         # R1-C44 / D2: three-way, not a truthiness test. "not found" is the one case the
         # block exists for and was the one case `if r and …` threw away.
         if r is not None:
             if not r["found"]:
                 env["resolved"] = r
-            elif r["ambiguous"] or r["input"] != r["id"]:
+                env["outcome"] = "not_found"
+            elif r["ambiguous"] or r["input"] != r["id"] or op == "resolve":
                 env["resolved"] = r
         if op in _PARTIAL_OPS:  # R1-C13: machine-readable "this is a lower bound"
-            env["epistemic"] = self._epistemic(op)
+            env["epistemic"] = self._epistemic(op, args)
         if self._limit is not None:  # R1-C28: how much of the answer survived the cut
             env["limit"] = self._limit
         # R1-C51: a *filter* is the same partiality as a limit, and it was not declared.
@@ -469,16 +478,28 @@ class Session:
         # API and how `communities` judges only the package while saying nothing.
         if self._scope is not None:
             env["scope"] = self._scope
+        limit = None if args.get("full") else args.get("limit")
+        if op == "impact":
+            return compact_impact(env, limit)
+        if op == "call_contract":
+            return cap_list(env, limit)
         return env
 
-    def _epistemic(self, op: str) -> dict:
-        """The lower-bound block for ``op``, with the splice reason when it applies (D4/D5).
+    def _epistemic(self, op: str, args: dict) -> dict:
+        """The uncertainty for an operation, including carried-over deep samples.
 
         Conditioned on the graph *and* the op: only a deep graph can carry a frozen
         sample, and only an op reading a spliced class reads it. On a full deep graph
         and on the fast tier the block is exactly the R1-C13 one.
         """
         block = dict(_EPISTEMIC_OVER_SET if op in _OVER_SET_OPS else _EPISTEMIC_PARTIAL)
+        if ("calls" in _OP_EDGE_CLASSES[op]
+                and self.query.has_heuristic_calls
+                and args.get("min_confidence") not in ("exact", "inferred")):
+            block["may_include_candidates"] = True
+            block["candidates_reason"] = "heuristic dispatch edges can add potential targets"
+        if op in ("tests", "covers"):
+            block["test_evidence"] = "static_reachability"
         prov = self.graph.provenance or {}
         if op in _SPLICE_OPS and prov.get("tier") == "deep":
             if prov.get("incremental") is True:
@@ -534,12 +555,12 @@ class Session:
             out["diagnostics"] = diags
         return out
 
-    def _currency(self) -> dict:
+    def _currency(self, *, fresh: bool = False) -> dict:
         """The served graph against the tree now, cached for ``currency_ttl`` seconds (R1-C85)."""
         import time
         now = time.monotonic()
         c = self._currency_cache
-        if c is None or now - c[0] >= self.currency_ttl:     # ttl 0: every call
+        if fresh or c is None or now - c[0] >= self.currency_ttl:     # ttl 0: every call
             self._currency_checks += 1
             if not self.graph_path:
                 res = {"status": "unknown",
@@ -583,18 +604,23 @@ class Session:
                               "restart to refresh"}
         before = {"nodes": len(self.graph.nodes), "edges": len(self.graph.edges)}
         try:
-            graph = store.load(self.graph_path)
-        except (OSError, ValueError) as exc:
-            return {"reloaded": False,
-                    "reason": f"could not read {self.graph_path}: "
+            graph, mtime = store.load_snapshot(self.graph_path)
+            query = Query(graph)
+            hashes = source_hashes(self.graph_path, graph.provenance.get("scope_id"))
+            kinds = {node.kind for node in graph.nodes.values()}
+        except Exception as exc:
+            return {"reloaded": False, "status": "failed",
+                    "reason": f"could not load snapshot {self.graph_path}: "
                               f"{type(exc).__name__}: {exc}"}
-        self.graph = graph
-        self.query = Query(graph)
-        self._served_mtime = self._current_mtime()
+        changed = (graph != self.graph or graph.loaded_schema != self.graph.loaded_schema
+                   or hashes != self._source_hashes)
+        self.graph, self.query = graph, query
+        self._source_hashes, self._node_kinds = hashes, kinds
+        self._served_mtime = mtime
         self._currency_cache = None      # R1-C85: a new graph is checked afresh
         after = {"nodes": len(graph.nodes), "edges": len(graph.edges)}
         out = {"reloaded": True, "before": before, "after": after,
-               "changed": before != after,
+               "changed": changed,
                "freshness": freshness(self.graph_path,
                                       served_mtime=self._served_mtime)}
         # R1-C38: this is the op whose name promises freshness, so it is the op that owes
@@ -612,35 +638,51 @@ class Session:
 
     def _op_impact(self, args) -> dict:
         sym = args["symbol"]
-        depth = int(args.get("depth", 2))
-        flow_depth = int(args.get("flow_depth", 5))
+        depth = nonnegative_count(args.get("depth", 2), "depth", minimum=1)
+        flow_depth = nonnegative_count(args.get("flow_depth", 5), "flow_depth")
+        if "limit" in args:
+            nonnegative_count(args["limit"], "limit")
         ids = self.query.impact_targets(sym)  # F23: accept full id / re-export too
         if not ids:  # R1-C44: this op resolves on its own, so it records on its own
             self._resolution = _not_found(sym)
-        return {
+        elif len(ids) > 1:
+            self._resolution = {"input": sym, "found": True, "ambiguous": True,
+                                "id": None, "alternatives": ids, "mode": "all_matches"}
+        elif ids[0] != sym:
+            self._resolution = {"input": sym, "found": True, "ambiguous": False,
+                                "id": ids[0], "alternatives": []}
+        impacts = [{**self.query.impact(sid, depth=depth),
+                    "flows": self.query.flows_to(sid, max_depth=flow_depth)}
+                   for sid in ids]
+        result = {
             "symbol": sym,
             # R1-C40: blast radius and the flows it lands on are two answers kept side by
             # side, not merged — "who references" and "where in a scenario the change
             # first bites" have different partialities, and each states its own.
-            "impact": [{**self.query.impact(sid, depth=depth),
-                        "flows": self.query.flows_to(sid, max_depth=flow_depth)}
-                       for sid in ids],
-            "markdown": render_impact(self.query, sym, depth=depth,
-                                      flow_depth=flow_depth),
+            "impact": impacts,
         }
+        if args.get("full") or "limit" not in args:
+            result["markdown"] = render_impact(self.query, sym, impacts=impacts)
+        return result
 
     def _op_resolve(self, args) -> dict | None:
         # F14: full resolution — {input, id, ambiguous, alternatives} — so a cold
         # agent can check for ambiguity before chaining into a relational op.
-        return self.query.canonical_info(args["name"])
+        self._canon(args["name"])
+        if not self._resolution["found"]:
+            return None
+        return {k: v for k, v in self._resolution.items() if k != "found"}
 
     def _op_search(self, args) -> list:
         # R1-C28: count the whole match set, then slice — this op is the *discovery*
         # entry point (F9), the one an agent uses precisely because it does not yet
         # know what exists, so a silent 50-of-1259 is the worst place to be quiet.
         # The full list is already materialised inside `search`; counting is free.
-        limit = int(args.get("limit", 50))
-        hits = self.query.search(args["term"], kind=args.get("kind"), limit=None)
+        limit = nonnegative_count(args.get("limit", 50), "limit")
+        kind = args.get("kind")
+        if kind is not None and kind not in _SEARCH_KINDS and kind not in self._node_kinds:
+            raise ValueError(f"unknown kind: {kind!r}")
+        hits = self.query.search(args["term"], kind=kind, limit=None)
         self._limit = limit_block(limit, min(limit, len(hits)), len(hits))
         return hits[:limit]
 
@@ -676,9 +718,10 @@ class Session:
 
     def _op_tests(self, args) -> dict:
         """R1-C24: which tests exercise a symbol, nearest band first, honestly labelled."""
-        cap = int(args.get("cap", 25))
+        cap = nonnegative_count(args.get("cap", 25), "cap")
         res = self.query.tests_for(
-            self._canon(args["symbol"]), depth=int(args.get("depth", 3)), cap=cap,
+            self._canon(args["symbol"]),
+            depth=nonnegative_count(args.get("depth", 3), "depth", minimum=1), cap=cap,
             all_bands=bool(args.get("all_bands", False)))
         # These two already say it in their own body (`total_at_distance` + a caveat
         # line). The envelope block is added anyway: a machine consumer should read one
@@ -688,9 +731,10 @@ class Session:
 
     def _op_covers(self, args) -> dict:
         """The inverse — what a test actually reaches (same index, read forward)."""
-        cap = int(args.get("cap", 25))
+        cap = nonnegative_count(args.get("cap", 25), "cap")
         res = self.query.covers(
-            self._canon(args["test"]), depth=int(args.get("depth", 3)), cap=cap)
+            self._canon(args["test"]),
+            depth=nonnegative_count(args.get("depth", 3), "depth", minimum=1), cap=cap)
         self._limit = limit_block(cap, len(res["symbols"]), res["total"])
         return res
 
@@ -719,17 +763,30 @@ class Session:
                 "siblings": self.query.family_siblings(cid)}
 
     def _op_call_contract(self, args) -> list:
+        if "limit" in args:
+            nonnegative_count(args["limit"], "limit")
         return self.query.call_contract(self._canon(args["symbol"]))
 
     def _op_locate(self, args) -> dict:
         """F16: (file, line) or (file, lines:[start,end]) → containing symbol(s)."""
         file = args["file"]
+        if ("line" in args) == ("lines" in args):
+            raise ValueError("locate needs exactly one line or a complete start/end range")
         if "line" in args:
-            return {"file": file, "line": int(args["line"]),
-                    "symbol": self.query.symbol_at(file, int(args["line"]))}
-        lo, hi = args["lines"]
-        return {"file": file, "lines": [int(lo), int(hi)],
-                "symbols": self.query.symbols_in_range(file, int(lo), int(hi))}
+            line = nonnegative_count(args["line"], "line")
+            if line == 0:
+                raise ValueError("line must be at least 1")
+            return {"file": file, "line": line, "symbol": self.query.symbol_at(file, line)}
+        span = args["lines"]
+        if not isinstance(span, (list, tuple)) or len(span) != 2:
+            raise ValueError("locate needs a complete start/end range")
+        lo, hi = span
+        lo = nonnegative_count(lo, "start")
+        hi = nonnegative_count(hi, "end")
+        if not 1 <= lo <= hi:
+            raise ValueError("locate requires 1 <= start <= end")
+        return {"file": file, "lines": [lo, hi],
+                "symbols": self.query.symbols_in_range(file, lo, hi)}
 
     def _op_review(self, args) -> dict:
         """F17: change-set review from diff hunks and/or explicit symbols."""
@@ -766,13 +823,14 @@ class Session:
         root = args.get("root") or self.source_root or "."
         contract = load_contract(root)
         # R1-C70: the served graph came from disk; say whether it is the tree it judges.
-        currency = None
-        if self.graph_path:
-            from codemap.serve.currency import graph_currency
-            currency = graph_currency(self.graph_path,
-                                      (self.query.graph.provenance or {}).get("scope_id"))
+        require_current = args.get("require_current", False)
+        require_contract = args.get("require_contract", False)
+        if type(require_current) is not bool or type(require_contract) is not bool:
+            raise ValueError("require_current and require_contract must be booleans")
+        self._answer_currency = self._currency(fresh=require_current)
         return build_check(self.query, contract, check_contract(self.query, contract),
-                           currency=currency)
+                           currency=self._answer_currency, require_current=require_current,
+                           require_contract=require_contract)
 
     def _op_communities(self, args) -> list:
         """R1-C18: data-driven module subsystems (greedy modularity).
@@ -807,7 +865,7 @@ class Session:
                                          "removes an entry point — so a more complete "
                                          "graph can list fewer",
             }
-        return self.query.flow(self._canon(sym), max_depth=int(args.get("depth", 5)))
+        return self.query.flow(self._canon(sym), max_depth=nonnegative_count(args.get("depth", 5), "depth"))
 
     def _op_semantic(self, args) -> dict:
         """R1-C16: semantic search via an opt-in adapter, enriched to codemap symbols.
@@ -820,7 +878,7 @@ class Session:
         from codemap.serve.semantic import semantic_search
         root = args.get("root") or self.source_root or "."
         res = semantic_search(self.query, args["query"], root=root,
-                              limit=int(args.get("limit", 10)))
+                              limit=nonnegative_count(args.get("limit", 10), "limit"))
         # R1-C28: here the cut happens *upstream*, inside the adapter, so the pre-limit
         # total is genuinely unobservable when it returns a full page — `total: null` is
         # the true answer, and it is stated rather than omitted.
@@ -830,7 +888,7 @@ class Session:
     def _op_pack(self, args) -> dict:
         """R1-C6: token-budgeted context pack — most relevant graph slice under N tokens."""
         from codemap.serve.pack import build_pack
-        return build_pack(self.query, budget=int(args.get("budget", 2000)),
+        return build_pack(self.query, budget=nonnegative_count(args.get("budget", 2000), "budget"),
                           seeds=tuple(args.get("seeds") or ()),
                           direction=args.get("direction"))
 
@@ -840,27 +898,41 @@ class Session:
         ``code`` is included when the file is readable under ``source_root`` (or
         cwd); otherwise only the location is returned so the caller can read it.
         """
+        from hashlib import sha256
         from pathlib import Path
         cid = self._canon(args["symbol"])
         node = self.graph.nodes.get(cid)
         if node is None:
-            return {"error": f"unknown symbol: {args['symbol']!r}"}
+            return {"status": "not_found", "error": f"unknown symbol: {args['symbol']!r}"}
         loc = {"id": cid, "file": node.file, "lines": [node.lineno, node.endlineno]}
-        if not node.file or node.lineno is None:
-            return {**loc, "code": None, "note": "no location (overlay node)"}
+        if not node.file:
+            return {**loc, "code": None, "status": "no_file", "note": "no source file recorded"}
+        if not node.lineno:
+            return {**loc, "code": None, "status": "no_span", "note": "no source line range recorded"}
         base = (Path(self.source_root) if self.source_root else Path(".")).resolve()
-        path = base / node.file
+        path = (base / node.file).resolve()
         # R1-C125: the graph says where to read; the read stays below the source root, links followed.
-        if not path.resolve().is_relative_to(base):
-            return {**loc, "code": None,
+        if not path.is_relative_to(base):
+            return {**loc, "code": None, "status": "outside_root",
                     "note": f"not read: {node.file!r} resolves outside the source root {base}"}
+        expected = self._source_hashes.get(node.file)
+        if not expected:
+            return {**loc, "code": None, "status": "unverified",
+                    "note": "no verified file hash for this graph snapshot; rebuild the graph"}
         try:
-            lines = path.read_text(encoding="utf-8").splitlines()
-            loc["code"] = "\n".join(lines[node.lineno - 1:(node.endlineno or node.lineno)])
-        except OSError:
-            loc["code"] = None
-            loc["note"] = f"source unreadable at {path} — set source_root"
-        return loc
+            if not path.is_file():
+                raise OSError("not a regular file")
+            data = path.read_bytes()
+            if sha256(data).hexdigest() != expected:
+                return {**loc, "code": None, "status": "behind",
+                        "note": "file differs from the graph snapshot; rebuild and reload"}
+            lines = data.decode("utf-8").splitlines()
+        except (OSError, UnicodeError):
+            return {**loc, "code": None, "status": "unreadable", "note": f"source unreadable at {path}"}
+        end = node.endlineno or node.lineno
+        if not node.lineno <= end <= len(lines):
+            return {**loc, "code": None, "status": "invalid_span", "note": "source range is outside the file"}
+        return {**loc, "status": "verified", "code": "\n".join(lines[node.lineno - 1:end])}
 
     def _op_report(self, args) -> dict:
         kind = args["kind"]

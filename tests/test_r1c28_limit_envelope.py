@@ -283,6 +283,8 @@ def test_declared_limited_ops_actually_emit_the_block():
         "semantic": {"query": "zones", "root": "."},
         "tests": {"symbol": "pkg.core.f"},
         "covers": {"test": "tests.test_m.test_0"},
+        "impact": {"symbol": "pkg.core.f", "limit": 1},
+        "call_contract": {"symbol": "pkg.core.f", "limit": 1},
     }
     assert set(calls) == set(_LIMITED_OPS), "a limited op has no coverage here"
     for op, args in calls.items():

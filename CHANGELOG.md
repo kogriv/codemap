@@ -5,7 +5,38 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.48] - 2026-11-24
+
+**MCP answer format 13**, graph schema **0.13**, devkit **v8**.
+Upgrade the package in the environment that starts MCP and restart the server.
+Run `codemap devkit update` for projects with the managed hook, then refresh the
+graph to pick up the new call edges and verified file hashes.
+
+### Changed
+- **Fast calls through annotated constructor fields** (R1-C147). A direct call through
+  an instance field assigned from an annotated same-module parameter can now resolve
+  on fast. The `annotated-field` route is inferred. A resolved call removes the live
+  private method from high-confidence dead-code candidates.
+- **Devkit usage counts CLI calls** (R1-C148). The report shows separate MCP, CLI and
+  grep totals and uses `(MCP + CLI) / (MCP + CLI + grep)` for the combined share.
+- **MCP answer format 13** (R1-C137…C146). MCP advertises an output schema and sends the
+  same JSON in `structuredContent` and the text block. Consumers should read `outcome` and
+  `error_kind` for operation errors, missing symbols and refusals, and `result.ok` for
+  an architecture verdict. Application errors now set MCP `isError`. Negative result
+  limits are rejected and an uncapped result uses `limit.applied: null`. Add strict
+  `check(require_contract=true, require_current=true)` for an architecture gate.
+- **Snapshot-aware MCP**. `source` returns code only when the current file's bytes match
+  the loaded graph's verified manifest. Rebuild older graphs to enable code previews.
+  `reload` installs graph and indexes together and detects changes at identical counts.
+  Graph schema 0.13 is unchanged.
+- **Devkit v8** records the final graph path in the post-commit rebuild recipe. Run
+  `codemap devkit update` to install the updated hook.
+
 ### Research
+- **MCP surface audit** (R1-C137…C146). Ten findings on codmap 0.0.47, including
+  reproducible limit and reload discrepancies and gaps in strict architecture checks.
+  [Evidence](gaps/mcp_surface_audit_2026-11-24.md) and
+  [design and verification](docs/design/mcp_surface_contract.md).
 - **An independent call-graph accuracy benchmark** (R1-C132). Five public projects codemap was never tuned on
   (more-itertools, click, rich, markdown-it-py, jinja) are measured against the calls their own test suites
   make at runtime, with pre-registered predictions and controls. In 105 contradicted edges read by hand, one is

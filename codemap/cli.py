@@ -92,19 +92,20 @@ def _emit_answer(text: str) -> None:
     print(f"_answer format {ANSWER_FORMAT} · schema {SCHEMA_VERSION}_")
 
 
-def _graph_from(args):
+def _graph_from(args, *, snapshot: bool = False):
     if getattr(args, "build", None):
-        return extract(args.build, deep=getattr(args, "deep", False))
+        graph = extract(args.build, deep=getattr(args, "deep", False))
+        return (graph, None) if snapshot else graph
     if getattr(args, "graph", None):
         if not os.path.exists(args.graph):
             # R1-C119: said before any work, with the command that makes one.
             raise SystemExit(f"error: no graph at {args.graph} — build it first: "
                              f"`codemap build <package> -o {args.graph}`")
-        graph = store.load(args.graph)
+        graph, mtime = store.load_snapshot(args.graph)
         if getattr(args, "func", None) not in (_cmd_check, _cmd_serve):
             _warn_if_behind(args.graph, graph, args)
         _warn_if_newer_tool(args.graph, graph)
-        return graph
+        return (graph, mtime) if snapshot else graph
     raise SystemExit("error: need --graph <file> or --build <path>")
 
 
@@ -175,6 +176,7 @@ def _cmd_build(args) -> int:
         except OSError as exc:
             print(f"error: cannot create the directory for {args.out}: {exc.strerror}", file=sys.stderr)
             return 2
+    input_scope = _resolve_scope_quietly(args) if args.out else None
     if args.consumer or args.docs:
         core_graph = None
         if getattr(args, "incremental", False) and args.out:
@@ -224,12 +226,17 @@ def _cmd_build(args) -> int:
         # rebuild it, and so the graph's age is meaningful to `serve`/stats.
         # M19.A: also record the input scope manifest (scope_id + profile + git).
         from codemap.freshness import write_meta
-        base = (str(roots_base(args.path, tuple(args.consumer or ()),
-                               tuple(args.docs or ())))
-                if (args.consumer or args.docs) else None)
-        write_meta(args.out, argv=getattr(args, "_argv", []),
-                   cwd=os.getcwd(), target=graph.target, scope=scope,
-                   roots_base=base)
+        base = str(roots_base(args.path, tuple(args.consumer or ()), tuple(args.docs or ())))
+        recipe_out = getattr(args, "recipe_output", None)
+        recipe = (_build_recipe(args, out=recipe_out, incremental=args.incremental)
+                  if recipe_out else getattr(args, "_argv", []))
+        try:
+            write_meta(args.out, argv=recipe, cwd=os.getcwd(), target=graph.target, scope=scope,
+                       roots_base=base, strict=bool(recipe_out), source_verified=bool(
+                           input_scope and scope and input_scope["scope_id"] == scope["scope_id"]))
+        except OSError as exc:
+            print(f"error: could not write staged build recipe: {exc}", file=sys.stderr)
+            return 2
         if incr_info is not None:
             # R1-C92: a full build that had a reason says it — computed, never shown, before.
             why = f" ({incr_info['reason']})" if incr_info.get("reason") else ""
@@ -396,14 +403,11 @@ def _incremental_core(args, repeat):
                         deep=args.deep, repeat=repeat)
 
 
-def _watch_build_argv(args) -> list[str]:
-    """The build recipe this watch replays — recorded in the sidecar, not the watch argv.
-
-    M18 writes ``argv`` beside the graph so ``codemap refresh`` can rebuild it. If a watch
-    recorded its *own* argv there, `refresh` would start a watcher instead of rebuilding —
-    a loop that never returns. So the sidecar gets the equivalent single build.
-    """
-    argv = ["build", args.path, "-o", args.out, "--incremental"]
+def _build_recipe(args, *, out, incremental: bool) -> list[str]:
+    """Single build replay for a watcher or a graph published from a staging file."""
+    argv = ["build", args.path, "-o", out]
+    if incremental:
+        argv.append("--incremental")
     if args.deep:
         argv.append("--deep")
     if (getattr(args, "repeat", None) or 1) > 1:
@@ -415,6 +419,10 @@ def _watch_build_argv(args) -> list[str]:
     if args.mode != "thin":
         argv += ["--mode", args.mode]
     return argv
+
+
+def _watch_build_argv(args) -> list[str]:
+    return _build_recipe(args, out=args.out, incremental=True)
 
 
 def _watch_start_is_stale(out: str, scope_id: str) -> bool:
@@ -930,6 +938,8 @@ def _recipe_problem(meta: dict, graph: str) -> str | None:
         return f"`build` does not take it ({last[-1] if last else 'unparsable'})"
     if args.command != "build":
         return f"it runs `{args.command}`, not `build`"
+    if args.recipe_output:
+        return "a published rebuild recipe cannot redirect its own recorded output"
     if not args.out:
         return "it writes no graph file"
     cwd = meta.get("cwd")
@@ -1263,7 +1273,8 @@ def _cmd_serve(args) -> int:
     ops over the Model Context Protocol instead (needs the optional `mcp` extra).
     """
     from codemap.serve.session import Session
-    session = Session(_graph_from(args), source_root=args.source_root,
+    graph, mtime = _graph_from(args, snapshot=True)
+    session = Session(graph, source_root=args.source_root, served_mtime=mtime,
                       graph_path=getattr(args, "graph", None),
                       currency_ttl=getattr(args, "currency_ttl", 10.0))
     if getattr(args, "watch", False):
@@ -1310,7 +1321,9 @@ def _start_reload_watcher(session, args) -> bool:
               f"{r.get('reason', env.get('error'))}", file=sys.stderr)
         return False
 
-    poller = DebouncedPoller(mtime_probe(args.graph), reload,
+    from codemap.freshness import meta_path
+    graph_probe, meta_probe = mtime_probe(args.graph), mtime_probe(meta_path(args.graph))
+    poller = DebouncedPoller(lambda: (graph_probe(), meta_probe()), reload,
                              interval=args.interval, debounce=args.debounce)
     threading.Thread(target=poller.run, kwargs={"cycles": None},
                      name="codemap-watch", daemon=True).start()
@@ -1408,6 +1421,7 @@ def build_parser() -> argparse.ArgumentParser:
                                 "directory name is the package name every node id starts "
                                 "with — a copy under another name answers to that name.")
     b.add_argument("-o", "--out", help="Write graph.json here (default: stdout JSON).")
+    b.add_argument("--recipe-output", help=argparse.SUPPRESS)
     b.add_argument("--deep", action="store_true",
                    help="Deep call resolution via jedi (richer, ~1 min; default fast).")
     b.add_argument("--consumer", action="append", metavar="PATH",
@@ -1683,7 +1697,7 @@ def build_parser() -> argparse.ArgumentParser:
     dx = dks.add_parser("index", help="Write the per-module digest the hooks read.")
     dx.add_argument("--root", default=".")
     dx.add_argument("--graph", default=None)
-    dus = dks.add_parser("usage", help="codemap tool calls against grep in local Claude Code transcripts.")
+    dus = dks.add_parser("usage", help="Count codemap MCP, codemap CLI and grep in local Claude Code transcripts.")
     dus.add_argument("--root", default=".")
     dus.add_argument("--days", type=int, default=7)
     dus.add_argument("--transcripts", default=None, help="Transcripts directory (default: Claude Code's for --root).")

@@ -209,6 +209,7 @@ class Query:
         ]
         # calls edges (M4 behavioral layer): caller -> callee.
         self._calls = nx.DiGraph()
+        self.has_heuristic_calls = False
         # F7: callee -> [(caller, edge extras)] to expose the argument contract.
         self._call_in: dict[str, list[tuple[str, dict]]] = {}
         for e in graph.edges:
@@ -219,6 +220,7 @@ class Query:
                 # registry at another) — the *strongest* wins: the pair is genuinely
                 # connected by a binding, whatever else also points that way.
                 grade = confidence_of(e, strict=False)
+                self.has_heuristic_calls |= grade == "heuristic"
                 prev = self._calls.edges.get((e.source, e.target), {}).get("confidence")
                 if prev is not None and _grade_rank(prev) < _grade_rank(grade):
                     grade = prev
@@ -1542,7 +1544,7 @@ class Query:
                 if cc is not None:
                     class_cc.setdefault(e.source, []).append(cc)
         god = sorted(((c, n) for c, n in method_counts.items() if n >= min_methods),
-                     key=lambda x: (-x[1], x[0]))[:limit]
+                     key=lambda x: (-x[1], x[0]))
 
         # Second axis: individual functions ranked by cyclomatic complexity.
         complex_fns = []
@@ -1575,9 +1577,14 @@ class Query:
                     "total_cc": sum(ccs), "max_cc": max(ccs) if ccs else 0}
 
         return {
-            "god_classes": [_class_entry(c, n) for c, n in god],
+            "god_classes": [_class_entry(c, n) for c, n in god[:limit]],
             "complex_functions": complex_fns[:limit],
             "call_hubs": hubs[:limit],
+            "selection": {
+                "root": root, "limit_per_list": limit, "min_methods": min_methods, "min_cc": min_cc,
+                "totals": {"god_classes": len(god), "complex_functions": len(complex_fns),
+                           "call_hubs": len(hubs)},
+            },
         }
 
     # -- test mapping (R1-C24, axis A10) -------------------------------------

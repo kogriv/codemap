@@ -87,7 +87,11 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
         _stamp_shadows(graph, tree, modpath)
         walked_here: set[str] = set()   # R1-C74: nodes that already took a body in this module
         shadow_skip = _shadow_map(tree)[0]
-        for fnode, class_stack, scope in _named_functions_scoped(tree):
+        functions = _named_functions_scoped(tree)
+        postponed = any(isinstance(stmt, ast.ImportFrom) and stmt.module == "__future__"
+                        and any(alias.name == "annotations" for alias in stmt.names) for stmt in tree.body)
+        field_types = _constructor_field_types(functions, modpath, nodes, postponed=postponed)
+        for fnode, class_stack, scope in functions:
             node_id = _node_id(modpath, class_stack, fnode.name)
             local = local_imports.get(id(fnode))
             fn_imports = {**imports, **local} if local else imports
@@ -108,8 +112,15 @@ def add_behavior(graph, griffe_root, target_pkg: str, *, deep: bool = False,
                 continue
             members = _class_members(mod, class_stack, modules) if class_stack else {}
             class_prefix = ".".join([modpath, *class_stack]) if class_stack else ""
-            def fast(call, _cp=class_prefix, _im=fn_imports, _mm=modmembers, _me=members):
-                return _resolve(call, modpath, _cp, _im, _mm, _me, reexports, nodes)
+            instance_fields = field_types.get(tuple(class_stack)) if fnode.name != "__init__" else None
+            receiver = _instance_receiver(fnode) if instance_fields else None
+            if receiver and receiver in _rebound_names(fnode):
+                receiver = None
+
+            def fast(call, _cp=class_prefix, _im=fn_imports, _mm=modmembers, _me=members,
+                     _receiver=receiver, _fields=instance_fields):
+                return _resolve(call, modpath, _cp, _im, _mm, _me, reexports, nodes,
+                                receiver=_receiver, instance_fields=_fields)
             resolve = (_deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules)
                        if script else fast)
             _process_function(graph, node_id, fnode, resolve,
@@ -516,7 +527,7 @@ def _own_nodes(fnode):
 
 # -- per-function resolution + control ---------------------------------------
 
-_EDGE_RESOLUTIONS = {"module", "self", "imported", "deep"}
+_EDGE_RESOLUTIONS = {"module", "self", "imported", "deep", "annotated-field"}
 
 
 def _deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules):
@@ -590,6 +601,8 @@ def _process_function(graph, node_id, fnode, resolve, accumulate: bool = False) 
         # emit an edge to nothing (which would poison callers/callees/impact).
         if _tally(counts, graph, target, resolution):
             agg = by_target.setdefault(target, {"resolution": resolution, "shapes": []})
+            if agg["resolution"] == "annotated-field":
+                agg["resolution"] = resolution  # retain a stronger route to the same target
             agg["shapes"].append(_arg_shape(call))
 
     for target in sorted(by_target):
@@ -654,9 +667,107 @@ def _attr_chain(node) -> tuple[str, list[str]] | None:
     return node.id, parts[::-1]
 
 
+def _instance_receiver(fnode) -> str | None:
+    positional = fnode.args.posonlyargs + fnode.args.args
+    if positional and not {"staticmethod", "classmethod"}.intersection(_decorator_tails(fnode)):
+        return positional[0].arg
+    return None
+
+
+def _rebound_names(fnode) -> set[str]:
+    bound = _local_bindings(fnode, include_parameters=False)
+    for node in _own_nodes(fnode):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            bound.update(alias.asname or alias.name.split(".")[0] for alias in node.names)
+        elif isinstance(node, (ast.MatchAs, ast.MatchStar)) and node.name:
+            bound.add(node.name)
+        elif isinstance(node, ast.MatchMapping) and node.rest:
+            bound.add(node.rest)
+        elif isinstance(node, ast.Lambda):
+            args = node.args
+            bound.update(a.arg for a in [*args.posonlyargs, *args.args, *args.kwonlyargs,
+                                         args.vararg, args.kwarg] if a is not None)
+    return bound
+
+
+def _is_field(node, receiver: str) -> bool:
+    return isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == receiver
+
+
+def _constructor_field_types(functions, modpath, nodes, *, postponed: bool) -> dict[tuple[str, ...], dict[str, str]]:
+    """Trust one visible store of an unchanged, simply annotated constructor parameter."""
+    methods = {}
+    for fn, classes, scope in functions:
+        if classes and classes == scope:
+            methods.setdefault(tuple(classes), []).append(fn)
+    result = {}
+    for classes, functions_in_class in methods.items():
+        ctors = [fn for fn in functions_in_class if fn.name == "__init__"]
+        if len(ctors) != 1 or not isinstance(ctors[0], ast.FunctionDef):
+            continue
+        ctor = ctors[0]
+        receiver = _instance_receiver(ctor)
+        if not receiver:
+            continue
+        params = {}
+        for arg in ctor.args.posonlyargs + ctor.args.args + ctor.args.kwonlyargs:
+            annotation = arg.annotation
+            name = annotation.id if isinstance(annotation, ast.Name) else (
+                annotation.value if isinstance(annotation, ast.Constant) else None)
+            if arg.arg != receiver and isinstance(name, str) and name.isidentifier():
+                target = f"{modpath}.{name}"
+                node = nodes.get(target)
+                deferred = postponed or isinstance(annotation, ast.Constant)
+                if (node and node.kind == "class"
+                        and (deferred or (node.lineno is not None and node.lineno < ctor.lineno))):
+                    params[arg.arg] = target
+        if not params:
+            continue
+        rebound = _rebound_names(ctor)
+        if receiver in rebound:
+            continue
+        candidates = {}
+        for stmt in ctor.body:
+            if isinstance(stmt, ast.Assign) and len(stmt.targets) == 1:
+                target = stmt.targets[0]
+            elif isinstance(stmt, ast.AnnAssign):
+                target = stmt.target
+            else:
+                continue
+            value = stmt.value
+            if (_is_field(target, receiver) and isinstance(value, ast.Name)
+                    and value.id in params and value.id not in rebound):
+                candidates[target.attr] = params[value.id]
+        if not candidates:
+            continue
+        writes = dict.fromkeys(candidates, 0)
+        for method in functions_in_class:
+            bound = _instance_receiver(method)
+            if not bound:
+                continue
+            for node in _own_nodes(method):
+                if _is_field(node, bound) and isinstance(node.ctx, (ast.Store, ast.Del)):
+                    if node.attr in writes:
+                        writes[node.attr] += 1
+                elif (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                      and node.func.id in ("setattr", "delattr") and len(node.args) >= 2
+                      and isinstance(node.args[0], ast.Name) and node.args[0].id == bound):
+                    name = node.args[1]
+                    if isinstance(name, ast.Constant) and isinstance(name.value, str):
+                        if name.value in writes:
+                            writes[name.value] += 1
+                    else:
+                        for field in writes:
+                            writes[field] += 1
+        verified = {name: cls for name, cls in candidates.items() if writes[name] == 1}
+        if verified:
+            result[classes] = verified
+    return result
+
+
 def _resolve(call, modpath, class_prefix, imports, modmembers, members, reexports=None,
-             nodes=frozenset()):
-    """Return (target_id, resolution). Only module/self/imported become edges."""
+             nodes=frozenset(), *, receiver=None, instance_fields=None):
+    """Return the target and the route used to resolve an explicit call."""
     f = call.func
     if isinstance(f, ast.Name):
         name = f.id
@@ -687,6 +798,12 @@ def _resolve(call, modpath, class_prefix, imports, modmembers, members, reexport
         # so `b.registry.get()` stays unresolved. External: external at any depth (D2) —
         # `np.random.rand()` is no more unknown than `np.zeros()`.
         chain = _attr_chain(f)
+        if (receiver is not None and chain is not None and chain[0] == receiver
+                and len(chain[1]) == 2):
+            owner = instance_fields.get(chain[1][0])
+            target = f"{owner}.{attr}" if owner else None
+            if target in nodes and nodes[target].kind == "function":
+                return target, "annotated-field"
         if chain is not None and chain[0] in imports:
             head, parts = chain
             tgt = imports[head]
@@ -867,7 +984,7 @@ def _string_annotation_names(text: str) -> list[ast.Name]:
             if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)]
 
 
-def _local_bindings(scope) -> set[str]:
+def _local_bindings(scope, *, include_parameters: bool = True) -> set[str]:
     """Names bound in a **function** scope, which therefore never mean the module symbol.
 
     Python binds per scope, not per statement: once a name is assigned anywhere in a
@@ -897,7 +1014,7 @@ def _local_bindings(scope) -> set[str]:
     declared_global: set[str] = set()
 
     args = getattr(scope, "args", None)
-    if args is not None:
+    if args is not None and include_parameters:
         for a in [*args.posonlyargs, *args.args, *args.kwonlyargs, args.vararg, args.kwarg]:
             if a is not None:
                 bound.add(a.arg)

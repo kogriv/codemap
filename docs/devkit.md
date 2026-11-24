@@ -113,10 +113,16 @@ groups and comments in the region are kept.
 
 ## Is it used? `codemap devkit usage`
 
-It counts `mcp__codemap__*` tool calls against grep (the Grep tool and `grep`/`rg` in Bash) in the project's local
-Claude Code transcripts, sessions and subagents, for the last N days (`--days`). It reads names and counts only.
-Codex transcripts are not read. Grep also covers searches that are not about structure, so the share is a floor,
-not a score. If it stays near zero, the rules block is not doing its job: say so to the codemap maintainers.
+It counts codemap MCP tools, console-script and module invocations in Bash, and grep usage
+(`Grep` plus `grep`/`rg` in Bash) for the last N days (`--days`). The source is the project's
+local Claude Code transcripts, including subagents. The report includes tool names and counts.
+
+The share is **(MCP + CLI) / (MCP + CLI + grep)**. A Bash tool-use can count once in each
+applicable category. The CLI scan supports simple command positions such as `codemap`,
+`.venv/bin/codemap`, `python -m codemap` and `uv run codemap`. It does not expand shell
+functions, here-documents or remote commands. Codex transcripts are outside the scope.
+In JSON, `codemap` and `codemap_total` still describe MCP. Read `codemap_cli_total`
+for CLI and `share` for the basis, numerator, denominator and fraction.
 
 ## Keeping the devkit current
 

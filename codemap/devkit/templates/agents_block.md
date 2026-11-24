@@ -22,9 +22,12 @@ reaches — ask the graph instead of reading files or grepping.
   answer is about the older tree.
 - `resolved.ambiguous` — the short name matched several symbols; ask again by the full name.
 - `limit.truncated: true` — the list is not complete.
+- In `source`, use code with `result.status: verified`. Rebuild and reload when the
+  status is `behind` or `unverified` before relying on the recorded line range.
 
 **The architecture contract** — `[architecture]` in `codemap.toml`, run as
-`codemap check --graph {{graph}} --root . --require-contract` (exit 2 = broken). `allowed` there is a
+`codemap check --graph {{graph}} --root . --require-contract --require-current`.
+In MCP, set `require_contract` and `require_current`, then read `result.ok`. `allowed` there is a
 ratchet: every import between two layers must be a listed pair. A red `allowed` means a new dependency
 between layers: remove the import, or add the pair by hand inside the generated region **with a comment
 giving the reason**, and let the review judge it. `codemap devkit ratchet --tighten` removes the pairs

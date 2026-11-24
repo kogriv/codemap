@@ -65,6 +65,12 @@ Two of those are missing **call** edges, so this was never only a dead-code ques
 `impact`, `callers` and `flows` were reading a call graph with import-time work and
 closure bodies cut out of it.
 
+The fast tier also follows a call such as `self._worker._work()` when the constructor
+assigns the field once from a parameter annotated with a concrete class in the same
+module (R1-C147). The edge is `annotated-field` with grade `inferred`. A visible
+reassignment, ambiguous annotation, or missing target leaves the call unresolved.
+The resulting absence of an edge still needs corroboration before deletion.
+
 Annotations are labelled apart from values on purpose: a dispatch table implies the
 function runs, an annotation implies a contract. Both keep a symbol out of **high**, and
 the distinction is on the edge if you want to weigh them differently. `extras.via="nested"`

@@ -105,10 +105,13 @@ def test_query_match_carries_file_and_lines(session):
     assert m["file"] and m["lines"][0]
 
 
-def test_source_op_returns_code(session):
+def test_source_op_returns_code(session, tmp_path):
     # F12: the source op reads the span (source_root wired below in dispatch test).
-    from pathlib import Path
-    s = Session(extract(FIX), source_root=str(FIX.parent))
+    from codemap import store
+    from codemap.cli import main
+    graph = tmp_path / "graph.json"
+    assert main(["build", str(FIX), "-o", str(graph)]) == 0
+    s = Session(store.load(graph), source_root=str(FIX.parent), graph_path=str(graph))
     r = s.handle({"op": "source", "args": {"symbol": "flowpkg.produce.compute"}})
     assert r["ok"]
     assert "def compute" in (r["result"]["code"] or "")

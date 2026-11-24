@@ -36,11 +36,14 @@ def _with_file(path: Path, file: str) -> dict:
 
 
 def test_e1_source_does_not_read_outside_the_source_root(tmp_path):
+    from codemap.cli import main
     path = _graph(tmp_path)
     secret = tmp_path / "secret.txt"
     secret.write_text("TOP SECRET\n")
     root = tmp_path / "src"
-    good = Session(store.load(path), source_root=str(root)).handle({"op": "source", "args": {"symbol": "pkg.f"}})
+    assert main(["build", str(root / "pkg"), "-o", str(path)]) == 0
+    good = Session(store.load(path), source_root=str(root), graph_path=str(path)).handle(
+        {"op": "source", "args": {"symbol": "pkg.f"}})
     assert "def f" in good["result"]["code"]                          # control
     (root / "link.py").symlink_to(secret)
     g = Graph.from_dict(_with_file(path, "link.py"))
