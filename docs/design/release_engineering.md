@@ -1343,6 +1343,40 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 | Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
 | version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
 
+**0.0.51 — the release check, pre-registered before the upload (2026-11-24).** R1-C106.
+After upload, install both pinned wheels from PyPI in separate clean venvs outside
+the source checkout. With `checkout` set to the absolute path of the release
+checkout, run the following from an empty working directory using the same Python
+for both venvs. `replay.py` uses the baseline interpreter's installed wheel for
+0.0.50 and takes the installed 0.0.51 wheel's import directory as its candidate.
+
+```bash
+python -m venv baseline
+python -m venv release
+baseline/bin/python -I -m pip --isolated install --index-url https://pypi.org/simple --no-cache-dir --only-binary=codmap 'codmap==0.0.50'
+release/bin/python -I -m pip --isolated install --index-url https://pypi.org/simple --no-cache-dir --only-binary=codmap 'codmap==0.0.51'
+env -u PYTHONPATH release/bin/codemap --version
+release/bin/python -I -c 'from codemap.devkit import DEVKIT_VERSION; print(DEVKIT_VERSION)'
+candidate=$(release/bin/python -I -c 'from importlib.metadata import distribution; print(distribution("codmap").locate_file(""))')
+baseline/bin/python -I "$checkout/research/bench/r1c106/replay.py" "$candidate"
+```
+
+Expect `codemap 0.0.51 · answer format 13 · schema 0.13` and devkit version `8`.
+Require the following from the replay on both fast and deep builds:
+
+| Check | Expected result |
+|---|---|
+| Fixture runtime | Both registered callbacks execute and return `old callback` and `new callback`. `ArgumentParser.print_help()` invokes the private override and records `external dispatch`. |
+| Definite shadows | 0.0.50 reports the earlier `_hook` line. That line alone leaves the definite report in 0.0.51. The earlier `_ordinary` and `_decorated_later` lines remain in text and JSON, including at the high-confidence cutoff. |
+| External override | `Runner._print_message` moves from `high` to `medium` and names `argparse.ArgumentParser._print_message` as source evidence. |
+| Unused sibling | `Runner._unused_private` stays `high` in both releases. |
+
+After upgrading, run a full `codemap build` for each existing graph using its
+usual inputs and tier, without `--incremental`, to collect decorator and
+external-ancestor evidence. The replay builds fresh graphs for both tiers.
+The historical consumer 41-to-3 figure is a separate measurement on a pinned
+consumer snapshot. This synthetic release replay does not measure it.
+
 **0.0.50 — the release check, pre-registered before the upload (2026-11-24).** R1-C150 and R1-C151.
 Install the published wheel in a clean environment. On the same synthetic graph,
 compare global and seeded ranks and packs with an isolated 0.0.49 installation.

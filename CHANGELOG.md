@@ -5,11 +5,17 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.51] - 2026-11-24
+
+**MCP answer format 13**, graph schema **0.13**, devkit **v8**.
+After upgrading, run a full `codemap build` without `--incremental` to populate
+the new decorator and external-ancestor evidence.
+
 ### Fixed
 - **Dead-code findings account for decorators and external ancestors** (R1-C106).
   Definite shadow findings omit earlier decorated definitions. A private override
   of a method verified in an external ancestor's source receives `medium` when
-  it would otherwise receive `high`. Rebuild the graph to populate the evidence.
+  it would otherwise receive `high`.
   Incremental builds also preserve bound-method references used by the report.
   [Verification](docs/design/registered_definitions_dead_code.md#verification-on-m99).
 
