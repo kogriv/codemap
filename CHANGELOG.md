@@ -5,6 +5,11 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+### Fixed
+- **Incremental builds preserve annotated-field calls** (R1-C149). Core extraction,
+  incremental rebuilds and repeated deep samples share the same behavioral routes.
+  Rebuild in full to restore calls missing from graphs produced by 0.0.48.
+
 ### Research
 - **Scalability benchmark** (R1-C130). Measured full and incremental builds, MCP STDIO
   latency and payload size, and idle watchers on three public projects with `codmap 0.0.48`.

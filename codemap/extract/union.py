@@ -13,7 +13,7 @@ per edge class, because the two jedi passes resolve in opposite orders:
 
 - ``calls`` produced by the behavioural pass (``resolution`` in :data:`BEHAVIOR_CALL_RES`)
   is resolved **jedi first, fast fallback** (R1-C26 D2). The same call site can come out
-  ``deep`` in one run and ``imported``/``self``/``module`` in another, and the deep run may
+  ``deep`` in one run and ``imported``/``self``/``module``/``annotated-field`` in another, and the deep run may
   also carry more ``callsites`` and extra method edges. Its identity is
   ``(source, target, via)`` — unique within one build, verified on 2807 edges — and the
   ``deep`` variant wins whole.
@@ -57,13 +57,7 @@ from __future__ import annotations
 import copy
 import json
 
-from codemap.model import Edge, Graph
-
-#: Behavioral ``calls`` resolutions — the class whose ``resolution`` is a *quality* of the
-#: run rather than an identity of the edge. The incremental splice keys on the same set
-#: (``incremental.py`` imports it from here): what is spliced and what is unstable turned
-#: out to be one list, twice.
-BEHAVIOR_CALL_RES = frozenset({"module", "self", "imported", "deep"})
+from codemap.model import BEHAVIOR_CALL_RES, Edge, Graph
 
 #: Node-extras counters that count sites and may differ between runs of one tree.
 _SITE_COUNTERS = ("calls", "attr_access")

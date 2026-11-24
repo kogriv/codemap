@@ -27,7 +27,7 @@ import pytest
 
 from codemap import cli, store
 from codemap.diagnostics import DEEP_TIER_UNSTABLE, NOTE, deep_tier_diagnostic, diagnostics
-from codemap.extract import extract
+from codemap.extract import behavior, extract
 from codemap.extract.union import BEHAVIOR_CALL_RES, merge_samples
 from codemap.incremental import _BEHAVIOR_CALL_RES
 from codemap.model import Edge, Graph, Node
@@ -70,6 +70,23 @@ def test_the_order_of_runs_does_not_change_the_result():
     shallow = _graph([("calls", "pkg.a", "pkg.B", {"resolution": "imported", "callsites": 1})])
     deep = _graph([("calls", "pkg.a", "pkg.B", {"resolution": "deep", "callsites": 2})])
     assert _edges(merge_samples([shallow, deep])[0]) == _edges(merge_samples([deep, shallow])[0])
+
+
+def test_annotated_field_and_deep_variants_merge_beside_the_registry_edge():
+    registry = ("calls", "pkg.a", "pkg.B.m", {"resolution": "registry", "callsites": 1})
+    shallow = _graph([registry, ("calls", "pkg.a", "pkg.B.m",
+                                {"resolution": "annotated-field", "callsites": 1})])
+    deep = _graph([registry, ("calls", "pkg.a", "pkg.B.m",
+                             {"resolution": "deep", "callsites": 2})])
+
+    for samples in ([shallow, deep], [deep, shallow]):
+        merged, stats = merge_samples(samples)
+        assert len(merged.edges) == 2
+        assert {edge.extras["resolution"]: edge.extras for edge in merged.edges} == {
+            "registry": registry[3],
+            "deep": {"resolution": "deep", "callsites": 2},
+        }
+        assert stats == {"runs": 2, "unstable": 0}
 
 
 def test_the_same_samples_in_any_order_merge_to_the_same_bytes():
@@ -163,8 +180,8 @@ def test_a_single_sample_is_returned_untouched_and_unmeasured():
     assert stats == {"runs": 1}, "`unstable` cannot be measured from one run — absent, not 0"
 
 
-def test_the_merge_class_and_the_splice_class_are_one_list():
-    assert _BEHAVIOR_CALL_RES is BEHAVIOR_CALL_RES
+def test_emission_merge_and_splice_share_the_same_routes():
+    assert behavior.BEHAVIOR_CALL_RES is _BEHAVIOR_CALL_RES is BEHAVIOR_CALL_RES
 
 
 # -- through extract(): an actual union graph ----------------------------------------------

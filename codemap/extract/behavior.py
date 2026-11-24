@@ -31,7 +31,7 @@ import griffe
 
 from codemap.extract.gsource import (NESTED_IMPORT_HINT, flat_known_modules, flat_resolve,
                                      module_file, module_imports, qualify_target)
-from codemap.model import Edge
+from codemap.model import BEHAVIOR_CALL_RES, Edge
 
 _BUILTINS = set(vars(__import__("builtins")))
 _SKIP_RECEIVERS = {"self", "cls", "super"}
@@ -527,9 +527,6 @@ def _own_nodes(fnode):
 
 # -- per-function resolution + control ---------------------------------------
 
-_EDGE_RESOLUTIONS = {"module", "self", "imported", "deep", "annotated-field"}
-
-
 def _deep_then_fast(graph, script, target_pkg, fast, modpath, known_modules):
     """Deep tier = jedi **union** the name resolver, not jedi instead of it (R1-C26).
 
@@ -571,7 +568,7 @@ def _tally(counts: dict, graph, target, resolution) -> bool:
     and checked against the source.
     """
     counts["out"] += 1
-    if resolution in _EDGE_RESOLUTIONS and target and target in graph.nodes:
+    if resolution in BEHAVIOR_CALL_RES and target and target in graph.nodes:
         counts["resolved"] += 1
         return True
     if resolution == "external":

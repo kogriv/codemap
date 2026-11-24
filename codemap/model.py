@@ -165,6 +165,10 @@ EDGE_TYPES = frozenset({
     "accesses",       # function → attribute node it reads/writes (extras.access, R1-C20)
 })
 
+# Routes emitted by the core behavioral pass. Incremental builds carry these
+# calls forward from unaffected modules, and repeated samples merge their variants.
+BEHAVIOR_CALL_RES = frozenset({"module", "self", "imported", "deep", "annotated-field"})
+
 # Closed vocabulary of ``extras.resolution`` (R1-C39), keyed by (edge type, value).
 #
 # The route was already on the edge before this table existed — `calls` alone carries six

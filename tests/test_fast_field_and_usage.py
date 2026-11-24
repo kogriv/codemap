@@ -53,6 +53,47 @@ def test_fast_field_accepts_explicit_forward_ref(tmp_path):
     assert Query(graph).callers("pkg.Worker._work") == ["pkg.Task.execute"]
 
 
+@pytest.mark.parametrize("consumer_root", [False, True], ids=["package", "repo"])
+def test_incremental_keeps_an_annotated_field_call_until_its_source_changes(
+    tmp_path, monkeypatch, capsys, consumer_root,
+):
+    monkeypatch.chdir(tmp_path)
+    package = _package(tmp_path, "")
+    source = package / "task.py"
+    source.write_text(FIELD_SOURCE)
+    settings = package / "settings.py"
+    settings.write_text("ENABLED = True\n")
+    (package / "helper.py").write_text("VALUE = 2\n")
+    args = ["build", "pkg", "-o", "graph.json"]
+    if consumer_root:
+        consumer = tmp_path / "tests"
+        consumer.mkdir()
+        (consumer / "test_settings.py").write_text("from pkg.settings import ENABLED\n")
+        args.extend(["--consumer", "tests", "--mode", "full"])
+
+    def field_edges(graph):
+        return [edge for edge in graph.edges if edge.type == "calls"
+                and edge.source == "pkg.task.Task.execute"
+                and edge.target == "pkg.task.Worker._work"]
+
+    assert main(args) == 0
+    baseline = field_edges(store.load("graph.json"))
+    assert len(baseline) == 1 and baseline[0].extras["resolution"] == "annotated-field"
+    capsys.readouterr()
+
+    settings.write_text("ENABLED = False\n")
+    assert main([*args, "--incremental"]) == 0
+    assert "[incremental] incremental: 1 module(s) recomputed" in capsys.readouterr().err
+    graph = store.load("graph.json")
+    assert field_edges(graph) == baseline
+    assert Query(graph).callers("pkg.task.Worker._work") == ["pkg.task.Task.execute"]
+
+    source.write_text(FIELD_SOURCE.replace("return self._worker._work(1)", "return 0"))
+    assert main([*args, "--incremental"]) == 0
+    assert "[incremental] incremental: 1 module(s) recomputed" in capsys.readouterr().err
+    assert field_edges(store.load("graph.json")) == []
+
+
 def test_exact_route_wins_when_both_sites_call_the_same_method(tmp_path):
     source = FIELD_SOURCE.replace("return self._worker._work(1)",
                                   "self._worker._work(1)\n        return Worker._work(self._worker, 2)")
