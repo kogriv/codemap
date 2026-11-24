@@ -1377,6 +1377,16 @@ external-ancestor evidence. The replay builds fresh graphs for both tiers.
 The historical consumer 41-to-3 figure is a separate measurement on a pinned
 consumer snapshot. This synthetic release replay does not measure it.
 
+**0.0.51 published 2026-11-24:** [`codmap` 0.0.51](https://pypi.org/project/codmap/0.0.51/)
+from `ce56847`, with `v0.0.51` on GitHub and GitLab. All eight
+[CI jobs](https://github.com/kogriv/codemap/actions/runs/45376611022) passed
+after the README count was updated to 1534 collected tests. Both archives
+passed `twine check --strict` and matched the PyPI SHA-256 digests. The wheel
+downloaded from PyPI passed the fast and deep replay against the separate
+0.0.50 environment, with matching text and JSON findings. A fresh install
+by version from the PyPI index also succeeded. Answer format 13, schema 0.13,
+and devkit v8 were verified in the installed release.
+
 **0.0.50 — the release check, pre-registered before the upload (2026-11-24).** R1-C150 and R1-C151.
 Install the published wheel in a clean environment. On the same synthetic graph,
 compare global and seeded ranks and packs with an isolated 0.0.49 installation.
