@@ -5,6 +5,10 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.50] - 2026-11-24
+
+**MCP answer format 13**, graph schema **0.13**, devkit **v8**.
+
 ### Changed
 - **Faster ranking and seeded context packs** (R1-C150, R1-C151). PageRank prepares its
   traversal once per rank, and a seeded pack shares one projection across seed resolution,

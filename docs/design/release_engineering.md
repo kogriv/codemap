@@ -1343,6 +1343,13 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 | Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
 | version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
 
+**0.0.50 — the release check, pre-registered before the upload (2026-11-24).** R1-C150 and R1-C151.
+Install the published wheel in a clean environment. On the same synthetic graph,
+compare global and seeded ranks and packs with an isolated 0.0.49 installation.
+The serialized results must match for both traversal directions, with the seeded
+projection count going from three to one. The wheel must report Codemap 0.0.50,
+answer format 13, graph schema 0.13 and devkit v8.
+
 **0.0.49 — the release check, pre-registered before the upload (2026-11-24).** R1-C149
 fixes the regression found in the R1-C130 benchmark. Install the published wheel
 in a clean environment and replay the synthetic package from issue #26.
