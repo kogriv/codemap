@@ -1350,6 +1350,13 @@ The serialized results must match for both traversal directions, with the seeded
 projection count going from three to one. The wheel must report Codemap 0.0.50,
 answer format 13, graph schema 0.13 and devkit v8.
 
+**0.0.50 published 2026-11-24:** [`codmap` 0.0.50](https://pypi.org/project/codmap/0.0.50/)
+from `5901519`, tagged `v0.0.50` on GitHub and GitLab. All eight
+[CI jobs](https://github.com/kogriv/codemap/actions/runs/45350412529) passed.
+Both archives passed `twine check --strict` and matched the PyPI SHA-256 digests.
+In a clean environment the published wheel matched 0.0.49's serialized ranks and
+packs and built one projection per valid seeded request.
+
 **0.0.49 — the release check, pre-registered before the upload (2026-11-24).** R1-C149
 fixes the regression found in the R1-C130 benchmark. Install the published wheel
 in a clean environment and replay the synthetic package from issue #26.
