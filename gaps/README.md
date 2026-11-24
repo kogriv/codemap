@@ -19,6 +19,7 @@
 
 | Документ | Назначение |
 |----------|------------|
+| **[override_dispatch_2026-11-24.md](override_dispatch_2026-11-24.md)** | R1-C136. Потери на виртуальной диспетчеризации, допустимые кандидаты и пороги для проверки на R1-C132. |
 | **[rank_pack_cost_2026-11-24.md](rank_pack_cost_2026-11-24.md)** | R1-C131. Профиль `rank` и `pack`, повторное использование графа ранжирования и чувствительность к повторам запросов. |
 | **[scalability_2026-11-24.md](scalability_2026-11-24.md)** | R1-C130. Полная и инкрементальная сборка, MCP и `watch` на трёх классах деревьев. [Предрегистрация и приёмка](../research/bench/r1c130/DESIGN.md). |
 | **[fast_fields_and_devkit_cli_usage_2026-11-24.md](fast_fields_and_devkit_cli_usage_2026-11-24.md)** | Вызов через поле конструктора теряется на fast, а devkit usage пропускает CLI в Bash. Синтетические примеры и [дизайн](../docs/design/fast_fields_and_devkit_cli_usage.md), R1-C147–R1-C148. |
