@@ -1343,6 +1343,18 @@ field), schema 0.13, devkit v5 (no template changed). From PyPI, clean venvs, in
 | Russian tail | `devkit init --agents-lang ru` in a tree with a `.js` file | "this repository also has javascript" | "в этом репозитории есть ещё javascript" |
 | version | `codemap --version` | `codemap 0.0.43 · answer format 12 · schema 0.13` | `codemap 0.0.44 · answer format 12 · schema 0.13` |
 
+**0.0.49 — the release check, pre-registered before the upload (2026-11-24).** R1-C149
+fixes the regression found in the R1-C130 benchmark. Install the published wheel
+in a clean environment and replay the synthetic package from issue #26.
+
+| Check | 0.0.49 expected |
+|---|---|
+| `codemap --version` | Version 0.0.49, answer format 13, graph schema 0.13. |
+| Unrelated file edit with `build --incremental` | One module is recomputed and the original `annotated-field` edge is preserved in package and consumer scopes. |
+| Edit that removes the call from its own module | The next incremental build removes the edge. |
+| Two samples resolve the same call as `annotated-field` and `deep` | One stable behavioral edge with the `deep` variant. A separate registry edge survives. |
+| Installed devkit | Template version 8. |
+
 **0.0.48 — the release check, pre-registered before the upload (2026-11-24).** R1-C137–R1-C148.
 Install the published package in a clean environment and run on synthetic inputs.
 

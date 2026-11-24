@@ -5,10 +5,16 @@ the graph JSON has its own `SCHEMA_VERSION` (`codemap/model.py`), noted per entr
 
 ## [Unreleased]
 
+## [0.0.49] - 2026-11-24
+
+**MCP answer format 13**, graph schema **0.13**, devkit **v8**.
+Upgrade Codemap and run a full `codemap build` once to recover any calls lost by
+incremental builds in `0.0.48`. Restart MCP after updating its environment.
+
 ### Fixed
 - **Incremental builds preserve annotated-field calls** (R1-C149). Core extraction,
   incremental rebuilds and repeated deep samples share the same behavioral routes.
-  Rebuild in full to restore calls missing from graphs produced by 0.0.48.
+  [Issue #26](https://github.com/kogriv/codemap/issues/26).
 
 ### Research
 - **Scalability benchmark** (R1-C130). Measured full and incremental builds, MCP STDIO
