@@ -11,8 +11,8 @@ and say *why*, so you can tell a real corpse from a framework-wired function.
 
 | Level | Meaning | Typical reason |
 |---|---|---|
-| **high** | No inbound edge of any kind, no decorator, no registry — **and it overrides nothing** | `no inbound calls, references, or decorators` |
-| **medium** | A decorator or registry membership could invoke it implicitly; or it overrides a base method that is itself uncalled here | `decorated by @route — may be invoked implicitly` · `overrides Base._open, which is itself uncalled here — dead only if the base is` |
+| **high** | No inbound edge of any kind, decorator, registry membership, or detected ancestor method | `no inbound calls, references, or decorators` |
+| **medium** | A decorator or registry membership could invoke it implicitly, or it overrides a base method that is uncalled here or declared in external source | `decorated by @route — may be invoked implicitly` · `overrides Base._open, which is itself uncalled here — dead only if the base is` |
 | **low** | Something *references* it (re-export, a name in a list, a registration), or it **overrides a called base** → likely alive | `referenced (references) by tests×3` · `overrides PIL.ImageFile.ImageFile._open, which has 1 inbound call(s) — reached by dispatch, not by name` |
 
 ### Overrides are reached through the base (R1-C55)
@@ -37,6 +37,24 @@ The **low** tier is the false-positive cut: a private helper that a test, a re-e
 or a registry points at is *referenced*, so codemap says so and grades it down instead
 of listing it as dead. The reason names who references it, across roots (core / tests /
 docs / …) when the graph was built repo-scoped.
+
+### Source-verified external overrides (R1-C106)
+
+An otherwise high-confidence private method moves to **medium** when a qualified
+external ancestor declares the same method in readable Python source or a stub.
+The reason names the canonical ancestor method, for example
+`overrides argparse.HelpFormatter._format_usage, declared in external source — may be reached by dispatch`.
+References, decorators, and internal override evidence retain their existing grades
+and reasons. An external base edge alone supplies no method evidence.
+
+Fast and deep core builds follow qualified bases, static import aliases, and ancestor
+declarations by reading the relevant module files. They do not import dependencies.
+Missing or unreadable source, compiled-only dependencies, dynamic aliases, and
+unresolved ancestry can leave an override undetected. The graph stores the qualified
+method ID in `extras.external_override`, with no dependency file path. This is
+evidence of a possible dispatch route. The dependency's actual calls are outside the
+graph. Full consumer roots still supply their existing cross-root references and
+do not build an inheritance graph.
 
 ### What counts as a reference
 
@@ -103,7 +121,7 @@ definitions as nodes (`tests.test_x.test_it._local_helper`). Measured on one rea
 none of them nodes; 35 in the consumer roots, all 35 nodes. Design:
 [design/nested_definitions.md](design/nested_definitions.md).
 
-## Shadowed definitions — certain, not graded
+## Shadowed definitions — definite binding replacements
 
 A name defined twice in one scope — a method written twice in a class, a function
 repeated at module level — is listed in its own section ahead of the graded candidates:
@@ -111,21 +129,35 @@ repeated at module level — is listed in its own section ahead of the graded ca
 ```
 ## Shadowed definitions — certain: 1
 
-- `pkg.Thing.get` — defined at line 11 shadows the definition at line 8; the earlier body can never run.
+- `pkg.Thing.get` — defined at line 11 shadows the definition at line 8.
 ```
 
-It is not a candidate because it is not a heuristic: Python binds the later body and the
-earlier one cannot run whatever calls it. The surviving node carries `extras.shadows`
-(the shadowed line numbers), and the extractor walks only the body that can run — before
-this, both bodies' calls were attributed to the one node, so the graph claimed a call
-from code that never executes (R1-C46, found by a consumer as a `contains` record that
-appeared twice).
+The surviving node's `extras.shadows` records every earlier line whose binding it
+replaced. When an earlier definition has a decorator, the extractor also records its
+line in `extras.decorated_shadows`. A decorator may retain that object, so the text
+and JSON reports omit that line from the definite list. In a mixed sequence, plain
+earlier definitions are still listed. A decorator on the later definition alone
+does not protect an earlier binding. The record establishes rebinding and the
+presence of a decorator. Object retention and execution depend on runtime behavior.
+
+The graph has one canonical node for the surviving definition. When definitions
+share that ID, calls inside replaced bodies stay out of the surviving node's call
+edges. The core call-site report accounts for them in `shadowed_not_walked`, including
+calls in bodies a decorator may have retained. Full consumer roots also record
+binding lines and filter their definite findings.
 
 Three idioms rebind a name on purpose and are exempt by decorator, never by guess:
 `@overload` before the implementation, `@x.setter` / `.getter` / `.deleter`, and a
 `@f.register` (or the singledispatch `_`) after the base. A definition under `if` or
 `try` — `if TYPE_CHECKING:`, an `except ImportError` fallback — neither shadows nor is
 shadowed; both bodies keep being walked.
+
+### Rebuild for the new evidence
+
+Older graphs remain readable and use the evidence recorded when they were built.
+Make a fresh build to populate the two optional fields. A no-op incremental build
+reuses the old artifact. If an external dependency is installed, removed, or changed
+without an edit to the analyzed source, rebuild to refresh ancestor evidence.
 
 ## Called only from outside the package (R1-C118)
 

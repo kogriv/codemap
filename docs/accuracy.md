@@ -24,6 +24,16 @@ Two things are measured here, both reproducible:
 
 ---
 
+## Dead-code report accuracy (R1-C106)
+
+The definite shadow list now excludes earlier decorated definitions because a
+decorator can retain the earlier object after rebinding. The graph still records
+the replacement and assigns calls only to the surviving definition. An otherwise
+high private method drops to medium when an external ancestor's readable source
+declares the same method. This indicates possible dispatch, and source availability
+limits coverage. Synthetic runtime controls exercise both cases. Build a fresh
+graph to get the new evidence. [Dead-code report semantics](dead-code.md)
+
 ## (a) Call-graph accuracy
 
 ### Why not PyCG as the oracle

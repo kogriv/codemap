@@ -32,6 +32,7 @@ from codemap.extract.behavior import add_behavior
 from codemap.extract.dataflow import add_dataflow
 from codemap.extract.dispatch import (add_dispatch, add_family_links, add_protocol_dispatch,
                                       add_structural_implements)
+from codemap.extract.external import stamp_external_overrides
 from codemap.extract.gsource import (DOTTED_IMPORT_HINT, NESTED_IMPORT_HINT, KnownModules,
                                      deepest_module, flat_resolve, module_file, module_identity)
 from codemap.extract.union import merge_samples
@@ -50,6 +51,7 @@ SKIP_ENCODING, SKIP_SYNTAX, SKIP_IO, SKIP_UNREAD = "encoding", "syntax", "io", "
 class _Walk:
     """What one structural walk accumulates besides nodes and edges."""
 
+    external_bases: dict[str, list[str]] = field(default_factory=dict)
     aliases: list = field(default_factory=list)   # (parent_module, name, target, public)
     #: (module_id, target_symbol_path, scope) — scope is "module" or, since R1-C29,
     #: "function" for an import written inside a function body.
@@ -255,6 +257,7 @@ def build_structural(package_path: str | Path):
 
     _collect(graph, root, search_path, module_name, walk)
     _resolve_edges(graph, module_name, walk.aliases, walk.imports)
+    stamp_external_overrides(graph, walk.external_bases, search_path)
     # R1-C23/D2: an input the extractor could not read used to vanish without a word,
     # and the graph then reported on a tree it had not fully seen. Record what was
     # missed *in the artifact*, so a consumer holding only the graph is told.
@@ -648,7 +651,7 @@ def _collect(graph, obj, root, target_pkg, walk) -> None:
         graph.add_edge(Edge("contains", obj.canonical_path, member.canonical_path))
         _emit_decorated_by(graph, member)
         if member.kind.value == "class":
-            _emit_inherits(graph, member, target_pkg)
+            _emit_inherits(graph, member, target_pkg, walk)
         if member.kind.value in {"module", "class"}:
             _collect(graph, member, root, target_pkg, walk)
 
@@ -676,11 +679,13 @@ def _claim(module, walk) -> bool:
 
 # -- semantic edges resolvable inline (griffe gives absolute targets) --------
 
-def _emit_inherits(graph, cls, target_pkg) -> None:
+def _emit_inherits(graph, cls, target_pkg, walk) -> None:
     """One `inherits` edge per base; griffe resolves the base to a canonical path."""
     for base in getattr(cls, "bases", None) or []:
         target = getattr(base, "canonical_path", None) or str(base)
         internal = target == target_pkg or target.startswith(target_pkg + ".")
+        if not internal and "." in target and getattr(base, "reference_path", None) == target:
+            walk.external_bases.setdefault(cls.canonical_path, []).append(target)
         graph.add_edge(
             Edge(
                 "inherits",

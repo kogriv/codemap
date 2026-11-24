@@ -663,9 +663,9 @@ class Query:
         is what cuts the false positives a call-only tool (vulture) can't:
 
         - **high** — no inbound edge of *any* kind (call / reference / re-export) and
-          no decorator or registry hook: the strongest dead signal.
+          no decorator, registry hook, or detected ancestor method.
         - **medium** — no inbound reference, but a decorator or registry membership
-          could invoke it implicitly (a framework hook, dispatched impl).
+          could invoke it implicitly, or an ancestor declares the same method.
         - **low** — something *references* it (a re-export, a name put in a list, a
           registration): probably alive; the reason names who, so you can judge.
 
@@ -816,6 +816,10 @@ class Query:
                 reasons.append(
                     f"registered as {registry.get('key', '?')!r} — may be dispatched")
             confidence = "medium"
+        elif ancestor := n.extras.get("external_override"):
+            reasons = [f"overrides {ancestor}, declared in external source — "
+                       "may be reached by dispatch"]
+            confidence = "medium"
         else:
             reasons = ["no inbound calls, references, or decorators"]
             confidence = "high"
@@ -823,20 +827,23 @@ class Query:
                 "root": self.root_of(n.id), "reasons": reasons}
 
     def shadowed_definitions(self) -> list[dict]:
-        """Definitions that replaced an earlier definition of the same name (R1-C46).
+        """Replaced definition lines eligible for the definite report section.
 
-        Not a graded candidate: a body a later ``def`` in the same scope replaced can
-        never run, and no inbound edge changes that — so it is listed apart from
-        :meth:`dead_code`, whose bands all mean "probably". Read from ``extras.shadows``,
-        which the extractor stamps on the surviving node (``extract/behavior.py``).
+        The graph keeps all replaced binding lines in ``extras.shadows``. Earlier
+        decorators may retain their original objects, so omit those lines when
+        source-derived ``extras.decorated_shadows`` is available.
         """
         out = []
         for n in self.graph.nodes.values():
-            shadows = n.extras.get("shadows")
+            replaced = n.extras.get("shadows")
+            if not replaced:
+                continue
+            decorated = set(n.extras.get("decorated_shadows", ()))
+            shadows = [line for line in replaced if line not in decorated]
             if shadows:
                 out.append({"id": n.id, "kind": n.kind, "root": self.root_of(n.id),
                             "file": n.file, "lineno": n.lineno,
-                            "shadows": list(shadows)})
+                            "shadows": shadows})
         out.sort(key=lambda d: d["id"])
         return out
 

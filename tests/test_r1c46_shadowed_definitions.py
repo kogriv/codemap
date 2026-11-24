@@ -133,7 +133,7 @@ def test_report_lists_it_as_certain_not_as_a_graded_candidate(graph):
     text = render_dead_code(q)
     assert "## Shadowed definitions — certain: 1" in text
     assert "`shadowpkg.Thing.get` — defined at line" in text
-    assert "can never run" in text
+    assert "shadows the definition at line" in text
 
 
 def test_a_tree_without_a_duplicate_has_no_section():

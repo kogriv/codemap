@@ -1,0 +1,91 @@
+{
+  "baseline": {
+    "deep": {
+      "high": [
+        "proofpkg.Runner._print_message",
+        "proofpkg.Runner._unused_private",
+        "proofpkg._ordinary"
+      ],
+      "override": {
+        "confidence": "high",
+        "id": "proofpkg.Runner._print_message",
+        "reasons": [
+          "no inbound calls, references, or decorators"
+        ],
+        "root": "core"
+      },
+      "shadowed": [
+        "proofpkg._decorated_later",
+        "proofpkg._hook",
+        "proofpkg._ordinary"
+      ]
+    },
+    "fast": {
+      "high": [
+        "proofpkg.Runner._print_message",
+        "proofpkg.Runner._unused_private",
+        "proofpkg._ordinary"
+      ],
+      "override": {
+        "confidence": "high",
+        "id": "proofpkg.Runner._print_message",
+        "reasons": [
+          "no inbound calls, references, or decorators"
+        ],
+        "root": "core"
+      },
+      "shadowed": [
+        "proofpkg._decorated_later",
+        "proofpkg._hook",
+        "proofpkg._ordinary"
+      ]
+    }
+  },
+  "candidate": {
+    "deep": {
+      "high": [
+        "proofpkg.Runner._unused_private",
+        "proofpkg._ordinary"
+      ],
+      "override": {
+        "confidence": "medium",
+        "id": "proofpkg.Runner._print_message",
+        "reasons": [
+          "overrides argparse.ArgumentParser._print_message, declared in external source \u2014 may be reached by dispatch"
+        ],
+        "root": "core"
+      },
+      "shadowed": [
+        "proofpkg._decorated_later",
+        "proofpkg._ordinary"
+      ]
+    },
+    "fast": {
+      "high": [
+        "proofpkg.Runner._unused_private",
+        "proofpkg._ordinary"
+      ],
+      "override": {
+        "confidence": "medium",
+        "id": "proofpkg.Runner._print_message",
+        "reasons": [
+          "overrides argparse.ArgumentParser._print_message, declared in external source \u2014 may be reached by dispatch"
+        ],
+        "root": "core"
+      },
+      "shadowed": [
+        "proofpkg._decorated_later",
+        "proofpkg._ordinary"
+      ]
+    }
+  },
+  "runtime": {
+    "callbacks": [
+      "old callback",
+      "new callback"
+    ],
+    "external_calls": [
+      "external dispatch"
+    ]
+  }
+}

@@ -95,7 +95,7 @@ def build_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
         "candidates": dead,
         "totals": {c: sum(1 for d in dead if d["confidence"] == c)
                    for c in ("high", "medium", "low")},
-        # R1-C46: certain, not graded — a body a later definition replaced cannot run.
+        # Definite replaced bindings after excluding earlier decorated definitions.
         "shadowed": query.shadowed_definitions(),
         "whitelist": {"patterns": list(whitelist), "error": whitelist_error},
         "min_confidence": min_confidence,
@@ -154,8 +154,7 @@ def build_behavior(query: Query) -> dict:
         "kind": "behavior",
         "target": graph.target,
         "call_sites": {**agg, "functions_with_coverage": len(with_cov),
-                       # R1-C74: the whole and its parts; they sum to every call in the source
-                       # that can run (shadowed bodies are named, not walked).
+                       # R1-C74: walked and skipped sites together account for source calls.
                        "by_scope": sites["by_scope"],
                        "shadowed_not_walked": sites["shadowed_not_walked"]},
         "calls_edges": {"total": sum(by_res.values()), "by_resolution": dict(sorted(by_res.items()))},
@@ -227,20 +226,20 @@ def render_dead_code(query: Query, *, whitelist: tuple[str, ...] = (),
             f"_{breakdown} — tests/examples/scripts/research are never imported; "
             "expected orphan. Excluded from dead-code candidates (F8)._"
         )
-    # R1-C46: a name defined twice in one scope. Ahead of the graded list and worded as
-    # a certainty, because it is one: the earlier body cannot run whatever calls it.
+    # R1-C46/R1-C106: definite replaced bindings, ahead of the graded list.
     shadowed = query.shadowed_definitions()
     if shadowed:
         lines.append("")
         lines.append(f"## Shadowed definitions — certain: {len(shadowed)}")
         lines.append("")
         lines.append("_A later definition of the same name in the same scope replaced "
-                     "these; the earlier body can never run. Not a heuristic._")
+                     "these bindings. Earlier decorated definitions are omitted when "
+                     "the graph records their decorators._")
         lines.append("")
         for s in shadowed:
             earlier = ", ".join(str(ln) for ln in s["shadows"])
             lines.append(f"- `{s['id']}` — defined at line {s['lineno']} shadows the "
-                         f"definition at line {earlier}; the earlier body can never run.")
+                         f"definition at line {earlier}.")
     # R1-C8: uncalled private functions, graded by confidence with a provenance reason.
     lines.append("")
     filt = f" (min-confidence: {min_confidence})" if min_confidence else ""
@@ -326,7 +325,7 @@ def render_behavior(query: Query) -> str:
         f"_{by['function']['out']} in function bodies, {by['nested']['out']} in nested functions, "
         f"{by['module']['out']} at module level, {by['class_body']['out']} in class bodies"
         + (f"; {shadow} more sit in bodies replaced by a later definition and are not walked "
-           "(they cannot run)" if shadow else "")
+           "under the surviving definition" if shadow else "")
         + "._")
     lines.append("")
     lines.append(f"- resolved to internal edges: **{agg['resolved']}** ({100*agg['resolved']/total:.1f}%)")

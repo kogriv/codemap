@@ -66,19 +66,19 @@ from codemap.scope import diff_scopes
 # R1-C45: the same set is the class `--repeat` merges by quality — what is spliced and
 # what is unstable are one list, so it is defined once, beside the merge.
 _BEHAVIOR_CALL_RES = BEHAVIOR_CALL_RES
-# R1-C22: `references` resolutions the behavioral pass owns (a name used as a value, or
-# as a type annotation). The consumer/doc references carry other resolutions and belong
+# References from names, type annotations, and bound methods belong to the behavioral
+# pass. The consumer/doc references carry other resolutions and belong
 # to the repo-scope pass, which the incremental path does not touch.
-_BEHAVIOR_REF_RES = frozenset({"name", "annotation"})
+_BEHAVIOR_REF_RES = frozenset({"name", "annotation", "self"})
 # Node-extras keys owned by the two jedi-sensitive passes (spliced for unaffected).
-# `shadows` (R1-C46) is stamped by the behavioral pass too, so an unaffected module keeps
-# it — or the fast tier's byte-identity to a full build (R1-C9) breaks on it.
+# Shadow metadata (R1-C46/R1-C106) is stamped by the behavioral pass too, so an
+# unaffected module keeps it for parity with a full fast build (R1-C9).
 # R1-C86: `calls_nested` (calls inside nested defs, counted on the owner) and
 # `calls_shadowed` (on the module node) are stamped by the same pass and were missing,
 # so every unaffected module with a nested def lost them: on a bquant commit replay, 26
 # nodes differed from a full build. A guard now derives the set from the passes.
 _BEHAVIORAL_EXTRAS = ("calls", "control", "complexity", "attr_access", "shadows",
-                      "calls_nested", "calls_shadowed")
+                      "decorated_shadows", "calls_nested", "calls_shadowed")
 # Old edge types whose target landing in a changed/removed module makes the source
 # module stale (it must re-resolve). Only the spliced passes matter here — and the serve
 # layer reads the same set to know which ops answer from a spliced class (R1-C44).

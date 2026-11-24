@@ -32,7 +32,7 @@ import os
 import re
 from pathlib import Path
 
-from codemap.extract.behavior import _arg_contract, _arg_shape, _shadow_map
+from codemap.extract.behavior import _arg_contract, _arg_shape, _shadow_map, _stamp_shadows
 from codemap.extract.griffe_extractor import extract
 from codemap.provenance import canonicalize
 from codemap.model import Edge, Graph, Node
@@ -306,9 +306,8 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
         if isinstance(n, ast.Attribute) and isinstance(n.value, ast.Attribute)
     }
     func_ranges = _func_ranges(tree) if mode == "full" else []
-    # R1-C46: a use inside a body that a later definition replaced is not a use — it
-    # would attribute a reference (or a call) to code that never runs, in either mode.
-    dead = _shadow_map(tree)[2]
+    # R1-C46: uses in replaced bodies do not belong to the surviving node.
+    replaced = _shadow_map(tree)[2]
     # R1-C80 D0: in full mode, a use of the module's own top-level function or class is an
     # edge too — a test calling `_vector` in its own module. Without it the walk from a core
     # symbol stopped at the helper. Names that an import also binds are left to the import.
@@ -320,7 +319,7 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
 
     for node in ast.walk(tree):
         line = getattr(node, "lineno", None)
-        if line is not None and any(a <= line <= b for a, b in dead):
+        if line is not None and any(a <= line <= b for a, b in replaced):
             continue
         target = None
         use_node = node
@@ -351,7 +350,7 @@ def _scan_consumer_module(graph, py, base, label, tree, index, mode, origin=None
     if mode == "full":
         # R1-C81 D4: `fc = _spec().build().fit(df); fc.band(…)` — calls on objects whose
         # type a constructor or a return annotation names.
-        for src, target, res in _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, dead):
+        for src, target, res in _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, replaced):
             if (src, target) not in uses:
                 uses[(src, target)] = {"called": True, "shapes": [], "local": False, "typed": res}
 
@@ -494,14 +493,14 @@ class _Typer:
         return env
 
 
-def _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, dead):
+def _typed_calls(graph, tree, mod_id, symbol_map, index, func_ranges, replaced):
     """(source id, core method id, resolution) for calls on typed receivers in a consumer module."""
     typer = _Typer(graph, tree, symbol_map, index)
     out: set[tuple[str, str]] = set()
     for fnode in ast.walk(tree):
         if not isinstance(fnode, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
-        if any(a <= fnode.lineno <= b for a, b in dead):
+        if any(a <= fnode.lineno <= b for a, b in replaced):
             continue
         env = typer.env_of(fnode)
         for call in ast.walk(fnode):
@@ -603,13 +602,7 @@ def _materialize_defs(graph, tree, mod_id, label, file: str | None = None) -> No
                             extras={"root": label}))
         parent = ".".join([mod_id, *class_stack]) if class_stack else mod_id
         graph.add_edge(Edge("contains", parent, node_id))
-    # R1-C46: one node and one `contains` per definition that can run (issue #16 found
-    # the record twice); the survivor says which earlier bodies it replaced.
-    for (scope, name), rec in _shadow_map(tree)[1].items():
-        if rec["node"]:
-            nid = ".".join([mod_id, *scope, name])
-            if nid in graph.nodes:
-                graph.nodes[nid].extras["shadows"] = sorted(rec["linenos"])
+    _stamp_shadows(graph, tree, mod_id)
 
 
 def _defs(tree):

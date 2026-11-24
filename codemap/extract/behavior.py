@@ -418,17 +418,19 @@ def _shadow_map(tree) -> tuple[set[int], dict, list[tuple[int, int]]]:
 
     R1-C46: griffe keeps the **last** body of a name defined twice and drops the first
     without a word; the AST walkers here used to visit *both* and attribute both bodies'
-    calls to the one surviving node — an edge from code that can never run. So every
-    walker skips the shadowed subtree, and the surviving node records what it shadowed.
+    calls to the one surviving node. Every walker skips the replaced subtree,
+    and the surviving node records which bindings it replaced. A decorator on
+    an earlier definition can retain its object independently of that binding.
 
     Only a *direct* statement of a module, class or function body shadows or is
     shadowed. A definition under ``if`` / ``try`` / ``with`` is conditional on either
     side (``if TYPE_CHECKING:``, an ``except ImportError`` fallback): it neither replaces
     nor is replaced, and both bodies keep being walked — the honest over-approximation.
 
-    Returns ``(ids of AST nodes to skip, records, dead line ranges)``; ``records`` maps
-    ``(scope chain, name) -> {"linenos": [...], "node": bool}`` where ``node`` says the
-    chain is classes only, i.e. the survivor is a definition node the graph holds.
+    Returns ``(ids of AST nodes to skip, records, replaced line ranges)``; ``records`` maps
+    ``(scope chain, name)`` to all replaced ``linenos`` and, when present, a
+    ``decorated`` subset. ``node`` marks a class-only scope chain, where the survivor
+    has a canonical definition node.
     """
     skip: set[int] = set()
     records: dict[tuple[tuple[str, ...], str], dict] = {}
@@ -447,6 +449,8 @@ def _shadow_map(tree) -> tuple[set[int], dict, list[tuple[int, int]]]:
                     rec = records.setdefault((tuple(scope), stmt.name),
                                              {"linenos": [], "node": all(k == "c" for k in kinds)})
                     rec["linenos"].append(prev.lineno)
+                    if prev.decorator_list:
+                        rec.setdefault("decorated", []).append(prev.lineno)
                 last[stmt.name] = stmt
         for child in ast.iter_child_nodes(node):
             if id(child) in skip:
@@ -463,13 +467,16 @@ def _shadow_map(tree) -> tuple[set[int], dict, list[tuple[int, int]]]:
 
 
 def _stamp_shadows(graph, tree, prefix: str) -> None:
-    """Write ``extras.shadows`` on every surviving definition node under ``prefix``."""
+    """Record replaced bindings and any earlier decorated lines on the survivor."""
     for (scope, name), rec in _shadow_map(tree)[1].items():
         if not rec["node"]:
             continue
         nid = ".".join([prefix, *scope, name])
         if nid in graph.nodes:
-            graph.nodes[nid].extras["shadows"] = sorted(rec["linenos"])
+            extras = graph.nodes[nid].extras
+            extras["shadows"] = sorted(rec["linenos"])
+            if rec.get("decorated"):
+                extras["decorated_shadows"] = sorted(rec["decorated"])
 
 
 def _named_functions(tree):
