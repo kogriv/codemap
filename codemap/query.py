@@ -137,16 +137,16 @@ def _pagerank(g: "nx.DiGraph", personalization: dict[str, float] | None,
         p = {v: personalization.get(v, 0.0) / s for v in nodes}
     else:
         p = {v: 1.0 / n for v in nodes}
-    outdeg = {v: g.out_degree(v) for v in nodes}
-    dangling = [v for v in nodes if outdeg[v] == 0]
+    traversal = [(v, g.out_degree(v), sorted(g.successors(v))) for v in nodes]
+    dangling = [v for v, degree, _ in traversal if degree == 0]
     x = dict(p)
     for _ in range(max_iter):
         xlast = x
         x = {v: 0.0 for v in nodes}
         danglesum = alpha * sum(xlast[v] for v in dangling)
-        for v in nodes:
-            share = alpha * xlast[v] / outdeg[v] if outdeg[v] else 0.0
-            for w in sorted(g.successors(v)):
+        for v, degree, successors in traversal:
+            share = alpha * xlast[v] / degree if degree else 0.0
+            for w in successors:
                 x[w] += share
         for v in nodes:
             x[v] += danglesum * p[v] + (1.0 - alpha) * p[v]
@@ -1188,8 +1188,10 @@ class Query:
         it did match. Before this, all three shapes fell through to the global rank
         under a header naming the seed.
         """
+        return self._seed_resolution_on(self._rank_graph(root=root), seeds)
+
+    def _seed_resolution_on(self, g: "nx.DiGraph", seeds) -> dict:
         from collections import Counter
-        g = self._rank_graph(root=root)
         per, unresolved, ids = [], [], set()
         for s in seeds:
             via, matched = self._expand_seed(s)
@@ -1216,7 +1218,10 @@ class Query:
         round to zero.
         """
         _check_direction(direction)
-        g = self._rank_graph(root=root)
+        return self._reachable_on(self._rank_graph(root=root), ids, direction)
+
+    @staticmethod
+    def _reachable_on(g: "nx.DiGraph", ids, direction: str) -> set[str]:
         seeds = [i for i in ids if i in g]
         out = set(seeds)
         for i in seeds:
@@ -1246,14 +1251,17 @@ class Query:
         g = self._rank_graph(edge_types, root)
         if g.number_of_nodes() == 0:
             return {}
+        seed_ids = {s for s in self._expand_seeds(seeds) if s in g} if seeds else set()
+        return self._rank_on(g, seed_ids, direction)
+
+    @staticmethod
+    def _rank_on(g: "nx.DiGraph", seed_ids: set[str], direction: str) -> dict[str, float]:
         personalization = None
-        if seeds:
-            seed_ids = {s for s in self._expand_seeds(seeds) if s in g}
-            if seed_ids:  # restart biased to seeds (normalized inside _pagerank)
-                personalization = {n: (1.0 if n in seed_ids else 0.0) for n in g}
-                if direction == "both":
-                    g = nx.DiGraph(g)
-                    g.add_edges_from([(b, a) for a, b in g.edges])
+        if seed_ids:  # restart biased to seeds (normalized inside _pagerank)
+            personalization = {n: (1.0 if n in seed_ids else 0.0) for n in g}
+            if direction == "both":
+                g = nx.DiGraph(g)
+                g.add_edges_from([(b, a) for a, b in g.edges])
         pr = _pagerank(g, personalization)
         return {n: round(v, 8) for n, v in pr.items()}
 

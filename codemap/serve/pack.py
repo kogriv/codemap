@@ -109,7 +109,9 @@ def build_pack(query: Query, *, budget: int, seeds=(), root: str | None = None,
     seed_block = None
     reach = None
     if seeds:
-        res = query.seed_resolution(seeds, root=root)
+        # Share the directed projection for this pack invocation.
+        projection = query._rank_graph(root=root)
+        res = query._seed_resolution_on(projection, seeds)
         seed_block = {"requested": res["seeds"], "unresolved": res["unresolved"]}
         if not res["ids"]:
             return {
@@ -121,8 +123,11 @@ def build_pack(query: Query, *, budget: int, seeds=(), root: str | None = None,
                 "seeds": seed_block,
                 "coverage": coverage,
             }
-        reach = query.reachable_from(res["ids"], root=root, direction=direction)
-    ranked = query.rank(seeds=seeds, root=root, direction=direction or "uses")
+        seed_ids = set(res["ids"])
+        reach = query._reachable_on(projection, seed_ids, direction)
+        ranked = query._rank_on(projection, seed_ids, direction)
+    else:
+        ranked = query.rank(root=root)
     order = sorted(ranked, key=lambda n: (-ranked[n], n))  # rank desc, id tiebreak
     unreachable = None
     if reach is not None:
