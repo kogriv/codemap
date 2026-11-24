@@ -1355,6 +1355,13 @@ in a clean environment and replay the synthetic package from issue #26.
 | Two samples resolve the same call as `annotated-field` and `deep` | One stable behavioral edge with the `deep` variant. A separate registry edge survives. |
 | Installed devkit | Template version 8. |
 
+**0.0.49 published 2026-11-24:** [`codmap` 0.0.49](https://pypi.org/project/codmap/0.0.49/)
+from `8e55e2d`, tagged `v0.0.49` on GitHub and GitLab. All eight
+[CI jobs](https://github.com/kogriv/codemap/actions/runs/45341498835) passed, including Python 3.11–3.14.
+The wheel and sdist passed `twine check --strict` and matched the PyPI SHA-256 digests.
+The downloaded wheel passed all five checks in a clean environment. A separate environment
+installed `codmap[mcp]==0.0.49` by version from the PyPI index.
+
 **0.0.48 — the release check, pre-registered before the upload (2026-11-24).** R1-C137–R1-C148.
 Install the published package in a clean environment and run on synthetic inputs.
 
