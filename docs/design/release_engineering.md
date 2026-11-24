@@ -1354,6 +1354,13 @@ Install the published package in a clean environment and run on synthetic inputs
 | Claude Code transcript with one Codemap CLI tool use and one `rg` tool use | MCP 0, CLI 1, grep 1, share 50%. |
 | Installed devkit | The packaged template version is 8. |
 
+**0.0.48 published 2026-11-24:** [`codmap` 0.0.48](https://pypi.org/project/codmap/0.0.48/)
+from `23d8d58`, tagged `v0.0.48` on GitHub and GitLab. All eight
+[CI jobs](https://github.com/kogriv/codemap/actions/runs/45328273402) passed, including Python 3.11–3.14.
+The wheel and sdist passed `twine check --strict` and matched the PyPI SHA-256 digests.
+The downloaded wheel passed all five checks above in a clean environment. Both thin and full fast graphs
+recorded the inferred call. The unused control method still appeared among high-confidence candidates.
+
 **0.0.47 — the release check, pre-registered before the upload (2026-11-23).** The follow-up audit's findings
 FU-01…FU-03 (R1-C133…C135); a **security** release for the devkit (R1-C133 bypasses the 0.0.46 fix of
 GHSA-c3hp-596c-2p77). `ANSWER_FORMAT` stays **12**, schema 0.13, devkit **v7** (templates unchanged). From PyPI,
